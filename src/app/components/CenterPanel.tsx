@@ -464,8 +464,8 @@ export function CenterPanel({ onSendToTrade }: CenterPanelProps) {
     <div className="p-3 space-y-3 h-full overflow-y-auto flex flex-col">
       <div className="flex-shrink-0">
         {/* 期限筛选 */}
-        <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200 mb-3">
-          <span className="text-gray-600 text-xs">期限筛选：</span>
+        <div className="flex items-center gap-2 bg-[#0a1628] p-2 rounded-lg border border-[#1e3352] mb-3">
+          <span className="text-[#8aa0b8] text-xs">期限筛选：</span>
           <div className="flex gap-1 flex-wrap">
             {periods.map((period) => (
               <button
@@ -474,7 +474,7 @@ export function CenterPanel({ onSendToTrade }: CenterPanelProps) {
                 className={`px-2 py-0.5 rounded text-xs transition-colors ${
                   selectedPeriod === period
                     ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                    : 'bg-[#0f1e31] text-[#b0c1d6] hover:bg-[#18293f] border border-[#2a4466]'
                 }`}
               >
                 {getPeriodLabel(period)}
@@ -519,9 +519,9 @@ export function CenterPanel({ onSendToTrade }: CenterPanelProps) {
       {/* 非银机构报价明细 */}
       {selectedQuoteForDetail && (
         <div className="mt-3 flex-shrink-0">
-          <div className="bg-white rounded-lg border border-blue-300 shadow-sm">
+          <div className="bg-[#0f1e31] rounded-lg border border-blue-300 shadow-sm">
             <div className="bg-gradient-to-r from-blue-100 to-blue-50 px-3 py-2 border-b border-blue-300 flex items-center justify-between gap-2">
-              <h3 className="font-bold text-gray-900 text-xs shrink-0">
+              <h3 className="font-bold text-[#e4ecf5] text-xs shrink-0">
                 非银机构报价明细 - {selectedQuoteForDetail.period}期限
               </h3>
               <input
@@ -529,7 +529,7 @@ export function CenterPanel({ onSendToTrade }: CenterPanelProps) {
                 value={nonBankSearch}
                 onChange={e => setNonBankSearch(e.target.value)}
                 placeholder="搜索机构名称..."
-                className="flex-1 max-w-[180px] px-2 py-0.5 text-xs border border-blue-300 rounded bg-white focus:outline-none focus:border-blue-500"
+                className="flex-1 max-w-[180px] px-2 py-0.5 text-xs border border-blue-300 rounded bg-[#0f1e31] focus:outline-none focus:border-blue-500"
               />
               <div className="flex items-center gap-2 shrink-0">
                 <button
@@ -567,7 +567,7 @@ export function CenterPanel({ onSendToTrade }: CenterPanelProps) {
                 </button>
                 <button
                   onClick={() => { setSelectedQuoteForDetail(null); setNonBankSearch(''); }}
-                  className="text-gray-600 hover:text-gray-900 text-xs px-2 py-0.5 hover:bg-white rounded"
+                  className="text-[#8aa0b8] hover:text-[#e4ecf5] text-xs px-2 py-0.5 hover:bg-[#18293f] rounded"
                 >
                   关闭
                 </button>
@@ -576,43 +576,43 @@ export function CenterPanel({ onSendToTrade }: CenterPanelProps) {
             <div className="overflow-x-auto">
               <table className="w-full text-xs border-collapse">
                 <thead>
-                  <tr className="bg-gray-100 border-b border-gray-300">
-                    <th className="px-3 py-2 text-left font-bold text-gray-700 border-r border-gray-200">机构名称</th>
-                    <th className="px-3 py-2 text-left font-bold text-gray-700 border-r border-gray-200">类型</th>
-                    <th className="px-3 py-2 text-right font-bold text-gray-700 border-r border-gray-200">逆回购量(亿)</th>
-                    <th className="px-3 py-2 text-right font-bold text-gray-700 border-r border-gray-200">逆回购利率(%)</th>
-                    <th className="px-3 py-2 text-right font-bold text-gray-700 border-r border-gray-200">正回购利率(%)</th>
-                    <th className="px-3 py-2 text-right font-bold text-gray-700">正回购量(亿)</th>
+                  <tr className="bg-[#18293f] border-b border-[#2a4466]">
+                    <th className="px-3 py-2 text-left font-bold text-[#b0c1d6] border-r border-[#1e3352]">机构名称</th>
+                    <th className="px-3 py-2 text-left font-bold text-[#b0c1d6] border-r border-[#1e3352]">类型</th>
+                    <th className="px-3 py-2 text-right font-bold text-[#b0c1d6] border-r border-[#1e3352]">逆回购量(亿)</th>
+                    <th className="px-3 py-2 text-right font-bold text-[#b0c1d6] border-r border-[#1e3352]">逆回购利率(%)</th>
+                    <th className="px-3 py-2 text-right font-bold text-[#b0c1d6] border-r border-[#1e3352]">正回购利率(%)</th>
+                    <th className="px-3 py-2 text-right font-bold text-[#b0c1d6]">正回购量(亿)</th>
                   </tr>
                 </thead>
                 <tbody>
                   {nonBankDetails.filter(d => d.institution.includes(nonBankSearch.trim())).map((detail, index) => (
                     <tr
                       key={detail.id}
-                      className={`border-b border-gray-200 hover:bg-blue-50 transition-colors ${
-                        index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                      className={`border-b border-[#1e3352] hover:bg-blue-50 transition-colors ${
+                        index % 2 === 0 ? 'bg-[#0f1e31]' : 'bg-[#0a1628]'
                       }`}
                     >
-                      <td className="px-3 py-2 font-bold text-gray-900 border-r border-gray-200">{detail.institution}</td>
-                      <td className="px-3 py-2 text-gray-700 border-r border-gray-200">
+                      <td className="px-3 py-2 font-bold text-[#e4ecf5] border-r border-[#1e3352]">{detail.institution}</td>
+                      <td className="px-3 py-2 text-[#b0c1d6] border-r border-[#1e3352]">
                         <span className={`px-2 py-0.5 rounded text-xs ${
-                          detail.type === '券商' ? 'bg-blue-100 text-blue-700' :
-                          detail.type === '基金' ? 'bg-purple-100 text-purple-700' :
-                          'bg-orange-100 text-orange-700'
+                          detail.type === '券商' ? 'bg-blue-500/15 text-blue-400 border border-blue-500/40' :
+                          detail.type === '基金' ? 'bg-purple-500/15 text-purple-400 border border-purple-500/40' :
+                          'bg-orange-500/15 text-orange-400 border border-orange-500/40'
                         }`}>
                           {detail.type}
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-right text-gray-800 font-mono font-medium border-r border-gray-200">
+                      <td className="px-3 py-2 text-right text-[#d0dbea] font-mono font-medium border-r border-[#1e3352]">
                         {detail.bidVolume}
                       </td>
-                      <td className="px-3 py-2 text-right font-mono font-bold text-emerald-600 border-r border-gray-200">
+                      <td className="px-3 py-2 text-right font-mono font-bold text-emerald-600 border-r border-[#1e3352]">
                         {detail.bidRate.toFixed(2)}
                       </td>
-                      <td className="px-3 py-2 text-right font-mono font-bold text-red-600 border-r border-gray-200">
+                      <td className="px-3 py-2 text-right font-mono font-bold text-red-600 border-r border-[#1e3352]">
                         {detail.askRate.toFixed(2)}
                       </td>
-                      <td className="px-3 py-2 text-right text-gray-800 font-mono font-medium">
+                      <td className="px-3 py-2 text-right text-[#d0dbea] font-mono font-medium">
                         {detail.askVolume}
                       </td>
                     </tr>
@@ -705,9 +705,9 @@ function QuoteSection({ title, quotes, flashingIds, onSendToTrade, onRowClick, h
   };
 
   return (
-    <div className={`bg-white rounded-lg border border-gray-300 shadow-sm ${highlight ? 'ring-2 ring-blue-500/50' : ''} relative`}>
-      <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-3 py-2 border-b border-gray-300 flex items-center justify-between">
-        <h3 className="font-bold text-gray-900 text-xs">{title}</h3>
+    <div className={`bg-[#0f1e31] rounded-lg border border-[#2a4466] shadow-sm ${highlight ? 'ring-2 ring-blue-500/50' : ''} relative`}>
+      <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-3 py-2 border-b border-[#2a4466] flex items-center justify-between">
+        <h3 className="font-bold text-[#e4ecf5] text-xs">{title}</h3>
         <button
           onClick={handleDownload}
           className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors"
@@ -719,13 +719,13 @@ function QuoteSection({ title, quotes, flashingIds, onSendToTrade, onRowClick, h
       <div className="overflow-visible">
         <table className="w-full text-xs border-collapse">
           <thead>
-            <tr className="bg-gray-100 border-b border-gray-300">
-              <th className="px-3 py-2 text-left font-bold text-gray-700 border-r border-gray-200">期限</th>
-              <th className="px-3 py-2 text-right font-bold text-gray-700 border-r border-gray-200">逆回购量(亿)</th>
-              <th className="px-3 py-2 text-right font-bold text-gray-700 border-r border-gray-200">逆回购利率(%)</th>
-              <th className="px-3 py-2 text-right font-bold text-gray-700 border-r border-gray-200">正回购利率(%)</th>
-              <th className="px-3 py-2 text-right font-bold text-gray-700 border-r border-gray-200">正回购量(亿)</th>
-              <th className="px-3 py-2 text-center font-bold text-gray-700">操作</th>
+            <tr className="bg-[#18293f] border-b border-[#2a4466]">
+              <th className="px-3 py-2 text-left font-bold text-[#b0c1d6] border-r border-[#1e3352]">期限</th>
+              <th className="px-3 py-2 text-right font-bold text-[#b0c1d6] border-r border-[#1e3352]">逆回购量(亿)</th>
+              <th className="px-3 py-2 text-right font-bold text-[#b0c1d6] border-r border-[#1e3352]">逆回购利率(%)</th>
+              <th className="px-3 py-2 text-right font-bold text-[#b0c1d6] border-r border-[#1e3352]">正回购利率(%)</th>
+              <th className="px-3 py-2 text-right font-bold text-[#b0c1d6] border-r border-[#1e3352]">正回购量(亿)</th>
+              <th className="px-3 py-2 text-center font-bold text-[#b0c1d6]">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -735,24 +735,24 @@ function QuoteSection({ title, quotes, flashingIds, onSendToTrade, onRowClick, h
               return (
                 <tr
                   key={quote.id}
-                  className={`border-b border-gray-200 hover:bg-blue-50 transition-colors cursor-pointer ${
-                    isFlashing ? 'bg-blue-100' : index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                  className={`border-b border-[#1e3352] hover:bg-blue-50 transition-colors cursor-pointer ${
+                    isFlashing ? 'bg-blue-500/25' : index % 2 === 0 ? 'bg-[#0f1e31]' : 'bg-[#0a1628]'
                   }`}
                   onClick={() => onRowClick(quote)}
                   onMouseMove={(e) => handleMouseMove(quote, e)}
                   onMouseLeave={() => setHoveredQuote(null)}
                 >
-                  <td className="px-3 py-2 font-bold text-gray-900 border-r border-gray-200">{quote.period}</td>
-                  <td className="px-3 py-2 text-right text-gray-800 font-mono font-medium border-r border-gray-200">
+                  <td className="px-3 py-2 font-bold text-[#e4ecf5] border-r border-[#1e3352]">{quote.period}</td>
+                  <td className="px-3 py-2 text-right text-[#d0dbea] font-mono font-medium border-r border-[#1e3352]">
                     {quote.bidVolume.toLocaleString()}
                   </td>
-                  <td className="px-3 py-2 text-right font-mono font-bold text-emerald-600 border-r border-gray-200">
+                  <td className="px-3 py-2 text-right font-mono font-bold text-emerald-600 border-r border-[#1e3352]">
                     {quote.bidRate.toFixed(2)}
                   </td>
-                  <td className="px-3 py-2 text-right font-mono font-bold text-red-600 border-r border-gray-200">
+                  <td className="px-3 py-2 text-right font-mono font-bold text-red-600 border-r border-[#1e3352]">
                     {quote.askRate.toFixed(2)}
                   </td>
-                  <td className="px-3 py-2 text-right text-gray-800 font-mono font-medium border-r border-gray-200">
+                  <td className="px-3 py-2 text-right text-[#d0dbea] font-mono font-medium border-r border-[#1e3352]">
                     {quote.askVolume.toLocaleString()}
                   </td>
                   <td className="px-3 py-2 text-center">
@@ -783,36 +783,36 @@ function QuoteSection({ title, quotes, flashingIds, onSendToTrade, onRowClick, h
             top: `${tooltipPosition.y}px` 
           }}
         >
-          <div className="bg-white border-2 border-blue-500 rounded-lg shadow-xl p-3 w-[280px]">
-            <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-200">
+          <div className="bg-[#0f1e31] border-2 border-blue-500 rounded-lg shadow-xl p-3 w-[280px]">
+            <div className="flex items-center gap-2 mb-2 pb-2 border-b border-[#1e3352]">
               <User size={14} className="text-blue-600" />
-              <span className="font-semibold text-gray-900 text-xs">报价人信息</span>
+              <span className="font-semibold text-[#e4ecf5] text-xs">报价人信息</span>
             </div>
             <div className="space-y-1.5 text-xs">
               <div className="flex items-center gap-2">
-                <span className="text-gray-600 w-16">姓名：</span>
-                <span className="text-gray-900 font-semibold">{hoveredQuote.trader.name}</span>
+                <span className="text-[#8aa0b8] w-16">姓名：</span>
+                <span className="text-[#e4ecf5] font-semibold">{hoveredQuote.trader.name}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-gray-600 w-16">机构：</span>
-                <span className="text-gray-900">{hoveredQuote.trader.institution}</span>
+                <span className="text-[#8aa0b8] w-16">机构：</span>
+                <span className="text-[#e4ecf5]">{hoveredQuote.trader.institution}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-gray-600 w-16">部门：</span>
-                <span className="text-gray-900">{hoveredQuote.trader.desk}</span>
+                <span className="text-[#8aa0b8] w-16">部门：</span>
+                <span className="text-[#e4ecf5]">{hoveredQuote.trader.desk}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Phone size={10} className="text-gray-600" />
-                <span className="text-gray-600 w-14">电话：</span>
-                <span className="text-gray-900 font-mono">{hoveredQuote.trader.phone}</span>
+                <Phone size={10} className="text-[#8aa0b8]" />
+                <span className="text-[#8aa0b8] w-14">电话：</span>
+                <span className="text-[#e4ecf5] font-mono">{hoveredQuote.trader.phone}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Clock size={10} className="text-gray-600" />
-                <span className="text-gray-600 w-14">时间：</span>
-                <span className="text-gray-900 font-mono">{hoveredQuote.trader.quoteTime}</span>
+                <Clock size={10} className="text-[#8aa0b8]" />
+                <span className="text-[#8aa0b8] w-14">时间：</span>
+                <span className="text-[#e4ecf5] font-mono">{hoveredQuote.trader.quoteTime}</span>
               </div>
             </div>
-            <div className="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-500">
+            <div className="mt-2 pt-2 border-t border-[#1e3352] text-xs text-[#6a7f98]">
               <span>期限 {hoveredQuote.period} | </span>
               <span className="text-emerald-600 font-semibold">买{hoveredQuote.bidRate.toFixed(2)}%</span>
               <span> / </span>
@@ -867,9 +867,9 @@ function ExpandableBankQuoteSection({ title, quotes, flashingIds, onSendToTrade 
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-300 shadow-sm">
-      <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-3 py-2 border-b border-gray-300 flex items-center justify-between">
-        <h3 className="font-bold text-gray-900 text-xs">{title}</h3>
+    <div className="bg-[#0f1e31] rounded-lg border border-[#2a4466] shadow-sm">
+      <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-3 py-2 border-b border-[#2a4466] flex items-center justify-between">
+        <h3 className="font-bold text-[#e4ecf5] text-xs">{title}</h3>
         <button
           onClick={handleDownload}
           className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors"
@@ -880,14 +880,14 @@ function ExpandableBankQuoteSection({ title, quotes, flashingIds, onSendToTrade 
       </div>
       <table className="w-full text-xs border-collapse">
         <thead>
-          <tr className="bg-gray-100 border-b border-gray-300">
-            <th className="px-2 py-2 text-left font-bold text-gray-700 border-r border-gray-200 w-6"></th>
-            <th className="px-3 py-2 text-left font-bold text-gray-700 border-r border-gray-200">期限</th>
-            <th className="px-3 py-2 text-right font-bold text-gray-700 border-r border-gray-200">逆回购量(亿)</th>
-            <th className="px-3 py-2 text-right font-bold text-gray-700 border-r border-gray-200">逆回购利率(%)</th>
-            <th className="px-3 py-2 text-right font-bold text-gray-700 border-r border-gray-200">正回购利率(%)</th>
-            <th className="px-3 py-2 text-right font-bold text-gray-700 border-r border-gray-200">正回购量(亿)</th>
-            <th className="px-3 py-2 text-center font-bold text-gray-700">操作</th>
+          <tr className="bg-[#18293f] border-b border-[#2a4466]">
+            <th className="px-2 py-2 text-left font-bold text-[#b0c1d6] border-r border-[#1e3352] w-6"></th>
+            <th className="px-3 py-2 text-left font-bold text-[#b0c1d6] border-r border-[#1e3352]">期限</th>
+            <th className="px-3 py-2 text-right font-bold text-[#b0c1d6] border-r border-[#1e3352]">逆回购量(亿)</th>
+            <th className="px-3 py-2 text-right font-bold text-[#b0c1d6] border-r border-[#1e3352]">逆回购利率(%)</th>
+            <th className="px-3 py-2 text-right font-bold text-[#b0c1d6] border-r border-[#1e3352]">正回购利率(%)</th>
+            <th className="px-3 py-2 text-right font-bold text-[#b0c1d6] border-r border-[#1e3352]">正回购量(亿)</th>
+            <th className="px-3 py-2 text-center font-bold text-[#b0c1d6]">操作</th>
           </tr>
         </thead>
         <tbody>
@@ -899,28 +899,28 @@ function ExpandableBankQuoteSection({ title, quotes, flashingIds, onSendToTrade 
               <>
                 <tr
                   key={quote.id}
-                  className={`border-b border-gray-200 hover:bg-blue-50 transition-colors cursor-pointer ${
-                    isFlashing ? 'bg-blue-100' : index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                  className={`border-b border-[#1e3352] hover:bg-blue-50 transition-colors cursor-pointer ${
+                    isFlashing ? 'bg-blue-500/25' : index % 2 === 0 ? 'bg-[#0f1e31]' : 'bg-[#0a1628]'
                   }`}
                   onClick={() => togglePeriod(quote.period)}
                 >
-                  <td className="px-2 py-2 text-center border-r border-gray-200">
+                  <td className="px-2 py-2 text-center border-r border-[#1e3352]">
                     {isExpanded
                       ? <ChevronDown size={12} className="text-blue-600 mx-auto" />
                       : <ChevronRight size={12} className="text-gray-400 mx-auto" />
                     }
                   </td>
-                  <td className="px-3 py-2 font-bold text-gray-900 border-r border-gray-200">{quote.period}</td>
-                  <td className="px-3 py-2 text-right text-gray-800 font-mono font-medium border-r border-gray-200">
+                  <td className="px-3 py-2 font-bold text-[#e4ecf5] border-r border-[#1e3352]">{quote.period}</td>
+                  <td className="px-3 py-2 text-right text-[#d0dbea] font-mono font-medium border-r border-[#1e3352]">
                     {quote.bidVolume.toLocaleString()}
                   </td>
-                  <td className="px-3 py-2 text-right font-mono font-bold text-emerald-600 border-r border-gray-200">
+                  <td className="px-3 py-2 text-right font-mono font-bold text-emerald-600 border-r border-[#1e3352]">
                     {quote.bidRate.toFixed(2)}
                   </td>
-                  <td className="px-3 py-2 text-right font-mono font-bold text-red-600 border-r border-gray-200">
+                  <td className="px-3 py-2 text-right font-mono font-bold text-red-600 border-r border-[#1e3352]">
                     {quote.askRate.toFixed(2)}
                   </td>
-                  <td className="px-3 py-2 text-right text-gray-800 font-mono font-medium border-r border-gray-200">
+                  <td className="px-3 py-2 text-right text-[#d0dbea] font-mono font-medium border-r border-[#1e3352]">
                     {quote.askVolume.toLocaleString()}
                   </td>
                   <td className="px-3 py-2 text-center">
@@ -934,21 +934,21 @@ function ExpandableBankQuoteSection({ title, quotes, flashingIds, onSendToTrade 
                   </td>
                 </tr>
                 {isExpanded && bankRows.map((bank) => (
-                  <tr key={`${quote.period}-${bank.name}`} className="border-b border-gray-100 bg-blue-50/40 hover:bg-blue-50">
-                    <td className="border-r border-gray-200"></td>
-                    <td className="px-3 py-1.5 border-r border-gray-200">
-                      <span className="pl-4 text-gray-700 font-medium">{bank.name}</span>
+                  <tr key={`${quote.period}-${bank.name}`} className="border-b border-[#1e3352] bg-blue-50/40 hover:bg-blue-50">
+                    <td className="border-r border-[#1e3352]"></td>
+                    <td className="px-3 py-1.5 border-r border-[#1e3352]">
+                      <span className="pl-4 text-[#b0c1d6] font-medium">{bank.name}</span>
                     </td>
-                    <td className="px-3 py-1.5 text-right text-gray-700 font-mono border-r border-gray-200">
+                    <td className="px-3 py-1.5 text-right text-[#b0c1d6] font-mono border-r border-[#1e3352]">
                       {bank.bidVolume.toLocaleString()}
                     </td>
-                    <td className="px-3 py-1.5 text-right font-mono text-emerald-600 border-r border-gray-200">
+                    <td className="px-3 py-1.5 text-right font-mono text-emerald-600 border-r border-[#1e3352]">
                       {bank.bidRate.toFixed(2)}
                     </td>
-                    <td className="px-3 py-1.5 text-right font-mono text-red-600 border-r border-gray-200">
+                    <td className="px-3 py-1.5 text-right font-mono text-red-600 border-r border-[#1e3352]">
                       {bank.askRate.toFixed(2)}
                     </td>
-                    <td className="px-3 py-1.5 text-right text-gray-700 font-mono border-r border-gray-200">
+                    <td className="px-3 py-1.5 text-right text-[#b0c1d6] font-mono border-r border-[#1e3352]">
                       {bank.askVolume.toLocaleString()}
                     </td>
                     <td className="px-3 py-1.5 text-center">
