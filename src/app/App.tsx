@@ -2,6 +2,35 @@ import { useEffect, useState } from 'react';
 
 type AuxChartTab = 'ncd' | 'institution-repo' | 'fund-structure';
 type TrendMode = 'intraday' | 'history' | 'comparison';
+type OverlayProduct = 'none' | 'dr007' | 'gc007' | 'r007';
+type RightLowerTab = 'cfets' | 'ncd' | 'institution-repo' | 'fund-structure';
+
+type SummaryTableSection = {
+  layout: 'table';
+  title: string;
+  columns: readonly string[];
+  rows: readonly (readonly string[])[];
+  greenColumns?: readonly number[];
+  redColumns?: readonly number[];
+  deltaColumns?: readonly number[];
+  emphasisColumns?: readonly number[];
+  buttonColumn?: number;
+  fitToWidth?: boolean;
+  scrollable: boolean;
+};
+
+type ExchangeMarketSplitSection = {
+  layout: 'exchange-split';
+  title: string;
+  scrollable: boolean;
+  markets: readonly {
+    title: string;
+    columns: readonly string[];
+    rows: readonly (readonly string[])[];
+    greenColumns?: readonly number[];
+    deltaColumns?: readonly number[];
+  }[];
+};
 
 const chartPalette = {
   emerald: '#34d399',
@@ -9,10 +38,12 @@ const chartPalette = {
   violet: '#a78bfa',
   amber: '#fbbf24',
   pink: '#f472b6',
+  red: '#f87171',
 } as const;
 
-const leftSections = [
+const leftSections: readonly (SummaryTableSection | ExchangeMarketSplitSection)[] = [
   {
+    layout: 'table',
     title: '当日大行价格',
     columns: ['机构', '非银利率', '银行利率', '涨跌bp', '更新时间'],
     rows: [
@@ -27,6 +58,7 @@ const leftSections = [
     scrollable: false,
   },
   {
+    layout: 'table',
     title: 'XREPO',
     columns: ['期限', '正档位', '正回购金额', '逆回购利率', '正回购利率', '逆回购金额', '逆档位', '操作'],
     rows: [
@@ -44,36 +76,37 @@ const leftSections = [
     scrollable: false,
   },
   {
+    layout: 'exchange-split',
     title: '交易所回购',
-    columns: ['品种', '最新', '涨跌bp', '涨跌%', '成交金额', '最高', '最低', '开盘'],
-    rows: [
-      ['GC001', '1.3700', '-1.00', '-0.72', '14.93亿', '1.4050', '1.3250', '1.3300'],
-      ['GC007', '1.3750', '-1.00', '-0.72', '14.00亿', '1.4200', '1.3250', '1.3500'],
-      ['R001', '1.3900', '-1.50', '-1.07', '8.21亿', '1.4100', '1.3600', '1.3950'],
-      ['R007', '1.4000', '-0.50', '-0.36', '309.17亿', '1.4100', '1.3800', '1.4100'],
-      ['R014', '1.4050', '-0.50', '-0.35', '26.98亿', '1.4200', '1.3550', '1.3550'],
-      ['R028', '1.4000', '-1.00', '-0.71', '5.91亿', '1.4450', '1.3800', '1.3850'],
-      ['GC014', '1.3820', '-0.80', '-0.58', '9.26亿', '1.3980', '1.3600', '1.3880'],
-      ['GC028', '1.3960', '-0.70', '-0.50', '6.88亿', '1.4220', '1.3820', '1.4010'],
-      ['GC091', '1.4180', '-1.20', '-0.84', '2.75亿', '1.4360', '1.4010', '1.4250'],
-      ['GC182', '1.4350', '-1.50', '-1.03', '1.92亿', '1.4600', '1.4200', '1.4420'],
-      ['R091', '1.3950', '-2.00', '-1.41', '6,157.20万', '1.4050', '1.3700', '1.3700'],
-      ['R182', '1.3800', '-1.50', '-1.08', '2,975.70万', '1.4000', '1.3550', '1.3550'],
-      ['R273', '1.4120', '-1.10', '-0.77', '1.86亿', '1.4390', '1.4010', '1.4200'],
-      ['R364', '1.4280', '-0.90', '-0.63', '1.24亿', '1.4500', '1.4120', '1.4370'],
-      ['CG007', '1.3680', '-0.90', '-0.66', '4.52亿', '1.3900', '1.3500', '1.3720'],
-      ['CG014', '1.3800', '-1.50', '-1.08', '2,975.70万', '1.4000', '1.3550', '1.3550'],
-      ['CG028', '1.3920', '-1.00', '-0.71', '1.48亿', '1.4100', '1.3800', '1.3990'],
-      ['CF001', '1.3620', '-0.80', '-0.58', '3.14亿', '1.3810', '1.3500', '1.3660'],
-      ['CF007', '1.3740', '-0.70', '-0.51', '2.87亿', '1.3910', '1.3610', '1.3790'],
-      ['CF014', '1.3860', '-0.60', '-0.43', '1.92亿', '1.4010', '1.3720', '1.3900'],
-      ['CF028', '1.3980', '-0.50', '-0.36', '1.45亿', '1.4160', '1.3840', '1.4020'],
+    markets: [
+      {
+        title: '上交所',
+        columns: ['期限', '品种', '最新', '涨跌bp'],
+        rows: [
+          ['1天', 'GC001', '1.3700', '-1.00'],
+          ['7天', 'GC007', '1.3750', '-1.00'],
+          ['14天', 'GC014', '1.3820', '-0.80'],
+          ['21天', 'GC021', '1.3890', '-0.70'],
+          ['28天', 'GC028', '1.3960', '-0.70'],
+        ],
+        greenColumns: [2],
+        deltaColumns: [3],
+      },
+      {
+        title: '深交所',
+        columns: ['期限', '品种', '最新', '涨跌bp'],
+        rows: [
+          ['1天', 'R001', '1.3900', '-1.50'],
+          ['7天', 'R007', '1.4000', '-0.50'],
+          ['14天', 'R014', '1.4050', '-0.50'],
+          ['21天', 'R021', '1.4030', '-0.60'],
+          ['28天', 'R028', '1.4000', '-1.00'],
+        ],
+        greenColumns: [2],
+        deltaColumns: [3],
+      },
     ],
-    greenColumns: [1, 6],
-    redColumns: [5, 7],
-    deltaColumns: [2, 3],
-    fitToWidth: true,
-    scrollable: true,
+    scrollable: false,
   },
 ] as const;
 
@@ -143,6 +176,20 @@ const auxChartTabs: Array<{ id: AuxChartTab; label: string }> = [
   { id: 'fund-structure', label: '机构资金结构' },
 ];
 
+const overlayProductOptions: Array<{ id: OverlayProduct; label: string }> = [
+  { id: 'none', label: '不叠加' },
+  { id: 'dr007', label: 'DR007' },
+  { id: 'gc007', label: 'GC007' },
+  { id: 'r007', label: 'R007' },
+];
+
+const rightLowerTabs: Array<{ id: RightLowerTab; label: string }> = [
+  { id: 'cfets', label: 'CFETS日报统计' },
+  { id: 'ncd', label: 'NCD' },
+  { id: 'institution-repo', label: '分机构回购' },
+  { id: 'fund-structure', label: '机构资金结构' },
+];
+
 const trendModeTabs: Array<{ id: TrendMode; label: string }> = [
   { id: 'intraday', label: '分时' },
   { id: 'history', label: '历史' },
@@ -172,9 +219,31 @@ const trendAxisLabels = ['2/22', '3/1', '3/7', '3/13', '3/20', '3/27', '4/2', '4
 const trendPriceTicks = [2.107, 2.028, 1.948, 1.868] as const;
 const trendVolumeTicks = ['2k', '1k', '900', '450', '0'] as const;
 
+const intradaySeries = [
+  1.948, 1.946, 1.944, 1.945, 1.947, 1.95, 1.948, 1.946, 1.943, 1.941, 1.942, 1.944,
+  1.945, 1.943, 1.942, 1.939, 1.936, 1.934, 1.933, 1.936, 1.939, 1.943, 1.946, 1.948,
+  1.949, 1.951, 1.954, 1.956, 1.955, 1.957, 1.96, 1.963, 1.966, 1.968, 1.967, 1.969,
+  1.971, 1.974, 1.976, 1.979,
+] as const;
+
+const intradayTimeLabels = ['09:30', '10:00', '10:30', '11:00', '13:30', '14:00', '14:30', '15:00'] as const;
+
+const cfetsSummaryCards = [
+  { label: '净融出', value: '+428亿', tone: 'good' },
+  { label: 'DR007', value: '2.15%', tone: 'alert' },
+  { label: '非银占比', value: '49.8%', tone: 'neutral' },
+  { label: '成交总额', value: '5,824亿', tone: 'neutral' },
+] as const;
+
+const cfetsDetailRows = [
+  ['回购成交', '4,631亿', '较昨 +6.2%'],
+  ['XREPO成交', '782亿', '较昨 -1.5%'],
+  ['大行净融出', '+215亿', '边际走松'],
+  ['非银需求', '偏强', '隔夜至 14D 活跃'],
+] as const;
+
 function App() {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [activeAuxChart, setActiveAuxChart] = useState<AuxChartTab>('ncd');
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -191,7 +260,7 @@ function App() {
         <main className="grid min-h-0 flex-1 grid-cols-[30fr_35fr_35fr] gap-3 overflow-hidden px-3 pb-3 pt-2">
           <LeftSummaryPanel />
           <MainQuoteBoard />
-          <RightSidebar activeAuxChart={activeAuxChart} onAuxChartChange={setActiveAuxChart} />
+          <RightSidebar />
         </main>
       </div>
     </div>
@@ -216,11 +285,7 @@ function TopBar({ currentTime }: { currentTime: Date }) {
           <div className="flex flex-wrap items-center gap-6">
             <div>
               <div className="text-[28px] font-semibold tracking-[0.04em] text-slate-50">资金实时行情看板</div>
-              <div className="mt-1 text-xs text-slate-400">框架 Demo，仅展示最新主报价区与右侧趋势布局关系</div>
             </div>
-            <InfoChip label="系统时间" value={formattedDateTime} tone="neutral" />
-            <InfoChip label="数据更新" value="10:53:27" tone="good" />
-            <InfoChip label="交易日" value="今日" tone="neutral" />
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {topQuickFilters.periods.map((item, index) => (
@@ -251,31 +316,65 @@ function LeftSummaryPanel() {
   return (
     <aside className="flex h-full min-h-0 min-w-0 flex-col gap-3 overflow-hidden pr-1">
       {leftSections.map((section) => (
-        <div key={section.title} className={section.scrollable ? 'min-h-0 flex-1' : 'shrink-0'}>
+        <div key={section.title} className={section.title === '交易所回购' ? 'min-h-0 flex-1' : section.scrollable ? 'min-h-0 flex-1' : 'shrink-0'}>
           <PanelCard
             title={section.title}
             bodyClassName="min-h-0 flex-1"
             bodyPaddingClassName="p-0"
             bodyFill
           >
-            <StructuredTable
-              columns={section.columns}
-              rows={section.rows}
-              greenColumns={section.greenColumns}
-              redColumns={section.redColumns}
-              deltaColumns={section.deltaColumns}
-              emphasisColumns={section.emphasisColumns}
-              buttonColumn={section.buttonColumn}
-              fitToWidth={section.fitToWidth}
-              compact
-              flush
-              adaptiveHeight={!section.scrollable}
-              scrollY={section.scrollable}
-            />
+            {section.layout === 'exchange-split' ? (
+              <ExchangeMarketSplitCard markets={section.markets} />
+            ) : (
+              <StructuredTable
+                columns={section.columns}
+                rows={section.rows}
+                greenColumns={section.greenColumns}
+                redColumns={section.redColumns}
+                deltaColumns={section.deltaColumns}
+                emphasisColumns={section.emphasisColumns}
+                buttonColumn={section.buttonColumn}
+                fitToWidth={section.fitToWidth}
+                compact
+                flush
+                adaptiveHeight={!section.scrollable}
+                scrollY={section.scrollable}
+              />
+            )}
           </PanelCard>
         </div>
       ))}
     </aside>
+  );
+}
+
+function ExchangeMarketSplitCard({
+  markets,
+}: {
+  markets: ExchangeMarketSplitSection['markets'];
+}) {
+  return (
+    <div className="grid h-full min-h-0 grid-cols-2 gap-2 p-2">
+      {markets.map((market) => (
+        <div key={market.title} className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
+          <div className="border-b border-[#1a2c45] bg-[#101b2c] px-3 py-2 text-xs font-semibold tracking-[0.02em] text-slate-200">
+            {market.title}
+          </div>
+          <div className="min-h-0 flex-1">
+            <StructuredTable
+              columns={market.columns}
+              rows={market.rows}
+              greenColumns={market.greenColumns}
+              deltaColumns={market.deltaColumns}
+              compact
+              fitToWidth
+              flush
+              adaptiveHeight
+            />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -302,39 +401,354 @@ function MainQuoteBoard() {
   );
 }
 
-function RightSidebar({
-  activeAuxChart,
-  onAuxChartChange,
-}: {
-  activeAuxChart: AuxChartTab;
-  onAuxChartChange: (tab: AuxChartTab) => void;
-}) {
+function RightSidebar() {
+  const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>('none');
+  const [activeLowerTab, setActiveLowerTab] = useState<RightLowerTab>('cfets');
+
   return (
-    <aside className="grid min-h-0 min-w-0 grid-rows-[60fr_40fr] gap-3 overflow-hidden">
+    <aside className="grid min-h-0 min-w-0 grid-rows-[24fr_38fr_38fr] gap-3 overflow-hidden">
       <div className="min-h-0 overflow-hidden">
-        <TrendOverviewCard />
+        <IntradayPanel overlayProduct={overlayProduct} onOverlayChange={setOverlayProduct} />
       </div>
 
-      <div className="grid min-h-0 overflow-hidden rounded-xl border border-[#1e2f48] bg-[#0d1726]">
-        <div className="grid h-full min-h-0 grid-rows-[auto_1fr] gap-2 overflow-hidden p-2">
-          <div className="flex flex-wrap gap-1.5">
-            {auxChartTabs.map((tab) => (
-              <button
-                key={tab.id}
-                className={auxTabClass(tab.id === activeAuxChart)}
-                onClick={() => onAuxChartChange(tab.id)}
-                type="button"
-              >
-                {tab.label}
-              </button>
-            ))}
+      <div className="min-h-0 overflow-hidden">
+        <KLinePanel overlayProduct={overlayProduct} />
+      </div>
+
+      <div className="min-h-0 overflow-hidden">
+        <RightLowerPanel activeTab={activeLowerTab} onTabChange={setActiveLowerTab} />
+      </div>
+    </aside>
+  );
+}
+
+function IntradayPanel({
+  overlayProduct,
+  onOverlayChange,
+}: {
+  overlayProduct: OverlayProduct;
+  onOverlayChange: (product: OverlayProduct) => void;
+}) {
+  const overlaySeries = overlayProduct === 'none' ? null : buildOverlaySeries(intradaySeries, overlayProduct);
+  const mainPath = buildLinePath(intradaySeries, 680, 150, 1.928, 1.986);
+  const overlayPath = overlaySeries ? buildLinePath(overlaySeries, 680, 150, 1.928, 1.986) : null;
+
+  return (
+    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
+      <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101d32] px-3 py-2">
+        <div className="flex items-center gap-3">
+          <div className="text-sm font-semibold text-slate-100">分时</div>
+          <OverlayProductSelect value={overlayProduct} onChange={onOverlayChange} />
+        </div>
+        <div className="text-xs text-slate-400">nonbankBest · R014</div>
+      </div>
+      <div className="grid min-h-0 grid-cols-[3rem_1fr] px-3 pb-2 pt-2">
+        <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+          {['1.980', '1.964', '1.948', '1.932'].map((tick) => (
+            <div key={tick}>{tick}</div>
+          ))}
+        </div>
+        <div className="relative min-h-0">
+          {[0, 1, 2, 3].map((index) => (
+            <div
+              key={`intraday-grid-${index}`}
+              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              style={{ top: `${(index / 3) * 100}%` }}
+            />
+          ))}
+          <div className="absolute inset-x-0 top-[56%] border-t border-dashed border-[#ff8a26]" />
+          <div className="absolute inset-x-0 bottom-5 top-1">
+            <svg className="h-full w-full" preserveAspectRatio="none" viewBox="0 0 680 150">
+              <path d={mainPath} fill="none" stroke={chartPalette.blue} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              {overlayPath ? (
+                <path
+                  d={overlayPath}
+                  fill="none"
+                  stroke={chartPalette.amber}
+                  strokeWidth="2"
+                  strokeDasharray="5 4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              ) : null}
+            </svg>
           </div>
-          <div className="min-h-0 overflow-hidden">
-            <MiniChartCard title={auxChartTabs.find((item) => item.id === activeAuxChart)?.label ?? ''} bars={activeAuxChart === 'fund-structure'} />
+          <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-300">
+            <LegendDot color={chartPalette.blue} label="当前品种" />
+            {overlayProduct !== 'none' ? <LegendDot color={chartPalette.amber} label={overlayProductLabel(overlayProduct)} /> : null}
+          </div>
+          <div className="absolute inset-x-0 bottom-0 grid grid-cols-8 text-[10px] text-slate-400">
+            {intradayTimeLabels.map((label) => (
+              <div key={label} className="text-center">
+                {label}
+              </div>
+            ))}
           </div>
         </div>
       </div>
-    </aside>
+    </section>
+  );
+}
+
+function KLinePanel({ overlayProduct }: { overlayProduct: OverlayProduct }) {
+  const candles = buildCandlesFromSeries(trendRateSeries.slice(-32));
+  const candleMin = Math.min(...candles.map((item) => item.low)) - 0.01;
+  const candleMax = Math.max(...candles.map((item) => item.high)) + 0.01;
+  const overlaySeries = overlayProduct === 'none' ? null : buildOverlaySeries(candles.map((item) => item.close), overlayProduct);
+  const overlayPath = overlaySeries ? buildLinePath(overlaySeries, 720, 210, candleMin, candleMax) : null;
+  const volumeMax = Math.max(...candles.map((item) => item.volume));
+
+  return (
+    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
+      <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101d32] px-3 py-2">
+        <div className="flex items-center gap-3">
+          <div className="text-sm font-semibold text-slate-100">K线</div>
+          <div className="text-xs text-slate-400">
+            叠加：
+            <span className="ml-1 text-slate-200">{overlayProductLabel(overlayProduct)}</span>
+          </div>
+        </div>
+        <div className="text-xs text-slate-400">历史 · 近 30 日</div>
+      </div>
+      <div className="grid min-h-0 grid-rows-[68fr_24fr_auto] px-3 pb-2 pt-2">
+        <div className="grid min-h-0 grid-cols-[3.25rem_1fr]">
+          <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+            {buildAxisLabels(candleMin, candleMax, 4).map((label) => (
+              <div key={label}>{label}</div>
+            ))}
+          </div>
+          <div className="relative min-h-0">
+            {[0, 1, 2, 3].map((index) => (
+              <div
+                key={`k-grid-${index}`}
+                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                style={{ top: `${(index / 3) * 100}%` }}
+              />
+            ))}
+            <svg className="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox="0 0 720 210">
+              {candles.map((candle, index) => {
+                const x = ((index + 0.5) / candles.length) * 720;
+                const openY = valueToY(candle.open, 210, candleMin, candleMax);
+                const closeY = valueToY(candle.close, 210, candleMin, candleMax);
+                const highY = valueToY(candle.high, 210, candleMin, candleMax);
+                const lowY = valueToY(candle.low, 210, candleMin, candleMax);
+                const bullish = candle.close >= candle.open;
+                const color = bullish ? chartPalette.emerald : chartPalette.red;
+                const bodyTop = Math.min(openY, closeY);
+                const bodyHeight = Math.max(Math.abs(closeY - openY), 2);
+                return (
+                  <g key={`candle-${index}`}>
+                    <line x1={x} x2={x} y1={highY} y2={lowY} stroke={color} strokeWidth="1.5" />
+                    <rect x={x - 8} y={bodyTop} width={16} height={bodyHeight} fill={bullish ? `${color}55` : color} stroke={color} strokeWidth="1.2" rx="1" />
+                  </g>
+                );
+              })}
+              {overlayPath ? (
+                <path
+                  d={overlayPath}
+                  fill="none"
+                  stroke={chartPalette.amber}
+                  strokeWidth="2"
+                  strokeDasharray="5 4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              ) : null}
+            </svg>
+          </div>
+        </div>
+        <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[#1d3250] pt-2">
+          <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+            {['1.8k', '1.2k', '600', '0'].map((tick) => (
+              <div key={tick}>{tick}</div>
+            ))}
+          </div>
+          <div className="relative min-h-0">
+            <div className="absolute inset-0 flex items-end gap-[4px]">
+              {candles.map((candle, index) => (
+                <div
+                  key={`k-vol-${index}`}
+                  className="min-w-0 flex-1 rounded-t-[2px]"
+                  style={{
+                    height: `${(candle.volume / volumeMax) * 100}%`,
+                    backgroundColor: candle.close >= candle.open ? '#22c1dc' : '#ff8a26',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-[3.25rem_1fr] pt-2">
+          <div />
+          <div className="grid grid-cols-8 text-[10px] text-slate-400">
+            {['3/1', '3/5', '3/10', '3/15', '3/20', '4/1', '4/10', '4/22'].map((label) => (
+              <div key={label} className="text-center">
+                {label}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function RightLowerPanel({
+  activeTab,
+  onTabChange,
+}: {
+  activeTab: RightLowerTab;
+  onTabChange: (tab: RightLowerTab) => void;
+}) {
+  return (
+    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-[#203551] bg-[#101d32] px-2 py-2">
+        {rightLowerTabs.map((tab) => (
+          <button
+            key={tab.id}
+            className={auxTabClass(tab.id === activeTab)}
+            onClick={() => onTabChange(tab.id)}
+            type="button"
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <div className="min-h-0 p-2.5">
+        {activeTab === 'cfets' ? <CfetsDailyPanel /> : <AuxTabPanel type={activeTab} />}
+      </div>
+    </section>
+  );
+}
+
+function CfetsDailyPanel() {
+  return (
+    <div className="grid h-full min-h-0 grid-rows-[auto_auto_1fr] gap-2">
+      <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+        {cfetsSummaryCards.map((card) => (
+          <div key={card.label} className="rounded-lg border border-[#223754] bg-[#0f1a2d] px-3 py-2">
+            <div className="text-[11px] text-slate-500">{card.label}</div>
+            <div className={`mt-1 text-base font-semibold ${card.tone === 'good' ? 'text-emerald-300' : card.tone === 'alert' ? 'text-amber-300' : 'text-slate-100'}`}>
+              {card.value}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-xs xl:grid-cols-4">
+        {cfetsDetailRows.map((row) => (
+          <div key={row[0]} className="rounded-lg border border-[#1d3250] bg-[#0d1726] px-3 py-2">
+            <div className="text-slate-500">{row[0]}</div>
+            <div className="mt-1 font-semibold text-slate-100">{row[1]}</div>
+            <div className="mt-1 text-slate-400">{row[2]}</div>
+          </div>
+        ))}
+      </div>
+      <div className="overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
+        <table className="min-w-full text-xs">
+          <thead className="bg-[#101d32] text-slate-400">
+            <tr>
+              {['日期', '公开市场操作', '净投放', 'MLF', '关注点'].map((column) => (
+                <th key={column} className="px-3 py-2 text-left font-medium">
+                  {column}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              ['2026-04-22', '逆回购 7D', '+40亿', '--', '短端偏稳'],
+              ['2026-04-21', '逆回购到期', '-10亿', '--', '大行融出维持'],
+              ['2026-04-20', '逆回购 7D', '+5亿', '--', '非银需求回升'],
+              ['2026-04-17', '逆回购 7D', '+1985亿', '--', '月内跨季预期升温'],
+            ].map((row) => (
+              <tr key={row[0]} className="border-t border-[#162439] text-slate-300">
+                {row.map((cell, index) => (
+                  <td key={`${row[0]}-${index}`} className="px-3 py-2">
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function AuxTabPanel({ type }: { type: Exclude<RightLowerTab, 'cfets'> }) {
+  if (type === 'fund-structure') {
+    return <AuxBarsPanel stacked />;
+  }
+  return <AuxBarsPanel stacked={false} />;
+}
+
+function AuxBarsPanel({ stacked }: { stacked: boolean }) {
+  return (
+    <div className="grid h-full min-h-0 grid-rows-[1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+      <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]">
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(58,81,115,0.16)_1px,transparent_1px),linear-gradient(90deg,rgba(58,81,115,0.16)_1px,transparent_1px)] bg-[size:100%_25%,14.28%_100%]" />
+        <div className="absolute inset-x-3 bottom-3 top-3 flex items-end gap-2">
+          {Array.from({ length: 7 }).map((_, index) => (
+            <div key={index} className="flex flex-1 items-end gap-1">
+              {stacked
+                ? [chartPalette.violet, chartPalette.emerald, chartPalette.blue, chartPalette.pink].map((color, partIndex) => (
+                    <div
+                      key={`${index}-${partIndex}`}
+                      className="w-full rounded-t"
+                      style={{
+                        height: `${32 + ((index + partIndex) % 4) * 12}%`,
+                        backgroundColor: color,
+                        opacity: 0.72,
+                      }}
+                    />
+                  ))
+                : [chartPalette.blue, chartPalette.amber].map((color, partIndex) => (
+                    <div
+                      key={`${index}-${partIndex}`}
+                      className="w-full rounded-t"
+                      style={{
+                        height: `${26 + ((index * 2 + partIndex) % 5) * 13}%`,
+                        backgroundColor: color,
+                        opacity: 0.82,
+                      }}
+                    />
+                  ))}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-7 text-center text-[10px] text-slate-400">
+        {['3/21', '3/24', '3/27', '4/1', '4/8', '4/14', '4/22'].map((label) => (
+          <div key={label}>{label}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OverlayProductSelect({
+  value,
+  onChange,
+}: {
+  value: OverlayProduct;
+  onChange: (product: OverlayProduct) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2 text-xs text-slate-400">
+      <span>叠加品种</span>
+      <select
+        className="rounded-md border border-[#2a4164] bg-[#0f1b2f] px-2 py-1 text-xs text-slate-200 outline-none"
+        value={value}
+        onChange={(event) => onChange(event.target.value as OverlayProduct)}
+      >
+        {overlayProductOptions.map((option) => (
+          <option key={option.id} value={option.id}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
@@ -688,6 +1102,39 @@ function buildLinePath(values: readonly number[], width: number, height: number,
 function buildAreaPath(values: readonly number[], width: number, height: number, min: number, max: number) {
   const line = buildLinePath(values, width, height, min, max);
   return `${line} L ${width} ${height} L 0 ${height} Z`;
+}
+
+function overlayProductLabel(product: OverlayProduct) {
+  return overlayProductOptions.find((option) => option.id === product)?.label ?? '不叠加';
+}
+
+function buildOverlaySeries(values: readonly number[], product: OverlayProduct) {
+  const delta = product === 'dr007' ? 0.012 : product === 'gc007' ? -0.008 : 0.004;
+  return values.map((value, index) => value + delta + Math.sin(index / 3.2) * 0.0025);
+}
+
+function buildCandlesFromSeries(values: readonly number[]) {
+  const candles = [];
+  for (let index = 0; index < values.length - 1; index += 2) {
+    const open = values[index];
+    const close = values[index + 1];
+    const high = Math.max(open, close) + 0.006 + (index % 3) * 0.0015;
+    const low = Math.min(open, close) - 0.006 - (index % 2) * 0.001;
+    const volume = 520 + ((index * 97) % 1100);
+    candles.push({ open, close, high, low, volume });
+  }
+  return candles;
+}
+
+function buildAxisLabels(min: number, max: number, count: number) {
+  return Array.from({ length: count }, (_, index) => {
+    const value = max - ((max - min) * index) / (count - 1);
+    return value.toFixed(3);
+  });
+}
+
+function valueToY(value: number, height: number, min: number, max: number) {
+  return height - ((value - min) / (max - min)) * height;
 }
 
 function PanelCard({
