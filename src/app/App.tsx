@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 type AuxChartTab = 'ncd' | 'institution-repo' | 'fund-structure';
 type TrendMode = 'intraday' | 'history' | 'comparison';
 type OverlayProduct = 'none' | 'dr007' | 'gc007' | 'r007';
-type RightLowerTab = 'cfets' | 'ncd' | 'institution-repo' | 'fund-structure';
+type RightLowerTab = 'cfets' | 'fund-structure';
 
 type SummaryTableSection = {
   layout: 'table';
@@ -16,6 +16,7 @@ type SummaryTableSection = {
   emphasisColumns?: readonly number[];
   buttonColumn?: number;
   fitToWidth?: boolean;
+  columnWidths?: readonly string[];
   scrollable: boolean;
 };
 
@@ -24,6 +25,7 @@ type ExchangeMarketSplitSection = {
   title: string;
   scrollable: boolean;
   markets: readonly {
+    id: 'sse' | 'szse';
     title: string;
     columns: readonly string[];
     rows: readonly (readonly string[])[];
@@ -73,6 +75,7 @@ const leftSections: readonly (SummaryTableSection | ExchangeMarketSplitSection)[
     emphasisColumns: [1, 6],
     buttonColumn: 7,
     fitToWidth: true,
+    columnWidths: ['11%', '10%', '16%', '15%', '15%', '16%', '10%', '7%'],
     scrollable: false,
   },
   {
@@ -80,6 +83,7 @@ const leftSections: readonly (SummaryTableSection | ExchangeMarketSplitSection)[
     title: '交易所回购',
     markets: [
       {
+        id: 'sse',
         title: '上交所',
         columns: ['期限', '品种', '最新', '涨跌bp'],
         rows: [
@@ -93,14 +97,15 @@ const leftSections: readonly (SummaryTableSection | ExchangeMarketSplitSection)[
         deltaColumns: [3],
       },
       {
+        id: 'szse',
         title: '深交所',
         columns: ['期限', '品种', '最新', '涨跌bp'],
         rows: [
-          ['1天', 'R001', '1.3900', '-1.50'],
-          ['7天', 'R007', '1.4000', '-0.50'],
-          ['14天', 'R014', '1.4050', '-0.50'],
-          ['21天', 'R021', '1.4030', '-0.60'],
-          ['28天', 'R028', '1.4000', '-1.00'],
+          ['1天', 'R-001', '1.3900', '-1.50'],
+          ['7天', 'R-007', '1.4000', '-0.50'],
+          ['14天', 'R-014', '1.4050', '-0.50'],
+          ['21天', 'R-021', '1.4030', '-0.60'],
+          ['28天', 'R-028', '1.4000', '-1.00'],
         ],
         greenColumns: [2],
         deltaColumns: [3],
@@ -165,10 +170,13 @@ const middleSections = [
   },
 ] as const;
 
-const topQuickFilters = {
-  periods: ['全部', '1D', '7D', '14D', '21D', '1M'],
-  views: ['今天', '近5日', '更多历史'],
-};
+const topBoardFilters = {
+  periods: ['全部', '1', '7', '14', '21', '28+'],
+  amountMin: '0',
+  amountMax: '不限',
+  rateMin: '0.00',
+  rateMax: '不限',
+} as const;
 
 const auxChartTabs: Array<{ id: AuxChartTab; label: string }> = [
   { id: 'ncd', label: 'NCD' },
@@ -185,8 +193,6 @@ const overlayProductOptions: Array<{ id: OverlayProduct; label: string }> = [
 
 const rightLowerTabs: Array<{ id: RightLowerTab; label: string }> = [
   { id: 'cfets', label: 'CFETS日报统计' },
-  { id: 'ncd', label: 'NCD' },
-  { id: 'institution-repo', label: '分机构回购' },
   { id: 'fund-structure', label: '机构资金结构' },
 ];
 
@@ -242,6 +248,44 @@ const cfetsDetailRows = [
   ['非银需求', '偏强', '隔夜至 14D 活跃'],
 ] as const;
 
+const ncdTrendSeries = [1.94, 1.95, 1.96, 1.97, 1.98, 1.97, 1.99, 2.0, 1.99, 2.01, 2.02, 2.01, 2.02, 2.03] as const;
+const ncdThreeMonthSeries = [1.99, 2.0, 2.01, 2.02, 2.03, 2.02, 2.03, 2.04, 2.05, 2.05, 2.06, 2.05, 2.06, 2.07] as const;
+const ncdOneYearSeries = [2.08, 2.08, 2.09, 2.09, 2.1, 2.09, 2.1, 2.11, 2.11, 2.12, 2.12, 2.11, 2.12, 2.13] as const;
+const auxChartLabels = ['4/9', '4/10', '4/11', '4/12', '4/13', '4/14', '4/15', '4/16', '4/17', '4/18', '4/19', '4/20', '4/21', '4/22'] as const;
+const compactAuxChartLabels = ['4/9', '4/11', '4/13', '4/15', '4/17', '4/19', '4/22'] as const;
+const ncdTableRows = [
+  ['1M', '2.03%', '+2', '2.01%', '10:53:27'],
+  ['3M', '2.07%', '+1', '2.05%', '10:53:27'],
+  ['6M', '2.11%', '+1', '2.08%', '10:53:27'],
+  ['9M', '2.14%', '0', '2.11%', '10:53:27'],
+  ['1Y', '2.13%', '-1', '2.10%', '10:53:27'],
+] as const;
+const fundStructureBars = [
+  [700, 560, 360, 180, 630, 480, 640],
+  [760, 420, 420, 270, 780, 610, 820],
+  [820, 930, 520, 360, 560, 720, 980],
+  [720, 510, 390, 250, 710, 540, 860],
+  [260, 180, 410, 230, 1030, 390, 600],
+  [320, 1120, 540, 350, 240, 520, 640],
+  [1040, 320, 370, 240, 540, 440, 720],
+  [220, 410, 300, 170, 590, 710, 820],
+  [980, 360, 620, 420, 740, 610, 620],
+  [440, 870, 410, 260, 660, 920, 860],
+  [820, 210, 690, 490, 370, 560, 680],
+  [1010, 720, 300, 220, 840, 430, 640],
+  [760, 340, 520, 320, 690, 520, 710],
+  [690, 560, 240, 190, 520, 390, 560],
+] as const;
+const fundStructureLegendItems = [
+  { color: '#7286d3', label: '大行' },
+  { color: '#a9d57f', label: '股份行' },
+  { color: '#f4cf68', label: '理财' },
+  { color: '#f6a960', label: '理财子' },
+  { color: '#ea7878', label: '券商' },
+  { color: '#8bc6de', label: '基金' },
+  { color: '#63b383', label: '保险' },
+] as const;
+
 function App() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -268,16 +312,6 @@ function App() {
 }
 
 function TopBar({ currentTime }: { currentTime: Date }) {
-  const formattedDateTime = currentTime.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  });
-
   return (
     <header className="border-b border-[#1b2a42] bg-[#0d1726] px-4 py-3 shadow-[inset_0_-1px_0_rgba(74,101,140,0.18)]">
       <div className="flex items-start justify-between gap-6">
@@ -287,18 +321,27 @@ function TopBar({ currentTime }: { currentTime: Date }) {
               <div className="text-[28px] font-semibold tracking-[0.04em] text-slate-50">资金实时行情看板</div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {topQuickFilters.periods.map((item, index) => (
-              <ToolbarChip key={item} active={index === 0}>
-                {item}
-              </ToolbarChip>
-            ))}
-            <div className="mx-1 h-4 w-px bg-[#243552]" />
-            {topQuickFilters.views.map((item, index) => (
-              <ToolbarChip key={item} active={index === 0}>
-                {item}
-              </ToolbarChip>
-            ))}
+          <div className="flex flex-wrap items-center gap-2.5 text-sm text-slate-400">
+            <FilterLabel>期限</FilterLabel>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {topBoardFilters.periods.map((item, index) => (
+                <ToolbarChip key={item} active={index === 0}>
+                  {item}
+                </ToolbarChip>
+              ))}
+            </div>
+            <FilterDivider />
+            <FilterLabel>金额</FilterLabel>
+            <RangeFilterField value={topBoardFilters.amountMin} />
+            <span className="text-slate-500">~</span>
+            <RangeFilterField value={topBoardFilters.amountMax} />
+            <span className="text-slate-500">亿</span>
+            <FilterDivider />
+            <FilterLabel>利率</FilterLabel>
+            <RangeFilterField value={topBoardFilters.rateMin} />
+            <span className="text-slate-500">~</span>
+            <RangeFilterField value={topBoardFilters.rateMax} />
+            <span className="text-slate-500">%</span>
           </div>
         </div>
 
@@ -313,65 +356,248 @@ function TopBar({ currentTime }: { currentTime: Date }) {
 }
 
 function LeftSummaryPanel() {
+  const summarySections = leftSections.filter((section): section is SummaryTableSection => section.layout === 'table');
+  const exchangeRepoSection = leftSections.find(
+    (section): section is ExchangeMarketSplitSection => section.layout === 'exchange-split',
+  );
+
   return (
     <aside className="flex h-full min-h-0 min-w-0 flex-col gap-3 overflow-hidden pr-1">
-      {leftSections.map((section) => (
-        <div key={section.title} className={section.title === '交易所回购' ? 'min-h-0 flex-1' : section.scrollable ? 'min-h-0 flex-1' : 'shrink-0'}>
+      {summarySections.map((section) => (
+        <div key={section.title} className={section.scrollable ? 'min-h-0 flex-1' : 'shrink-0'}>
           <PanelCard
             title={section.title}
             bodyClassName="min-h-0 flex-1"
             bodyPaddingClassName="p-0"
             bodyFill
           >
-            {section.layout === 'exchange-split' ? (
-              <ExchangeMarketSplitCard markets={section.markets} />
-            ) : (
-              <StructuredTable
-                columns={section.columns}
-                rows={section.rows}
-                greenColumns={section.greenColumns}
-                redColumns={section.redColumns}
-                deltaColumns={section.deltaColumns}
-                emphasisColumns={section.emphasisColumns}
-                buttonColumn={section.buttonColumn}
-                fitToWidth={section.fitToWidth}
-                compact
-                flush
-                adaptiveHeight={!section.scrollable}
-                scrollY={section.scrollable}
-              />
-            )}
+            <StructuredTable
+              columns={section.columns}
+              rows={section.rows}
+              greenColumns={section.greenColumns}
+              redColumns={section.redColumns}
+              deltaColumns={section.deltaColumns}
+              emphasisColumns={section.emphasisColumns}
+              buttonColumn={section.buttonColumn}
+              fitToWidth={section.fitToWidth}
+              columnWidths={section.columnWidths}
+              compact
+              flush
+              adaptiveHeight={!section.scrollable}
+              scrollY={section.scrollable}
+            />
           </PanelCard>
         </div>
       ))}
+      {exchangeRepoSection ? (
+        <div className="flex min-h-0 flex-1 flex-col gap-3">
+          <div className="h-[284px] shrink-0 overflow-hidden">
+            <ExchangeRepoCard title={exchangeRepoSection.title} markets={exchangeRepoSection.markets} />
+          </div>
+          <div className="min-h-0 flex-1 overflow-hidden">
+            <LeftNcdCard />
+          </div>
+        </div>
+      ) : null}
     </aside>
   );
 }
 
-function ExchangeMarketSplitCard({
+function LeftNcdCard() {
+  const [mode, setMode] = useState<'trend' | 'table'>('trend');
+
+  return (
+    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
+      <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-sm font-semibold tracking-[0.02em] text-slate-50">NCD</div>
+          <div className="flex items-center gap-2">
+            <button className={auxTabClass(mode === 'trend')} onClick={() => setMode('trend')} type="button">
+              趋势图
+            </button>
+            <button className={auxTabClass(mode === 'table')} onClick={() => setMode('table')} type="button">
+              表格
+            </button>
+          </div>
+        </div>
+      </div>
+      <div className="min-h-0 flex-1 overflow-hidden p-2">
+        {mode === 'trend' ? (
+          <NcdTrendPanel compact />
+        ) : (
+          <div className="h-full min-h-0">
+            <StructuredTable
+              columns={['期限', '最新', '涨跌bp', '参考收益', '更新时间']}
+              rows={ncdTableRows}
+              greenColumns={[1]}
+              deltaColumns={[2]}
+              fitToWidth
+              columnWidths={['14%', '18%', '16%', '22%', '30%']}
+              compact
+              flush={false}
+              scrollY
+            />
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ExchangeRepoCard({
+  title,
+  markets,
+}: {
+  title: string;
+  markets: ExchangeMarketSplitSection['markets'];
+}) {
+  const [activeView, setActiveView] = useState<'core' | 'sse' | 'szse'>('core');
+  const filteredMarkets =
+    activeView === 'core' ? markets : markets.filter((market) => market.id === activeView);
+
+  return (
+    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
+      <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-sm font-semibold tracking-[0.02em] text-slate-50">{title}</div>
+          <div className="flex items-center gap-2">
+            {[
+              { id: 'core', label: '核心' },
+              { id: 'sse', label: '上交所' },
+              { id: 'szse', label: '深交所' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                className={auxTabClass(tab.id === activeView)}
+                onClick={() => setActiveView(tab.id as 'core' | 'sse' | 'szse')}
+                type="button"
+              >
+                {tab.label}
+              </button>
+            ))}
+            <button
+              className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
+              type="button"
+            >
+              下载
+            </button>
+          </div>
+        </div>
+      </div>
+      <div className="min-h-0 flex-1 p-2">
+        {activeView === 'core' ? (
+          <ExchangeCoreCompactBoard markets={markets} />
+        ) : (
+          <div className="grid h-full min-h-0 grid-cols-1">
+            {filteredMarkets.map((market) => (
+              <ExchangeMarketTable
+                key={`${activeView}-${market.id}`}
+                market={market}
+                rows={market.rows}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ExchangeCoreCompactBoard({
   markets,
 }: {
   markets: ExchangeMarketSplitSection['markets'];
 }) {
   return (
-    <div className="grid h-full min-h-0 grid-cols-2 gap-2 p-2">
+    <div className="grid h-full min-h-0 grid-cols-1 grid-rows-2 gap-2">
       {markets.map((market) => (
-        <div key={market.title} className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
-          <div className="border-b border-[#1a2c45] bg-[#101b2c] px-3 py-2 text-xs font-semibold tracking-[0.02em] text-slate-200">
-            {market.title}
+        <div key={`core-board-${market.id}`} className="min-h-0">
+          <ExchangeCoreCompactBlock rows={market.rows.slice(0, 2)} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ExchangeCoreCompactBlock({
+  rows,
+}: {
+  rows: readonly (readonly string[])[];
+}) {
+  return (
+    <div
+      className="grid h-full min-h-0 overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]"
+      style={{ gridTemplateRows: `auto repeat(${rows.length}, minmax(0, 1fr))` }}
+    >
+      <div className="grid grid-cols-[0.7fr_1fr_1fr_0.8fr] border-b border-[#22324d] bg-[#111d30] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+        <span className="text-left">期限</span>
+        <span className="text-left">品种</span>
+        <span className="text-right">最新</span>
+        <span className="text-right">涨跌bp</span>
+      </div>
+      {rows.map((row, rowIndex) => (
+        <div
+          key={`${row[1]}-${rowIndex}`}
+          className={`grid grid-cols-[0.7fr_1fr_1fr_0.8fr] items-center px-4 text-sm ${
+            rowIndex === 0 ? 'border-b border-[#162439]' : ''
+          }`}
+        >
+          <span className="font-semibold text-slate-100">{row[0]}</span>
+          <span className="font-semibold text-slate-100">{row[1]}</span>
+          <span className="text-right font-semibold text-emerald-300">{row[2]}</span>
+          <span className={`text-right ${cellClassName(row[3], 1, [], [], [1], [])}`}>{row[3]}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ExchangeMarketTable({
+  market,
+  rows,
+}: {
+  market: ExchangeMarketSplitSection['markets'][number];
+  rows?: readonly (readonly string[])[];
+}) {
+  const displayRows = rows ?? market.rows;
+
+  return (
+    <div
+      className="grid h-full min-h-0 min-w-0 overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]"
+      style={{ gridTemplateRows: `auto repeat(${displayRows.length}, minmax(0, 1fr))` }}
+    >
+      <div className="grid grid-cols-4 border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
+        {market.columns.map((column, index) => (
+          <div
+            key={`${market.title}-${column}`}
+            className={`px-2 py-1.5 ${
+              index === 0 ? 'text-left' : 'text-right'
+            } ${index === 1 ? 'truncate' : ''}`}
+          >
+            {column}
           </div>
-          <div className="min-h-0 flex-1">
-            <StructuredTable
-              columns={market.columns}
-              rows={market.rows}
-              greenColumns={market.greenColumns}
-              deltaColumns={market.deltaColumns}
-              compact
-              fitToWidth
-              flush
-              adaptiveHeight
-            />
-          </div>
+        ))}
+      </div>
+      {displayRows.map((row, rowIndex) => (
+        <div
+          key={`${market.title}-${row[0]}-${rowIndex}`}
+          className={`grid min-h-0 grid-cols-4 border-b border-[#162439] text-xs ${
+            rowIndex % 2 === 0 ? 'bg-transparent' : 'bg-[#0d1726]/55'
+          }`}
+        >
+          {row.map((cell, cellIndex) => (
+            <div
+              key={`${market.title}-${row[0]}-${cellIndex}`}
+              className={`flex min-h-0 items-center px-2 py-1.5 ${
+                cellIndex === 0 ? 'justify-start' : 'justify-end'
+              } ${cellIndex === 1 ? 'truncate' : ''}`}
+              title={cell}
+            >
+              <span className={cellClassName(cell, cellIndex, market.greenColumns, [], market.deltaColumns, [])}>
+                {cell}
+              </span>
+            </div>
+          ))}
         </div>
       ))}
     </div>
@@ -614,7 +840,7 @@ function RightLowerPanel({
           </button>
         ))}
       </div>
-      <div className="min-h-0 p-2.5">
+      <div className="h-full min-h-0 overflow-hidden p-2.5">
         {activeTab === 'cfets' ? <CfetsDailyPanel /> : <AuxTabPanel type={activeTab} />}
       </div>
     </section>
@@ -678,50 +904,120 @@ function CfetsDailyPanel() {
 
 function AuxTabPanel({ type }: { type: Exclude<RightLowerTab, 'cfets'> }) {
   if (type === 'fund-structure') {
-    return <AuxBarsPanel stacked />;
+    return <FundStructurePanel />;
   }
-  return <AuxBarsPanel stacked={false} />;
+  return null;
 }
 
-function AuxBarsPanel({ stacked }: { stacked: boolean }) {
+function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
+  const allSeries = [ncdTrendSeries, ncdThreeMonthSeries, ncdOneYearSeries];
+  const min = Math.min(...allSeries.flat()) - 0.02;
+  const max = Math.max(...allSeries.flat()) + 0.02;
+  const width = compact ? 520 : 720;
+  const height = compact ? 120 : 180;
+  const oneMonthPath = buildLinePath(ncdTrendSeries, width, height, min, max);
+  const threeMonthPath = buildLinePath(ncdThreeMonthSeries, width, height, min, max);
+  const oneYearPath = buildLinePath(ncdOneYearSeries, width, height, min, max);
+  const area = buildAreaPath(ncdTrendSeries, width, height, min, max);
+  const labels = compact ? compactAuxChartLabels : auxChartLabels;
+
   return (
-    <div className="grid h-full min-h-0 grid-rows-[1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+    <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+      <div className="flex items-center justify-between text-[11px] text-slate-400">
+        <div className="flex flex-wrap items-center gap-3">
+          <LegendDot color={chartPalette.blue} label="1M" />
+          <LegendDot color={chartPalette.emerald} label="3M" />
+          <LegendDot color={chartPalette.amber} label="1Y" />
+        </div>
+        <span>近14天</span>
+      </div>
       <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]">
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(58,81,115,0.16)_1px,transparent_1px),linear-gradient(90deg,rgba(58,81,115,0.16)_1px,transparent_1px)] bg-[size:100%_25%,14.28%_100%]" />
-        <div className="absolute inset-x-3 bottom-3 top-3 flex items-end gap-2">
-          {Array.from({ length: 7 }).map((_, index) => (
-            <div key={index} className="flex flex-1 items-end gap-1">
-              {stacked
-                ? [chartPalette.violet, chartPalette.emerald, chartPalette.blue, chartPalette.pink].map((color, partIndex) => (
+        {[0, 1, 2, 3].map((index) => (
+          <div
+            key={`ncd-grid-${index}`}
+            className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+            style={{ top: `${(index / 3) * 100}%` }}
+          />
+        ))}
+        <svg className="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox={`0 0 ${width} ${height}`}>
+          <defs>
+            <linearGradient id="ncd-fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#5ea3ff" stopOpacity="0.24" />
+              <stop offset="100%" stopColor="#5ea3ff" stopOpacity="0.04" />
+            </linearGradient>
+          </defs>
+          <path d={area} fill="url(#ncd-fill)" />
+          <path d={oneMonthPath} fill="none" stroke={chartPalette.blue} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={threeMonthPath} fill="none" stroke={chartPalette.emerald} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={oneYearPath} fill="none" stroke={chartPalette.amber} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+      <div className={`grid ${compact ? 'grid-cols-7' : 'grid-cols-14'} text-center text-[9px] text-slate-400`}>
+        {labels.map((label) => (
+          <div key={label}>{label}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FundStructurePanel() {
+  const yTicks = [5000, 4000, 3000, 2000, 1000, 0] as const;
+
+  return (
+    <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+        <div className="flex flex-wrap items-center gap-3">
+          {fundStructureLegendItems.map((item) => (
+            <LegendDot key={item.label} color={item.color} label={item.label} />
+          ))}
+        </div>
+        <span>近14天</span>
+      </div>
+      <div className="grid min-h-0 grid-cols-[3rem_1fr] gap-2">
+        <div className="flex flex-col justify-between pb-2 pt-1 text-right text-[10px] text-slate-400">
+          {yTicks.map((tick) => (
+            <div key={tick}>{tick.toLocaleString()}</div>
+          ))}
+        </div>
+        <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]">
+          {yTicks.map((tick, index) => (
+            <div
+              key={`fund-grid-${tick}`}
+              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              style={{ top: `${(index / (yTicks.length - 1)) * 100}%` }}
+            />
+          ))}
+          <div className="absolute inset-x-3 bottom-2 top-2 flex items-end gap-1.5">
+            {fundStructureBars.map((values, index) => (
+              <div key={`fund-bar-${index}`} className="flex h-full min-w-0 flex-1 items-end">
+                <div className="flex h-full w-full flex-col justify-end overflow-hidden rounded-t-[3px]">
+                  {values.map((value, partIndex) => (
                     <div
-                      key={`${index}-${partIndex}`}
-                      className="w-full rounded-t"
+                      key={`fund-bar-${index}-${partIndex}`}
+                      className={partIndex === values.length - 1 ? 'rounded-t-[3px]' : ''}
                       style={{
-                        height: `${32 + ((index + partIndex) % 4) * 12}%`,
-                        backgroundColor: color,
-                        opacity: 0.72,
-                      }}
-                    />
-                  ))
-                : [chartPalette.blue, chartPalette.amber].map((color, partIndex) => (
-                    <div
-                      key={`${index}-${partIndex}`}
-                      className="w-full rounded-t"
-                      style={{
-                        height: `${26 + ((index * 2 + partIndex) % 5) * 13}%`,
-                        backgroundColor: color,
-                        opacity: 0.82,
+                        height: `${(value / 5000) * 100}%`,
+                        backgroundColor: fundStructureLegendItems[partIndex].color,
+                        opacity: 0.9,
                       }}
                     />
                   ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="grid grid-cols-[3rem_1fr]">
+        <div />
+        <div className="grid grid-cols-14 text-[9px] text-slate-400">
+          {auxChartLabels.map((label) => (
+            <div key={`fund-label-${label}`} className="flex justify-center overflow-visible">
+              <span className="origin-top-left -rotate-45 whitespace-nowrap">{`2026-${label}`}</span>
             </div>
           ))}
         </div>
-      </div>
-      <div className="grid grid-cols-7 text-center text-[10px] text-slate-400">
-        {['3/21', '3/24', '3/27', '4/1', '4/8', '4/14', '4/22'].map((label) => (
-          <div key={label}>{label}</div>
-        ))}
       </div>
     </div>
   );
@@ -824,6 +1120,7 @@ function StructuredTable({
   buttonColumn,
   compact = false,
   fitToWidth = false,
+  columnWidths,
   flush = false,
   adaptiveHeight = false,
   scrollY = false,
@@ -837,6 +1134,7 @@ function StructuredTable({
   buttonColumn?: number;
   compact?: boolean;
   fitToWidth?: boolean;
+  columnWidths?: readonly string[];
   flush?: boolean;
   adaptiveHeight?: boolean;
   scrollY?: boolean;
@@ -854,6 +1152,13 @@ function StructuredTable({
           compact ? 'text-xs' : 'text-sm'
         }`}
       >
+        {columnWidths ? (
+          <colgroup>
+            {columnWidths.map((width, index) => (
+              <col key={`col-${index}`} style={{ width }} />
+            ))}
+          </colgroup>
+        ) : null}
         <thead className="sticky top-0 z-10 bg-[#111d30]">
           <tr>
             {columns.map((column, index) => (
@@ -861,7 +1166,9 @@ function StructuredTable({
                 key={column}
                 className={`border-b border-[#22324d] px-3 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400 ${
                   index === 0 ? 'text-left' : 'text-right'
-                } ${compact ? 'px-2 py-1.5' : 'px-3 py-2.5'} ${fitToWidth ? 'whitespace-normal break-all leading-tight' : ''}`}
+                } ${compact ? 'px-2 py-1.5' : 'px-3 py-2.5'} ${
+                  fitToWidth ? (columnWidths ? 'whitespace-nowrap leading-tight' : 'whitespace-normal break-all leading-tight') : ''
+                }`}
               >
                 {column}
               </th>
@@ -1216,6 +1523,22 @@ function ToolbarChip({ active, children }: { active?: boolean; children: React.R
     >
       {children}
     </button>
+  );
+}
+
+function FilterLabel({ children }: { children: React.ReactNode }) {
+  return <span className="px-1 text-slate-400">{children}</span>;
+}
+
+function FilterDivider() {
+  return <div className="mx-2 h-6 w-px bg-[#243552]" />;
+}
+
+function RangeFilterField({ value }: { value: string }) {
+  return (
+    <div className="flex h-8 min-w-[96px] items-center rounded-lg border border-[#2a4164] bg-[#101a2b] px-3 text-sm text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+      {value}
+    </div>
   );
 }
 
