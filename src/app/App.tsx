@@ -4,6 +4,15 @@ type AuxChartTab = 'ncd' | 'institution-repo' | 'fund-structure';
 type TrendMode = 'intraday' | 'history' | 'comparison';
 type OverlayProduct = 'none' | 'dr007' | 'gc007' | 'r007';
 type RightLowerTab = 'cfets' | 'fund-structure';
+type HistoryRange = '5d' | '1m' | '6m';
+type SpreadProduct = 'dr001' | 'dr007' | 'gc007' | 'r007';
+type BankRateRow = {
+  institution: string;
+  nonBankRate: string;
+  bankRate: string;
+  deltaBp: string;
+  updatedAt: string;
+};
 
 type SummaryTableSection = {
   layout: 'table';
@@ -43,17 +52,19 @@ const chartPalette = {
   red: '#f87171',
 } as const;
 
+const initialBankRateRows: readonly BankRateRow[] = [
+  { institution: '工商银行', nonBankRate: '1.95%', bankRate: '2.00%', deltaBp: '-2', updatedAt: '10:53:27' },
+  { institution: '建设银行', nonBankRate: '1.94%', bankRate: '1.99%', deltaBp: '-1', updatedAt: '10:53:27' },
+  { institution: '农业银行', nonBankRate: '1.96%', bankRate: '2.01%', deltaBp: '+1', updatedAt: '10:53:27' },
+  { institution: '中国银行', nonBankRate: '1.95%', bankRate: '2.00%', deltaBp: '0', updatedAt: '10:53:27' },
+] as const;
+
 const leftSections: readonly (SummaryTableSection | ExchangeMarketSplitSection)[] = [
   {
     layout: 'table',
     title: '当日大行价格',
     columns: ['机构', '非银利率', '银行利率', '涨跌bp', '更新时间'],
-    rows: [
-      ['工商银行', '1.95%', '2.00%', '-2', '10:53:27'],
-      ['建设银行', '1.94%', '1.99%', '-1', '10:53:27'],
-      ['农业银行', '1.96%', '2.01%', '+1', '10:53:27'],
-      ['中国银行', '1.95%', '2.00%', '0', '10:53:27'],
-    ],
+    rows: [],
     greenColumns: [1],
     redColumns: [2],
     deltaColumns: [3],
@@ -62,20 +73,20 @@ const leftSections: readonly (SummaryTableSection | ExchangeMarketSplitSection)[
   {
     layout: 'table',
     title: 'XREPO',
-    columns: ['期限', '正档位', '正回购金额', '逆回购利率', '正回购利率', '逆回购金额', '逆档位', '操作'],
+    columns: ['期限', '可点击量', '正回购金额', '正回购利率', '逆回购利率', '逆回购金额', '可点击量', '操作'],
     rows: [
-      ['R001', '(4)', '442亿', '1.95%', '2.00%', '442亿', '(12)', '发送'],
-      ['R007', '(4)', '28亿', '1.25%', '2.00%', '442亿', '(12)', '发送'],
-      ['R014', '(4)', '442亿', '1.95%', '2.00%', '442亿', '(12)', '发送'],
-      ['R021', '(4)', '442亿', '1.95%', '2.00%', '442亿', '(12)', '发送'],
-      ['R028', '(4)', '442亿', '1.95%', '2.00%', '442亿', '(12)', '发送'],
+      ['R001', '(4)', '442亿', '2.00%', '1.95%', '442亿', '(12)', '发送'],
+      ['R007', '(4)', '28亿', '2.00%', '1.25%', '442亿', '(12)', '发送'],
+      ['R014', '(4)', '442亿', '2.00%', '1.95%', '442亿', '(12)', '发送'],
+      ['R021', '(4)', '442亿', '2.00%', '1.95%', '442亿', '(12)', '发送'],
+      ['R028', '(4)', '442亿', '2.00%', '1.95%', '442亿', '(12)', '发送'],
     ],
-    greenColumns: [3],
-    redColumns: [4],
+    greenColumns: [4],
+    redColumns: [3],
     emphasisColumns: [1, 6],
     buttonColumn: 7,
     fitToWidth: true,
-    columnWidths: ['11%', '10%', '16%', '15%', '15%', '16%', '10%', '7%'],
+    columnWidths: ['11%', '11%', '16%', '14%', '14%', '16%', '11%', '7%'],
     scrollable: false,
   },
   {
@@ -232,7 +243,42 @@ const intradaySeries = [
   1.971, 1.974, 1.976, 1.979,
 ] as const;
 
+const intradayVolumeSeries = [
+  120, 68, 52, 88, 160, 102, 96, 210, 740, 360, 420, 510, 580, 760, 210, 190, 120, 86, 74, 132,
+  248, 184, 226, 288, 344, 192, 168, 141, 198, 902, 334, 248, 210, 162, 144, 126, 98, 76, 44, 28,
+] as const;
+
 const intradayTimeLabels = ['09:30', '10:00', '10:30', '11:00', '13:30', '14:00', '14:30', '15:00'] as const;
+
+const historyRangeTabs: Array<{ id: HistoryRange; label: string }> = [
+  { id: '5d', label: '近5日' },
+  { id: '1m', label: '近1M' },
+  { id: '6m', label: '近半年' },
+];
+
+const historicalCloseDatasets: Record<
+  HistoryRange,
+  { labels: readonly string[]; close: readonly number[]; volume: readonly number[] }
+> = {
+  '5d': {
+    labels: ['4/22', '4/23', '4/24', '4/25', '4/28'],
+    close: [1.2218, 1.2232, 1.2291, 1.2328, 1.2364],
+    volume: [1320, 980, 1460, 1180, 1620],
+  },
+  '1m': {
+    labels: ['3/28', '3/29', '3/30', '3/31', '4/1', '4/2', '4/3', '4/4', '4/5', '4/8', '4/9', '4/10', '4/11', '4/12', '4/13', '4/14', '4/15', '4/16', '4/17', '4/18', '4/19', '4/20', '4/21', '4/22', '4/23', '4/24', '4/25', '4/28'],
+    close: [1.214, 1.2146, 1.2153, 1.2161, 1.2169, 1.2176, 1.2184, 1.2192, 1.2198, 1.2206, 1.2211, 1.2218, 1.2224, 1.223, 1.2237, 1.2243, 1.2252, 1.2261, 1.2268, 1.2276, 1.2284, 1.2291, 1.2302, 1.231, 1.2321, 1.2334, 1.2348, 1.236],
+    volume: [980, 860, 910, 1420, 1080, 1020, 1180, 1260, 940, 1100, 1320, 1240, 890, 1430, 1570, 1490, 1360, 1280, 1190, 1250, 1330, 1410, 1380, 1430, 1520, 1570, 1640, 1710],
+  },
+  '6m': buildSixMonthDailyDataset(),
+};
+
+const spreadProductOptions: Array<{ id: SpreadProduct; label: string }> = [
+  { id: 'dr007', label: 'DR007' },
+  { id: 'dr001', label: 'DR001' },
+  { id: 'gc007', label: 'GC007' },
+  { id: 'r007', label: 'R007' },
+];
 
 const cfetsSummaryCards = [
   { label: '净融出', value: '+428亿', tone: 'good' },
@@ -356,13 +402,47 @@ function TopBar({ currentTime }: { currentTime: Date }) {
 }
 
 function LeftSummaryPanel() {
-  const summarySections = leftSections.filter((section): section is SummaryTableSection => section.layout === 'table');
+  const [bankRateRows, setBankRateRows] = useState<BankRateRow[]>([...initialBankRateRows]);
+  const [draftBankRateRows, setDraftBankRateRows] = useState<BankRateRow[]>([...initialBankRateRows]);
+  const [isBankEditorOpen, setIsBankEditorOpen] = useState(false);
+
+  const summarySections = leftSections
+    .filter((section): section is SummaryTableSection => section.layout === 'table')
+    .map((section) =>
+      section.title === '当日大行价格'
+        ? {
+            ...section,
+            rows: bankRateRows.map((row) => [row.institution, row.nonBankRate, row.bankRate, row.deltaBp, row.updatedAt]),
+          }
+        : section,
+    );
   const exchangeRepoSection = leftSections.find(
     (section): section is ExchangeMarketSplitSection => section.layout === 'exchange-split',
   );
 
+  function openBankEditor() {
+    setDraftBankRateRows(bankRateRows.map((row) => ({ ...row })));
+    setIsBankEditorOpen(true);
+  }
+
+  function updateDraftRow(index: number, field: keyof BankRateRow, value: string) {
+    setDraftBankRateRows((current) =>
+      current.map((row, rowIndex) => (rowIndex === index ? { ...row, [field]: value } : row)),
+    );
+  }
+
+  function resetDraftRows() {
+    setDraftBankRateRows(initialBankRateRows.map((row) => ({ ...row })));
+  }
+
+  function saveBankRateRows() {
+    setBankRateRows(draftBankRateRows.map((row) => ({ ...row })));
+    setIsBankEditorOpen(false);
+  }
+
   return (
-    <aside className="flex h-full min-h-0 min-w-0 flex-col gap-3 overflow-hidden pr-1">
+    <>
+      <aside className="flex h-full min-h-0 min-w-0 flex-col gap-3 overflow-hidden pr-1">
       {summarySections.map((section) => (
         <div key={section.title} className={section.scrollable ? 'min-h-0 flex-1' : 'shrink-0'}>
           <PanelCard
@@ -370,6 +450,25 @@ function LeftSummaryPanel() {
             bodyClassName="min-h-0 flex-1"
             bodyPaddingClassName="p-0"
             bodyFill
+            actions={
+              section.title === '当日大行价格' ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1 text-xs font-medium text-slate-300"
+                    onClick={openBankEditor}
+                    type="button"
+                  >
+                    手工输入
+                  </button>
+                  <button
+                    className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
+                    type="button"
+                  >
+                    下载
+                  </button>
+                </div>
+              ) : undefined
+            }
           >
             <StructuredTable
               columns={section.columns}
@@ -399,7 +498,142 @@ function LeftSummaryPanel() {
           </div>
         </div>
       ) : null}
-    </aside>
+      </aside>
+      <BankRateEditorModal
+        open={isBankEditorOpen}
+        rows={draftBankRateRows}
+        onChange={updateDraftRow}
+        onClose={() => setIsBankEditorOpen(false)}
+        onReset={resetDraftRows}
+        onSave={saveBankRateRows}
+      />
+    </>
+  );
+}
+
+function BankRateEditorModal({
+  open,
+  rows,
+  onChange,
+  onClose,
+  onReset,
+  onSave,
+}: {
+  open: boolean;
+  rows: readonly BankRateRow[];
+  onChange: (index: number, field: keyof BankRateRow, value: string) => void;
+  onClose: () => void;
+  onReset: () => void;
+  onSave: () => void;
+}) {
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc] px-4">
+      <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]">
+        <div className="border-b border-[#1c3150] bg-[#101d32] px-5 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-base font-semibold text-slate-50">当日大行价格手工输入</div>
+              <div className="mt-1 text-xs text-slate-500">按机构维护非银利率、银行利率、涨跌和更新时间。</div>
+            </div>
+            <button
+              className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+              onClick={onClose}
+              type="button"
+            >
+              关闭
+            </button>
+          </div>
+        </div>
+        <div className="px-5 py-4">
+          <div className="overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
+            <div className="grid grid-cols-[1.1fr_1fr_1fr_0.9fr_1fr] border-b border-[#22324d] bg-[#111d30] px-4 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+              <span>机构</span>
+              <span className="text-right">非银利率</span>
+              <span className="text-right">银行利率</span>
+              <span className="text-right">涨跌bp</span>
+              <span className="text-right">更新时间</span>
+            </div>
+            {rows.map((row, index) => (
+              <div
+                key={`${row.institution}-${index}`}
+                className={`grid grid-cols-[1.1fr_1fr_1fr_0.9fr_1fr] items-center gap-3 border-b border-[#162439] px-4 py-3 ${
+                  index % 2 === 0 ? 'bg-transparent' : 'bg-[#0d1726]/55'
+                }`}
+              >
+                <div className="text-sm font-semibold text-slate-100">{row.institution}</div>
+                <ModalInput
+                  align="right"
+                  value={row.nonBankRate}
+                  onChange={(value) => onChange(index, 'nonBankRate', value)}
+                />
+                <ModalInput
+                  align="right"
+                  value={row.bankRate}
+                  onChange={(value) => onChange(index, 'bankRate', value)}
+                />
+                <ModalInput
+                  align="right"
+                  value={row.deltaBp}
+                  onChange={(value) => onChange(index, 'deltaBp', value)}
+                />
+                <ModalInput
+                  align="right"
+                  value={row.updatedAt}
+                  onChange={(value) => onChange(index, 'updatedAt', value)}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-2 border-t border-[#1c3150] bg-[#0d1726] px-5 py-4">
+          <button
+            className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+            onClick={onReset}
+            type="button"
+          >
+            重置
+          </button>
+          <button
+            className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+            onClick={onClose}
+            type="button"
+          >
+            取消
+          </button>
+          <button
+            className="rounded-lg border border-blue-500/30 bg-blue-500/20 px-3 py-1.5 text-xs font-medium text-blue-300"
+            onClick={onSave}
+            type="button"
+          >
+            保存
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ModalInput({
+  value,
+  onChange,
+  align = 'left',
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  align?: 'left' | 'right';
+}) {
+  return (
+    <input
+      className={`w-full rounded-lg border border-[#284164] bg-[#0f1b2f] px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-blue-400 ${
+        align === 'right' ? 'text-right' : 'text-left'
+      }`}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    />
   );
 }
 
@@ -629,20 +863,32 @@ function MainQuoteBoard() {
 
 function RightSidebar() {
   const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>('none');
-  const [activeLowerTab, setActiveLowerTab] = useState<RightLowerTab>('cfets');
+  const [historyRange, setHistoryRange] = useState<HistoryRange>('5d');
+  const [spreadLeft, setSpreadLeft] = useState<SpreadProduct>('dr007');
+  const [spreadRight, setSpreadRight] = useState<SpreadProduct>('dr001');
 
   return (
-    <aside className="grid min-h-0 min-w-0 grid-rows-[24fr_38fr_38fr] gap-3 overflow-hidden">
+    <aside className="grid min-h-0 min-w-0 grid-rows-[31fr_39fr_30fr] gap-3 overflow-hidden">
       <div className="min-h-0 overflow-hidden">
         <IntradayPanel overlayProduct={overlayProduct} onOverlayChange={setOverlayProduct} />
       </div>
 
       <div className="min-h-0 overflow-hidden">
-        <KLinePanel overlayProduct={overlayProduct} />
+        <HistoryClosePanel
+          activeRange={historyRange}
+          overlayProduct={overlayProduct}
+          onRangeChange={setHistoryRange}
+        />
       </div>
 
       <div className="min-h-0 overflow-hidden">
-        <RightLowerPanel activeTab={activeLowerTab} onTabChange={setActiveLowerTab} />
+        <SpreadPanel
+          activeRange={historyRange}
+          leftProduct={spreadLeft}
+          rightProduct={spreadRight}
+          onLeftProductChange={setSpreadLeft}
+          onRightProductChange={setSpreadRight}
+        />
       </div>
     </aside>
   );
@@ -656,54 +902,94 @@ function IntradayPanel({
   onOverlayChange: (product: OverlayProduct) => void;
 }) {
   const overlaySeries = overlayProduct === 'none' ? null : buildOverlaySeries(intradaySeries, overlayProduct);
-  const mainPath = buildLinePath(intradaySeries, 680, 150, 1.928, 1.986);
-  const overlayPath = overlaySeries ? buildLinePath(overlaySeries, 680, 150, 1.928, 1.986) : null;
+  const volumeMax = Math.max(...intradayVolumeSeries);
+  const min = Math.min(...intradaySeries, ...(overlaySeries ?? [])) - 0.01;
+  const max = Math.max(...intradaySeries, ...(overlaySeries ?? [])) + 0.01;
+  const mainPath = buildLinePath(intradaySeries, 680, 178, min, max);
+  const areaPath = buildAreaPath(intradaySeries, 680, 178, min, max);
+  const overlayPath = overlaySeries ? buildLinePath(overlaySeries, 680, 178, min, max) : null;
 
   return (
     <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
       <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101d32] px-3 py-2">
         <div className="flex items-center gap-3">
-          <div className="text-sm font-semibold text-slate-100">分时</div>
+          <div className="text-sm font-semibold text-slate-100">当日分时</div>
+          <div className="rounded border border-[#264167] bg-[#13223a] px-1.5 py-0.5 text-[10px] font-medium text-blue-300">
+            DR001
+          </div>
           <OverlayProductSelect value={overlayProduct} onChange={onOverlayChange} />
         </div>
-        <div className="text-xs text-slate-400">nonbankBest · R014</div>
+        <div className="text-xs text-slate-400">盘中加权利率 / 成交量</div>
       </div>
-      <div className="grid min-h-0 grid-cols-[3rem_1fr] px-3 pb-2 pt-2">
-        <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
-          {['1.980', '1.964', '1.948', '1.932'].map((tick) => (
-            <div key={tick}>{tick}</div>
-          ))}
+      <div className="grid min-h-0 grid-rows-[68fr_22fr_auto] px-3 pb-2 pt-2">
+        <div className="grid min-h-0 grid-cols-[3rem_1fr]">
+          <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+            {buildAxisLabels(min, max, 4).map((tick) => (
+              <div key={tick}>{tick}</div>
+            ))}
+          </div>
+          <div className="relative min-h-0">
+            {[0, 1, 2, 3].map((index) => (
+              <div
+                key={`intraday-grid-${index}`}
+                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                style={{ top: `${(index / 3) * 100}%` }}
+              />
+            ))}
+            <div className="absolute inset-x-0 top-[58%] border-t border-dashed border-[#ff8a26]" />
+            <div className="absolute inset-x-0 bottom-0 top-0">
+              <svg className="h-full w-full" preserveAspectRatio="none" viewBox="0 0 680 178">
+                <defs>
+                  <linearGradient id="intraday-fill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#5ea3ff" stopOpacity="0.24" />
+                    <stop offset="100%" stopColor="#5ea3ff" stopOpacity="0.04" />
+                  </linearGradient>
+                </defs>
+                <path d={areaPath} fill="url(#intraday-fill)" />
+                <path d={mainPath} fill="none" stroke={chartPalette.blue} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+                {overlayPath ? (
+                  <path
+                    d={overlayPath}
+                    fill="none"
+                    stroke={chartPalette.amber}
+                    strokeWidth="2"
+                    strokeDasharray="5 4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                ) : null}
+              </svg>
+            </div>
+            <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-300">
+              <LegendDot color={chartPalette.blue} label="加权平均(%)" />
+              {overlayProduct !== 'none' ? <LegendDot color={chartPalette.amber} label={overlayProductLabel(overlayProduct)} /> : null}
+            </div>
+          </div>
         </div>
-        <div className="relative min-h-0">
-          {[0, 1, 2, 3].map((index) => (
-            <div
-              key={`intraday-grid-${index}`}
-              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
-              style={{ top: `${(index / 3) * 100}%` }}
-            />
-          ))}
-          <div className="absolute inset-x-0 top-[56%] border-t border-dashed border-[#ff8a26]" />
-          <div className="absolute inset-x-0 bottom-5 top-1">
-            <svg className="h-full w-full" preserveAspectRatio="none" viewBox="0 0 680 150">
-              <path d={mainPath} fill="none" stroke={chartPalette.blue} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              {overlayPath ? (
-                <path
-                  d={overlayPath}
-                  fill="none"
-                  stroke={chartPalette.amber}
-                  strokeWidth="2"
-                  strokeDasharray="5 4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+        <div className="grid min-h-0 grid-cols-[3rem_1fr] border-t border-[#1d3250] pt-2">
+          <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+            {['900', '600', '300', '0'].map((tick) => (
+              <div key={tick}>{tick}</div>
+            ))}
+          </div>
+          <div className="relative min-h-0">
+            <div className="absolute inset-x-0 bottom-0 top-0 flex items-end gap-[4px]">
+              {intradayVolumeSeries.map((value, index) => (
+                <div
+                  key={`intraday-vol-${index}`}
+                  className="min-w-0 flex-1 rounded-t-[2px]"
+                  style={{
+                    height: `${(value / volumeMax) * 100}%`,
+                    backgroundColor: index % 4 === 0 ? '#3b82f6' : '#275f9f',
+                  }}
                 />
-              ) : null}
-            </svg>
+              ))}
+            </div>
           </div>
-          <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-300">
-            <LegendDot color={chartPalette.blue} label="当前品种" />
-            {overlayProduct !== 'none' ? <LegendDot color={chartPalette.amber} label={overlayProductLabel(overlayProduct)} /> : null}
-          </div>
-          <div className="absolute inset-x-0 bottom-0 grid grid-cols-8 text-[10px] text-slate-400">
+        </div>
+        <div className="grid grid-cols-[3rem_1fr] pt-2">
+          <div />
+          <div className="grid grid-cols-8 text-[10px] text-slate-400">
             {intradayTimeLabels.map((label) => (
               <div key={label} className="text-center">
                 {label}
@@ -716,30 +1002,52 @@ function IntradayPanel({
   );
 }
 
-function KLinePanel({ overlayProduct }: { overlayProduct: OverlayProduct }) {
-  const candles = buildCandlesFromSeries(trendRateSeries.slice(-32));
-  const candleMin = Math.min(...candles.map((item) => item.low)) - 0.01;
-  const candleMax = Math.max(...candles.map((item) => item.high)) + 0.01;
-  const overlaySeries = overlayProduct === 'none' ? null : buildOverlaySeries(candles.map((item) => item.close), overlayProduct);
-  const overlayPath = overlaySeries ? buildLinePath(overlaySeries, 720, 210, candleMin, candleMax) : null;
-  const volumeMax = Math.max(...candles.map((item) => item.volume));
+function HistoryClosePanel({
+  activeRange,
+  overlayProduct,
+  onRangeChange,
+}: {
+  activeRange: HistoryRange;
+  overlayProduct: OverlayProduct;
+  onRangeChange: (range: HistoryRange) => void;
+}) {
+  const dataset = historicalCloseDatasets[activeRange];
+  const axisLabels = buildAxisTickLabels(dataset.labels, activeRange === '5d' ? 5 : activeRange === '1m' ? 7 : 8);
+  const overlaySeries = overlayProduct === 'none' ? null : buildHistoricalSeries(activeRange, overlayProduct);
+  const min = Math.min(...dataset.close, ...(overlaySeries ?? [])) - 0.015;
+  const max = Math.max(...dataset.close, ...(overlaySeries ?? [])) + 0.015;
+  const volumeMax = Math.max(...dataset.volume);
+  const mainPath = buildLinePath(dataset.close, 720, 186, min, max);
+  const areaPath = buildAreaPath(dataset.close, 720, 186, min, max);
+  const overlayPath = overlaySeries ? buildLinePath(overlaySeries, 720, 186, min, max) : null;
 
   return (
     <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
       <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101d32] px-3 py-2">
         <div className="flex items-center gap-3">
-          <div className="text-sm font-semibold text-slate-100">K线</div>
+          <div className="text-sm font-semibold text-slate-100">收盘价走势</div>
           <div className="text-xs text-slate-400">
-            叠加：
-            <span className="ml-1 text-slate-200">{overlayProductLabel(overlayProduct)}</span>
+            产品：
+            <span className="ml-1 text-slate-200">DR001</span>
           </div>
         </div>
-        <div className="text-xs text-slate-400">历史 · 近 30 日</div>
+        <div className="flex items-center gap-2">
+          {historyRangeTabs.map((tab) => (
+            <button
+              key={tab.id}
+              className={auxTabClass(tab.id === activeRange)}
+              onClick={() => onRangeChange(tab.id)}
+              type="button"
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="grid min-h-0 grid-rows-[68fr_24fr_auto] px-3 pb-2 pt-2">
         <div className="grid min-h-0 grid-cols-[3.25rem_1fr]">
           <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
-            {buildAxisLabels(candleMin, candleMax, 4).map((label) => (
+            {buildAxisLabels(min, max, 4).map((label) => (
               <div key={label}>{label}</div>
             ))}
           </div>
@@ -751,24 +1059,15 @@ function KLinePanel({ overlayProduct }: { overlayProduct: OverlayProduct }) {
                 style={{ top: `${(index / 3) * 100}%` }}
               />
             ))}
-            <svg className="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox="0 0 720 210">
-              {candles.map((candle, index) => {
-                const x = ((index + 0.5) / candles.length) * 720;
-                const openY = valueToY(candle.open, 210, candleMin, candleMax);
-                const closeY = valueToY(candle.close, 210, candleMin, candleMax);
-                const highY = valueToY(candle.high, 210, candleMin, candleMax);
-                const lowY = valueToY(candle.low, 210, candleMin, candleMax);
-                const bullish = candle.close >= candle.open;
-                const color = bullish ? chartPalette.emerald : chartPalette.red;
-                const bodyTop = Math.min(openY, closeY);
-                const bodyHeight = Math.max(Math.abs(closeY - openY), 2);
-                return (
-                  <g key={`candle-${index}`}>
-                    <line x1={x} x2={x} y1={highY} y2={lowY} stroke={color} strokeWidth="1.5" />
-                    <rect x={x - 8} y={bodyTop} width={16} height={bodyHeight} fill={bullish ? `${color}55` : color} stroke={color} strokeWidth="1.2" rx="1" />
-                  </g>
-                );
-              })}
+            <svg className="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox="0 0 720 186">
+              <defs>
+                <linearGradient id="history-fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#5ea3ff" stopOpacity="0.24" />
+                  <stop offset="100%" stopColor="#5ea3ff" stopOpacity="0.04" />
+                </linearGradient>
+              </defs>
+              <path d={areaPath} fill="url(#history-fill)" />
+              <path d={mainPath} fill="none" stroke={chartPalette.blue} strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
               {overlayPath ? (
                 <path
                   d={overlayPath}
@@ -781,23 +1080,27 @@ function KLinePanel({ overlayProduct }: { overlayProduct: OverlayProduct }) {
                 />
               ) : null}
             </svg>
+            <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-300">
+              <LegendDot color={chartPalette.blue} label="收盘价" />
+              {overlayProduct !== 'none' ? <LegendDot color={chartPalette.amber} label={overlayProductLabel(overlayProduct)} /> : null}
+            </div>
           </div>
         </div>
         <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[#1d3250] pt-2">
           <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
-            {['1.8k', '1.2k', '600', '0'].map((tick) => (
+            {buildCompactVolumeTicks(volumeMax).map((tick) => (
               <div key={tick}>{tick}</div>
             ))}
           </div>
           <div className="relative min-h-0">
             <div className="absolute inset-0 flex items-end gap-[4px]">
-              {candles.map((candle, index) => (
+              {dataset.volume.map((value, index) => (
                 <div
-                  key={`k-vol-${index}`}
+                  key={`history-vol-${index}`}
                   className="min-w-0 flex-1 rounded-t-[2px]"
                   style={{
-                    height: `${(candle.volume / volumeMax) * 100}%`,
-                    backgroundColor: candle.close >= candle.open ? '#22c1dc' : '#ff8a26',
+                    height: `${(value / volumeMax) * 100}%`,
+                    backgroundColor: index % 3 === 0 ? '#2fc3de' : '#2f6fd0',
                   }}
                 />
               ))}
@@ -806,9 +1109,12 @@ function KLinePanel({ overlayProduct }: { overlayProduct: OverlayProduct }) {
         </div>
         <div className="grid grid-cols-[3.25rem_1fr] pt-2">
           <div />
-          <div className="grid grid-cols-8 text-[10px] text-slate-400">
-            {['3/1', '3/5', '3/10', '3/15', '3/20', '4/1', '4/10', '4/22'].map((label) => (
-              <div key={label} className="text-center">
+          <div
+            className="grid text-[10px] text-slate-400"
+            style={{ gridTemplateColumns: `repeat(${dataset.labels.length}, minmax(0, 1fr))` }}
+          >
+            {axisLabels.map((label, index) => (
+              <div key={`${dataset.labels[index]}-${index}`} className="text-center">
                 {label}
               </div>
             ))}
@@ -819,29 +1125,90 @@ function KLinePanel({ overlayProduct }: { overlayProduct: OverlayProduct }) {
   );
 }
 
-function RightLowerPanel({
-  activeTab,
-  onTabChange,
+function SpreadPanel({
+  activeRange,
+  leftProduct,
+  rightProduct,
+  onLeftProductChange,
+  onRightProductChange,
 }: {
-  activeTab: RightLowerTab;
-  onTabChange: (tab: RightLowerTab) => void;
+  activeRange: HistoryRange;
+  leftProduct: SpreadProduct;
+  rightProduct: SpreadProduct;
+  onLeftProductChange: (product: SpreadProduct) => void;
+  onRightProductChange: (product: SpreadProduct) => void;
 }) {
+  const labels = historicalCloseDatasets[activeRange].labels;
+  const axisLabels = buildAxisTickLabels(labels, activeRange === '5d' ? 5 : activeRange === '1m' ? 7 : 8);
+  const spreadValues = buildSpreadSeries(activeRange, leftProduct, rightProduct);
+  const min = Math.min(...spreadValues, 0) - 1.5;
+  const max = Math.max(...spreadValues, 0) + 1.5;
+  const zeroLineY = valueToY(0, 180, min, max);
+
   return (
     <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
-      <div className="flex flex-wrap items-center gap-1.5 border-b border-[#203551] bg-[#101d32] px-2 py-2">
-        {rightLowerTabs.map((tab) => (
-          <button
-            key={tab.id}
-            className={auxTabClass(tab.id === activeTab)}
-            onClick={() => onTabChange(tab.id)}
-            type="button"
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101d32] px-3 py-2">
+        <div className="flex items-center gap-2">
+          <div className="text-sm font-semibold text-slate-100">利差</div>
+          <SpreadProductSelect value={leftProduct} onChange={onLeftProductChange} />
+          <span className="text-sm text-slate-500">-</span>
+          <SpreadProductSelect value={rightProduct} onChange={onRightProductChange} />
+        </div>
+        <div className="text-xs text-slate-400">{historyRangeTabs.find((item) => item.id === activeRange)?.label}</div>
       </div>
-      <div className="h-full min-h-0 overflow-hidden p-2.5">
-        {activeTab === 'cfets' ? <CfetsDailyPanel /> : <AuxTabPanel type={activeTab} />}
+      <div className="grid min-h-0 grid-rows-[1fr_auto] gap-0 px-3 pb-2 pt-2">
+        <div className="grid min-h-0 grid-cols-[3.25rem_1fr]">
+          <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+            {buildAxisLabels(min, max, 5).map((tick) => (
+              <div key={tick}>{tick}</div>
+            ))}
+          </div>
+          <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#29476e]">
+            {[0, 1, 2, 3, 4].map((index) => (
+              <div
+                key={`spread-grid-${index}`}
+                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                style={{ top: `${(index / 4) * 100}%` }}
+              />
+            ))}
+            <svg className="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox="0 0 720 180">
+              <line x1="0" x2="720" y1={zeroLineY} y2={zeroLineY} stroke="#9fb9df" strokeWidth="1.2" strokeDasharray="4 4" />
+              {spreadValues.map((value, index) => {
+                const slotWidth = 720 / spreadValues.length;
+                const barWidth = Math.min(22, slotWidth * 0.68);
+                const x = slotWidth * index + (slotWidth - barWidth) / 2;
+                const y = value >= 0 ? valueToY(value, 180, min, max) : zeroLineY;
+                const barHeight = Math.max(2, Math.abs(valueToY(value, 180, min, max) - zeroLineY));
+
+                return (
+                  <rect
+                    key={`spread-bar-${index}`}
+                    x={x}
+                    y={y}
+                    width={barWidth}
+                    height={barHeight}
+                    rx="2"
+                    fill={value >= 0 ? '#ef5a6f' : '#2fc3de'}
+                    opacity="0.92"
+                  />
+                );
+              })}
+            </svg>
+          </div>
+        </div>
+        <div className="grid grid-cols-[3.25rem_1fr] pt-2">
+          <div />
+          <div
+            className="grid text-[10px] text-slate-400"
+            style={{ gridTemplateColumns: `repeat(${labels.length}, minmax(0, 1fr))` }}
+          >
+            {axisLabels.map((label, index) => (
+              <div key={`spread-label-${labels[index]}-${index}`} className="text-center">
+                {label}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -1048,6 +1415,28 @@ function OverlayProductSelect({
   );
 }
 
+function SpreadProductSelect({
+  value,
+  onChange,
+}: {
+  value: SpreadProduct;
+  onChange: (product: SpreadProduct) => void;
+}) {
+  return (
+    <select
+      className="rounded-md border border-[#2a4164] bg-[#0f1b2f] px-2 py-1 text-xs text-slate-200 outline-none"
+      value={value}
+      onChange={(event) => onChange(event.target.value as SpreadProduct)}
+    >
+      {spreadProductOptions.map((option) => (
+        <option key={option.id} value={option.id}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 function QuoteSection({
   title,
   columns,
@@ -1163,7 +1552,7 @@ function StructuredTable({
           <tr>
             {columns.map((column, index) => (
               <th
-                key={column}
+                key={`${column}-${index}`}
                 className={`border-b border-[#22324d] px-3 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400 ${
                   index === 0 ? 'text-left' : 'text-right'
                 } ${compact ? 'px-2 py-1.5' : 'px-3 py-2.5'} ${
@@ -1420,6 +1809,102 @@ function buildOverlaySeries(values: readonly number[], product: OverlayProduct) 
   return values.map((value, index) => value + delta + Math.sin(index / 3.2) * 0.0025);
 }
 
+function buildHistoricalSeries(range: HistoryRange, product: OverlayProduct | SpreadProduct) {
+  const baseSeries = historicalCloseDatasets[range].close;
+  const normalized = product === 'none' ? 'dr001' : product;
+
+  if (normalized === 'dr001') {
+    return [...baseSeries];
+  }
+
+  const config = getProductSeriesConfig(normalized);
+  return baseSeries.map((value, index) => {
+    const wave =
+      Math.sin(index / config.waveDivisor) * config.waveAmplitude +
+      Math.cos(index / (config.waveDivisor + 3.4)) * (config.waveAmplitude * 0.55);
+    return Number((value + config.offset + wave).toFixed(4));
+  });
+}
+
+function buildSpreadSeries(range: HistoryRange, leftProduct: SpreadProduct, rightProduct: SpreadProduct) {
+  const leftSeries = buildHistoricalSeries(range, leftProduct);
+  const rightSeries = buildHistoricalSeries(range, rightProduct);
+  return leftSeries.map((value, index) => Number(((value - rightSeries[index]) * 10000).toFixed(1)));
+}
+
+function getProductSeriesConfig(product: Exclude<OverlayProduct | SpreadProduct, 'none' | 'dr001'>) {
+  switch (product) {
+    case 'dr007':
+      return { offset: 0.00115, waveAmplitude: 0.00015, waveDivisor: 5.8 };
+    case 'gc007':
+      return { offset: 0.00172, waveAmplitude: 0.00018, waveDivisor: 6.5 };
+    case 'r007':
+      return { offset: 0.00138, waveAmplitude: 0.00014, waveDivisor: 5.1 };
+    default:
+      return { offset: 0, waveAmplitude: 0, waveDivisor: 6 };
+  }
+}
+
+function buildCompactVolumeTicks(max: number) {
+  return [max, max * 0.66, max * 0.33, 0].map((value) => {
+    if (value >= 1000) {
+      return `${(value / 1000).toFixed(1)}k`;
+    }
+    return `${Math.round(value)}`;
+  });
+}
+
+function buildAxisTickLabels(labels: readonly string[], maxVisible: number) {
+  if (labels.length <= maxVisible) {
+    return [...labels];
+  }
+
+  const visibleIndexes = new Set<number>([0, labels.length - 1]);
+  const step = (labels.length - 1) / (maxVisible - 1);
+  for (let index = 1; index < maxVisible - 1; index += 1) {
+    visibleIndexes.add(Math.round(index * step));
+  }
+
+  return labels.map((label, index) => (visibleIndexes.has(index) ? label : ''));
+}
+
+function buildSixMonthDailyDataset() {
+  const labels: string[] = [];
+  const close: number[] = [];
+  const volume: number[] = [];
+  const cursor = new Date('2025-11-04T00:00:00');
+  const points = 126;
+
+  while (labels.length < points) {
+    const day = cursor.getDay();
+    if (day !== 0 && day !== 6) {
+      const index = labels.length;
+      const progress = index / (points - 1);
+
+      let baseline: number;
+      if (progress < 0.68) {
+        baseline = 1.268 - progress / 0.68 * 0.042;
+      } else if (progress < 0.82) {
+        baseline = 1.226 - ((progress - 0.68) / 0.14) * 0.011;
+      } else {
+        baseline = 1.215 + ((progress - 0.82) / 0.18) * 0.021;
+      }
+
+      const wave = Math.sin(index / 6.2) * 0.0018 + Math.cos(index / 11.5) * 0.0012;
+      const value = Number((baseline + wave).toFixed(4));
+      const amount = Math.round(2280 + Math.sin(index / 7.4) * 280 + Math.cos(index / 13.3) * 180 + progress * 760);
+
+      labels.push(`${cursor.getMonth() + 1}/${cursor.getDate()}`);
+      close.push(value);
+      volume.push(amount);
+    }
+
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return { labels, close, volume };
+}
+
 function buildCandlesFromSeries(values: readonly number[]) {
   const candles = [];
   for (let index = 0; index < values.length - 1; index += 2) {
@@ -1450,6 +1935,7 @@ function PanelCard({
   bodyClassName,
   bodyPaddingClassName,
   bodyFill = true,
+  actions,
   children,
 }: {
   title: string;
@@ -1457,6 +1943,7 @@ function PanelCard({
   bodyClassName?: string;
   bodyPaddingClassName?: string;
   bodyFill?: boolean;
+  actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -1467,12 +1954,14 @@ function PanelCard({
             <div className="text-sm font-semibold tracking-[0.02em] text-slate-50">{title}</div>
             {subtitle ? <div className="mt-1 text-xs text-slate-500">{subtitle}</div> : null}
           </div>
-          <button
-            className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
-            type="button"
-          >
-            下载
-          </button>
+          {actions ?? (
+            <button
+              className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
+              type="button"
+            >
+              下载
+            </button>
+          )}
         </div>
       </div>
       <div className={bodyClassName ? `min-h-0 flex-1 ${bodyClassName}` : bodyPaddingClassName ?? 'p-4'}>
