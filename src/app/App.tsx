@@ -1238,13 +1238,10 @@ function ExchangeCoreCompactBoard({
 }: {
   markets: ExchangeMarketSplitSection["markets"];
 }) {
+  const combinedRows = markets.flatMap((market) => market.rows.slice(0, 2));
   return (
-    <div className="grid h-full min-h-0 grid-cols-1 grid-rows-2 gap-2">
-      {markets.map((market) => (
-        <div key={`core-board-${market.id}`} className="min-h-0">
-          <ExchangeCoreCompactBlock rows={market.rows.slice(0, 2)} />
-        </div>
-      ))}
+    <div className="h-full min-h-0">
+      <ExchangeCoreCompactBlock rows={combinedRows} rowCount={5} />
     </div>
   );
 }
@@ -1275,7 +1272,7 @@ function ExchangeCoreCompactBlock({
         <div
           key={row ? `${row[1]}-${rowIndex}` : `empty-${rowIndex}`}
           className={`grid grid-cols-[0.7fr_1fr_1fr_0.8fr] items-center px-4 text-sm ${
-            rowIndex === 0 ? "border-b border-[#162439]" : ""
+            rowIndex > 0 ? "border-t border-[#162439]" : ""
           }`}
         >
           {row ? (
