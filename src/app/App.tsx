@@ -13,6 +13,35 @@ type BankRateRow = {
   deltaBp: string;
   updatedAt: string;
 };
+type QuoteRank = '最优' | '次优' | '报价';
+type QuoteDetailRow = {
+  id: string;
+  institution: string;
+  tenor: string;
+  amount: string;
+  rate: string;
+  collateral: string;
+  rank: QuoteRank;
+  reason: string;
+  accountType: string;
+  minimum: string;
+  updatedAt: string;
+};
+type QuoteGroup = {
+  id: string;
+  name: string;
+  tenorSummary: string;
+  totalAmount: string;
+  averageRate: string;
+  collateral: string;
+  badges: readonly string[];
+  rows: readonly QuoteDetailRow[];
+};
+type RepoQuoteSection = {
+  id: 'reverse' | 'forward';
+  title: string;
+  groups: readonly QuoteGroup[];
+};
 
 type SummaryTableSection = {
   layout: 'table';
@@ -126,58 +155,344 @@ const leftSections: readonly (SummaryTableSection | ExchangeMarketSplitSection)[
   },
 ] as const;
 
-const middleSections = [
+const repoQuoteSections: readonly RepoQuoteSection[] = [
   {
-    id: 'non-bank-best',
-    title: '非银最优',
-    columns: ['期限', '正回购金额', '逆回购利率', '正回购利率', '逆回购金额', '操作'],
-    rows: [
-      ['R001', '1.0', '1.95%', '2.00%', '0.3', '发送'],
-      ['R007', '0.9', '1.95%', '2.00%', '0.8', '发送'],
-      ['R014', '0.88', '1.95%', '2.00%', '0.3', '发送'],
-      ['R028', '0.39', '1.95%', '2.00%', '0.2', '发送'],
-      ['R028+', '0.91', '1.95%', '2.00%', '0.5', '发送'],
+    id: 'reverse',
+    title: '逆回购报价',
+    groups: [
+      {
+        id: 'reverse-rate-local',
+        name: '利率地方',
+        tenorSummary: 'R001 / R007 / R014',
+        totalAmount: '25亿',
+        averageRate: '1.40%',
+        collateral: '利率债 / 地方债',
+        badges: ['R001 最优', 'R007 次优', 'R014 最优'],
+        rows: [
+          {
+            id: 'reverse-rate-local-citic',
+            institution: '中信银行',
+            tenor: 'R001',
+            amount: '10亿',
+            rate: '1.35%',
+            collateral: '利率',
+            rank: '最优',
+            reason: '这是 R001 最优',
+            accountType: '自营户',
+            minimum: '5亿起',
+            updatedAt: '10:53:27',
+          },
+          {
+            id: 'reverse-rate-local-bj',
+            institution: '北京银行',
+            tenor: 'R007',
+            amount: '5亿',
+            rate: '1.40%',
+            collateral: '利率地方存单商金',
+            rank: '最优',
+            reason: '这是 R007 最优',
+            accountType: '商金户',
+            minimum: '2亿起',
+            updatedAt: '10:53:27',
+          },
+          {
+            id: 'reverse-rate-local-shrcb',
+            institution: '上海农商行',
+            tenor: 'R001',
+            amount: '10亿',
+            rate: '1.41%',
+            collateral: '利率',
+            rank: '次优',
+            reason: 'R001 次优',
+            accountType: '商金户',
+            minimum: '5亿起',
+            updatedAt: '10:53:27',
+          },
+          {
+            id: 'reverse-rate-local-gz',
+            institution: '广州银行',
+            tenor: 'R014',
+            amount: '6亿',
+            rate: '1.43%',
+            collateral: '利率地方存单商金',
+            rank: '最优',
+            reason: '这是 R014 最优',
+            accountType: '自营户',
+            minimum: '3亿起',
+            updatedAt: '10:53:27',
+          },
+        ],
+      },
+      {
+        id: 'reverse-cd-sj',
+        name: '存单商金',
+        tenorSummary: 'R001 / R007',
+        totalAmount: '7亿',
+        averageRate: '1.41%',
+        collateral: '大行存单 / 商金',
+        badges: ['R001 最优', 'R007 次优'],
+        rows: [
+          {
+            id: 'reverse-cd-sj-bj',
+            institution: '北京银行',
+            tenor: 'R001',
+            amount: '5亿',
+            rate: '1.40%',
+            collateral: '利率地方存单商金',
+            rank: '最优',
+            reason: '这是 R001 最优',
+            accountType: '商金户',
+            minimum: '5亿起',
+            updatedAt: '10:53:27',
+          },
+          {
+            id: 'reverse-cd-sj-nongyin',
+            institution: '农银理财',
+            tenor: 'R007',
+            amount: '2亿',
+            rate: '1.42%',
+            collateral: '大行存单',
+            rank: '最优',
+            reason: '这是 R007 最优',
+            accountType: '理财子',
+            minimum: '2亿起',
+            updatedAt: '10:53:27',
+          },
+          {
+            id: 'reverse-cd-sj-yangguang',
+            institution: '阳光资产',
+            tenor: 'R007',
+            amount: '5亿',
+            rate: '1.40%',
+            collateral: '利率地方存单商金',
+            rank: '次优',
+            reason: 'R007 次优',
+            accountType: '保险资管',
+            minimum: '3亿起',
+            updatedAt: '10:53:27',
+          },
+        ],
+      },
+      {
+        id: 'reverse-credit',
+        name: '信用',
+        tenorSummary: 'R001 / R007 / R014',
+        totalAmount: '12.45亿',
+        averageRate: '1.44%',
+        collateral: '信用债 / 年金户',
+        badges: ['R001 最优', 'R007 最优', 'R014 最优'],
+        rows: [
+          {
+            id: 'reverse-credit-penghua',
+            institution: '鹏华基金',
+            tenor: 'R007',
+            amount: '4亿',
+            rate: '1.45%',
+            collateral: '信用',
+            rank: '最优',
+            reason: '这是 R007 最优',
+            accountType: '公募基金',
+            minimum: '1亿起',
+            updatedAt: '10:53:27',
+          },
+          {
+            id: 'reverse-credit-pingan',
+            institution: '平安资产',
+            tenor: 'R001',
+            amount: '10亿',
+            rate: '1.43%',
+            collateral: '单笔 1e 起',
+            rank: '次优',
+            reason: 'R001 次优',
+            accountType: '保险资管',
+            minimum: '单笔 1e 起',
+            updatedAt: '10:53:27',
+          },
+          {
+            id: 'reverse-credit-cncbsec',
+            institution: '中信建投证券',
+            tenor: 'R001',
+            amount: '2.45亿',
+            rate: '1.43%',
+            collateral: '年金户',
+            rank: '最优',
+            reason: '这是 R001 最优',
+            accountType: '券商自营',
+            minimum: '2亿起',
+            updatedAt: '10:53:27',
+          },
+          {
+            id: 'reverse-credit-huaan',
+            institution: '华安基金',
+            tenor: 'R014',
+            amount: '3亿',
+            rate: '1.45%',
+            collateral: '信用',
+            rank: '最优',
+            reason: '这是 R014 最优',
+            accountType: '公募基金',
+            minimum: '1亿起',
+            updatedAt: '10:53:27',
+          },
+        ],
+      },
     ],
-    greenColumns: [2],
-    redColumns: [3],
-    buttonColumn: 5,
-    scrollable: false,
   },
   {
-    id: 'non-bank',
-    title: '非银报价',
-    columns: ['机构', '期限', '正回购金额', '正回购利率', '逆回购利率', '逆回购金额', '时间', '操作'],
-    rows: [
-      ['中信证券', 'R007', '200亿', '2.05%', '1.98%', '200亿', '10:53:27', '发送'],
-      ['中泰证券', 'R014', '120亿', '2.06%', '1.97%', '90亿', '10:53:27', '发送'],
-      ['鹏扬基金', 'R007', '50亿', '2.08%', '1.95%', '50亿', '10:53:27', '发送'],
-      ['兴全基金', 'R028', '80亿', '2.10%', '2.01%', '60亿', '10:53:27', '发送'],
-      ['东方证券', 'R021', '90亿', '2.07%', '1.99%', '70亿', '10:53:27', '发送'],
-      ['工银瑞信', 'R014', '60亿', '2.09%', '1.96%', '45亿', '10:53:27', '发送'],
-      ['光大证券', 'R007', '110亿', '2.04%', '1.97%', '85亿', '10:53:27', '发送'],
-      ['华夏基金', 'R001', '70亿', '2.03%', '1.95%', '65亿', '10:53:27', '发送'],
-      ['华泰证券', 'R007', '160亿', '2.06%', '1.98%', '140亿', '10:53:27', '发送'],
-      ['国泰君安', 'R014', '130亿', '2.07%', '1.99%', '120亿', '10:53:27', '发送'],
-      ['招商证券', 'R001', '95亿', '2.02%', '1.94%', '88亿', '10:53:27', '发送'],
-      ['广发证券', 'R021', '105亿', '2.08%', '2.00%', '92亿', '10:53:27', '发送'],
-      ['易方达基金', 'R007', '68亿', '2.09%', '1.96%', '55亿', '10:53:27', '发送'],
-      ['南方基金', 'R014', '72亿', '2.10%', '1.97%', '60亿', '10:53:27', '发送'],
-      ['嘉实基金', 'R028', '84亿', '2.11%', '2.02%', '73亿', '10:53:27', '发送'],
-      ['博时基金', 'R001', '58亿', '2.04%', '1.95%', '50亿', '10:53:27', '发送'],
-      ['中金公司', 'R007', '142亿', '2.05%', '1.98%', '136亿', '10:53:27', '发送'],
-      ['申万宏源', 'R014', '118亿', '2.06%', '1.97%', '101亿', '10:53:27', '发送'],
-      ['兴证证券', 'R021', '97亿', '2.07%', '1.99%', '84亿', '10:53:27', '发送'],
-      ['中欧基金', 'R007', '61亿', '2.08%', '1.96%', '54亿', '10:53:27', '发送'],
-      ['富国基金', 'R014', '66亿', '2.09%', '1.97%', '58亿', '10:53:27', '发送'],
-      ['汇添富基金', 'R028', '79亿', '2.10%', '2.01%', '68亿', '10:53:27', '发送'],
-      ['平安理财', 'R007', '88亿', '2.06%', '1.98%', '72亿', '10:53:27', '发送'],
-      ['招银理财', 'R014', '92亿', '2.07%', '1.99%', '81亿', '10:53:27', '发送'],
+    id: 'forward',
+    title: '正回购报价',
+    groups: [
+      {
+        id: 'forward-rate-local',
+        name: '利率地方',
+        tenorSummary: 'R001 / R007 / R014',
+        totalAmount: '18亿',
+        averageRate: '1.52%',
+        collateral: '利率债 / 地方债',
+        badges: ['R001 最优', 'R007 最优', 'R014 次优'],
+        rows: [
+          {
+            id: 'forward-rate-local-boc',
+            institution: '中国银行',
+            tenor: 'R001',
+            amount: '8亿',
+            rate: '1.51%',
+            collateral: '利率',
+            rank: '最优',
+            reason: '这是 R001 最优',
+            accountType: '大行自营',
+            minimum: '5亿起',
+            updatedAt: '10:53:27',
+          },
+          {
+            id: 'forward-rate-local-ccb',
+            institution: '建设银行',
+            tenor: 'R007',
+            amount: '6亿',
+            rate: '1.53%',
+            collateral: '利率地方',
+            rank: '最优',
+            reason: '这是 R007 最优',
+            accountType: '大行自营',
+            minimum: '3亿起',
+            updatedAt: '10:53:27',
+          },
+          {
+            id: 'forward-rate-local-jt',
+            institution: '交通银行',
+            tenor: 'R014',
+            amount: '4亿',
+            rate: '1.54%',
+            collateral: '利率地方',
+            rank: '次优',
+            reason: 'R014 次优',
+            accountType: '股份行',
+            minimum: '2亿起',
+            updatedAt: '10:53:27',
+          },
+        ],
+      },
+      {
+        id: 'forward-cd-sj',
+        name: '存单商金',
+        tenorSummary: 'R001 / R007',
+        totalAmount: '9亿',
+        averageRate: '1.57%',
+        collateral: '国股存单 / 商金',
+        badges: ['R001 次优', 'R007 最优'],
+        rows: [
+          {
+            id: 'forward-cd-sj-cmbwm',
+            institution: '招银理财',
+            tenor: 'R007',
+            amount: '4亿',
+            rate: '1.58%',
+            collateral: '国股存单',
+            rank: '最优',
+            reason: '这是 R007 最优',
+            accountType: '理财子',
+            minimum: '2亿起',
+            updatedAt: '10:53:27',
+          },
+          {
+            id: 'forward-cd-sj-icbcwm',
+            institution: '工银理财',
+            tenor: 'R001',
+            amount: '3亿',
+            rate: '1.56%',
+            collateral: '商金存单',
+            rank: '次优',
+            reason: 'R001 次优',
+            accountType: '理财子',
+            minimum: '2亿起',
+            updatedAt: '10:53:27',
+          },
+          {
+            id: 'forward-cd-sj-bjrcb',
+            institution: '北京农商行',
+            tenor: 'R007',
+            amount: '2亿',
+            rate: '1.59%',
+            collateral: '商金存单',
+            rank: '次优',
+            reason: 'R007 次优',
+            accountType: '商金户',
+            minimum: '1亿起',
+            updatedAt: '10:53:27',
+          },
+        ],
+      },
+      {
+        id: 'forward-credit',
+        name: '信用',
+        tenorSummary: 'R001 / R007 / R021',
+        totalAmount: '13.2亿',
+        averageRate: '1.61%',
+        collateral: '信用债 / 专户 / 年金',
+        badges: ['R001 最优', 'R007 次优', 'R021 最优'],
+        rows: [
+          {
+            id: 'forward-credit-citicsec',
+            institution: '中信证券',
+            tenor: 'R001',
+            amount: '5亿',
+            rate: '1.60%',
+            collateral: '信用',
+            rank: '最优',
+            reason: '这是 R001 最优',
+            accountType: '券商自营',
+            minimum: '1亿起',
+            updatedAt: '10:53:27',
+          },
+          {
+            id: 'forward-credit-pinganam',
+            institution: '平安资管',
+            tenor: 'R007',
+            amount: '3.2亿',
+            rate: '1.62%',
+            collateral: '信用债专户',
+            rank: '次优',
+            reason: 'R007 次优',
+            accountType: '保险资管',
+            minimum: '2亿起',
+            updatedAt: '10:53:27',
+          },
+          {
+            id: 'forward-credit-eastspring',
+            institution: '东方红资产',
+            tenor: 'R021',
+            amount: '5亿',
+            rate: '1.63%',
+            collateral: '年金户',
+            rank: '最优',
+            reason: '这是 R021 最优',
+            accountType: '券商资管',
+            minimum: '2亿起',
+            updatedAt: '10:53:27',
+          },
+        ],
+      },
     ],
-    greenColumns: [4],
-    redColumns: [3],
-    buttonColumn: 7,
-    fitToWidth: true,
-    scrollable: true,
   },
 ] as const;
 
@@ -839,26 +1154,133 @@ function ExchangeMarketTable({
 }
 
 function MainQuoteBoard() {
+  const [displayLevel, setDisplayLevel] = useState<1 | 2>(1);
+
   return (
-    <section className="flex h-full min-h-0 min-w-0 flex-col gap-3 overflow-hidden pr-1">
-      {middleSections.map((section, index) => (
-        <div key={section.id} className={section.scrollable ? 'min-h-0 flex-1' : 'shrink-0'}>
-          <QuoteSection
-            title={section.title}
-            columns={section.columns}
-            rows={section.rows}
-            greenColumns={section.greenColumns}
-            redColumns={section.redColumns}
-            deltaColumns={section.deltaColumns}
-            buttonColumn={section.buttonColumn}
-            fitToWidth={section.fitToWidth}
-            scrollable={section.scrollable}
-            emphasized={index === 0}
-          />
+    <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pr-1">
+      <section className="grid min-h-0 flex-1 grid-rows-[auto_1fr_1fr] overflow-hidden rounded-2xl border border-[#2a4a78] bg-[#0c1730]">
+        <div className="border-b border-[#1b2a42] bg-[#101b2c] px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-base font-semibold text-slate-50">报价明细</div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button className={auxTabClass(displayLevel === 1)} onClick={() => setDisplayLevel(1)} type="button">
+                1级
+              </button>
+              <button className={auxTabClass(displayLevel === 2)} onClick={() => setDisplayLevel(2)} type="button">
+                2级
+              </button>
+              <button
+                className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
+                type="button"
+              >
+                下载
+              </button>
+            </div>
+          </div>
         </div>
-      ))}
+        {repoQuoteSections.map((section, index) => (
+          <RepoQuoteSectionBoard
+            key={section.id}
+            section={section}
+            displayLevel={displayLevel}
+            withTopBorder={index === 1}
+          />
+        ))}
+      </section>
     </section>
   );
+}
+
+function RepoQuoteSectionBoard({
+  section,
+  displayLevel,
+  withTopBorder,
+}: {
+  section: RepoQuoteSection;
+  displayLevel: 1 | 2;
+  withTopBorder?: boolean;
+}) {
+  return (
+    <div className={`grid min-h-0 grid-rows-[auto_1fr] ${withTopBorder ? 'border-t border-[#18314f]' : ''}`}>
+      <div className="flex items-center justify-between bg-[#0f1a2d] px-4 py-2">
+        <div className="text-sm font-semibold text-slate-100">{section.title}</div>
+        <div className="rounded-full border border-[#29456c] bg-[#12203a] px-2 py-0.5 text-[11px] text-slate-400">层级 1 / 2</div>
+      </div>
+      <div className="min-h-0 overflow-y-auto">
+        <div className="grid grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] border-y border-[#1c3150] bg-[#111d30] px-4 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+          <span>分组 / 机构</span>
+          <span className="text-right">期限</span>
+          <span className="text-right">金额(总量)</span>
+          <span className="text-right">利率(均价)</span>
+          <span className="text-right">账户要求</span>
+          <span className="text-right">质押要求</span>
+        </div>
+        {section.groups.map((group) => (
+          <div key={group.id} className="border-b border-[#14263d]">
+            <div className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] items-center bg-[#0b1628] px-4 py-3 text-left">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded border border-[#355784] bg-[#13233a] text-sm text-slate-200">
+                  {displayLevel === 2 ? '2' : '1'}
+                </span>
+                <div>
+                  <div className="text-sm font-semibold text-slate-50">{group.name}</div>
+                  <div className="mt-0.5 text-[11px] text-slate-500">{displayLevel === 1 ? '分组摘要' : '全部机构报价'}</div>
+                </div>
+              </div>
+              <span className="text-right text-xs text-slate-300">{group.tenorSummary}</span>
+              <span className="text-right text-sm font-semibold text-slate-100">{group.totalAmount}</span>
+              <span className="text-right text-sm font-semibold text-amber-300">{group.averageRate}</span>
+              <span className="truncate pl-3 text-right text-xs text-slate-300" title={summarizeAccountRequirements(group.rows)}>
+                {summarizeAccountRequirements(group.rows)}
+              </span>
+              <span className="truncate pl-3 text-right text-xs text-slate-300" title={group.collateral}>
+                {group.collateral}
+              </span>
+            </div>
+            {displayLevel === 2 ? (
+              <div>
+                {group.rows.map((row) => (
+                  <div
+                    key={row.id}
+                    className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] items-center bg-[#0d1726]/55 px-4 py-2.5 text-left text-sm text-slate-200 transition hover:bg-[#11253d]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-slate-100">{row.institution}</span>
+                    </div>
+                    <span className="text-right">{row.tenor}</span>
+                    <span className="text-right">{row.amount}</span>
+                    <span className="text-right font-semibold text-amber-300">{row.rate}</span>
+                    <span className="truncate pl-3 text-right text-xs text-slate-300" title={normalizeAccountRequirement(row.accountType)}>
+                      {normalizeAccountRequirement(row.accountType)}
+                    </span>
+                    <span className="truncate pl-3 text-right text-xs text-slate-300" title={`${row.collateral} / ${row.reason}`}>
+                      {row.collateral}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function normalizeAccountRequirement(accountType: string) {
+  if (accountType.includes('自营')) return '自营';
+  if (accountType.includes('公募')) return '公募';
+  if (accountType.includes('券商资管')) return '专户出老户';
+  if (accountType.includes('理财子') || accountType.includes('保险资管')) return '可专户';
+  if (accountType.includes('商金')) return '非专户';
+  if (accountType.includes('股份行')) return '不限户';
+  return '不限户';
+}
+
+function summarizeAccountRequirements(rows: readonly QuoteDetailRow[]) {
+  return Array.from(new Set(rows.map((row) => normalizeAccountRequirement(row.accountType)))).join(' / ');
 }
 
 function RightSidebar() {
