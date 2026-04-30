@@ -151,7 +151,7 @@ const leftSections: readonly (
     emphasisColumns: [1, 6],
     buttonColumn: 7,
     fitToWidth: true,
-    columnWidths: ["11%", "11%", "16%", "14%", "14%", "16%", "11%", "7%"],
+    columnWidths: ["8%", "10%", "14%", "12%", "12%", "14%", "10%", "20%"],
     scrollable: false,
   },
   {
@@ -1118,6 +1118,62 @@ const fundStructureLegendItems = [
   { color: "#8bc6de", label: "基金" },
   { color: "#63b383", label: "保险" },
 ] as const;
+
+type FundStructureRange = "14d" | "1m" | "6m";
+
+const fundStructureRangeTabs: Array<{ id: FundStructureRange; label: string }> =
+  [
+    { id: "14d", label: "14D" },
+    { id: "1m", label: "1M" },
+    { id: "6m", label: "6M" },
+  ];
+
+function generateFundStructureBars(count: number, seed: number): number[][] {
+  const bars: number[][] = [];
+  for (let i = 0; i < count; i++) {
+    const row: number[] = [];
+    for (let j = 0; j < fundStructureLegendItems.length; j++) {
+      const noise = ((i + 1) * 9301 + (j + 1) * 49297 + seed * 233280) % 233280;
+      const ratio = noise / 233280;
+      row.push(Math.round(180 + ratio * 900));
+    }
+    bars.push(row);
+  }
+  return bars;
+}
+
+function generateMonthLabels(count: number): string[] {
+  const start = new Date(2026, 2, 24);
+  return Array.from({ length: count }, (_, index) => {
+    const day = new Date(start);
+    day.setDate(start.getDate() + index);
+    return `${day.getMonth() + 1}/${day.getDate()}`;
+  });
+}
+
+function generateHalfYearLabels(count: number): string[] {
+  const start = new Date(2025, 10, 1);
+  return Array.from({ length: count }, (_, index) => {
+    const day = new Date(start);
+    day.setDate(start.getDate() + index * 7);
+    return `${day.getMonth() + 1}/${day.getDate()}`;
+  });
+}
+
+const fundStructureRangeData: Record<
+  FundStructureRange,
+  { bars: readonly (readonly number[])[]; labels: readonly string[] }
+> = {
+  "14d": { bars: fundStructureBars, labels: auxChartLabels },
+  "1m": {
+    bars: generateFundStructureBars(30, 11),
+    labels: generateMonthLabels(30),
+  },
+  "6m": {
+    bars: generateFundStructureBars(26, 47),
+    labels: generateHalfYearLabels(26),
+  },
+};
 
 function App() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -2736,6 +2792,10 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
 
 function FundStructurePanel() {
   const yTicks = [5000, 4000, 3000, 2000, 1000, 0] as const;
+  const [range, setRange] = useState<FundStructureRange>("14d");
+  const { bars, labels } = fundStructureRangeData[range];
+  const rangeSummary =
+    range === "14d" ? "近14天" : range === "1m" ? "近1月" : "近半年";
 
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
@@ -2745,7 +2805,21 @@ function FundStructurePanel() {
             <LegendDot key={item.label} color={item.color} label={item.label} />
           ))}
         </div>
-        <span>近14天</span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            {fundStructureRangeTabs.map((tab) => (
+              <button
+                key={tab.id}
+                className={auxTabClass(tab.id === range)}
+                onClick={() => setRange(tab.id)}
+                type="button"
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <span>{rangeSummary}</span>
+        </div>
       </div>
       <div className="grid min-h-0 grid-cols-[3rem_1fr] gap-2">
         <div className="flex flex-col justify-between pb-2 pt-1 text-right text-[10px] text-slate-400">
@@ -2762,15 +2836,15 @@ function FundStructurePanel() {
             />
           ))}
           <div className="absolute inset-x-3 bottom-2 top-2 flex items-end gap-1.5">
-            {fundStructureBars.map((values, index) => (
+            {bars.map((values, index) => (
               <div
-                key={`fund-bar-${index}`}
+                key={`fund-bar-${range}-${index}`}
                 className="flex h-full min-w-0 flex-1 items-end"
               >
                 <div className="flex h-full w-full flex-col justify-end overflow-hidden rounded-t-[3px]">
                   {values.map((value, partIndex) => (
                     <div
-                      key={`fund-bar-${index}-${partIndex}`}
+                      key={`fund-bar-${range}-${index}-${partIndex}`}
                       className={
                         partIndex === values.length - 1 ? "rounded-t-[3px]" : ""
                       }
@@ -2788,15 +2862,22 @@ function FundStructurePanel() {
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-[3rem_1fr]">
+      <div className="grid shrink-0 grid-cols-[3rem_1fr]">
         <div />
-        <div className="grid grid-cols-14 text-[9px] text-slate-400">
-          {auxChartLabels.map((label) => (
+        <div
+          className="grid pt-0.5 text-[9px] text-slate-400"
+          style={{
+            gridTemplateColumns: `repeat(${labels.length}, minmax(0, 1fr))`,
+          }}
+        >
+          {labels.map((label, index) => (
             <div
-              key={`fund-label-${label}`}
+              key={`fund-label-${range}-${index}`}
               className="flex justify-center overflow-visible"
             >
-              <span className="origin-top-left -rotate-45 whitespace-nowrap">{`2026-${label}`}</span>
+              <span className="origin-top-right -rotate-45 whitespace-nowrap">
+                {label}
+              </span>
             </div>
           ))}
         </div>
@@ -3002,7 +3083,7 @@ function StructuredTable({
                   key={`${row[0]}-${cellIndex}`}
                   className={`border-b border-[#162439] ${compact ? "px-2.5 py-2" : "px-3 py-2.5"} ${
                     cellIndex === 0 ? "text-left" : "text-right"
-                  } ${fitToWidth ? "overflow-hidden text-ellipsis whitespace-nowrap" : ""}`}
+                  } ${fitToWidth && buttonColumn !== cellIndex ? "overflow-hidden text-ellipsis whitespace-nowrap" : ""}`}
                 >
                   {buttonColumn === cellIndex ? (
                     <button
