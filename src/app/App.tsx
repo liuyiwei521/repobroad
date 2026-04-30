@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 
 type AuxChartTab = "ncd" | "institution-repo" | "fund-structure";
 type TrendMode = "intraday" | "history" | "comparison";
@@ -1146,17 +1146,13 @@ function App() {
 
 function TopBar({ currentTime }: { currentTime: Date }) {
   return (
-    <header className="border-b border-[#1b2a42] bg-[#0d1726] px-4 py-3 shadow-[inset_0_-1px_0_rgba(74,101,140,0.18)]">
-      <div className="flex items-start justify-between gap-6">
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-6">
-            <div>
-              <div className="text-[28px] font-semibold tracking-[0.04em] text-slate-50">
-                资金实时行情看板
-              </div>
-            </div>
+    <header className="border-b border-[#1b2a42] bg-[#0d1726] px-4 py-2 shadow-[inset_0_-1px_0_rgba(74,101,140,0.18)]">
+      <div className="flex items-center justify-between gap-6">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="text-[20px] font-semibold tracking-[0.04em] text-slate-50">
+            资金实时行情看板
           </div>
-          <div className="flex flex-wrap items-center gap-2.5 text-sm text-slate-400">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400">
             <FilterLabel>期限</FilterLabel>
             <div className="flex flex-wrap items-center gap-1.5">
               {topBoardFilters.periods.map((item, index) => (
@@ -1180,7 +1176,7 @@ function TopBar({ currentTime }: { currentTime: Date }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 self-center">
+        <div className="flex items-center gap-3">
           <InfoChip label="DR007" value="2.15%" tone="alert" />
           <InfoChip label="资金情绪" value="51 / 47 / 50 / 49" tone="neutral" />
           <StatusBadge>平衡</StatusBadge>
@@ -1698,12 +1694,61 @@ function ExchangeMarketTable({
   );
 }
 
+const QUOTE_BOARD_RATIO_KEY = "quoteBoardLevel2TopRatio";
+const DEFAULT_LEVEL2_TOP_RATIO = 70;
+
 function MainQuoteBoard() {
   const [displayLevel, setDisplayLevel] = useState<1 | 2>(1);
+  const [activeSectionId, setActiveSectionId] = useState<
+    RepoQuoteSection["id"]
+  >(repoQuoteSections[0].id);
+  const [topRatio, setTopRatio] = useState<number>(() => {
+    if (typeof window === "undefined") return DEFAULT_LEVEL2_TOP_RATIO;
+    const saved = window.localStorage.getItem(QUOTE_BOARD_RATIO_KEY);
+    const parsed = saved == null ? NaN : parseFloat(saved);
+    return Number.isFinite(parsed)
+      ? clampRatio(parsed)
+      : DEFAULT_LEVEL2_TOP_RATIO;
+  });
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(QUOTE_BOARD_RATIO_KEY, String(topRatio));
+  }, [topRatio]);
+
+  function startDrag(event: React.MouseEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const body = bodyRef.current;
+    if (!body) return;
+
+    function update(clientY: number) {
+      const rect = body!.getBoundingClientRect();
+      if (rect.height <= 0) return;
+      const next = ((clientY - rect.top) / rect.height) * 100;
+      setTopRatio(clampRatio(next));
+    }
+
+    function onMove(ev: MouseEvent) {
+      update(ev.clientY);
+    }
+
+    function onUp() {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    }
+
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "row-resize";
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }
 
   return (
     <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pr-1">
-      <section className="grid min-h-0 flex-1 grid-rows-[auto_1fr_1fr] overflow-hidden rounded-2xl border border-[#2a4a78] bg-[#0c1730]">
+      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#2a4a78] bg-[#0c1730]">
         <div className="border-b border-[#1b2a42] bg-[#101b2c] px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -1735,42 +1780,112 @@ function MainQuoteBoard() {
             </div>
           </div>
         </div>
-        {repoQuoteSections.map((section, index) => (
-          <RepoQuoteSectionBoard
-            key={section.id}
-            section={section}
-            displayLevel={displayLevel}
-            withTopBorder={index === 1}
-          />
-        ))}
+        <div ref={bodyRef} className="flex min-h-0 flex-1 flex-col">
+          {repoQuoteSections.map((section, index) => {
+            const isLast = index === repoQuoteSections.length - 1;
+            const dragRatio =
+              displayLevel === 2
+                ? index === 0
+                  ? topRatio
+                  : 100 - topRatio
+                : null;
+            return (
+              <Fragment key={section.id}>
+                <RepoQuoteSectionBoard
+                  section={section}
+                  displayLevel={displayLevel}
+                  withTopBorder={index === 1}
+                  isActive={section.id === activeSectionId}
+                  onActivate={() => setActiveSectionId(section.id)}
+                  dragRatio={dragRatio}
+                />
+                {displayLevel === 2 && !isLast ? (
+                  <div
+                    role="separator"
+                    aria-orientation="horizontal"
+                    onMouseDown={startDrag}
+                    className="group relative h-1.5 shrink-0 cursor-row-resize bg-[#18263b] transition-colors hover:bg-sky-500/60"
+                  >
+                    <span className="pointer-events-none absolute left-1/2 top-1/2 h-[2px] w-10 -translate-x-1/2 -translate-y-1/2 rounded bg-slate-500/60 group-hover:bg-sky-200" />
+                  </div>
+                ) : null}
+              </Fragment>
+            );
+          })}
+        </div>
       </section>
     </section>
   );
+}
+
+function clampRatio(value: number) {
+  return Math.max(15, Math.min(85, value));
 }
 
 function RepoQuoteSectionBoard({
   section,
   displayLevel,
   withTopBorder,
+  isActive,
+  onActivate,
+  dragRatio,
 }: {
   section: RepoQuoteSection;
   displayLevel: 1 | 2;
   withTopBorder?: boolean;
+  isActive: boolean;
+  onActivate: () => void;
+  dragRatio: number | null;
 }) {
+  const useDrag = displayLevel === 2 && dragRatio != null;
+  const containerStyle = useDrag
+    ? { flex: `${dragRatio} 1 0%`, minHeight: 0 }
+    : undefined;
   return (
     <div
-      className={`grid min-h-0 grid-rows-[auto_1fr] ${withTopBorder ? "border-t border-[#18314f]" : ""}`}
+      className={`flex min-h-0 flex-col ${
+        useDrag
+          ? ""
+          : displayLevel === 2
+            ? isActive
+              ? "min-h-0 flex-[7]"
+              : "min-h-0 flex-[3]"
+            : isActive
+              ? "flex-none"
+              : "min-h-0 flex-1"
+      } ${withTopBorder ? "border-t border-[#18314f]" : ""}`}
+      style={containerStyle}
+      onFocus={onActivate}
+      onClick={onActivate}
+      tabIndex={0}
     >
-      <div className="flex items-center justify-between bg-[#0f1a2d] px-4 py-2">
-        <div className="text-sm font-semibold text-slate-100">
-          {section.title}
+      <div
+        className={`flex cursor-pointer items-center justify-between px-4 py-1.5 ${isActive ? "border-l-[3px] border-sky-300 bg-gradient-to-r from-sky-500/40 via-sky-600/25 to-transparent shadow-[inset_0_-1px_0_rgba(125,211,252,0.35)]" : "bg-[#0f1a2d]"}`}
+      >
+        <div className="flex items-center gap-2">
+          <div className="text-sm font-semibold text-slate-100">
+            {section.title}
+          </div>
+          {isActive ? (
+            <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-medium text-sky-300">
+              焦点
+            </span>
+          ) : null}
         </div>
         <div className="rounded-full border border-[#29456c] bg-[#12203a] px-2 py-0.5 text-[11px] text-slate-400">
           层级 1 / 2
         </div>
       </div>
-      <div className="min-h-0 overflow-y-auto">
-        <div className="grid grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] border-y border-[#1c3150] bg-[#111d30] px-4 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+      <div
+        className={`min-h-0 ${
+          displayLevel === 2
+            ? "flex-1 overflow-y-auto"
+            : isActive
+              ? "overflow-hidden"
+              : "flex-1 overflow-y-auto"
+        }`}
+      >
+        <div className="grid grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] border-y border-[#1c3150] bg-[#111d30] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
           <span>分组 / 机构</span>
           <span className="text-right">期限</span>
           <span className="text-right">金额(总量)</span>
@@ -1780,7 +1895,7 @@ function RepoQuoteSectionBoard({
         </div>
         {section.groups.map((group) => (
           <div key={group.id} className="border-b-2 border-[#1f3759]">
-            <div className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] items-center border-l-[3px] border-sky-500/70 bg-gradient-to-r from-[#15294a] via-[#11223c] to-[#0d1a30] px-4 py-3 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
+            <div className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] items-center border-l-[3px] border-sky-500/70 bg-gradient-to-r from-[#15294a] via-[#11223c] to-[#0d1a30] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
               <div className="flex items-center gap-3">
                 <span className="inline-flex items-center gap-1 rounded-md border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-sky-200">
                   汇总
@@ -1814,7 +1929,7 @@ function RepoQuoteSectionBoard({
                 {selectLevel1Rows(group).map((row) => (
                   <div
                     key={row.id}
-                    className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] items-center border-l-[3px] border-transparent py-2 pl-8 pr-4 text-left text-sm text-slate-200"
+                    className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-sm text-slate-200"
                   >
                     <div className="flex items-center gap-2">
                       <RankBadge rank={row.rank} />
@@ -1846,7 +1961,7 @@ function RepoQuoteSectionBoard({
                 {group.rows.map((row) => (
                   <div
                     key={row.id}
-                    className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] items-center border-l-[3px] border-transparent py-2 pl-8 pr-4 text-left text-sm text-slate-200 transition hover:bg-[#11253d]"
+                    className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-sm text-slate-200 transition hover:bg-[#11253d]"
                   >
                     <div className="flex items-center gap-2">
                       {row.rank === "最优" || row.rank === "次优" ? (
