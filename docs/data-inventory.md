@@ -1,0 +1,386 @@
+# 数据清单 — Mock 数据全量普查
+
+> 补充文档 | 配合 `frontend-spec.md` 使用
+
+---
+
+## 目录
+
+1. [文件总览](#文件总览)
+2. [报价数据](#报价数据)
+3. [参考数据](#参考数据)
+4. [趋势数据](#趋势数据)
+5. [元数据](#元数据)
+6. [真实 API 建议映射](#真实-api-建议映射)
+
+---
+
+## 文件总览
+
+```
+src/app/data/
+├── types.ts                    — 18 个类型/接口定义
+├── sources.ts                  — 数据源元数据 (5 个源)
+├── institutions.ts             — 机构列表 (22 家)
+├── institutionQuotes.ts        — 机构报价生成器
+├── quotes/
+│   ├── index.ts                — 统一访问入口
+│   ├── xrepo.ts                — XRepo 报价 (5 行)
+│   ├── bankPrice.ts            — 大行价格 (7 行)
+│   ├── exchange.ts             — 交易所回购 (7 行)
+│   ├── nonbankBest.ts          — 非银最优 (5 行)
+│   ├── ncd.ts                  — NCD 报价 (5 行)
+│   └── interbank.ts            — 同业存款 (4 行)
+├── reference/
+│   ├── omo.ts                  — 公开市场操作 (17 条记录 + 8 条汇总)
+│   ├── sentiment.ts            — 资金情绪 (1 个当前值 + 生成器)
+│   ├── institutionRepo.ts      — 分机构回购 (4 天)
+│   └── capitalStructure.ts     — 资金结构 (4 天)
+└── trends/
+    ├── comparison.ts            — 趋势对比 (5 条线 × 20 点)
+    ├── intraday.ts              — 分时生成器 (上至 60 点)
+    └── history.ts               — 历史生成器 (上至 60 天)
+```
+
+---
+
+## 报价数据
+
+### 1. XRepo 报价 (`quotes/xrepo.ts`)
+
+**数据源**: `xrepoQuotes: Quote[]`，5 行
+**对应组件**: ① MainMarketTable (XRepo 模式)
+
+| period | bidVolume | bidRate | askRate | askVolume |
+|--------|-----------|---------|---------|-----------|
+| 1 | 4 | 1.95 | 2.00 | 12 |
+| 7 | 4 | **1.25** | 2.00 | 12 |
+| 14 | 4 | 1.95 | 2.00 | 12 |
+| 21 | 4 | 1.95 | 2.00 | 12 |
+| 28+ | 4 | 1.95 | 2.00 | 12 |
+
+**约束与限制**:
+- bidRate 仅 7D 期限有变异（1.25），其余全部 1.95 — 无期限结构曲线
+- askRate 全部 2.00 — 无 ask 侧利率变化
+- 金额 bidVolume=4, askVolume=12 几乎没有变化 — 无供需量差信号
+- **结论**: 是最简化的 mock 数据，真实数据需要有期限制结构和 bid/ask 变化
+
+**真实数据预期字段**: 同上 + 报价人信息 + 更新时间戳 + 报价状态
+
+---
+
+### 2. 大行价格 (`quotes/bankPrice.ts`)
+
+**类型**: `BankPriceRow`（独立接口，非 Quote）
+**对应组件**: ① MainMarketTable (大行价格模式)
+
+| institution | bankRate | nonbankRate | updateTime |
+|-------------|----------|-------------|------------|
+| 工商银行 | 1.95 | 2.00 | 10:32:15 |
+| 农业银行 | 1.93 | 1.98 | 10:28:41 |
+| 建设银行 | 1.95 | 2.00 | 10:35:02 |
+| 中国银行 | 1.90 | 1.97 | 10:21:33 |
+| 交通银行 | 1.92 | 1.99 | 10:40:18 |
+| 招商银行 | 1.94 | 2.01 | 10:38:55 |
+| 浦发银行 | 1.91 | 1.96 | 10:15:20 |
+
+**约束与限制**:
+- bankRate 范围 1.90-1.95, nonbankRate 范围 1.96-2.01 — 利差 ~2-7bp
+- 仅 7 家机构（5 大行 + 2 股份行），覆盖不全
+- updateTime 为字符串 `HH:mm:ss`，非标准时间戳
+- 过滤仅支持 rateRange，不支持 period 和 amountRange
+- **结论**: 数据较真实，扩展至 15-30 家机构即可
+
+---
+
+### 3. 交易所回购 (`quotes/exchange.ts`)
+
+**对应组件**: ② InstitutionCompareTable (交易所回购模式)
+
+| period | changeBp | weightedAvg | totalAmount | high | low | openRate | bidRate | askRate |
+|--------|----------|-------------|-------------|------|-----|----------|---------|---------|
+| GC001 | -1.0 | 1.3650 | 14.93 | 1.4050 | 1.3250 | 1.3300 | 1.37 | 1.37 |
+| GC007 | -1.0 | 1.3770 | 14.00 | 1.4200 | 1.3250 | 1.3500 | 1.3750 | 1.3750 |
+| GC014 | -0.5 | 1.4030 | 309.17 | 1.4100 | 1.3800 | 1.4100 | 1.4000 | 1.4000 |
+| R-001 | -0.5 | 1.4060 | 26.98 | 1.4200 | 1.3550 | 1.3550 | 1.4050 | 1.4050 |
+| R-007 | -1.0 | 1.4020 | 5.91 | 1.4450 | 1.3800 | 1.3850 | 1.4000 | 1.4000 |
+| R-014 | -2.0 | 1.3950 | **6157.2** | 1.4050 | 1.3700 | 1.3700 | 1.3950 | 1.3950 |
+| R-028 | -1.5 | 1.3920 | **2975.7** | 1.4000 | 1.3550 | 1.3550 | 1.3800 | 1.3800 |
+
+**约束与限制**:
+- 这是最完整的 mock 数据（OHLC + 加权均价 + BP变化 + 成交量）
+- R-014 成交量 6157 亿、R-028 成交量 2976 亿真实度较高
+- 但 bidVolume/askVolume 全部 442 — 明显为占位值
+- exchange 数据过滤使用 `weightedAvg`（rateRange）+ `totalAmount`（amountRange），与 Quote 标准过滤不同
+- **注意**: 不使用 selectedPeriod 过滤（交易所品种用各自的品种代码如 GC001）
+
+---
+
+### 4. 非银最优 (`quotes/nonbankBest.ts`)
+
+**对应组件**: ② InstitutionCompareTable (非银最优模式)
+
+| period | bidVolume | bidRate | askRate | askVolume |
+|--------|-----------|---------|---------|-----------|
+| 1 | 1 | 1.95 | 2.00 | 0.3 |
+| 7 | 0.9 | 1.95 | 2.00 | 0.8 |
+| 14 | 0.88 | 1.95 | 2.00 | 0.3 |
+| 28 | 0.39 | 1.95 | 2.00 | 0.2 |
+| 28+ | 0.91 | 1.95 | 2.00 | 0.5 |
+
+**约束与限制**:
+- bidRate / askRate 全部相同 — 无期限结构
+- 金额 0.2-1 亿，远小于真实市场非银交易量
+- **结论**: 与 XRepo 同样的问题，最简化的 mock
+
+---
+
+### 5. NCD 报价 (`quotes/ncd.ts`)
+
+**对应组件**: ⑤ SentimentCard (NCD走势 Tab)
+
+| period | bidRate | askRate | changeBp | weightedAvg |
+|--------|---------|---------|----------|-------------|
+| 1M | 2.25 | 2.27 | +0.02 | 2.26 |
+| 3M | 2.35 | 2.37 | +0.03 | 2.36 |
+| 6M | 2.48 | 2.50 | +0.01 | 2.49 |
+| 9M | 2.62 | 2.64 | **-0.01** | 2.63 |
+| 1Y | 2.75 | 2.77 | 0 | 2.76 |
+
+**约束与限制**:
+- 有期限结构 (1M→1Y 利率上升) — 这点较真实
+- bidVolume/askVolume 均为 0 — 不展示
+- 仅有 5 个标准期限，真实 NCD 有更多品种
+- BP 变化值极小（±0.01~0.03），真实波动可能更大
+
+---
+
+### 6. 同业存款 (`quotes/interbank.ts`)
+
+**对应组件**: ⑤ SentimentCard (同业存款 Tab)
+
+| period | bidRate | askRate |
+|--------|---------|---------|
+| 1M | 2.05 | 2.08 |
+| 3M | 2.22 | 2.25 |
+| 6M | 2.40 | 2.43 |
+| 1Y | 2.68 | 2.71 |
+
+**约束与限制**:
+- 仅有 4 个标准期限
+- 无 bidVolume/askVolume
+- 收益曲线合理（长期 > 短期），是最简化的展示
+- 脚注 "泰康已接入 · 日更新" 暗示真实数据来自保险公司合作 API
+
+---
+
+## 参考数据
+
+### 7. 公开市场操作 — 逐笔明细 (`reference/omo.ts`)
+
+**类型**: `OmoRecord[]`，17 条
+
+记录日期范围: 2026-04-10 ~ 2026-04-21
+
+**操作类型分布**:
+
+| type | 条数 | 特点 |
+|------|------|------|
+| 逆回购 | 8 | 金额 5-50 亿，利率 1.40%，期限 7D |
+| 逆回购到期 | 8 | 金额 -5 ~ -20 亿，负值表示回笼 |
+| MLF | 1 | 金额 +800 亿，利率 2.00%，期限 1Y |
+| MLF到期 | 1 | 金额 -1000 亿 |
+| 国库定存 | 1 | 金额 +2000 亿，利率 1.70%，期限 91D |
+
+**约束与限制**:
+- 17 条仅覆盖约 2 周，真实场景可能有 50-100 条（月度视图）
+- 转置表（列=日期）列数增多时需水平滚动
+- "到期"类记录 amount 为负值，UI 通过 type 字符串判断颜色
+
+### 8. 公开市场操作 — 净投放统计 (`reference/omo.ts`)
+
+**类型**: `OmoSummary[]`，8 条
+
+| date | netInject | repo | repoMaturity | mlf | mlfMaturity |
+|------|-----------|------|-------------|-----|-------------|
+| 2026-04-21 | +40 | +50 | -10 | null | null |
+| 2026-04-20 | 0 | +5 | -5 | null | null |
+| 2026-04-17 | **+1985** | +5 | -20 | null | null |
+| 2026-04-16 | 0 | +5 | -5 | null | null |
+| 2026-04-15 | -1000 | +5 | -5 | null | null |
+| 2026-04-14 | +5 | +10 | -5 | null | null |
+| 2026-04-11 | +15 | +20 | -5 | null | null |
+| 2026-04-10 | -200 | 0 | 0 | +800 | -1000 |
+
+**约束与限制**:
+- 仅 8 天数据，真实场景可能需要一个月
+- MLF 字段在大多数日期为 null
+- 4/17 的 +1985 净投放（含国库定存 2000 亿）是最大的异常值
+
+### 9. 资金情绪 (`reference/sentiment.ts`)
+
+**当前值**: `currentSentimentIndex = 51`
+**标签**: `"平衡"`（≤60 且 ≥40）
+
+**约束与限制**:
+- 单一硬编码值，无法测试不同情绪状态（宽松 30、偏紧 75）
+- `generateSentimentSeries()` 随机生成时序，当前未被任何组件使用
+- 情绪子项（全市场/大行/中小行/非银）为组件内硬编码值，非数据层
+
+### 10. 分机构回购 (`reference/institutionRepo.ts`)
+
+**4 天 × 6 类机构**（单位: 亿）
+
+| date | 大行 | 中小行 | 货币 | 券商 | 理财子 | 保险 |
+|------|------|--------|------|------|--------|------|
+| 03/27 | 900 | 420 | 520 | 380 | 350 | 180 |
+| 03/28 | 860 | 400 | 500 | 400 | 330 | 170 |
+| 03/31 | 940 | 460 | 540 | 420 | 380 | 200 |
+| 04/02 | 880 | 430 | 510 | 390 | 360 | 190 |
+
+**约束与限制**:
+- 仅 4 天数据，趋势图上几乎看不出趋势
+- 真实场景至少 20-30 天数据（月度视图）
+
+### 11. 资金结构 (`reference/capitalStructure.ts`)
+
+**4 天 × 6 类机构**（单位: 亿）
+
+| date | 大行 | 中小行 | 货币 | 券商 | 理财子 | 保险 |
+|------|------|--------|------|------|--------|------|
+| 03/27 | 2800 | 1200 | 800 | 600 | 500 | 300 |
+| 03/28 | 2600 | 1150 | 820 | 620 | 510 | 280 |
+| 03/31 | 2900 | 1280 | 840 | 640 | 530 | 310 |
+| 04/02 | 2750 | 1220 | 810 | 610 | 520 | 290 |
+
+**约束与限制**:
+- 与 institutionRepo 同样 4 天数据的限制
+- 大行占比较高（~50%），券商+理财子+保险占比小 — 基本符合真实市场结构
+- 脚注 "CFETS日报" 暗示真实数据源
+
+---
+
+## 趋势数据
+
+### 12. 分时趋势 (`trends/intraday.ts`)
+
+**生成器**: `generateIntraday(base: number, points: number = 60)`
+
+**算法**:
+```typescript
+// 每个点的价格: 前一价格 + (random - 0.5) × 0.03 的随机游走
+// 60 个点 × 5 分钟间隔 = 5 小时的日内数据
+price += (Math.random() - 0.5) * 0.03;
+volume = Math.floor(100 + Math.random() * 800);  // 100-900 随机整数
+```
+
+**约束与限制**:
+- 随机游走无趋势，真实价格有方向性和波动率聚集
+- 每次调用结果不同 — 不可复现、不可测试
+- 不反映真实的 bid/ask 价差、流动性等市场微观结构
+- base 参数从 selectedRow 派生（exchange=1.4 / 其他=1.95），真实应由 API 返回
+
+### 13. 历史趋势 (`trends/history.ts`)
+
+**生成器**: `generateHistory(base: number, days: number = 30)`
+
+**算法**:
+```typescript
+price += (Math.random() - 0.5) * 0.06;  // 波动幅度是分时的 2 倍
+volume = Math.floor(200 + Math.random() * 1500);  // 200-1700 随机整数
+```
+
+**约束与限制**: 同分时趋势（随机游走 / 不可复现 / 无市场微观结构）
+
+### 14. 趋势对比 (`trends/comparison.ts`)
+
+**生成器**: `generateComparisonData()` → 20 个时间点，5 条固定折线
+
+**5 条预设线**:
+
+| key | label | base值 |
+|-----|-------|--------|
+| exchange_R001 | 交易所-R-001 | 2.02 |
+| nonbank_R001 | 非银最优-R001 | 2.52 |
+| citics_R001 | 中信证券-R001 | 2.30 |
+| bank_icbc | 大行-工商银行 | 2.15 |
+| xrepo_R007 | Xrepo-R007 | 2.35 |
+
+**约束与限制**:
+- 5 条线的 base 值均为硬编码，不响应任何 Context 变化
+- 20 个时间点（约 100 分钟），真实可能需要全天数据（48 个 5min 点）
+- 中信证券 和 工商银行 这两个单机构系列 — 数据源不明确（当前无此数据）
+
+---
+
+## 元数据
+
+### 15. 数据源配置 (`sources.ts`)
+
+| sourceId | label | periods | defaultPeriod |
+|----------|-------|---------|---------------|
+| xrepo | XRepo行情 | 1, 7, 14, 21, 28+ | 7 |
+| bankPrice | 大行价格 | 1, 7, 14, 21, 28+ | 7 |
+| exchange | 交易所回购 | GC001, GC007, GC014, R-001, R-007, R-014, R-028 | GC001 |
+| nonbankBest | 非银最优 | 1, 7, 14, 28, 28+ | 7 |
+| ncd | NCD | 1M, 3M, 6M, 9M, 1Y | 3M |
+
+### 16. 机构列表 (`institutions.ts`)
+
+**22 家机构**，7 种类型:
+
+| 类型 | 数量 | 机构 |
+|------|------|------|
+| 大行 | 5 | 工商、农业、中国、建设、交通 |
+| 股份行 | 3 | 招商、浦发、兴业 |
+| 城商行 | 2 | 北京、上海 |
+| 券商 | 4 | 中信、中泰、国泰君安、华泰 |
+| 基金 | 4 | 鹏扬、华夏、嘉实、中欧 |
+| 理财子 | 2 | 北银理财、工银理财 |
+| 保险 | 2 | 平安资管、太保资管 |
+
+### 17. 机构报价生成器 (`institutionQuotes.ts`)
+
+**生成器**: `getInstitutionQuotes(source, period)` → `InstQuote[]` (22 行)
+
+**机构类型价差**:
+```
+大行:   +0.000     (最优)
+股份行: +0.005
+城商行: +0.010
+券商:   +0.015
+理财子: +0.015
+保险:   +0.018
+基金:   +0.020     (最差)
+```
+
+外加 `(Math.random() - 0.5) * 0.005` 的随机噪声。
+
+**约束与限制**:
+- baseBid=1.95、baseAsk=2.00 硬编码 — 不随 source 和 period 实际数据变化
+- volume: `50 + Math.random() * 200` 随机 — 不可复现
+- 真实场景应从 API 获取机构的实际双边报价
+
+---
+
+## 真实 API 建议映射
+
+| 当前文件 | 建议 API Endpoint | 缓存策略 |
+|----------|-------------------|----------|
+| `quotes/xrepo.ts` | `GET /api/quotes/xrepo` | 短轮询 3-5s |
+| `quotes/bankPrice.ts` | `GET /api/quotes/bankPrice` | 短轮询 3-5s |
+| `quotes/exchange.ts` | `GET /api/quotes/exchange` | 短轮询 3-5s |
+| `quotes/nonbankBest.ts` | `GET /api/quotes/nonbankBest` | 短轮询 3-5s |
+| `quotes/ncd.ts` | `GET /api/quotes/ncd` | 中轮询 10s |
+| `quotes/interbank.ts` | `GET /api/quotes/interbank` | 长轮询 30s |
+| `reference/omo.ts` (records) | `GET /api/omo/records?days=30` | 手动刷新 |
+| `reference/omo.ts` (summary) | `GET /api/omo/summary?days=30` | 手动刷新 |
+| `reference/sentiment.ts` | `GET /api/sentiment/current` | 短轮询 5s |
+| `reference/institutionRepo.ts` | `GET /api/reference/institutionRepo?days=30` | 日更新 |
+| `reference/capitalStructure.ts` | `GET /api/reference/capitalStructure?days=30` | 日更新 |
+| `trends/intraday.ts` | `GET /api/trends/intraday?source=&period=` | 短轮询 3-5s |
+| `trends/history.ts` | `GET /api/trends/history?source=&period=&days=` | 手动刷新 |
+| `trends/comparison.ts` | `GET /api/trends/comparison` | 中轮询 10s |
+| `institutionQuotes.ts` | `GET /api/quotes/institutions?source=&period=` | 短轮询 3-5s |
+| `institutions.ts` | `GET /api/reference/institutions` | 静态缓存/构建时 |
+| `sources.ts` | 前端配置常量 | 不请求 |
