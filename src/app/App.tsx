@@ -1661,7 +1661,7 @@ function ExchangeCoreCompactBlock({
       {paddedRows.map((row, rowIndex) => (
         <div
           key={row ? `${row[1]}-${rowIndex}` : `empty-${rowIndex}`}
-          className={`grid grid-cols-[0.7fr_1fr_1fr_0.8fr] items-center px-4 text-sm ${
+          className={`grid grid-cols-[0.7fr_1fr_1fr_0.8fr] items-center px-4 text-xs ${
             rowIndex > 0 ? "border-t border-[#162439]" : ""
           }`}
         >
@@ -1956,15 +1956,15 @@ function RepoQuoteSectionBoard({
                 <span className="inline-flex items-center gap-1 rounded-md border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-sky-200">
                   汇总
                 </span>
-                <div className="text-sm font-semibold text-slate-50">
+                <div className="text-xs font-semibold text-slate-50">
                   {group.name}
                 </div>
               </div>
               <span aria-hidden="true" />
-              <span className="text-right text-sm font-semibold text-slate-100">
+              <span className="text-right text-xs font-semibold text-slate-100">
                 {group.totalAmount}
               </span>
-              <span className="text-right text-sm font-semibold text-amber-300">
+              <span className="text-right text-xs font-semibold text-amber-300">
                 {group.averageRate}
               </span>
               <span
@@ -1985,7 +1985,7 @@ function RepoQuoteSectionBoard({
                 {selectLevel1Rows(group).map((row) => (
                   <div
                     key={row.id}
-                    className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-sm text-slate-200"
+                    className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200"
                   >
                     <div className="flex items-center gap-2">
                       <RankBadge rank={row.rank} />
@@ -2014,10 +2014,10 @@ function RepoQuoteSectionBoard({
             ) : null}
             {displayLevel === 2 ? (
               <div className="divide-y divide-[#152437] bg-[#080f1c]">
-                {group.rows.map((row) => (
+                {sortRowsByRank(group.rows).map((row) => (
                   <div
                     key={row.id}
-                    className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-sm text-slate-200 transition hover:bg-[#11253d]"
+                    className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200 transition hover:bg-[#11253d]"
                   >
                     <div className="flex items-center gap-2">
                       {row.rank === "最优" || row.rank === "次优" ? (
@@ -2075,6 +2075,24 @@ const level1TenorRulesByGroup: Record<string, readonly string[]> = {
   存单商金: ["R001", "R007"],
   信用: ["R001", "R007", "R014"],
 };
+
+const rankPriority: Record<QuoteRank, number> = {
+  最优: 0,
+  次优: 1,
+  报价: 2,
+};
+
+function sortRowsByRank(rows: readonly QuoteDetailRow[]): QuoteDetailRow[] {
+  return rows
+    .map((row, index) => ({ row, index }))
+    .sort((a, b) => {
+      const ra = rankPriority[a.row.rank] ?? 99;
+      const rb = rankPriority[b.row.rank] ?? 99;
+      if (ra !== rb) return ra - rb;
+      return a.index - b.index;
+    })
+    .map(({ row }) => row);
+}
 
 function selectLevel1Rows(group: QuoteGroup): QuoteDetailRow[] {
   const rule = level1TenorRulesByGroup[group.name];
@@ -3039,9 +3057,7 @@ function StructuredTable({
       }`}
     >
       <table
-        className={`border-separate border-spacing-0 ${fitToWidth ? "w-full table-fixed" : "min-w-full whitespace-nowrap"} ${
-          compact ? "text-xs" : "text-sm"
-        }`}
+        className={`border-separate border-spacing-0 text-xs ${fitToWidth ? "w-full table-fixed" : "min-w-full whitespace-nowrap"}`}
       >
         {columnWidths ? (
           <colgroup>
