@@ -137,10 +137,7 @@ export function MainMarketTable() {
             );
           })}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-[#8aa0b8] font-mono">数据更新 10:53:27</span>
-          <DownloadBtn />
-        </div>
+        <DownloadBtn />
       </div>
 
       {/* 列头 */}
