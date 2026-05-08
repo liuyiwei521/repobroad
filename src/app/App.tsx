@@ -3,7 +3,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 type AuxChartTab = "ncd" | "institution-repo" | "fund-structure";
 type TrendMode = "intraday" | "history" | "comparison";
 type OverlayProduct = "none" | "dr007" | "gc007" | "r007";
-type RightLowerTab = "cfets" | "spread" | "fund-structure";
+type RightLowerTab = "cfets" | "fund-structure";
 type HistoryRange = "5d" | "1m" | "6m";
 type SpreadProduct = "dr001" | "dr007" | "gc007" | "r007";
 
@@ -894,7 +894,6 @@ const overlayProductOptions: Array<{ id: OverlayProduct; label: string }> = [
 
 const rightLowerTabs: Array<{ id: RightLowerTab; label: string }> = [
   { id: "cfets", label: "CFETS日报统计" },
-  { id: "spread", label: "利差" },
   { id: "fund-structure", label: "机构资金结构" },
 ];
 
@@ -1028,13 +1027,6 @@ const historicalCloseDatasets: Record<
   },
   "6m": buildSixMonthDailyDataset(),
 };
-
-const spreadProductOptions: Array<{ id: SpreadProduct; label: string }> = [
-  { id: "dr007", label: "DR007" },
-  { id: "dr001", label: "DR001" },
-  { id: "gc007", label: "GC007" },
-  { id: "r007", label: "R007" },
-];
 
 const cfetsSummaryCards = [
   { label: "净融出", value: "+428亿", tone: "good" },
@@ -2137,8 +2129,6 @@ function RightSidebar() {
   const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
   const [historyRange, setHistoryRange] = useState<HistoryRange>("5d");
   const [rightLowerTab, setRightLowerTab] = useState<RightLowerTab>("cfets");
-  const [spreadLeft, setSpreadLeft] = useState<SpreadProduct>("dr007");
-  const [spreadRight, setSpreadRight] = useState<SpreadProduct>("dr001");
 
   return (
     <aside
@@ -2166,11 +2156,7 @@ function RightSidebar() {
         <RightLowerPanel
           activeTab={rightLowerTab}
           activeRange={historyRange}
-          leftProduct={spreadLeft}
-          rightProduct={spreadRight}
           onTabChange={setRightLowerTab}
-          onLeftProductChange={setSpreadLeft}
-          onRightProductChange={setSpreadRight}
         />
       </div>
     </aside>
@@ -2180,19 +2166,11 @@ function RightSidebar() {
 function RightLowerPanel({
   activeTab,
   activeRange,
-  leftProduct,
-  rightProduct,
   onTabChange,
-  onLeftProductChange,
-  onRightProductChange,
 }: {
   activeTab: RightLowerTab;
   activeRange: HistoryRange;
-  leftProduct: SpreadProduct;
-  rightProduct: SpreadProduct;
   onTabChange: (tab: RightLowerTab) => void;
-  onLeftProductChange: (product: SpreadProduct) => void;
-  onRightProductChange: (product: SpreadProduct) => void;
 }) {
   return (
     <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
@@ -2210,16 +2188,6 @@ function RightLowerPanel({
       </div>
       <div className="min-h-0 overflow-hidden p-2">
         {activeTab === "cfets" ? <CfetsDailyPanel /> : null}
-        {activeTab === "spread" ? (
-          <SpreadPanel
-            activeRange={activeRange}
-            embedded
-            leftProduct={leftProduct}
-            rightProduct={rightProduct}
-            onLeftProductChange={onLeftProductChange}
-            onRightProductChange={onRightProductChange}
-          />
-        ) : null}
         {activeTab === "fund-structure" ? <FundStructurePanel /> : null}
       </div>
     </section>
@@ -2583,135 +2551,6 @@ function HistoryClosePanel({
   );
 }
 
-function SpreadPanel({
-  activeRange,
-  embedded = false,
-  leftProduct,
-  rightProduct,
-  onLeftProductChange,
-  onRightProductChange,
-}: {
-  activeRange: HistoryRange;
-  embedded?: boolean;
-  leftProduct: SpreadProduct;
-  rightProduct: SpreadProduct;
-  onLeftProductChange: (product: SpreadProduct) => void;
-  onRightProductChange: (product: SpreadProduct) => void;
-}) {
-  const labels = historicalCloseDatasets[activeRange].labels;
-  const axisLabels = buildAxisTickLabels(
-    labels,
-    activeRange === "5d" ? 5 : activeRange === "1m" ? 7 : 8,
-  );
-  const spreadValues = buildSpreadSeries(
-    activeRange,
-    leftProduct,
-    rightProduct,
-  );
-  const min = Math.min(...spreadValues, 0) - 1.5;
-  const max = Math.max(...spreadValues, 0) + 1.5;
-  const zeroLineY = valueToY(0, 180, min, max);
-
-  return (
-    <section
-      className={`grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden ${embedded ? "rounded-lg border border-[#1c2f49] bg-[#0d1726]" : "rounded-xl border border-[#284164] bg-[#0b1728]"}`}
-    >
-      <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101d32] px-3 py-2">
-        <div className="flex items-center gap-2">
-          <div className="text-sm font-semibold text-slate-100">利差</div>
-          <SpreadProductSelect
-            value={leftProduct}
-            onChange={onLeftProductChange}
-          />
-          <span className="text-sm text-slate-500">-</span>
-          <SpreadProductSelect
-            value={rightProduct}
-            onChange={onRightProductChange}
-          />
-        </div>
-        <div className="text-xs text-slate-400">
-          {historyRangeTabs.find((item) => item.id === activeRange)?.label}
-        </div>
-      </div>
-      <div className="grid min-h-0 grid-rows-[1fr_auto] gap-0 px-3 pb-2 pt-2">
-        <div className="grid min-h-0 grid-cols-[3.25rem_1fr]">
-          <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
-            {buildAxisLabels(min, max, 5).map((tick) => (
-              <div key={tick}>{tick}</div>
-            ))}
-          </div>
-          <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#29476e]">
-            {[0, 1, 2, 3, 4].map((index) => (
-              <div
-                key={`spread-grid-${index}`}
-                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
-                style={{ top: `${(index / 4) * 100}%` }}
-              />
-            ))}
-            <svg
-              className="absolute inset-0 h-full w-full"
-              preserveAspectRatio="none"
-              viewBox="0 0 720 180"
-            >
-              <line
-                x1="0"
-                x2="720"
-                y1={zeroLineY}
-                y2={zeroLineY}
-                stroke="#9fb9df"
-                strokeWidth="1.2"
-                strokeDasharray="4 4"
-              />
-              {spreadValues.map((value, index) => {
-                const slotWidth = 720 / spreadValues.length;
-                const barWidth = Math.min(22, slotWidth * 0.68);
-                const x = slotWidth * index + (slotWidth - barWidth) / 2;
-                const y =
-                  value >= 0 ? valueToY(value, 180, min, max) : zeroLineY;
-                const barHeight = Math.max(
-                  2,
-                  Math.abs(valueToY(value, 180, min, max) - zeroLineY),
-                );
-
-                return (
-                  <rect
-                    key={`spread-bar-${index}`}
-                    x={x}
-                    y={y}
-                    width={barWidth}
-                    height={barHeight}
-                    rx="2"
-                    fill={value >= 0 ? "#ef5a6f" : "#2fc3de"}
-                    opacity="0.92"
-                  />
-                );
-              })}
-            </svg>
-          </div>
-        </div>
-        <div className="grid grid-cols-[3.25rem_1fr] pt-2">
-          <div />
-          <div
-            className="grid text-[10px] text-slate-400"
-            style={{
-              gridTemplateColumns: `repeat(${labels.length}, minmax(0, 1fr))`,
-            }}
-          >
-            {axisLabels.map((label, index) => (
-              <div
-                key={`spread-label-${labels[index]}-${index}`}
-                className="text-center"
-              >
-                {label}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function CfetsDailyPanel() {
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_auto_1fr] gap-2">
@@ -2990,28 +2829,6 @@ function OverlayProductSelect({
         ))}
       </select>
     </label>
-  );
-}
-
-function SpreadProductSelect({
-  value,
-  onChange,
-}: {
-  value: SpreadProduct;
-  onChange: (product: SpreadProduct) => void;
-}) {
-  return (
-    <select
-      className="rounded-md border border-[#2a4164] bg-[#0f1b2f] px-2 py-1 text-xs text-slate-200 outline-none"
-      value={value}
-      onChange={(event) => onChange(event.target.value as SpreadProduct)}
-    >
-      {spreadProductOptions.map((option) => (
-        <option key={option.id} value={option.id}>
-          {option.label}
-        </option>
-      ))}
-    </select>
   );
 }
 
@@ -3506,18 +3323,6 @@ function buildHistoricalSeries(
         (config.waveAmplitude * 0.55);
     return Number((value + config.offset + wave).toFixed(4));
   });
-}
-
-function buildSpreadSeries(
-  range: HistoryRange,
-  leftProduct: SpreadProduct,
-  rightProduct: SpreadProduct,
-) {
-  const leftSeries = buildHistoricalSeries(range, leftProduct);
-  const rightSeries = buildHistoricalSeries(range, rightProduct);
-  return leftSeries.map((value, index) =>
-    Number(((value - rightSeries[index]) * 10000).toFixed(1)),
-  );
 }
 
 function getProductSeriesConfig(
