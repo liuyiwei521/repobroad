@@ -1934,17 +1934,18 @@ function RepoQuoteSectionBoard({
               : "flex-1 overflow-y-auto"
         }`}
       >
-        <div className="grid grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] border-y border-[#1c3150] bg-[#111d30] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+        <div className="grid grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr_0.6fr] border-y border-[#1c3150] bg-[#111d30] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
           <span>分组 / 机构</span>
           <span className="text-right">期限</span>
           <span className="text-right">金额(总量)</span>
           <span className="text-right">利率(均价)</span>
           <span className="text-right">账户要求</span>
           <span className="text-right">质押要求</span>
+          <span className="text-right">操作</span>
         </div>
         {section.groups.map((group) => (
           <div key={group.id} className="border-b-2 border-[#1f3759]">
-            <div className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] items-center border-l-[3px] border-sky-500/70 bg-gradient-to-r from-[#15294a] via-[#11223c] to-[#0d1a30] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
+            <div className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr_0.6fr] items-center border-l-[3px] border-sky-500/70 bg-gradient-to-r from-[#15294a] via-[#11223c] to-[#0d1a30] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
               <div className="flex items-center gap-3">
                 <span className="inline-flex items-center gap-1 rounded-md border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-sky-200">
                   汇总
@@ -1972,13 +1973,14 @@ function RepoQuoteSectionBoard({
               >
                 {group.collateral}
               </span>
+              <span />
             </div>
             {displayLevel === 1 ? (
               <div className="divide-y divide-[#152437] bg-[#080f1c]">
                 {selectLevel1Rows(group).map((row) => (
                   <div
                     key={row.id}
-                    className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200"
+                    className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr_0.6fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200"
                   >
                     <div className="flex items-center gap-2">
                       <RankBadge rank={row.rank} />
@@ -2001,6 +2003,14 @@ function RepoQuoteSectionBoard({
                     >
                       {row.collateral}
                     </span>
+                    <span className="flex items-center justify-end">
+                      <button
+                        className="rounded-lg border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
+                        type="button"
+                      >
+                        发送
+                      </button>
+                    </span>
                   </div>
                 ))}
               </div>
@@ -2010,7 +2020,7 @@ function RepoQuoteSectionBoard({
                 {sortRowsByRank(group.rows).map((row) => (
                   <div
                     key={row.id}
-                    className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200 transition hover:bg-[#11253d]"
+                    className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr_0.6fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200 transition hover:bg-[#11253d]"
                   >
                     <div className="flex items-center gap-2">
                       {row.rank === "最优" || row.rank === "次优" ? (
@@ -2034,6 +2044,14 @@ function RepoQuoteSectionBoard({
                       title={`${row.collateral} / ${row.reason}`}
                     >
                       {row.collateral}
+                    </span>
+                    <span className="flex items-center justify-end">
+                      <button
+                        className="rounded-lg border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
+                        type="button"
+                      >
+                        发送
+                      </button>
                     </span>
                   </div>
                 ))}
