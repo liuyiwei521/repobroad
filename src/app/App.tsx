@@ -2530,9 +2530,6 @@ function HistoryClosePanel({
         className="grid min-h-0 px-3 pb-2 pt-2"
         style={{
           gridTemplateRows: "68fr 24fr auto",
-          gridTemplateRows: "68fr 24fr auto",
-          gridTemplateRows: "68fr 24fr auto",
-          gridTemplateRows: "68fr 24fr auto",
         }}
       >
         <div className="grid min-h-0 grid-cols-[3.25rem_1fr]">
@@ -2616,54 +2613,52 @@ function HistoryClosePanel({
           <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
             <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
               {(() => {
-                const _mn = Math.min(...spreadValues);
-                const _mx = Math.max(...spreadValues);
+                const dMax = Math.max(...spreadValues, 0);
+                const dMin = Math.min(...spreadValues, 0);
+                const pad = (dMax - dMin) * 0.15 || 1;
+                const rTop = dMax + pad;
+                const rBot = dMin - pad;
+                const rng = rTop - rBot;
                 return Array.from({ length: 5 }, (_, i) => {
-                  const v = _mx - ((_mx - _mn) * i) / 4;
-                  return <div key={String(v)}>{v.toFixed(1)}</div>;
+                  const v = rTop - (rng * i) / 4;
+                  return <div key={i}>{v.toFixed(1)}</div>;
                 });
               })()}
             </div>
             <div className="relative min-h-0">
               <div className="absolute inset-x-0 top-0 flex items-center gap-[4px] bottom-1">
                 {(() => {
-                  const maxAbs = Math.max(...spreadValues.map(Math.abs), 0.1);
+                  const dMax = Math.max(...spreadValues, 0);
+                  const dMin = Math.min(...spreadValues, 0);
+                  const pad = (dMax - dMin) * 0.15 || 1;
+                  const rTop = dMax + pad;
+                  const rBot = dMin - pad;
+                  const rng = rTop - rBot;
                   return spreadValues.map((value, index) => {
-                    const barPct = (Math.abs(value) / maxAbs) * 35;
                     const isPos = value >= 0;
+                    const spaceTop = isPos
+                      ? ((rTop - value) / rng) * 100
+                      : (rTop / rng) * 100;
+                    const barH = (Math.abs(value) / rng) * 100;
+                    const spaceBot = isPos
+                      ? (-rBot / rng) * 100
+                      : ((value - rBot) / rng) * 100;
                     return (
                       <div
                         key={`spread-${index}`}
                         className="flex min-w-0 flex-1 flex-col"
                         style={{ height: "100%" }}
                       >
-                        {isPos ? (
-                          <>
-                            <div style={{ height: `${50 - barPct}%` }} />
-                            <div
-                              className="min-h-0 rounded-[2px]"
-                              style={{
-                                height: `${barPct}%`,
-                                backgroundColor: "#ef5a6f",
-                                opacity: 0.92,
-                              }}
-                            />
-                            <div style={{ flex: 1 }} />
-                          </>
-                        ) : (
-                          <>
-                            <div style={{ flex: 1 }} />
-                            <div
-                              className="min-h-0 rounded-[2px]"
-                              style={{
-                                height: `${barPct}%`,
-                                backgroundColor: "#2fc3de",
-                                opacity: 0.92,
-                              }}
-                            />
-                            <div style={{ height: `${50 - barPct}%` }} />
-                          </>
-                        )}
+                        <div style={{ height: `${spaceTop}%` }} />
+                        <div
+                          className="min-h-0 rounded-[2px]"
+                          style={{
+                            height: `${barH}%`,
+                            backgroundColor: isPos ? "#ef5a6f" : "#2fc3de",
+                            opacity: 0.92,
+                          }}
+                        />
+                        <div style={{ height: `${spaceBot}%` }} />
                       </div>
                     );
                   });
