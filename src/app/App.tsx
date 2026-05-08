@@ -2524,10 +2524,10 @@ function HistoryClosePanel({
       <div
         className="grid min-h-0 px-3 pb-2 pt-2"
         style={{
-          gridTemplateRows:
-            compareProduct !== "none"
-              ? "68fr 18fr 14fr auto"
-              : "68fr 24fr auto",
+          gridTemplateRows: "68fr 24fr auto",
+          gridTemplateRows: "68fr 24fr auto",
+          gridTemplateRows: "68fr 24fr auto",
+          gridTemplateRows: "68fr 24fr auto",
         }}
       >
         <div className="grid min-h-0 grid-cols-[3.25rem_1fr]">
@@ -2607,28 +2607,7 @@ function HistoryClosePanel({
             </div>
           </div>
         </div>
-        <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
-          <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
-            {buildCompactVolumeTicks(volumeMax).map((tick) => (
-              <div key={tick}>{tick}</div>
-            ))}
-          </div>
-          <div className="relative min-h-0">
-            <div className="absolute inset-0 flex items-end gap-[4px]">
-              {dataset.volume.map((value, index) => (
-                <div
-                  key={`history-vol-${index}`}
-                  className="min-w-0 flex-1 rounded-t-[2px]"
-                  style={{
-                    height: `${(value / volumeMax) * 100}%`,
-                    backgroundColor: index % 3 === 0 ? "#2fc3de" : "#2f6fd0",
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-        {spreadValues ? (
+        {compareProduct !== "none" && spreadValues ? (
           <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
             <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
               {buildSpreadAxisLabels(spreadValues).map((label) => (
@@ -2683,7 +2662,29 @@ function HistoryClosePanel({
               </div>
             </div>
           </div>
-        ) : null}
+        ) : (
+          <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
+            <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+              {buildCompactVolumeTicks(volumeMax).map((tick) => (
+                <div key={tick}>{tick}</div>
+              ))}
+            </div>
+            <div className="relative min-h-0">
+              <div className="absolute inset-0 flex items-end gap-[4px]">
+                {dataset.volume.map((value, index) => (
+                  <div
+                    key={`history-vol-${index}`}
+                    className="min-w-0 flex-1 rounded-t-[2px]"
+                    style={{
+                      height: `${(value / volumeMax) * 100}%`,
+                      backgroundColor: index % 3 === 0 ? "#2fc3de" : "#2f6fd0",
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-[3.25rem_1fr] pt-2">
           <div />
           <div
