@@ -2349,9 +2349,10 @@ function IntradayPanel({
                   const _bv = barValues as number[];
                   const _mn = Math.min(..._bv);
                   const _mx = Math.max(..._bv);
-                  return buildAxisLabels(_mn, _mx, 5).map((l) => (
-                    <div key={l}>{l}</div>
-                  ));
+                  return Array.from({ length: 5 }, (_, i) => {
+                    const v = _mx - ((_mx - _mn) * i) / 4;
+                    return <div key={String(v)}>{v.toFixed(1)}</div>;
+                  });
                 })()
               : ["900", "600", "300", "0"].map((tick) => (
                   <div key={tick}>{tick}</div>
@@ -2360,7 +2361,6 @@ function IntradayPanel({
           <div className="relative min-h-0">
             {overlaySeries ? (
               <>
-                <div className="absolute left-0 right-0 top-1/2 border-t border-dashed border-[#9fbdf9]" />
                 <div className="absolute inset-x-0 top-0 flex items-center gap-[4px] bottom-1">
                   {(barValues as number[]).map((value, index) => {
                     const barPct = (Math.abs(value) / (barMax as number)) * 35;
@@ -2618,13 +2618,13 @@ function HistoryClosePanel({
               {(() => {
                 const _mn = Math.min(...spreadValues);
                 const _mx = Math.max(...spreadValues);
-                return buildAxisLabels(_mn, _mx, 5).map((l) => (
-                  <div key={l}>{l}</div>
-                ));
+                return Array.from({ length: 5 }, (_, i) => {
+                  const v = _mx - ((_mx - _mn) * i) / 4;
+                  return <div key={String(v)}>{v.toFixed(1)}</div>;
+                });
               })()}
             </div>
             <div className="relative min-h-0">
-              <div className="absolute left-0 right-0 top-1/2 border-t border-dashed border-[#9fbdf9]" />
               <div className="absolute inset-x-0 top-0 flex items-center gap-[4px] bottom-1">
                 {(() => {
                   const maxAbs = Math.max(...spreadValues.map(Math.abs), 0.1);
@@ -3558,7 +3558,7 @@ function buildSixMonthDailyDataset() {
       }
 
       const wave =
-        Math.sin(index / 6.2) * 0.015 + Math.cos(index / 11.5) * 0.010;
+        Math.sin(index / 6.2) * 0.015 + Math.cos(index / 11.5) * 0.01;
       const value = Number((baseline + wave).toFixed(4));
       const amount = Math.round(
         2280 +
