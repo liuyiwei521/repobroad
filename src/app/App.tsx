@@ -988,7 +988,7 @@ const historicalCloseDatasets: Record<
 > = {
   "5d": {
     labels: ["4/22", "4/23", "4/24", "4/25", "4/28"],
-    close: [1.2218, 1.2232, 1.2291, 1.2328, 1.2364],
+    close: [1.18, 1.25, 1.21, 1.32, 1.28],
     volume: [1320, 980, 1460, 1180, 1620],
   },
   "1m": {
@@ -2356,7 +2356,7 @@ function IntradayPanel({
             {overlaySeries ? (
               <>
                 <div className="absolute left-0 right-0 top-1/2 border-t border-dashed border-[#9fbdf9]" />
-                <div className="absolute inset-0 flex items-center gap-[4px]">
+                <div className="absolute inset-0 flex items-center gap-[4px] pb-1">
                   {(barValues as number[]).map((value, index) => {
                     const barPct = (Math.abs(value) / (barMax as number)) * 50;
                     const isPos = value >= 0;
@@ -2399,7 +2399,7 @@ function IntradayPanel({
                 </div>
               </>
             ) : (
-              <div className="absolute inset-x-0 bottom-0 top-0 flex items-end gap-[4px]">
+              <div className="absolute inset-x-0 bottom-0 top-0 flex items-end gap-[4px] pb-1">
                 {(barValues as number[]).map((value, index) => (
                   <div
                     key={`intraday-bar-${index}`}
@@ -2616,7 +2616,7 @@ function HistoryClosePanel({
             </div>
             <div className="relative min-h-0">
               <div className="absolute left-0 right-0 top-1/2 border-t border-dashed border-[#9fbdf9]" />
-              <div className="absolute inset-0 flex items-center gap-[4px]">
+              <div className="absolute inset-0 flex items-center gap-[4px] pb-1">
                 {(() => {
                   const maxAbs = Math.max(...spreadValues.map(Math.abs), 0.1);
                   return spreadValues.map((value, index) => {
@@ -3549,7 +3549,7 @@ function buildSixMonthDailyDataset() {
       }
 
       const wave =
-        Math.sin(index / 6.2) * 0.0018 + Math.cos(index / 11.5) * 0.0012;
+        Math.sin(index / 6.2) * 0.015 + Math.cos(index / 11.5) * 0.010;
       const value = Number((baseline + wave).toFixed(4));
       const amount = Math.round(
         2280 +
