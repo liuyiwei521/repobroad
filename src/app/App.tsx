@@ -6,6 +6,7 @@ type OverlayProduct = "none" | "dr007" | "gc007" | "r007";
 type RightLowerTab = "cfets" | "spread" | "fund-structure";
 type HistoryRange = "5d" | "1m" | "6m";
 type SpreadProduct = "dr001" | "dr007" | "gc007" | "r007";
+
 type BankRateRow = {
   institution: string;
   nonBankRate: string;
@@ -2237,6 +2238,14 @@ function IntradayPanel({
       ? null
       : buildOverlaySeries(intradaySeries, overlayProduct);
   const volumeMax = Math.max(...intradayVolumeSeries);
+  const barValues = overlaySeries
+    ? intradaySeries.map((value, index) =>
+        Number(((value - overlaySeries[index]) * 10000).toFixed(1)),
+      )
+    : intradayVolumeSeries;
+  const barMax = overlaySeries
+    ? Math.max(...(barValues as number[]).map(Math.abs), 0.1)
+    : volumeMax;
   const min = Math.min(...intradaySeries, ...(overlaySeries ?? [])) - 0.01;
   const max = Math.max(...intradaySeries, ...(overlaySeries ?? [])) + 0.01;
   const mainPath = buildLinePath(intradaySeries, 680, 178, min, max);
@@ -2258,7 +2267,11 @@ function IntradayPanel({
             onChange={onOverlayChange}
           />
         </div>
-        <div className="text-xs text-slate-400">盘中加权利率 / 成交量</div>
+        <div className="text-xs text-slate-400">
+          {overlayProduct !== "none"
+            ? "盘中加权利率 / 利差(bp)"
+            : "盘中加权利率 / 成交量"}
+        </div>
       </div>
       <div className="grid min-h-0 grid-rows-[68fr_22fr_auto] px-3 pb-2 pt-2">
         <div className="grid min-h-0 grid-cols-[3rem_1fr]">
@@ -2331,25 +2344,76 @@ function IntradayPanel({
             </div>
           </div>
         </div>
-        <div className="grid min-h-0 grid-cols-[3rem_1fr] border-t border-[#1d3250] pt-2">
+        <div className="grid min-h-0 grid-cols-[3rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
           <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
-            {["900", "600", "300", "0"].map((tick) => (
-              <div key={tick}>{tick}</div>
-            ))}
+            {overlaySeries
+              ? buildSpreadAxisLabels(barValues as number[]).map((label) => (
+                  <div key={label}>{label}</div>
+                ))
+              : ["900", "600", "300", "0"].map((tick) => (
+                  <div key={tick}>{tick}</div>
+                ))}
           </div>
           <div className="relative min-h-0">
-            <div className="absolute inset-x-0 bottom-0 top-0 flex items-end gap-[4px]">
-              {intradayVolumeSeries.map((value, index) => (
-                <div
-                  key={`intraday-vol-${index}`}
-                  className="min-w-0 flex-1 rounded-t-[2px]"
-                  style={{
-                    height: `${(value / volumeMax) * 100}%`,
-                    backgroundColor: index % 4 === 0 ? "#3b82f6" : "#275f9f",
-                  }}
-                />
-              ))}
-            </div>
+            {overlaySeries ? (
+              <>
+                <div className="absolute left-0 right-0 top-1/2 border-t border-dashed border-[#9fbdf9]" />
+                <div className="absolute inset-0 flex items-center gap-[4px]">
+                  {(barValues as number[]).map((value, index) => {
+                    const barPct = (Math.abs(value) / (barMax as number)) * 50;
+                    const isPos = value >= 0;
+                    return (
+                      <div
+                        key={`intraday-bar-${index}`}
+                        className="flex min-w-0 flex-1 flex-col"
+                        style={{ height: "100%" }}
+                      >
+                        {isPos ? (
+                          <>
+                            <div style={{ height: `${50 - barPct}%` }} />
+                            <div
+                              className="min-h-0 rounded-[2px]"
+                              style={{
+                                height: `${barPct}%`,
+                                backgroundColor: "#ef5a6f",
+                                opacity: 0.92,
+                              }}
+                            />
+                            <div style={{ flex: 1 }} />
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ flex: 1 }} />
+                            <div
+                              className="min-h-0 rounded-[2px]"
+                              style={{
+                                height: `${barPct}%`,
+                                backgroundColor: "#2fc3de",
+                                opacity: 0.92,
+                              }}
+                            />
+                            <div style={{ height: `${50 - barPct}%` }} />
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <div className="absolute inset-x-0 bottom-0 top-0 flex items-end gap-[4px]">
+                {(barValues as number[]).map((value, index) => (
+                  <div
+                    key={`intraday-bar-${index}`}
+                    className="min-w-0 flex-1 rounded-t-[2px]"
+                    style={{
+                      height: `${(value / (barMax as number)) * 100}%`,
+                      backgroundColor: index % 4 === 0 ? "#3b82f6" : "#275f9f",
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
         <div className="grid grid-cols-[3rem_1fr] pt-2">
@@ -2475,7 +2539,7 @@ function HistoryClosePanel({
             </div>
           </div>
         </div>
-        <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[#1d3250] pt-2">
+        <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
           <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
             {buildCompactVolumeTicks(volumeMax).map((tick) => (
               <div key={tick}>{tick}</div>
@@ -3478,6 +3542,12 @@ function buildCompactVolumeTicks(max: number) {
     }
     return `${Math.round(value)}`;
   });
+}
+
+function buildSpreadAxisLabels(values: number[]) {
+  const maxAbs = Math.max(...values.map(Math.abs), 0.1);
+  const step = maxAbs / 2;
+  return [maxAbs, step, 0, -step, -maxAbs].map((v) => v.toFixed(1));
 }
 
 function buildAxisTickLabels(labels: readonly string[], maxVisible: number) {
