@@ -2345,9 +2345,14 @@ function IntradayPanel({
         <div className="grid min-h-0 grid-cols-[3rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
           <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
             {overlaySeries
-              ? buildSpreadAxisLabels(barValues as number[]).map((label) => (
-                  <div key={label}>{label}</div>
-                ))
+              ? (() => {
+                  const _bv = barValues as number[];
+                  const _mn = Math.min(..._bv);
+                  const _mx = Math.max(..._bv);
+                  return buildAxisLabels(_mn, _mx, 5).map((l) => (
+                    <div key={l}>{l}</div>
+                  ));
+                })()
               : ["900", "600", "300", "0"].map((tick) => (
                   <div key={tick}>{tick}</div>
                 ))}
@@ -2610,9 +2615,13 @@ function HistoryClosePanel({
         {compareProduct !== "none" && spreadValues ? (
           <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
             <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
-              {buildSpreadAxisLabels(spreadValues).map((label) => (
-                <div key={label}>{label}</div>
-              ))}
+              {(() => {
+                const _mn = Math.min(...spreadValues);
+                const _mx = Math.max(...spreadValues);
+                return buildAxisLabels(_mn, _mx, 5).map((l) => (
+                  <div key={l}>{l}</div>
+                ));
+              })()}
             </div>
             <div className="relative min-h-0">
               <div className="absolute left-0 right-0 top-1/2 border-t border-dashed border-[#9fbdf9]" />
