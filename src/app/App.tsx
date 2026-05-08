@@ -6,6 +6,7 @@ type OverlayProduct = "none" | "dr007" | "gc007" | "r007";
 type RightLowerTab = "cfets" | "fund-structure";
 type HistoryRange = "5d" | "1m" | "6m";
 type SpreadProduct = "dr001" | "dr007" | "gc007" | "r007";
+type CompareProduct = "none" | SpreadProduct;
 
 type BankRateRow = {
   institution: string;
@@ -887,6 +888,14 @@ const auxChartTabs: Array<{ id: AuxChartTab; label: string }> = [
 
 const overlayProductOptions: Array<{ id: OverlayProduct; label: string }> = [
   { id: "none", label: "不叠加" },
+  { id: "dr007", label: "DR007" },
+  { id: "gc007", label: "GC007" },
+  { id: "r007", label: "R007" },
+];
+
+const compareProductOptions: Array<{ id: CompareProduct; label: string }> = [
+  { id: "none", label: "不对比" },
+  { id: "dr001", label: "DR001" },
   { id: "dr007", label: "DR007" },
   { id: "gc007", label: "GC007" },
   { id: "r007", label: "R007" },
@@ -2147,6 +2156,7 @@ function RightSidebar() {
   const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
   const [historyRange, setHistoryRange] = useState<HistoryRange>("5d");
   const [rightLowerTab, setRightLowerTab] = useState<RightLowerTab>("cfets");
+  const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
 
   return (
     <aside
@@ -2166,7 +2176,9 @@ function RightSidebar() {
         <HistoryClosePanel
           activeRange={historyRange}
           overlayProduct={overlayProduct}
+          compareProduct={compareProduct}
           onRangeChange={setHistoryRange}
+          onCompareChange={setCompareProduct}
         />
       </div>
 
@@ -2420,11 +2432,15 @@ function IntradayPanel({
 function HistoryClosePanel({
   activeRange,
   overlayProduct,
+  compareProduct,
   onRangeChange,
+  onCompareChange,
 }: {
   activeRange: HistoryRange;
   overlayProduct: OverlayProduct;
+  compareProduct: CompareProduct;
   onRangeChange: (range: HistoryRange) => void;
+  onCompareChange: (product: CompareProduct) => void;
 }) {
   const dataset = historicalCloseDatasets[activeRange];
   const axisLabels = buildAxisTickLabels(
@@ -2435,13 +2451,35 @@ function HistoryClosePanel({
     overlayProduct === "none"
       ? null
       : buildHistoricalSeries(activeRange, overlayProduct);
-  const min = Math.min(...dataset.close, ...(overlaySeries ?? [])) - 0.015;
-  const max = Math.max(...dataset.close, ...(overlaySeries ?? [])) + 0.015;
+  const compareSeries =
+    compareProduct === "none"
+      ? null
+      : buildHistoricalSeries(activeRange, compareProduct);
+  const spreadValues = compareSeries
+    ? dataset.close.map((value, index) =>
+        Number(((value - compareSeries[index]) * 10000).toFixed(1)),
+      )
+    : null;
+  const min =
+    Math.min(
+      ...dataset.close,
+      ...(overlaySeries ?? []),
+      ...(compareSeries ?? []),
+    ) - 0.015;
+  const max =
+    Math.max(
+      ...dataset.close,
+      ...(overlaySeries ?? []),
+      ...(compareSeries ?? []),
+    ) + 0.015;
   const volumeMax = Math.max(...dataset.volume);
   const mainPath = buildLinePath(dataset.close, 720, 186, min, max);
   const areaPath = buildAreaPath(dataset.close, 720, 186, min, max);
   const overlayPath = overlaySeries
     ? buildLinePath(overlaySeries, 720, 186, min, max)
+    : null;
+  const compareLinePath = compareSeries
+    ? buildLinePath(compareSeries, 720, 186, min, max)
     : null;
 
   return (
@@ -2453,6 +2491,22 @@ function HistoryClosePanel({
             产品：
             <span className="ml-1 text-slate-200">DR001</span>
           </div>
+          <label className="flex items-center gap-1 text-xs text-slate-400">
+            <span>对比</span>
+            <select
+              className="rounded-md border border-[#2a4164] bg-[#0f1b2f] px-1.5 py-0.5 text-xs text-slate-200 outline-none"
+              value={compareProduct}
+              onChange={(e) =>
+                onCompareChange(e.target.value as CompareProduct)
+              }
+            >
+              {compareProductOptions.map((opt) => (
+                <option key={opt.id} value={opt.id}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
         <div className="flex items-center gap-2">
           {historyRangeTabs.map((tab) => (
@@ -2467,7 +2521,15 @@ function HistoryClosePanel({
           ))}
         </div>
       </div>
-      <div className="grid min-h-0 grid-rows-[68fr_24fr_auto] px-3 pb-2 pt-2">
+      <div
+        className="grid min-h-0 px-3 pb-2 pt-2"
+        style={{
+          gridTemplateRows:
+            compareProduct !== "none"
+              ? "68fr 18fr 14fr auto"
+              : "68fr 24fr auto",
+        }}
+      >
         <div className="grid min-h-0 grid-cols-[3.25rem_1fr]">
           <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
             {buildAxisLabels(min, max, 4).map((label) => (
@@ -2513,6 +2575,17 @@ function HistoryClosePanel({
                   strokeLinejoin="round"
                 />
               ) : null}
+              {compareLinePath ? (
+                <path
+                  d={compareLinePath}
+                  fill="none"
+                  stroke={chartPalette.violet}
+                  strokeWidth="2"
+                  strokeDasharray="3 3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              ) : null}
             </svg>
             <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-300">
               <LegendDot color={chartPalette.blue} label="收盘价" />
@@ -2520,6 +2593,15 @@ function HistoryClosePanel({
                 <LegendDot
                   color={chartPalette.amber}
                   label={overlayProductLabel(overlayProduct)}
+                />
+              ) : null}
+              {compareProduct !== "none" ? (
+                <LegendDot
+                  color={chartPalette.violet}
+                  label={
+                    compareProductOptions.find((o) => o.id === compareProduct)
+                      ?.label ?? ""
+                  }
                 />
               ) : null}
             </div>
@@ -2546,6 +2628,62 @@ function HistoryClosePanel({
             </div>
           </div>
         </div>
+        {spreadValues ? (
+          <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
+            <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+              {buildSpreadAxisLabels(spreadValues).map((label) => (
+                <div key={label}>{label}</div>
+              ))}
+            </div>
+            <div className="relative min-h-0">
+              <div className="absolute left-0 right-0 top-1/2 border-t border-dashed border-[#9fbdf9]" />
+              <div className="absolute inset-0 flex items-center gap-[4px]">
+                {(() => {
+                  const maxAbs = Math.max(...spreadValues.map(Math.abs), 0.1);
+                  return spreadValues.map((value, index) => {
+                    const barPct = (Math.abs(value) / maxAbs) * 50;
+                    const isPos = value >= 0;
+                    return (
+                      <div
+                        key={`spread-${index}`}
+                        className="flex min-w-0 flex-1 flex-col"
+                        style={{ height: "100%" }}
+                      >
+                        {isPos ? (
+                          <>
+                            <div style={{ height: `${50 - barPct}%` }} />
+                            <div
+                              className="min-h-0 rounded-[2px]"
+                              style={{
+                                height: `${barPct}%`,
+                                backgroundColor: "#ef5a6f",
+                                opacity: 0.92,
+                              }}
+                            />
+                            <div style={{ flex: 1 }} />
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ flex: 1 }} />
+                            <div
+                              className="min-h-0 rounded-[2px]"
+                              style={{
+                                height: `${barPct}%`,
+                                backgroundColor: "#2fc3de",
+                                opacity: 0.92,
+                              }}
+                            />
+                            <div style={{ height: `${50 - barPct}%` }} />
+                          </>
+                        )}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+          </div>
+        ) : null}
         <div className="grid grid-cols-[3.25rem_1fr] pt-2">
           <div />
           <div
