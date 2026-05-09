@@ -2,6 +2,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 
 type AuxChartTab = "ncd" | "institution-repo" | "fund-structure";
 type TrendMode = "intraday" | "history" | "comparison";
+type SentimentTab = "realtime" | "trend";
 type OverlayProduct = "none" | "dr007" | "gc007" | "r007";
 type RightLowerTab = "cfets" | "fund-structure";
 type HistoryRange = "5d" | "1m" | "6m";
@@ -1268,6 +1269,86 @@ const fundStructureRangeData: Record<
   },
 };
 
+type SentimentPoint = {
+  label: string;
+  total: number;
+  bigBank: number;
+  smallBank: number;
+  nonBank: number;
+};
+
+function generateSentimentSeries(
+  count: number,
+  seed: number,
+  base: number,
+  amp: number,
+): number[] {
+  return Array.from({ length: count }, (_, i) => {
+    const v =
+      base +
+      Math.sin((i + seed) / 2.3) * amp +
+      Math.cos((i + seed * 1.7) / 3.1) * (amp * 0.55);
+    return Math.round(v * 10) / 10;
+  });
+}
+
+const sentimentTrendData: SentimentPoint[] = (() => {
+  const dates = [
+    "04-07",
+    "04-08",
+    "04-09",
+    "04-10",
+    "04-11",
+    "04-13",
+    "04-14",
+    "04-15",
+    "04-16",
+    "04-17",
+    "04-20",
+    "04-21",
+    "04-22",
+    "04-23",
+    "04-24",
+    "04-27",
+    "04-28",
+    "04-29",
+    "04-30",
+    "05-07",
+  ];
+  const t = generateSentimentSeries(20, 1, 49.5, 2.8);
+  const b = generateSentimentSeries(20, 7, 47.2, 2.2);
+  const s = generateSentimentSeries(20, 13, 50.8, 2.5);
+  const n = generateSentimentSeries(20, 19, 49.0, 3.0);
+  return dates.map((label, i) => ({
+    label,
+    total: t[i],
+    bigBank: b[i],
+    smallBank: s[i],
+    nonBank: n[i],
+  }));
+})();
+
+const sentimentRealtimeData: SentimentPoint[] = (() => {
+  const labels: string[] = [];
+  for (let i = 0; i < 40; i++) {
+    const total = 9 * 60 + 30 + i * 6;
+    labels.push(
+      `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`,
+    );
+  }
+  const t = generateSentimentSeries(40, 3, 50.5, 1.5);
+  const b = generateSentimentSeries(40, 9, 47.5, 1.8);
+  const s = generateSentimentSeries(40, 15, 50.8, 1.3);
+  const n = generateSentimentSeries(40, 21, 49.2, 2.0);
+  return labels.map((label, i) => ({
+    label,
+    total: t[i],
+    bigBank: b[i],
+    smallBank: s[i],
+    nonBank: n[i],
+  }));
+})();
+
 function App() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -1327,7 +1408,7 @@ function TopBar({ currentTime }: { currentTime: Date }) {
 
         <div className="flex items-center gap-3">
           <InfoChip label="DR007" value="2.15%" tone="alert" />
-          <InfoChip label="资金情绪" value="51 / 47 / 50 / 49" tone="neutral" />
+          <SentimentChipWithPopover />
           <StatusBadge>平衡</StatusBadge>
         </div>
       </div>
@@ -4435,6 +4516,279 @@ function PanelCard({
         )}
       </div>
     </section>
+  );
+}
+
+function useHoverPopover(enterDelay = 80, leaveDelay = 120) {
+  const [visible, setVisible] = useState(false);
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+  const enterTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
+
+  function scheduleShow() {
+    if (leaveTimer.current) clearTimeout(leaveTimer.current);
+    enterTimer.current = setTimeout(() => {
+      setAnchorRect(anchorRef.current?.getBoundingClientRect() ?? null);
+      setVisible(true);
+    }, enterDelay);
+  }
+
+  function scheduleHide() {
+    if (enterTimer.current) clearTimeout(enterTimer.current);
+    leaveTimer.current = setTimeout(() => setVisible(false), leaveDelay);
+  }
+
+  function cancelHide() {
+    if (leaveTimer.current) clearTimeout(leaveTimer.current);
+  }
+
+  return {
+    visible,
+    anchorRect,
+    anchorRef,
+    scheduleShow,
+    scheduleHide,
+    cancelHide,
+  };
+}
+
+const sentimentSeriesConfig = [
+  { key: "total" as const, label: "全市场", color: "#e2e8f0" },
+  { key: "bigBank" as const, label: "大行", color: "#4ade80" },
+  { key: "smallBank" as const, label: "中小行", color: "#60a5fa" },
+  { key: "nonBank" as const, label: "非银机构", color: "#fb923c" },
+] as const;
+
+function SentimentPopoverPanel({
+  anchorRect,
+  onEnter,
+  onLeave,
+}: {
+  anchorRect: DOMRect;
+  onEnter: () => void;
+  onLeave: () => void;
+}) {
+  const [tab, setTab] = useState<SentimentTab>("trend");
+  const data = tab === "trend" ? sentimentTrendData : sentimentRealtimeData;
+  const VW = 380;
+  const VH = 120;
+
+  const allValues = data.flatMap((p) =>
+    sentimentSeriesConfig.map(({ key }) => p[key]),
+  );
+  const dataMin = Math.floor(Math.min(...allValues)) - 1;
+  const dataMax = Math.ceil(Math.max(...allValues)) + 1;
+
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(data.length);
+
+  const panelWidth = 440;
+  const left = Math.min(
+    anchorRect.right - panelWidth,
+    window.innerWidth - panelWidth - 8,
+  );
+  const top = anchorRect.bottom + 8;
+
+  const xTickIndices =
+    data.length <= 8
+      ? data.map((_, i) => i)
+      : Array.from({ length: 5 }, (_, i) =>
+          Math.round((i / 4) * (data.length - 1)),
+        );
+
+  const yTicks = Array.from({ length: 5 }, (_, i) =>
+    Math.round(dataMax - ((dataMax - dataMin) * i) / 4),
+  );
+
+  const crosshairX =
+    tooltipState != null ? (tooltipState.index / (data.length - 1)) * VW : null;
+
+  return (
+    <div
+      className="fixed z-[300] overflow-hidden rounded-xl border border-[#1d3250] bg-[#0a1322] shadow-2xl"
+      style={{ left, top, width: panelWidth }}
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+    >
+      <div className="flex items-center gap-2 border-b border-[#1a2c45] bg-[#0e1827] px-3 py-2">
+        <span className="text-xs font-semibold text-slate-200">资金情绪</span>
+        <div className="flex gap-0.5 rounded-md bg-[#0a1322] p-0.5">
+          {(["realtime", "trend"] as const).map((t) => (
+            <button
+              key={t}
+              className={`rounded px-2.5 py-0.5 text-[11px] transition-colors ${
+                tab === t
+                  ? "bg-[#c69b3a] font-semibold text-white"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+              type="button"
+              onClick={() => setTab(t)}
+            >
+              {t === "realtime" ? "实时" : "走势"}
+            </button>
+          ))}
+        </div>
+        {tab === "trend" && (
+          <span className="text-[10px] text-slate-500">
+            2026-04-07 → 2026-05-07
+          </span>
+        )}
+        <span className="ml-auto cursor-default select-none text-[11px] text-slate-600">
+          ?
+        </span>
+      </div>
+
+      <div className="flex gap-4 px-3 pb-1 pt-2 text-[11px] text-slate-400">
+        {sentimentSeriesConfig.map(({ key, label, color }) => (
+          <LegendDot key={key} color={color} label={label} />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-[36px_1fr] px-1 pb-1">
+        <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+          {yTicks.map((tick) => (
+            <div key={tick}>{tick}</div>
+          ))}
+        </div>
+        <div
+          ref={containerRef}
+          className="relative cursor-crosshair"
+          style={{ height: 140 }}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
+          <svg
+            viewBox={`0 0 ${VW} ${VH}`}
+            preserveAspectRatio="none"
+            className="absolute inset-0 h-full w-full overflow-visible"
+          >
+            {yTicks.map((_, gi) => (
+              <line
+                key={`sg-${gi}`}
+                x1="0"
+                x2={VW}
+                y1={(gi / (yTicks.length - 1)) * VH}
+                y2={(gi / (yTicks.length - 1)) * VH}
+                stroke="#1d3250"
+                strokeWidth="0.5"
+              />
+            ))}
+            {sentimentSeriesConfig.map(({ key, color }) => (
+              <path
+                key={key}
+                d={buildLinePath(
+                  data.map((p) => p[key]),
+                  VW,
+                  VH,
+                  dataMin,
+                  dataMax,
+                )}
+                fill="none"
+                stroke={color}
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                opacity={0.9}
+              />
+            ))}
+            {crosshairX !== null && (
+              <line
+                x1={crosshairX}
+                x2={crosshairX}
+                y1="0"
+                y2={VH}
+                stroke="#4a7ab5"
+                strokeWidth="0.8"
+                strokeDasharray="3 2"
+              />
+            )}
+          </svg>
+          {tooltipState &&
+            sentimentSeriesConfig.map(({ key, color }) => {
+              const v = data[tooltipState.index][key];
+              const cx = (tooltipState.index / (data.length - 1)) * 100;
+              const cy = ((dataMax - v) / (dataMax - dataMin)) * 100;
+              return (
+                <div
+                  key={key}
+                  className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#0a1322]"
+                  style={{
+                    left: `${cx}%`,
+                    top: `${cy}%`,
+                    backgroundColor: color,
+                  }}
+                />
+              );
+            })}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-[36px_1fr] pb-2">
+        <div />
+        <div className="relative h-4 px-1">
+          {xTickIndices.map((idx) => (
+            <span
+              key={idx}
+              className="absolute -translate-x-1/2 text-[9px] text-slate-600"
+              style={{ left: `${(idx / (data.length - 1)) * 100}%` }}
+            >
+              {data[idx].label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {tooltipState && (
+        <ChartTooltip
+          clientX={tooltipState.clientX}
+          clientY={tooltipState.clientY}
+        >
+          <div className="mb-1.5 font-semibold text-slate-200">
+            {data[tooltipState.index].label}
+          </div>
+          {sentimentSeriesConfig.map(({ key, label, color }) => (
+            <div key={key} className="flex items-center gap-2 py-0.5">
+              <span
+                className="h-2 w-2 flex-shrink-0 rounded-full"
+                style={{ backgroundColor: color }}
+              />
+              <span className="text-slate-400">{label}</span>
+              <span className="ml-auto pl-4 font-semibold text-slate-200">
+                {data[tooltipState.index][key]}
+              </span>
+            </div>
+          ))}
+        </ChartTooltip>
+      )}
+    </div>
+  );
+}
+
+function SentimentChipWithPopover() {
+  const {
+    visible,
+    anchorRect,
+    anchorRef,
+    scheduleShow,
+    scheduleHide,
+    cancelHide,
+  } = useHoverPopover();
+  return (
+    <div
+      ref={anchorRef}
+      onMouseEnter={scheduleShow}
+      onMouseLeave={scheduleHide}
+    >
+      <InfoChip label="资金情绪" value="51 / 47 / 50 / 49" tone="neutral" />
+      {visible && anchorRect && (
+        <SentimentPopoverPanel
+          anchorRect={anchorRect}
+          onEnter={cancelHide}
+          onLeave={scheduleHide}
+        />
+      )}
+    </div>
   );
 }
 
