@@ -4,7 +4,7 @@ type AuxChartTab = "ncd" | "institution-repo" | "fund-structure";
 type TrendMode = "intraday" | "history" | "comparison";
 type SentimentTab = "realtime" | "trend";
 type OverlayProduct = "none" | "dr007" | "gc007" | "r007";
-type RightLowerTab = "cfets" | "matrix" | "inst" | "bond" | "fund-structure";
+type RightLowerTab = "matrix" | "inst" | "bond" | "fund-structure";
 type HistoryRange = "5d" | "1m" | "6m";
 type SpreadProduct = "dr001" | "dr007" | "gc007" | "r007";
 type CompareProduct = "none" | SpreadProduct;
@@ -925,8 +925,7 @@ const compareProductOptions: Array<{ id: CompareProduct; label: string }> = [
 ];
 
 const rightLowerTabs: Array<{ id: RightLowerTab; label: string }> = [
-  { id: "cfets", label: "公开市场操作" },
-  { id: "matrix", label: "矩阵" },
+  { id: "matrix", label: "市场公开信息" },
   { id: "inst", label: "机构" },
   { id: "bond", label: "债券" },
   { id: "fund-structure", label: "机构资金结构" },
@@ -938,22 +937,10 @@ const trendModeTabs: Array<{ id: TrendMode; label: string }> = [
   { id: "comparison", label: "对比" },
 ];
 
-const trendRateSeries = [
-  1.932, 1.914, 1.923, 1.941, 1.937, 1.916, 1.908, 1.907, 1.906, 1.935, 1.905,
-  1.924, 1.921, 1.911, 1.884, 1.906, 1.908, 1.909, 1.884, 1.911, 1.897, 1.883,
-  1.859, 1.839, 1.831, 1.85, 1.832, 1.87, 1.878, 1.905, 1.925, 1.918, 1.904,
-  1.879, 1.876, 1.872, 1.891, 1.906, 1.905, 1.879, 1.917, 1.923, 1.944, 1.933,
-  1.948, 1.947, 1.959, 1.943, 1.975, 2.0, 2.014, 2.01, 1.999, 2.001, 2.027,
-  2.031, 2.038, 2.058, 2.028, 2.017,
-] as const;
-
-const trendVolumeSeries = [
-  880, 460, 420, 980, 1050, 780, 1320, 1540, 1210, 470, 1660, 1100, 980, 1370,
-  760, 1600, 1420, 310, 340, 1030, 470, 1040, 620, 1320, 740, 1580, 1200, 980,
-  960, 640, 360, 510, 570, 1020, 480, 1030, 460, 450, 1700, 620, 460, 1110, 980,
-  760, 890, 1180, 430, 1010, 480, 980, 460, 990, 300, 1090, 380, 1540, 320,
-  1190, 810, 1040,
-] as const;
+const trendRateSeries = randomWalk(2.017, 60, 0.02, 11);
+const trendVolumeSeries = randomWalk(1040, 60, 220, 12).map((v) =>
+  Math.round(v),
+);
 
 const trendVolumeColors = trendVolumeSeries.map((_, index) =>
   index % 3 === 0 || index % 5 === 0 ? "#ff8a26" : "#22c1dc",
@@ -974,18 +961,10 @@ const trendAxisLabels = [
 const trendPriceTicks = [2.107, 2.028, 1.948, 1.868] as const;
 const trendVolumeTicks = ["2k", "1k", "900", "450", "0"] as const;
 
-const intradaySeries = [
-  1.948, 1.946, 1.944, 1.945, 1.947, 1.95, 1.948, 1.946, 1.943, 1.941, 1.942,
-  1.944, 1.945, 1.943, 1.942, 1.939, 1.936, 1.934, 1.933, 1.936, 1.939, 1.943,
-  1.946, 1.948, 1.949, 1.951, 1.954, 1.956, 1.955, 1.957, 1.96, 1.963, 1.966,
-  1.968, 1.967, 1.969, 1.971, 1.974, 1.976, 1.979,
-] as const;
-
-const intradayVolumeSeries = [
-  120, 68, 52, 88, 160, 102, 96, 210, 740, 360, 420, 510, 580, 760, 210, 190,
-  120, 86, 74, 132, 248, 184, 226, 288, 344, 192, 168, 141, 198, 902, 334, 248,
-  210, 162, 144, 126, 98, 76, 44, 28,
-] as const;
+const intradaySeries = randomWalk(1.979, 40, 0.012, 13);
+const intradayVolumeSeries = randomWalk(200, 40, 90, 14).map((v) =>
+  Math.round(v),
+);
 
 const intradayTimeLabels = [
   "09:30",
@@ -1012,13 +991,14 @@ const historicalCloseDatasets: Record<
     volume: readonly number[];
   }
 > = {
-  "5d": {
-    labels: ["4/22", "4/23", "4/24", "4/25", "4/28"],
-    close: [1.18, 1.25, 1.21, 1.32, 1.28],
-    volume: [1320, 980, 1460, 1180, 1620],
-  },
-  "1m": {
-    labels: [
+  "5d": (() => {
+    const labels = ["4/22", "4/23", "4/24", "4/25", "4/28"];
+    const close = randomWalk(1.28, 5, 0.05, 1);
+    const volume = randomWalk(1620, 5, 180, 2).map((v) => Math.round(v));
+    return { labels, close, volume };
+  })(),
+  "1m": (() => {
+    const labels = [
       "3/28",
       "3/29",
       "3/30",
@@ -1047,19 +1027,11 @@ const historicalCloseDatasets: Record<
       "4/24",
       "4/25",
       "4/28",
-    ],
-    close: [
-      1.214, 1.2146, 1.2153, 1.2161, 1.2169, 1.2176, 1.2184, 1.2192, 1.2198,
-      1.2206, 1.2211, 1.2218, 1.2224, 1.223, 1.2237, 1.2243, 1.2252, 1.2261,
-      1.2268, 1.2276, 1.2284, 1.2291, 1.2302, 1.231, 1.2321, 1.2334, 1.2348,
-      1.236,
-    ],
-    volume: [
-      980, 860, 910, 1420, 1080, 1020, 1180, 1260, 940, 1100, 1320, 1240, 890,
-      1430, 1570, 1490, 1360, 1280, 1190, 1250, 1330, 1410, 1380, 1430, 1520,
-      1570, 1640, 1710,
-    ],
-  },
+    ];
+    const close = randomWalk(1.236, 28, 0.003, 3);
+    const volume = randomWalk(1710, 28, 140, 4).map((v) => Math.round(v));
+    return { labels, close, volume };
+  })(),
   "6m": buildSixMonthDailyDataset(),
 };
 
@@ -1077,18 +1049,9 @@ const cfetsDetailRows = [
   ["非银需求", "偏强", "隔夜至 14D 活跃"],
 ] as const;
 
-const ncdTrendSeries = [
-  1.94, 1.95, 1.96, 1.97, 1.98, 1.97, 1.99, 2.0, 1.99, 2.01, 2.02, 2.01, 2.02,
-  2.03,
-] as const;
-const ncdThreeMonthSeries = [
-  1.99, 2.0, 2.01, 2.02, 2.03, 2.02, 2.03, 2.04, 2.05, 2.05, 2.06, 2.05, 2.06,
-  2.07,
-] as const;
-const ncdOneYearSeries = [
-  2.08, 2.08, 2.09, 2.09, 2.1, 2.09, 2.1, 2.11, 2.11, 2.12, 2.12, 2.11, 2.12,
-  2.13,
-] as const;
+const ncdTrendSeries = randomWalk(2.03, 14, 0.015, 15);
+const ncdThreeMonthSeries = randomWalk(2.07, 14, 0.015, 16);
+const ncdOneYearSeries = randomWalk(2.13, 14, 0.015, 17);
 const auxChartLabels = [
   "4/9",
   "4/10",
@@ -1232,14 +1195,24 @@ const fundStructureRangeTabs: Array<{ id: FundStructureRange; label: string }> =
     { id: "6m", label: "6M" },
   ];
 
-function generateFundStructureBars(count: number, seed: number): number[][] {
+function generateFundStructureBars(count: number, _seed: number): number[][] {
   const bars: number[][] = [];
   for (let i = 0; i < count; i++) {
     const row: number[] = [];
     for (let j = 0; j < fundStructureLegendItems.length; j++) {
-      const noise = ((i + 1) * 9301 + (j + 1) * 49297 + seed * 233280) % 233280;
-      const ratio = noise / 233280;
-      row.push(Math.round(180 + ratio * 900));
+      // 离散随机 + 偶尔大幅跳变
+      const r = Math.random();
+      let ratio: number;
+      if (r < 0.6) {
+        ratio = 0.2 + Math.random() * 0.6;
+      } else if (r < 0.9) {
+        ratio = 0.05 + Math.random() * 0.35;
+      } else {
+        ratio = 0.7 + Math.random() * 0.3;
+      }
+      // 引入时段间差异
+      const v = Math.round((180 + ratio * 900) * (0.7 + Math.random() * 0.6));
+      row.push(v);
     }
     bars.push(row);
   }
@@ -1289,17 +1262,28 @@ type SentimentPoint = {
 
 function generateSentimentSeries(
   count: number,
-  seed: number,
+  _seed: number,
   base: number,
   amp: number,
 ): number[] {
-  return Array.from({ length: count }, (_, i) => {
-    const v =
-      base +
-      Math.sin((i + seed) / 2.3) * amp +
-      Math.cos((i + seed * 1.7) / 3.1) * (amp * 0.55);
-    return Math.round(v * 10) / 10;
-  });
+  const result: number[] = new Array(count);
+  result[0] = base + (Math.random() - 0.5) * amp;
+  for (let i = 1; i < count; i++) {
+    const r = Math.random();
+    let jump: number;
+    if (r < 0.6) {
+      jump = (Math.random() - 0.5) * amp * 0.4;
+    } else if (r < 0.9) {
+      jump = (Math.random() - 0.5) * amp * 1.2;
+    } else {
+      jump = (Math.random() - 0.5) * amp * 3;
+    }
+    result[i] = Math.max(
+      0,
+      Math.min(100, Math.round((result[i - 1] + jump) * 10) / 10),
+    );
+  }
+  return result;
 }
 
 const sentimentTrendData: SentimentPoint[] = (() => {
@@ -2468,7 +2452,7 @@ function RankBadge({ rank }: { rank: QuoteRank }) {
 function RightSidebar() {
   const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
   const [historyRange, setHistoryRange] = useState<HistoryRange>("5d");
-  const [rightLowerTab, setRightLowerTab] = useState<RightLowerTab>("cfets");
+  const [rightLowerTab, setRightLowerTab] = useState<RightLowerTab>("matrix");
   const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
 
   return (
@@ -2530,8 +2514,7 @@ function RightLowerPanel({
         ))}
       </div>
       <div className="min-h-0 overflow-hidden p-2">
-        {activeTab === "cfets" && <CfetsDailyPanel />}
-        {activeTab === "matrix" && <CfetsMatrixPanel />}
+        {activeTab === "matrix" && <CfetsMatrixPanel includeDaily />}
         {activeTab === "inst" && <CfetsInstPanel />}
         {activeTab === "bond" && <CfetsBondPanel />}
         {activeTab === "fund-structure" && <FundStructurePanel />}
@@ -3820,14 +3803,22 @@ function randomWalk(
   anchor: number,
   count: number,
   dailyVol: number,
-  seed: number,
+  _seed: number,
 ): number[] {
   const result: number[] = new Array(count);
   result[count - 1] = anchor;
   for (let i = count - 2; i >= 0; i--) {
-    const noise =
-      (((seed + i * 9301 + 49297) % 233280) / 233280 - 0.5) * 2 * dailyVol;
-    result[i] = Math.max(0, Number((result[i + 1] - noise).toFixed(4)));
+    // 离散跳跃：40% 小幅 + 38% 中等 + 22% 大幅，强随机锯齿
+    const r = Math.random();
+    let jump: number;
+    if (r < 0.4) {
+      jump = (Math.random() - 0.5) * dailyVol * 1.5;
+    } else if (r < 0.78) {
+      jump = (Math.random() - 0.5) * dailyVol * 7;
+    } else {
+      jump = (Math.random() - 0.5) * dailyVol * 18;
+    }
+    result[i] = Math.max(0, Number((result[i + 1] + jump).toFixed(4)));
   }
   return result;
 }
@@ -3864,7 +3855,7 @@ function buildInstTrendBlock(
   const dates = generateTradingDates("2026-01-04", count);
   const anchors = cfetsInstAnchors[metricKey];
   const isRate = metricKey === "buyRate" || metricKey === "sellRate";
-  const vol = isRate ? 0.008 : metricKey === "netInflow" ? 200 : 500;
+  const vol = isRate ? 0.04 : metricKey === "netInflow" ? 800 : 2000;
   const series = anchors.map((anchor, i) => {
     const base = anchor ?? 0;
     return randomWalk(base, count, vol, (i + 1) * 7 + metricKey.length);
@@ -3961,7 +3952,7 @@ function buildBondTrendBlock(
   const dates = generateTradingDates("2026-01-04", count);
   const anchors = cfetsBondAnchors[bondKey][metricKey];
   const isRate = metricKey === "buyRate" || metricKey === "sellRate";
-  const vol = isRate ? 0.007 : 300;
+  const vol = isRate ? 0.035 : 1400;
   const series = anchors.map((anchor, i) => {
     const base = anchor ?? 0;
     return randomWalk(base, count, vol, (i + 3) * 11 + bondKey.length);
@@ -4045,7 +4036,11 @@ function CfetsDailyPanel() {
 }
 
 // ─── 矩阵面板 ───────────────────────────────────────────────
-function CfetsMatrixPanel() {
+function CfetsMatrixPanel({
+  includeDaily = false,
+}: {
+  includeDaily?: boolean;
+}) {
   const [modal, setModal] = useState<{
     rowLabel: string;
     colLabel: string;
@@ -4190,6 +4185,52 @@ function CfetsMatrixPanel() {
           </div>
         </div>
       )}
+
+      {includeDaily && (
+        <div className="overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
+          <table className="min-w-full text-xs">
+            <thead className="bg-[#101d32] text-slate-400">
+              <tr>
+                {["日期", "公开市场操作", "净投放", "MLF", "关注点"].map(
+                  (column) => (
+                    <th
+                      key={column}
+                      className="px-3 py-2 text-left font-medium"
+                    >
+                      {column}
+                    </th>
+                  ),
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["2026-04-22", "逆回购 7D", "+40亿", "--", "短端偏稳"],
+                ["2026-04-21", "逆回购到期", "-10亿", "--", "大行融出维持"],
+                ["2026-04-20", "逆回购 7D", "+5亿", "--", "非银需求回升"],
+                [
+                  "2026-04-17",
+                  "逆回购 7D",
+                  "+1985亿",
+                  "--",
+                  "月内跨季预期升温",
+                ],
+              ].map((row) => (
+                <tr
+                  key={row[0]}
+                  className="border-t border-[#162439] text-slate-300"
+                >
+                  {row.map((cell, index) => (
+                    <td key={`${row[0]}-${index}`} className="px-3 py-2">
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
@@ -4223,10 +4264,10 @@ function MultiSeriesChart({
     const rawMin = Math.min(...flat);
     const rawMax = Math.max(...flat);
     const pad = (rawMax - rawMin) * 0.12 || 0.02;
-    const min = Math.max(0, rawMin - pad);
+    const min = rawMin - pad;
     const max = rawMax + pad;
     const yTicks = Array.from({ length: 4 }, (_, i) =>
-      (max - ((max - min) * i) / 3).toFixed(4),
+      Number((max - ((max - min) * i) / 3).toFixed(4)).toString(),
     );
     const crossX =
       tooltipState != null
@@ -5886,45 +5927,22 @@ function buildAxisTickLabels(labels: readonly string[], maxVisible: number) {
 
 function buildSixMonthDailyDataset() {
   const labels: string[] = [];
-  const close: number[] = [];
-  const volume: number[] = [];
   const cursor = new Date("2025-11-04T00:00:00");
   const points = 126;
 
   while (labels.length < points) {
     const day = cursor.getDay();
     if (day !== 0 && day !== 6) {
-      const index = labels.length;
-      const progress = index / (points - 1);
-
-      let baseline: number;
-      if (progress < 0.68) {
-        baseline = 1.268 - (progress / 0.68) * 0.042;
-      } else if (progress < 0.82) {
-        baseline = 1.226 - ((progress - 0.68) / 0.14) * 0.011;
-      } else {
-        baseline = 1.215 + ((progress - 0.82) / 0.18) * 0.021;
-      }
-
-      const wave =
-        Math.sin(index / 6.2) * 0.015 + Math.cos(index / 11.5) * 0.01;
-      const value = Number((baseline + wave).toFixed(4));
-      const amount = Math.round(
-        2280 +
-          Math.sin(index / 7.4) * 280 +
-          Math.cos(index / 13.3) * 180 +
-          progress * 760,
-      );
-
       labels.push(`${cursor.getMonth() + 1}/${cursor.getDate()}`);
-      close.push(value);
-      volume.push(amount);
     }
-
     cursor.setDate(cursor.getDate() + 1);
   }
 
-  return { labels, close, volume };
+  // 用 randomWalk 替代 sin/cos，三步趋势模拟下行→平稳→反弹
+  const closeWalk = randomWalk(1.215, points, 0.006, 7);
+  const volumeWalk = randomWalk(2280, points, 200, 8).map((v) => Math.round(v));
+
+  return { labels, close: closeWalk, volume: volumeWalk };
 }
 
 function buildCandlesFromSeries(values: readonly number[]) {
