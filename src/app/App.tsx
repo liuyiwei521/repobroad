@@ -4223,7 +4223,7 @@ function MultiSeriesChart({
     const rawMin = Math.min(...flat);
     const rawMax = Math.max(...flat);
     const pad = (rawMax - rawMin) * 0.12 || 0.02;
-    const min = rawMin - pad;
+    const min = Math.max(0, rawMin - pad);
     const max = rawMax + pad;
     const yTicks = Array.from({ length: 4 }, (_, i) =>
       (max - ((max - min) * i) / 3).toFixed(4),
@@ -4263,7 +4263,7 @@ function MultiSeriesChart({
                 />
               ))}
               {series.map((vals, si) =>
-                vals[0] > 0 ? (
+                Math.min(...vals) > 0 ? (
                   <path
                     key={si}
                     d={buildLinePath(vals, VW, VH, min, max)}
@@ -4290,7 +4290,7 @@ function MultiSeriesChart({
             </svg>
             {tooltipState &&
               series.map((vals, si) =>
-                vals[0] > 0 ? (
+                Math.min(...vals) > 0 ? (
                   <div
                     key={si}
                     className="pointer-events-none absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#0a1322]"
