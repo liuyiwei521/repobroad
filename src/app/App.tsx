@@ -1,17 +1,27 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 
-type AuxChartTab = "ncd" | "institution-repo" | "fund-structure";
 type TrendMode = "intraday" | "history" | "comparison";
+type SentimentTab = "realtime" | "trend";
 type OverlayProduct = "none" | "dr007" | "gc007" | "r007";
-type RightLowerTab = "cfets" | "fund-structure";
+type RightLowerTab = "matrix" | "inst" | "bond";
 type HistoryRange = "5d" | "1m" | "6m";
 type SpreadProduct = "dr001" | "dr007" | "gc007" | "r007";
 type CompareProduct = "none" | SpreadProduct;
+type CfetsMetricKey =
+  | "buyRate"
+  | "sellRate"
+  | "buyAmt"
+  | "sellAmt"
+  | "netInflow";
+type CfetsTrendBlock = { dates: string[]; series: number[][] };
 
 type BankRateRow = {
   institution: string;
   nonBankRate: string;
+  refNonBankRate: string;
+  deltaNonBankBp: string;
   bankRate: string;
+  refBankRate: string;
   deltaBp: string;
   updatedAt: string;
 };
@@ -87,28 +97,40 @@ const initialBankRateRows: readonly BankRateRow[] = [
   {
     institution: "工商银行",
     nonBankRate: "1.95%",
+    refNonBankRate: "1.96%",
+    deltaNonBankBp: "-1",
     bankRate: "2.00%",
+    refBankRate: "2.02%",
     deltaBp: "-2",
     updatedAt: "10:53:27",
   },
   {
     institution: "建设银行",
     nonBankRate: "1.94%",
+    refNonBankRate: "1.95%",
+    deltaNonBankBp: "-1",
     bankRate: "1.99%",
+    refBankRate: "2.00%",
     deltaBp: "-1",
     updatedAt: "10:53:27",
   },
   {
     institution: "农业银行",
     nonBankRate: "1.96%",
+    refNonBankRate: "1.96%",
+    deltaNonBankBp: "0",
     bankRate: "2.01%",
+    refBankRate: "2.00%",
     deltaBp: "+1",
     updatedAt: "10:53:27",
   },
   {
     institution: "中国银行",
     nonBankRate: "1.95%",
+    refNonBankRate: "1.94%",
+    deltaNonBankBp: "+1",
     bankRate: "2.00%",
+    refBankRate: "2.00%",
     deltaBp: "0",
     updatedAt: "10:53:27",
   },
@@ -121,11 +143,11 @@ const leftSections: readonly (
   {
     layout: "table",
     title: "当日大行价格",
-    columns: ["机构", "非银利率", "银行利率", "涨跌bp", "更新时间"],
+    columns: ["机构", "非银利率", "涨跌", "银行利率", "涨跌", "更新时间"],
     rows: [],
     greenColumns: [1],
-    redColumns: [2],
-    deltaColumns: [3],
+    redColumns: [3],
+    deltaColumns: [2, 4],
     scrollable: false,
   },
   {
@@ -153,7 +175,7 @@ const leftSections: readonly (
     emphasisColumns: [1, 6],
     buttonColumn: 7,
     fitToWidth: true,
-    columnWidths: ["14%", "10%", "14%", "12%", "12%", "14%", "10%", "14%"],
+    columnWidths: ["8%", "10%", "14%", "12%", "12%", "14%", "10%", "20%"],
     scrollable: false,
   },
   {
@@ -880,12 +902,6 @@ const topBoardFilters = {
   rateMax: "不限",
 } as const;
 
-const auxChartTabs: Array<{ id: AuxChartTab; label: string }> = [
-  { id: "ncd", label: "NCD" },
-  { id: "institution-repo", label: "分机构回购" },
-  { id: "fund-structure", label: "机构资金结构" },
-];
-
 const overlayProductOptions: Array<{ id: OverlayProduct; label: string }> = [
   { id: "none", label: "不叠加" },
   { id: "dr007", label: "DR007" },
@@ -902,8 +918,9 @@ const compareProductOptions: Array<{ id: CompareProduct; label: string }> = [
 ];
 
 const rightLowerTabs: Array<{ id: RightLowerTab; label: string }> = [
-  { id: "cfets", label: "CFETS日报统计" },
-  { id: "fund-structure", label: "机构资金结构" },
+  { id: "matrix", label: "市场公开信息" },
+  { id: "inst", label: "机构分期限统计" },
+  { id: "bond", label: "机构分债券统计" },
 ];
 
 const trendModeTabs: Array<{ id: TrendMode; label: string }> = [
@@ -912,22 +929,10 @@ const trendModeTabs: Array<{ id: TrendMode; label: string }> = [
   { id: "comparison", label: "对比" },
 ];
 
-const trendRateSeries = [
-  1.932, 1.914, 1.923, 1.941, 1.937, 1.916, 1.908, 1.907, 1.906, 1.935, 1.905,
-  1.924, 1.921, 1.911, 1.884, 1.906, 1.908, 1.909, 1.884, 1.911, 1.897, 1.883,
-  1.859, 1.839, 1.831, 1.85, 1.832, 1.87, 1.878, 1.905, 1.925, 1.918, 1.904,
-  1.879, 1.876, 1.872, 1.891, 1.906, 1.905, 1.879, 1.917, 1.923, 1.944, 1.933,
-  1.948, 1.947, 1.959, 1.943, 1.975, 2.0, 2.014, 2.01, 1.999, 2.001, 2.027,
-  2.031, 2.038, 2.058, 2.028, 2.017,
-] as const;
-
-const trendVolumeSeries = [
-  880, 460, 420, 980, 1050, 780, 1320, 1540, 1210, 470, 1660, 1100, 980, 1370,
-  760, 1600, 1420, 310, 340, 1030, 470, 1040, 620, 1320, 740, 1580, 1200, 980,
-  960, 640, 360, 510, 570, 1020, 480, 1030, 460, 450, 1700, 620, 460, 1110, 980,
-  760, 890, 1180, 430, 1010, 480, 980, 460, 990, 300, 1090, 380, 1540, 320,
-  1190, 810, 1040,
-] as const;
+const trendRateSeries = randomWalk(2.017, 60, 0.02, 11);
+const trendVolumeSeries = randomWalk(1040, 60, 220, 12).map((v) =>
+  Math.round(v),
+);
 
 const trendVolumeColors = trendVolumeSeries.map((_, index) =>
   index % 3 === 0 || index % 5 === 0 ? "#ff8a26" : "#22c1dc",
@@ -948,18 +953,10 @@ const trendAxisLabels = [
 const trendPriceTicks = [2.107, 2.028, 1.948, 1.868] as const;
 const trendVolumeTicks = ["2k", "1k", "900", "450", "0"] as const;
 
-const intradaySeries = [
-  1.948, 1.932, 1.956, 1.921, 1.967, 1.938, 1.972, 1.925, 1.953, 1.984, 1.942,
-  1.904, 1.975, 1.913, 1.992, 1.889, 1.936, 1.964, 1.903, 1.976, 1.919, 1.993,
-  1.926, 1.948, 1.969, 1.911, 1.954, 1.886, 1.975, 1.907, 2.004, 1.963, 1.926,
-  1.988, 1.917, 2.009, 1.931, 1.974, 1.936, 1.999,
-] as const;
-
-const intradayVolumeSeries = [
-  120, 68, 52, 88, 160, 102, 96, 210, 740, 360, 420, 510, 580, 760, 210, 190,
-  120, 86, 74, 132, 248, 184, 226, 288, 344, 192, 168, 141, 198, 902, 334, 248,
-  210, 162, 144, 126, 98, 76, 44, 28,
-] as const;
+const intradaySeries = randomWalk(1.979, 40, 0.012, 13);
+const intradayVolumeSeries = randomWalk(200, 40, 90, 14).map((v) =>
+  Math.round(v),
+);
 
 const intradayTimeLabels = [
   "09:30",
@@ -986,13 +983,14 @@ const historicalCloseDatasets: Record<
     volume: readonly number[];
   }
 > = {
-  "5d": {
-    labels: ["4/22", "4/23", "4/24", "4/25", "4/28"],
-    close: [1.18, 1.31, 1.15, 1.38, 1.22],
-    volume: [1320, 980, 2260, 1180, 1920],
-  },
-  "1m": {
-    labels: [
+  "5d": (() => {
+    const labels = ["4/22", "4/23", "4/24", "4/25", "4/28"];
+    const close = randomWalk(1.28, 5, 0.05, 1);
+    const volume = randomWalk(1620, 5, 180, 2).map((v) => Math.round(v));
+    return { labels, close, volume };
+  })(),
+  "1m": (() => {
+    const labels = [
       "3/28",
       "3/29",
       "3/30",
@@ -1021,18 +1019,11 @@ const historicalCloseDatasets: Record<
       "4/24",
       "4/25",
       "4/28",
-    ],
-    close: [
-      1.214, 1.238, 1.192, 1.256, 1.189, 1.247, 1.178, 1.269, 1.198, 1.22,
-      1.251, 1.188, 1.272, 1.203, 1.237, 1.264, 1.185, 1.246, 1.208, 1.277,
-      1.194, 1.259, 1.182, 1.281, 1.212, 1.233, 1.268, 1.206,
-    ],
-    volume: [
-      980, 1460, 910, 1820, 1080, 1720, 1180, 1960, 940, 1310, 2020, 1240, 1890,
-      1430, 1970, 1490, 1160, 1680, 1190, 1850, 1330, 2110, 1080, 1930, 1520,
-      1770, 1640, 1910,
-    ],
-  },
+    ];
+    const close = randomWalk(1.236, 28, 0.003, 3);
+    const volume = randomWalk(1710, 28, 140, 4).map((v) => Math.round(v));
+    return { labels, close, volume };
+  })(),
   "6m": buildSixMonthDailyDataset(),
 };
 
@@ -1050,18 +1041,13 @@ const cfetsDetailRows = [
   ["非银需求", "偏强", "隔夜至 14D 活跃"],
 ] as const;
 
-const ncdTrendSeries = [
-  1.94, 1.95, 1.96, 1.97, 1.98, 1.97, 1.99, 2.0, 1.99, 2.01, 2.02, 2.01, 2.02,
-  2.03,
-] as const;
-const ncdThreeMonthSeries = [
-  1.99, 2.0, 2.01, 2.02, 2.03, 2.02, 2.03, 2.04, 2.05, 2.05, 2.06, 2.05, 2.06,
-  2.07,
-] as const;
-const ncdOneYearSeries = [
-  2.08, 2.08, 2.09, 2.09, 2.1, 2.09, 2.1, 2.11, 2.11, 2.12, 2.12, 2.11, 2.12,
-  2.13,
-] as const;
+const ncdTrendSeries = randomWalk(2.03, 14, 0.015, 15);
+const ncdThreeMonthSeries = randomWalk(2.07, 14, 0.015, 16);
+const ncdOneYearSeries = randomWalk(2.13, 14, 0.015, 17);
+const ncdSecondaryGov6m = randomWalk(1.98, 130, 0.006, 40);
+const ncdSecondaryAAA6m = randomWalk(2.03, 130, 0.006, 41);
+const ncdSecondaryAAPlus6m = randomWalk(2.08, 130, 0.007, 42);
+const ncdSecondaryAA6m = randomWalk(2.13, 130, 0.007, 43);
 const auxChartLabels = [
   "4/9",
   "4/10",
@@ -1094,6 +1080,429 @@ const ncdTableRows = [
   ["9M", "2.14%", "0", "2.11%", "10:53:27"],
   ["1Y", "2.13%", "-1", "2.10%", "10:53:27"],
 ] as const;
+
+type NcdPeriod = "1M" | "3M" | "6M" | "9M" | "1Y";
+const ncdPrimaryPeriods: NcdPeriod[] = ["1M", "3M", "6M", "9M", "1Y"];
+const NCD_PERIOD_OFFSET: Record<NcdPeriod, number> = {
+  "1M": 0,
+  "3M": 0.1,
+  "6M": 0.2,
+  "9M": 0.25,
+  "1Y": 0.28,
+};
+
+const ncdPrimaryGovBase = [
+  1.96, 1.95, 1.96, 1.97, 1.96, 1.97, 1.97, 1.98, 1.97, 1.98, 1.99, 1.98, 1.99,
+  2.0,
+];
+const ncdPrimaryAAABase = [
+  2.0, 2.0, 2.01, 2.02, 2.01, 2.02, 2.02, 2.03, 2.03, 2.04, 2.04, 2.03, 2.05,
+  2.05,
+];
+const ncdPrimaryAAPlsBase = [
+  2.05, 2.04, 2.06, 2.06, 2.06, 2.07, 2.07, 2.08, 2.08, 2.09, 2.09, 2.09, 2.1,
+  2.1,
+];
+const ncdPrimaryAABase = [
+  2.1, 2.1, 2.11, 2.12, 2.11, 2.12, 2.12, 2.13, 2.13, 2.14, 2.14, 2.14, 2.15,
+  2.15,
+];
+
+type NcdTrendRange = "14d" | "1m" | "3m" | "6m";
+const NCD_TREND_COUNTS: Record<NcdTrendRange, number> = {
+  "14d": 14,
+  "1m": 22,
+  "3m": 65,
+  "6m": 130,
+};
+const ncdTrendRangeTabs: Array<{ id: NcdTrendRange; label: string }> = [
+  { id: "14d", label: "14D" },
+  { id: "1m", label: "1M" },
+  { id: "3m", label: "3M" },
+  { id: "6m", label: "6M" },
+];
+
+// 6M (130 pts) base series — last point anchored to 14d series tail
+const ncdPrimaryGovBase6m = randomWalk(2.0, 130, 0.006, 20);
+const ncdPrimaryAAABase6m = randomWalk(2.05, 130, 0.006, 21);
+const ncdPrimaryAAPlsBase6m = randomWalk(2.1, 130, 0.007, 22);
+const ncdPrimaryAABase6m = randomWalk(2.15, 130, 0.007, 23);
+const ncdTrendDates6m = generateTradingDates("2026-01-04", 130);
+
+function shiftSeries(base: number[], offset: number): number[] {
+  return base.map((v) => parseFloat((v + offset).toFixed(4)));
+}
+
+type NcdPrimaryRow = {
+  name: string;
+  rate: string;
+  change?: string;
+  marker?: boolean;
+};
+type NcdPrimaryGroup = { label: string; rows: NcdPrimaryRow[] };
+
+const ncdPrimary1MGroups: NcdPrimaryGroup[] = [
+  {
+    label: "国有/股份制",
+    rows: [
+      { name: "浦发银行", rate: "1.320" },
+      { name: "渤海银行", rate: "1.330" },
+    ],
+  },
+  {
+    label: "AAA",
+    rows: [
+      { name: "成都银行", rate: "1.300" },
+      { name: "哈尔滨银行", rate: "1.300" },
+      { name: "宁波银行", rate: "1.315" },
+      { name: "桂林银行", rate: "1.320" },
+      { name: "渝农商行", rate: "1.325", change: "+2.5" },
+    ],
+  },
+  {
+    label: "AA+",
+    rows: [
+      { name: "南粤银行", rate: "1.310" },
+      { name: "江门农商行", rate: "1.330" },
+      { name: "富民银行", rate: "1.500", marker: true },
+    ],
+  },
+  {
+    label: "AA",
+    rows: [
+      { name: "威海银行", rate: "1.380", change: "+5.0" },
+      { name: "蒙商银行", rate: "1.420" },
+    ],
+  },
+];
+
+type NcdAllPeriodCell = {
+  name: string;
+  rate: string;
+  change?: string;
+  limitNonBank?: boolean;
+};
+type NcdAllPeriodGroup = {
+  label: string;
+  cells: Record<NcdPeriod, NcdAllPeriodCell[]>;
+};
+
+const ncdColHeaders: Record<
+  NcdPeriod,
+  { dow: string; date: string; count?: string }
+> = {
+  "1M": { dow: "周一", date: "26-06-08" },
+  "3M": { dow: "周六", date: "26-08-08", count: "2/2" },
+  "6M": { dow: "周日", date: "26-11-08", count: "1/1" },
+  "9M": { dow: "周一", date: "27-02-08", count: "7/4" },
+  "1Y": { dow: "周六", date: "27-05-08", count: "2/2" },
+};
+
+const ncdAllPeriodsData: NcdAllPeriodGroup[] = [
+  {
+    label: "国有/股份制",
+    cells: {
+      "1M": [],
+      "3M": [
+        { name: "浦发银行", rate: "1.33" },
+        { name: "渤海银行", rate: "1.36" },
+      ],
+      "6M": [{ name: "渤海银行", rate: "1.41" }],
+      "9M": [{ name: "渤海银行", rate: "1.41" }],
+      "1Y": [{ name: "渤海银行", rate: "1.46" }],
+    },
+  },
+  {
+    label: "AAA",
+    cells: {
+      "1M": [
+        { name: "成都银行", rate: "1.300" },
+        { name: "哈尔滨银行", rate: "1.300" },
+        { name: "宁波银行", rate: "1.315" },
+        { name: "桂林银行", rate: "1.320" },
+        { name: "渝农商行", rate: "1.325", change: "+2.5" },
+      ],
+      "3M": [
+        { name: "成都银行", rate: "1.350" },
+        { name: "桂林银行", rate: "1.360" },
+        { name: "唐山银行", rate: "1.360" },
+        { name: "日照银行", rate: "1.360" },
+        { name: "大连银行", rate: "1.390" },
+        { name: "富滇银行", rate: "1.390" },
+        { name: "哈尔滨银行", rate: "1.390" },
+      ],
+      "6M": [
+        { name: "南京银行", rate: "1.390" },
+        { name: "徽商银行", rate: "1.400" },
+        { name: "九江银行", rate: "1.400" },
+        { name: "成都银行", rate: "1.400" },
+        { name: "广州农商行", rate: "1.410" },
+        { name: "宁波银行", rate: "1.420" },
+        { name: "富滇银行", rate: "1.420" },
+        { name: "桂林银行", rate: "1.420" },
+        { name: "唐山银行", rate: "1.420" },
+        { name: "哈尔滨银行", rate: "1.430" },
+        { name: "大连银行", rate: "1.430" },
+      ],
+      "9M": [
+        { name: "徽商银行", rate: "1.430" },
+        { name: "南京银行", rate: "1.430" },
+        { name: "广州农商行", rate: "1.430" },
+        { name: "成都银行", rate: "1.440" },
+        { name: "唐山银行", rate: "1.440" },
+        { name: "汉口银行", rate: "1.440" },
+        { name: "桂林银行", rate: "1.440" },
+        { name: "日照银行", rate: "1.450" },
+        { name: "宁波银行", rate: "1.450" },
+        { name: "富滇银行", rate: "1.460" },
+        { name: "大连银行", rate: "1.460" },
+        { name: "哈尔滨银行", rate: "1.460" },
+      ],
+      "1Y": [
+        { name: "广州农商行", rate: "1.450" },
+        { name: "南京银行", rate: "1.450" },
+        { name: "徽商银行", rate: "1.450" },
+        { name: "九江银行", rate: "1.460" },
+        { name: "唐山银行", rate: "1.460" },
+        { name: "汉口银行", rate: "1.460" },
+        { name: "成都银行", rate: "1.460" },
+        { name: "桂林银行", rate: "1.460" },
+        { name: "宁波银行", rate: "1.460" },
+        { name: "东莞银行", rate: "1.465" },
+        { name: "杭州银行", rate: "1.470" },
+        { name: "日照银行", rate: "1.470" },
+        { name: "大连银行", rate: "1.480" },
+        { name: "哈尔滨银行", rate: "1.480" },
+        { name: "富滇银行", rate: "1.480" },
+        { name: "渝农商行", rate: "1.480", limitNonBank: true },
+      ],
+    },
+  },
+  {
+    label: "AA+",
+    cells: {
+      "1M": [
+        { name: "南粤银行", rate: "1.310" },
+        { name: "江门农商行", rate: "1.330" },
+        { name: "东营银行", rate: "1.350" },
+        { name: "廊坊银行", rate: "1.360" },
+        { name: "绍兴银行", rate: "1.370" },
+        { name: "台州银行", rate: "1.375" },
+        { name: "温州银行", rate: "1.380" },
+        { name: "广州银行", rate: "1.385" },
+        { name: "贵阳银行", rate: "1.390" },
+        { name: "郑州银行", rate: "1.395" },
+        { name: "青岛农商行", rate: "1.400" },
+        { name: "无锡农商行", rate: "1.410" },
+        { name: "苏农银行", rate: "1.420" },
+        { name: "江阴银行", rate: "1.430" },
+        { name: "张家港行", rate: "1.435" },
+        { name: "富民银行", rate: "1.500", limitNonBank: true },
+      ],
+      "3M": [
+        { name: "长沙农商行", rate: "1.380" },
+        { name: "江门农商行", rate: "1.410" },
+        { name: "秦农农商行", rate: "1.420" },
+        { name: "南粤银行", rate: "1.420" },
+        { name: "中山农商行", rate: "1.420" },
+        { name: "台州银行", rate: "1.425" },
+        { name: "广州银行", rate: "1.428" },
+        { name: "东营银行", rate: "1.430" },
+        { name: "廊坊银行", rate: "1.430" },
+        { name: "温州银行", rate: "1.432" },
+        { name: "南海农商行", rate: "1.435" },
+        { name: "绍兴银行", rate: "1.438" },
+        { name: "贵阳银行", rate: "1.438" },
+        { name: "张家口银行", rate: "1.440" },
+        { name: "顺德农商行", rate: "1.440" },
+        { name: "郑州银行", rate: "1.442" },
+        { name: "青岛农商行", rate: "1.445" },
+        { name: "无锡农商行", rate: "1.448" },
+        { name: "苏农银行", rate: "1.450" },
+        { name: "江阴银行", rate: "1.452" },
+        { name: "张家港行", rate: "1.455" },
+      ],
+      "6M": [
+        { name: "长沙农商行", rate: "1.410" },
+        { name: "秦农农商行", rate: "1.430" },
+        { name: "中山农商行", rate: "1.430" },
+        { name: "台州银行", rate: "1.432" },
+        { name: "东营银行", rate: "1.435" },
+        { name: "广州银行", rate: "1.438" },
+        { name: "江门农商行", rate: "1.440" },
+        { name: "南粤银行", rate: "1.440" },
+        { name: "廊坊银行", rate: "1.440" },
+        { name: "温州银行", rate: "1.442" },
+        { name: "南海农商行", rate: "1.445" },
+        { name: "贵阳银行", rate: "1.448" },
+        { name: "顺德农商行", rate: "1.450" },
+        { name: "绍兴银行", rate: "1.450" },
+        { name: "张家口银行", rate: "1.450" },
+        { name: "郑州银行", rate: "1.452" },
+        { name: "青岛农商行", rate: "1.455" },
+        { name: "石嘴山银行", rate: "1.460" },
+        { name: "无锡农商行", rate: "1.460" },
+        { name: "苏农银行", rate: "1.462" },
+        { name: "江阴银行", rate: "1.465" },
+        { name: "张家港行", rate: "1.468" },
+      ],
+      "9M": [
+        { name: "长沙农商行", rate: "1.440" },
+        { name: "秦农农商行", rate: "1.440" },
+        { name: "新疆银行", rate: "1.450" },
+        { name: "中山农商行", rate: "1.450" },
+        { name: "台州银行", rate: "1.450" },
+        { name: "东营银行", rate: "1.450" },
+        { name: "广州银行", rate: "1.452" },
+        { name: "廊坊银行", rate: "1.455" },
+        { name: "温州银行", rate: "1.455" },
+        { name: "南海农商行", rate: "1.458" },
+        { name: "贵阳银行", rate: "1.460" },
+        { name: "江门农商行", rate: "1.460" },
+        { name: "顺德农商行", rate: "1.460" },
+        { name: "绍兴银行", rate: "1.462" },
+        { name: "长安银行", rate: "1.460", limitNonBank: true },
+        { name: "郑州银行", rate: "1.465" },
+        { name: "青岛农商行", rate: "1.468" },
+        { name: "石嘴山银行", rate: "1.470" },
+        { name: "无锡农商行", rate: "1.470" },
+        { name: "苏农银行", rate: "1.472" },
+        { name: "江阴银行", rate: "1.475" },
+        { name: "张家港行", rate: "1.478" },
+      ],
+      "1Y": [
+        { name: "长沙农商行", rate: "1.450" },
+        { name: "秦农农商行", rate: "1.450" },
+        { name: "南粤银行", rate: "1.460" },
+        { name: "台州银行", rate: "1.462" },
+        { name: "东营银行", rate: "1.465" },
+        { name: "广州银行", rate: "1.465" },
+        { name: "中山农商行", rate: "1.470" },
+        { name: "新疆银行", rate: "1.470" },
+        { name: "廊坊银行", rate: "1.470" },
+        { name: "温州银行", rate: "1.470" },
+        { name: "江门农商行", rate: "1.470" },
+        { name: "贵阳银行", rate: "1.472" },
+        { name: "南海农商行", rate: "1.472" },
+        { name: "顺德农商行", rate: "1.475" },
+        { name: "绍兴银行", rate: "1.478" },
+        { name: "郑州银行", rate: "1.478" },
+        { name: "长安银行", rate: "1.480", limitNonBank: true },
+        { name: "石嘴山银行", rate: "1.485" },
+        { name: "青岛农商行", rate: "1.485" },
+        { name: "无锡农商行", rate: "1.488" },
+        { name: "苏农银行", rate: "1.490" },
+        { name: "江阴银行", rate: "1.492" },
+        { name: "张家港行", rate: "1.495" },
+      ],
+    },
+  },
+  {
+    label: "AA",
+    cells: {
+      "1M": [
+        { name: "威海银行", rate: "1.380", change: "+5.0" },
+        { name: "蒙商银行", rate: "1.420" },
+        { name: "乌鲁木齐银行", rate: "1.450" },
+        { name: "齐商银行", rate: "1.460" },
+        { name: "葫芦岛银行", rate: "1.480" },
+        { name: "盐城银行", rate: "1.490" },
+        { name: "晋商银行", rate: "1.495" },
+        { name: "泸州银行", rate: "1.500" },
+        { name: "昆仑银行", rate: "1.505" },
+        { name: "宁夏银行", rate: "1.510" },
+        { name: "吉林银行", rate: "1.515" },
+        { name: "贵州银行", rate: "1.520" },
+        { name: "九台农商行", rate: "1.525" },
+        { name: "大庆银行", rate: "1.530" },
+        { name: "湖北银行", rate: "1.535" },
+      ],
+      "3M": [
+        { name: "威海银行", rate: "1.420" },
+        { name: "泰安银行", rate: "1.450" },
+        { name: "蒙商银行", rate: "1.460" },
+        { name: "乌鲁木齐银行", rate: "1.470" },
+        { name: "齐商银行", rate: "1.475" },
+        { name: "龙江银行", rate: "1.480" },
+        { name: "盐城银行", rate: "1.485" },
+        { name: "葫芦岛银行", rate: "1.490" },
+        { name: "晋商银行", rate: "1.492" },
+        { name: "赤峰银行", rate: "1.495" },
+        { name: "泸州银行", rate: "1.498" },
+        { name: "甘肃银行", rate: "1.500" },
+        { name: "昆仑银行", rate: "1.502" },
+        { name: "宁夏银行", rate: "1.505" },
+        { name: "吉林银行", rate: "1.508" },
+        { name: "贵州银行", rate: "1.510" },
+        { name: "九台农商行", rate: "1.515" },
+        { name: "大庆银行", rate: "1.518" },
+        { name: "湖北银行", rate: "1.520" },
+      ],
+      "6M": [
+        { name: "威海银行", rate: "1.450" },
+        { name: "泰安银行", rate: "1.470" },
+        { name: "乌鲁木齐银行", rate: "1.480" },
+        { name: "蒙商银行", rate: "1.480" },
+        { name: "齐商银行", rate: "1.485" },
+        { name: "盐城银行", rate: "1.490" },
+        { name: "龙江银行", rate: "1.500" },
+        { name: "晋商银行", rate: "1.500" },
+        { name: "葫芦岛银行", rate: "1.505" },
+        { name: "泸州银行", rate: "1.508" },
+        { name: "赤峰银行", rate: "1.510" },
+        { name: "甘肃银行", rate: "1.515" },
+        { name: "昆仑银行", rate: "1.518" },
+        { name: "宁夏银行", rate: "1.520" },
+        { name: "吉林银行", rate: "1.522" },
+        { name: "贵州银行", rate: "1.525" },
+        { name: "九台农商行", rate: "1.528" },
+        { name: "大庆银行", rate: "1.530" },
+        { name: "湖北银行", rate: "1.535" },
+      ],
+      "9M": [
+        { name: "威海银行", rate: "1.470" },
+        { name: "泰安银行", rate: "1.490" },
+        { name: "乌鲁木齐银行", rate: "1.495" },
+        { name: "蒙商银行", rate: "1.500" },
+        { name: "盐城银行", rate: "1.502" },
+        { name: "齐商银行", rate: "1.505" },
+        { name: "晋商银行", rate: "1.508" },
+        { name: "龙江银行", rate: "1.510" },
+        { name: "泸州银行", rate: "1.512" },
+        { name: "赤峰银行", rate: "1.520" },
+        { name: "甘肃银行", rate: "1.525" },
+        { name: "昆仑银行", rate: "1.528" },
+        { name: "宁夏银行", rate: "1.530" },
+        { name: "吉林银行", rate: "1.532" },
+        { name: "贵州银行", rate: "1.535" },
+        { name: "九台农商行", rate: "1.538" },
+        { name: "大庆银行", rate: "1.540" },
+        { name: "湖北银行", rate: "1.545" },
+      ],
+      "1Y": [
+        { name: "威海银行", rate: "1.490" },
+        { name: "泰安银行", rate: "1.510" },
+        { name: "乌鲁木齐银行", rate: "1.515" },
+        { name: "齐商银行", rate: "1.518" },
+        { name: "盐城银行", rate: "1.518" },
+        { name: "蒙商银行", rate: "1.520", change: "+2.5" },
+        { name: "晋商银行", rate: "1.522" },
+        { name: "龙江银行", rate: "1.525" },
+        { name: "泸州银行", rate: "1.525" },
+        { name: "葫芦岛银行", rate: "1.530" },
+        { name: "赤峰银行", rate: "1.535" },
+        { name: "甘肃银行", rate: "1.540" },
+        { name: "昆仑银行", rate: "1.542" },
+        { name: "宁夏银行", rate: "1.545" },
+        { name: "吉林银行", rate: "1.548" },
+        { name: "贵州银行", rate: "1.550" },
+        { name: "九台农商行", rate: "1.552" },
+        { name: "大庆银行", rate: "1.555" },
+        { name: "湖北银行", rate: "1.558" },
+      ],
+    },
+  },
+];
 const fundStructureBars = [
   [700, 560, 360, 180, 630, 480, 640],
   [760, 420, 420, 270, 780, 610, 820],
@@ -1129,14 +1538,24 @@ const fundStructureRangeTabs: Array<{ id: FundStructureRange; label: string }> =
     { id: "6m", label: "6M" },
   ];
 
-function generateFundStructureBars(count: number, seed: number): number[][] {
+function generateFundStructureBars(count: number, _seed: number): number[][] {
   const bars: number[][] = [];
   for (let i = 0; i < count; i++) {
     const row: number[] = [];
     for (let j = 0; j < fundStructureLegendItems.length; j++) {
-      const noise = ((i + 1) * 9301 + (j + 1) * 49297 + seed * 233280) % 233280;
-      const ratio = noise / 233280;
-      row.push(Math.round(180 + ratio * 900));
+      // 离散随机 + 偶尔大幅跳变
+      const r = Math.random();
+      let ratio: number;
+      if (r < 0.6) {
+        ratio = 0.2 + Math.random() * 0.6;
+      } else if (r < 0.9) {
+        ratio = 0.05 + Math.random() * 0.35;
+      } else {
+        ratio = 0.7 + Math.random() * 0.3;
+      }
+      // 引入时段间差异
+      const v = Math.round((180 + ratio * 900) * (0.7 + Math.random() * 0.6));
+      row.push(v);
     }
     bars.push(row);
   }
@@ -1176,6 +1595,136 @@ const fundStructureRangeData: Record<
   },
 };
 
+type SentimentPoint = {
+  label: string;
+  total: number;
+  bigBank: number;
+  smallBank: number;
+  nonBank: number;
+};
+
+function generateSentimentSeries(
+  count: number,
+  _seed: number,
+  base: number,
+  amp: number,
+): number[] {
+  const result: number[] = new Array(count);
+  result[0] = base + (Math.random() - 0.5) * amp;
+  for (let i = 1; i < count; i++) {
+    const r = Math.random();
+    let jump: number;
+    if (r < 0.6) {
+      jump = (Math.random() - 0.5) * amp * 0.4;
+    } else if (r < 0.9) {
+      jump = (Math.random() - 0.5) * amp * 1.2;
+    } else {
+      jump = (Math.random() - 0.5) * amp * 3;
+    }
+    result[i] = Math.max(
+      0,
+      Math.min(100, Math.round((result[i - 1] + jump) * 10) / 10),
+    );
+  }
+  return result;
+}
+
+const sentimentTrendData: SentimentPoint[] = (() => {
+  const dates = [
+    "04-07",
+    "04-08",
+    "04-09",
+    "04-10",
+    "04-11",
+    "04-13",
+    "04-14",
+    "04-15",
+    "04-16",
+    "04-17",
+    "04-20",
+    "04-21",
+    "04-22",
+    "04-23",
+    "04-24",
+    "04-27",
+    "04-28",
+    "04-29",
+    "04-30",
+    "05-07",
+  ];
+  const t = generateSentimentSeries(20, 1, 49.5, 2.8);
+  const b = generateSentimentSeries(20, 7, 47.2, 2.2);
+  const s = generateSentimentSeries(20, 13, 50.8, 2.5);
+  const n = generateSentimentSeries(20, 19, 49.0, 3.0);
+  return dates.map((label, i) => ({
+    label,
+    total: t[i],
+    bigBank: b[i],
+    smallBank: s[i],
+    nonBank: n[i],
+  }));
+})();
+
+const sentimentRealtimeData: SentimentPoint[] = (() => {
+  const labels: string[] = [];
+  for (let i = 0; i < 40; i++) {
+    const total = 9 * 60 + 30 + i * 6;
+    labels.push(
+      `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`,
+    );
+  }
+  const t = generateSentimentSeries(40, 3, 50.5, 1.5);
+  const b = generateSentimentSeries(40, 9, 47.5, 1.8);
+  const s = generateSentimentSeries(40, 15, 50.8, 1.3);
+  const n = generateSentimentSeries(40, 21, 49.2, 2.0);
+  return labels.map((label, i) => ({
+    label,
+    total: t[i],
+    bigBank: b[i],
+    smallBank: s[i],
+    nonBank: n[i],
+  }));
+})();
+
+function FloatingBall() {
+  const [pos, setPos] = useState({
+    x: window.innerWidth - 80,
+    y: window.innerHeight - 80,
+  });
+  const dragging = useRef(false);
+  const offset = useRef({ x: 0, y: 0 });
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    dragging.current = true;
+    offset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!dragging.current) return;
+    setPos({
+      x: e.clientX - offset.current.x,
+      y: e.clientY - offset.current.y,
+    });
+  };
+
+  const onPointerUp = () => {
+    dragging.current = false;
+  };
+
+  return (
+    <div
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      style={{ left: pos.x, top: pos.y }}
+      className="fixed z-[9999] flex h-16 w-16 cursor-grab select-none items-center justify-center rounded-full bg-blue-600/60 shadow-lg backdrop-blur active:cursor-grabbing"
+    >
+      <span className="text-xl font-bold text-white">42</span>
+    </div>
+  );
+}
+
 function App() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -1197,6 +1746,7 @@ function App() {
           <RightSidebar />
         </main>
       </div>
+      <FloatingBall />
     </div>
   );
 }
@@ -1204,36 +1754,38 @@ function App() {
 function TopBar({ currentTime }: { currentTime: Date }) {
   return (
     <header className="border-b border-[#1b2a42] bg-[#0d1726] px-4 py-2 shadow-[inset_0_-1px_0_rgba(74,101,140,0.18)]">
-      <div className="flex items-center gap-6">
-        <div className="text-[20px] font-semibold tracking-[0.04em] text-slate-50 shrink-0">
-          资金实时行情看板
-        </div>
-        <div className="flex flex-1 flex-wrap items-center justify-center gap-2 text-sm text-slate-400">
-          <FilterLabel>期限</FilterLabel>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {topBoardFilters.periods.map((item, index) => (
-              <ToolbarChip key={item} active={index === 0}>
-                {item}
-              </ToolbarChip>
-            ))}
+      <div className="flex items-center justify-between gap-6">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="text-[20px] font-semibold tracking-[0.04em] text-slate-50">
+            资金实时行情看板
           </div>
-          <FilterDivider />
-          <FilterLabel>金额</FilterLabel>
-          <RangeFilterField value={topBoardFilters.amountMin} />
-          <span className="text-slate-500">~</span>
-          <RangeFilterField value={topBoardFilters.amountMax} />
-          <span className="text-slate-500">亿</span>
-          <FilterDivider />
-          <FilterLabel>利率</FilterLabel>
-          <RangeFilterField value={topBoardFilters.rateMin} />
-          <span className="text-slate-500">~</span>
-          <RangeFilterField value={topBoardFilters.rateMax} />
-          <span className="text-slate-500">%</span>
+          <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400">
+            <FilterLabel>期限</FilterLabel>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {topBoardFilters.periods.map((item, index) => (
+                <ToolbarChip key={item} active={index === 0}>
+                  {item}
+                </ToolbarChip>
+              ))}
+            </div>
+            <FilterDivider />
+            <FilterLabel>金额</FilterLabel>
+            <RangeFilterField value={topBoardFilters.amountMin} />
+            <span className="text-slate-500">~</span>
+            <RangeFilterField value={topBoardFilters.amountMax} />
+            <span className="text-slate-500">亿</span>
+            <FilterDivider />
+            <FilterLabel>利率</FilterLabel>
+            <RangeFilterField value={topBoardFilters.rateMin} />
+            <span className="text-slate-500">~</span>
+            <RangeFilterField value={topBoardFilters.rateMax} />
+            <span className="text-slate-500">%</span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-3">
           <InfoChip label="DR007" value="2.15%" tone="alert" />
-          <InfoChip label="资金情绪" value="51 / 47 / 50 / 49" tone="neutral" />
+          <SentimentChipWithPopover />
           <StatusBadge>平衡</StatusBadge>
         </div>
       </div>
@@ -1261,6 +1813,7 @@ function LeftSummaryPanel() {
             rows: bankRateRows.map((row) => [
               row.institution,
               row.nonBankRate,
+              row.deltaNonBankBp,
               row.bankRate,
               row.deltaBp,
               row.updatedAt,
@@ -1284,9 +1837,27 @@ function LeftSummaryPanel() {
     value: string,
   ) {
     setDraftBankRateRows((current) =>
-      current.map((row, rowIndex) =>
-        rowIndex === index ? { ...row, [field]: value } : row,
-      ),
+      current.map((row, rowIndex) => {
+        if (rowIndex !== index) return row;
+        const updated = { ...row, [field]: value };
+        if (field === "bankRate") {
+          const cur = parseFloat(value.replace("%", ""));
+          const ref = parseFloat(row.refBankRate.replace("%", ""));
+          if (!isNaN(cur) && !isNaN(ref)) {
+            const bp = Math.round((cur - ref) * 100 * 10) / 10;
+            updated.deltaBp = bp > 0 ? `+${bp}` : String(bp);
+          }
+        }
+        if (field === "nonBankRate") {
+          const cur = parseFloat(value.replace("%", ""));
+          const ref = parseFloat(row.refNonBankRate.replace("%", ""));
+          if (!isNaN(cur) && !isNaN(ref)) {
+            const bp = Math.round((cur - ref) * 100 * 10) / 10;
+            updated.deltaNonBankBp = bp > 0 ? `+${bp}` : String(bp);
+          }
+        }
+        return updated;
+      }),
     );
   }
 
@@ -1295,7 +1866,11 @@ function LeftSummaryPanel() {
   }
 
   function saveBankRateRows() {
-    setBankRateRows(draftBankRateRows.map((row) => ({ ...row })));
+    const now = new Date();
+    const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+    setBankRateRows(
+      draftBankRateRows.map((row) => ({ ...row, updatedAt: time })),
+    );
     setIsBankEditorOpen(false);
   }
 
@@ -1352,7 +1927,7 @@ function LeftSummaryPanel() {
         ))}
         {exchangeRepoSection ? (
           <div className="flex min-h-0 flex-1 flex-col gap-3">
-            <div className="h-[284px] shrink-0 overflow-hidden">
+            <div className="h-[250px] shrink-0 overflow-hidden">
               <ExchangeRepoCard
                 title={exchangeRepoSection.title}
                 markets={exchangeRepoSection.markets}
@@ -1405,7 +1980,7 @@ function BankRateEditorModal({
                 当日大行价格手工输入
               </div>
               <div className="mt-1 text-xs text-slate-500">
-                按机构维护非银利率、银行利率、涨跌和更新时间。
+                按机构维护非银利率和银行利率，涨跌及更新时间自动计算。
               </div>
             </div>
             <button
@@ -1419,17 +1994,15 @@ function BankRateEditorModal({
         </div>
         <div className="px-5 py-4">
           <div className="overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
-            <div className="grid grid-cols-[1.1fr_1fr_1fr_0.9fr_1fr] border-b border-[#22324d] bg-[#111d30] px-4 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+            <div className="grid grid-cols-[1.4fr_1fr_1fr] border-b border-[#22324d] bg-[#111d30] px-4 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400">
               <span>机构</span>
               <span className="text-right">非银利率</span>
               <span className="text-right">银行利率</span>
-              <span className="text-right">涨跌bp</span>
-              <span className="text-right">更新时间</span>
             </div>
             {rows.map((row, index) => (
               <div
                 key={`${row.institution}-${index}`}
-                className={`grid grid-cols-[1.1fr_1fr_1fr_0.9fr_1fr] items-center gap-3 border-b border-[#162439] px-4 py-3 ${
+                className={`grid grid-cols-[1.4fr_1fr_1fr] items-center gap-3 border-b border-[#162439] px-4 py-3 ${
                   index % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
                 }`}
               >
@@ -1445,16 +2018,6 @@ function BankRateEditorModal({
                   align="right"
                   value={row.bankRate}
                   onChange={(value) => onChange(index, "bankRate", value)}
-                />
-                <ModalInput
-                  align="right"
-                  value={row.deltaBp}
-                  onChange={(value) => onChange(index, "deltaBp", value)}
-                />
-                <ModalInput
-                  align="right"
-                  value={row.updatedAt}
-                  onChange={(value) => onChange(index, "updatedAt", value)}
                 />
               </div>
             ))}
@@ -1509,53 +2072,174 @@ function ModalInput({
 }
 
 function LeftNcdCard() {
+  const [market, setMarket] = useState<"primary" | "secondary">("primary");
   const [mode, setMode] = useState<"trend" | "table">("trend");
+  const [period, setPeriod] = useState<NcdPeriod>("1M");
+  const [expanded, setExpanded] = useState(false);
 
-  return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
-      <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-sm font-semibold tracking-[0.02em] text-slate-50">
-            NCD
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              className={auxTabClass(mode === "trend")}
-              onClick={() => setMode("trend")}
-              type="button"
-            >
-              趋势图
-            </button>
-            <button
-              className={auxTabClass(mode === "table")}
-              onClick={() => setMode("table")}
-              type="button"
-            >
-              表格
-            </button>
-          </div>
-        </div>
+  const header = (onClose?: () => void) => (
+    <div className="flex items-center gap-2">
+      <div className="text-sm font-semibold tracking-[0.02em] text-slate-50">
+        NCD
       </div>
-      <div className="min-h-0 flex-1 overflow-hidden p-2">
-        {mode === "trend" ? (
-          <NcdTrendPanel compact />
-        ) : (
-          <div className="h-full min-h-0">
-            <StructuredTable
-              columns={["期限", "最新", "涨跌bp", "参考收益", "更新时间"]}
-              rows={ncdTableRows}
-              greenColumns={[1]}
-              deltaColumns={[2]}
-              fitToWidth
-              columnWidths={["14%", "18%", "16%", "22%", "30%"]}
-              compact
-              flush={false}
-              scrollY
-            />
+      <div className="flex items-center gap-1">
+        <button
+          className={auxTabClass(market === "primary")}
+          onClick={() => setMarket("primary")}
+          type="button"
+        >
+          一级
+        </button>
+        <button
+          className={auxTabClass(market === "secondary")}
+          onClick={() => setMarket("secondary")}
+          type="button"
+        >
+          二级
+        </button>
+      </div>
+      {market === "primary" && (
+        <>
+          <div className="mx-0.5 h-3 w-px bg-[#2a3f5f]" />
+          <div className="flex items-center gap-1">
+            {ncdPrimaryPeriods.map((p) => (
+              <button
+                key={p}
+                className={auxTabClass(period === p)}
+                onClick={() => setPeriod(p)}
+                type="button"
+              >
+                {p}
+              </button>
+            ))}
           </div>
+        </>
+      )}
+      <div className="ml-auto flex items-center gap-1">
+        <button
+          className={auxTabClass(mode === "trend")}
+          onClick={() => setMode("trend")}
+          type="button"
+        >
+          趋势图
+        </button>
+        <button
+          className={auxTabClass(mode === "table")}
+          onClick={() => setMode("table")}
+          type="button"
+        >
+          表格
+        </button>
+        {onClose ? (
+          <button
+            onClick={onClose}
+            type="button"
+            className="ml-1 rounded p-0.5 text-slate-400 hover:bg-[#1e3358] hover:text-slate-100"
+            title="收起"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path
+                d="M2 2l4 4M2 2h3M2 2v3M12 12l-4-4M12 12H9M12 12V9"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        ) : (
+          <button
+            onClick={() => setExpanded(true)}
+            type="button"
+            className="ml-1 rounded p-0.5 text-slate-400 hover:bg-[#1e3358] hover:text-slate-100"
+            title="展开"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path
+                d="M5 2H2v3M2 2l4 4M9 12h3V9M12 12l-4-4"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
         )}
       </div>
-    </section>
+    </div>
+  );
+
+  const body =
+    market === "primary" ? (
+      mode === "trend" ? (
+        <NcdPrimaryTrendPanel period={period} />
+      ) : (
+        <NcdPrimaryTable period={period} />
+      )
+    ) : mode === "trend" ? (
+      <NcdTrendPanel compact />
+    ) : (
+      <div className="h-full min-h-0">
+        <StructuredTable
+          columns={["期限", "最新", "涨跌bp", "参考收益", "更新时间"]}
+          rows={ncdTableRows}
+          greenColumns={[1]}
+          deltaColumns={[2]}
+          fitToWidth
+          columnWidths={["14%", "18%", "16%", "22%", "30%"]}
+          compact
+          flush={false}
+          scrollY
+        />
+      </div>
+    );
+
+  return (
+    <>
+      <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
+        <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-2.5">
+          {header()}
+        </div>
+        <div className="min-h-0 flex-1 overflow-hidden p-2">{body}</div>
+      </section>
+      {expanded && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc]"
+          onClick={() => setExpanded(false)}
+        >
+          <div
+            className="relative flex h-[85vh] w-[90vw] max-w-[1400px] flex-col overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setExpanded(false)}
+              type="button"
+              className="absolute right-3 top-3 z-10 rounded p-1 text-slate-400 hover:bg-[#1e3358] hover:text-slate-100"
+              title="收起"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path
+                  d="M2 2l4 4M2 2h3M2 2v3M12 12l-4-4M12 12H9M12 12V9"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+            <div className="min-h-0 flex-1 overflow-hidden p-3">
+              {market === "primary" && mode === "table" ? (
+                <NcdPrimaryExpandedTable />
+              ) : market === "primary" && mode === "trend" ? (
+                <NcdExpandedDualView period={period} />
+              ) : (
+                body
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -1567,22 +2251,10 @@ function ExchangeRepoCard({
   markets: ExchangeMarketSplitSection["markets"];
 }) {
   const [activeView, setActiveView] = useState<"core" | "sse" | "szse">("core");
-
-  // 准备三种视图的数据，避免切换时重新计算
-  const coreRows = React.useMemo(
-    () => markets.flatMap((market) => market.rows.slice(0, 2)),
-    [markets],
-  );
-
-  const sseRows = React.useMemo(
-    () => markets.find((m) => m.id === "sse")?.rows || [],
-    [markets],
-  );
-
-  const szseRows = React.useMemo(
-    () => markets.find((m) => m.id === "szse")?.rows || [],
-    [markets],
-  );
+  const filteredMarkets =
+    activeView === "core"
+      ? markets
+      : markets.filter((market) => market.id === activeView);
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
@@ -1616,34 +2288,36 @@ function ExchangeRepoCard({
         </div>
       </div>
       <div className="min-h-0 flex-1 p-2">
-        {/* 使用 CSS display 控制显示，而非条件渲染，避免 DOM 重建 */}
-        <div className="h-full min-h-0 grid grid-cols-1">
-          <div
-            style={{ display: activeView === "core" ? "grid" : "none" }}
-            className="h-full min-h-0"
-          >
-            <ExchangeCoreCompactBlock rows={coreRows} rowCount={5} />
+        {activeView === "core" ? (
+          <ExchangeCoreCompactBoard markets={markets} />
+        ) : (
+          <div className="grid h-full min-h-0 grid-cols-1">
+            {filteredMarkets.map((market) => (
+              <ExchangeMarketTable
+                key={`${activeView}-${market.id}`}
+                market={market}
+                rows={market.rows}
+              />
+            ))}
           </div>
-          <div
-            style={{ display: activeView === "sse" ? "grid" : "none" }}
-            className="h-full min-h-0"
-          >
-            <ExchangeMarketTable market={markets[0]} rows={sseRows} />
-          </div>
-          <div
-            style={{ display: activeView === "szse" ? "grid" : "none" }}
-            className="h-full min-h-0"
-          >
-            <ExchangeMarketTable market={markets[1]} rows={szseRows} />
-          </div>
-        </div>
+        )}
       </div>
     </section>
   );
 }
-// 交易所表格统一列宽配置
-const EXCHANGE_COLUMN_WIDTHS = ["0.7fr", "1fr", "1fr", "0.8fr"] as const;
-const EXCHANGE_COLUMN_PADDING = "px-4" as const;
+
+function ExchangeCoreCompactBoard({
+  markets,
+}: {
+  markets: ExchangeMarketSplitSection["markets"];
+}) {
+  const combinedRows = markets.flatMap((market) => market.rows.slice(0, 2));
+  return (
+    <div className="h-full min-h-0">
+      <ExchangeCoreCompactBlock rows={combinedRows} rowCount={5} />
+    </div>
+  );
+}
 
 function ExchangeCoreCompactBlock({
   rows,
@@ -1657,45 +2331,54 @@ function ExchangeCoreCompactBlock({
     (_, i) => rows[i] ?? null,
   );
   return (
-    <div
-      className="grid h-full min-h-0 overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]"
-      style={{ gridTemplateRows: `auto repeat(${rowCount}, minmax(0, 1fr))` }}
-    >
-      <div
-        className={`grid border-b border-[#22324d] bg-[#111d30] py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400`}
-        style={{ gridTemplateColumns: EXCHANGE_COLUMN_WIDTHS.join(" ") }}
-      >
-        <span className={`${EXCHANGE_COLUMN_PADDING} text-left`}>期限</span>
-        <span className={`${EXCHANGE_COLUMN_PADDING} text-left`}>品种</span>
-        <span className={`${EXCHANGE_COLUMN_PADDING} text-right`}>最新</span>
-        <span className={`${EXCHANGE_COLUMN_PADDING} text-right`}>涨跌bp</span>
-      </div>
-      {paddedRows.map((row, rowIndex) => (
-        <div
-          key={row ? `${row[1]}-${rowIndex}` : `empty-${rowIndex}`}
-          className={`grid items-center ${EXCHANGE_COLUMN_PADDING} text-xs ${
-            rowIndex > 0 ? "border-t border-[#162439]" : ""
-          }`}
-          style={{ gridTemplateColumns: EXCHANGE_COLUMN_WIDTHS.join(" ") }}
-        >
-          {row ? (
-            <>
-              <span className="font-semibold text-slate-100">{row[0]}</span>
-              <span className="font-semibold text-slate-100">{row[1]}</span>
-              <span className="text-right font-semibold text-emerald-300">
-                {row[2]}
-              </span>
-              <span
-                className={`text-right ${cellClassName(row[3], 1, [], [], [1], [])}`}
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
+      <table className="w-full table-fixed shrink-0">
+        <thead>
+          <tr className="border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
+            <th className="w-[18%] px-2 py-1.5 text-left font-medium">期限</th>
+            <th className="w-[30%] px-2 py-1.5 text-left font-medium">品种</th>
+            <th className="w-[28%] px-2 py-1.5 text-right font-medium">最新</th>
+            <th className="w-[24%] px-2 py-1.5 text-right font-medium">
+              涨跌bp
+            </th>
+          </tr>
+        </thead>
+      </table>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <table className="w-full table-fixed">
+          <tbody>
+            {paddedRows.map((row, rowIndex) => (
+              <tr
+                key={row ? `${row[1]}-${rowIndex}` : `empty-${rowIndex}`}
+                className={`text-xs ${
+                  rowIndex > 0 ? "border-t border-[#162439]" : ""
+                }`}
               >
-                {row[3]}
-              </span>
-            </>
-          ) : (
-            <span className="col-span-4" />
-          )}
-        </div>
-      ))}
+                {row ? (
+                  <>
+                    <td className="w-[18%] px-2 py-1.5 font-semibold text-slate-100">
+                      {row[0]}
+                    </td>
+                    <td className="w-[30%] px-2 py-1.5 font-semibold text-slate-100">
+                      {row[1]}
+                    </td>
+                    <td className="w-[28%] px-2 py-1.5 text-right font-semibold text-emerald-300">
+                      {row[2]}
+                    </td>
+                    <td
+                      className={`w-[24%] px-2 py-1.5 text-right ${cellClassName(row[3], 1, [], [], [1], [])}`}
+                    >
+                      {row[3]}
+                    </td>
+                  </>
+                ) : (
+                  <td colSpan={4} />
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -1710,59 +2393,72 @@ function ExchangeMarketTable({
   const displayRows = rows ?? market.rows;
 
   return (
-    <div
-      className="grid h-full min-h-0 min-w-0 overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]"
-      style={{
-        gridTemplateRows: `auto repeat(${displayRows.length}, minmax(0, 1fr))`,
-      }}
-    >
-      <div
-        className={`border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400`}
-        style={{ gridTemplateColumns: EXCHANGE_COLUMN_WIDTHS.join(" ") }}
-      >
-        {market.columns.map((column, index) => (
-          <div
-            key={`${market.title}-${column}`}
-            className={`${EXCHANGE_COLUMN_PADDING} py-1.5 ${
-              index === 0 ? "text-left" : "text-right"
-            } ${index === 1 ? "truncate" : ""}`}
-          >
-            {column}
-          </div>
-        ))}
-      </div>
-      {displayRows.map((row, rowIndex) => (
-        <div
-          key={`${market.title}-${row[0]}-${rowIndex}`}
-          className={`grid min-h-0 border-b border-[#162439] text-xs ${
-            rowIndex % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
-          }`}
-          style={{ gridTemplateColumns: EXCHANGE_COLUMN_WIDTHS.join(" ") }}
-        >
-          {row.map((cell, cellIndex) => (
-            <div
-              key={`${market.title}-${row[0]}-${cellIndex}`}
-              className={`flex min-h-0 items-center ${EXCHANGE_COLUMN_PADDING} py-1.5 ${
-                cellIndex === 0 ? "justify-start" : "justify-end"
-              } ${cellIndex === 1 ? "truncate" : ""}`}
-              title={cell}
-            >
-              <span
-                className={cellClassName(
-                  cell,
-                  cellIndex,
-                  market.greenColumns,
-                  [],
-                  market.deltaColumns,
-                  [],
-                )}
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
+      <table className="w-full table-fixed shrink-0">
+        <thead>
+          <tr className="border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
+            {market.columns.map((column, index) => (
+              <th
+                key={`${market.title}-${column}`}
+                className={`px-2 py-1.5 font-medium ${
+                  index === 0
+                    ? "w-[18%] text-left"
+                    : index === 1
+                      ? "w-[30%] text-left"
+                      : index === 2
+                        ? "w-[28%] text-right"
+                        : "w-[24%] text-right"
+                }`}
               >
-                {cell}
-              </span>
-            </div>
-          ))}
-        </div>
-      ))}
+                {column}
+              </th>
+            ))}
+          </tr>
+        </thead>
+      </table>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <table className="w-full table-fixed">
+          <tbody>
+            {displayRows.map((row, rowIndex) => (
+              <tr
+                key={`${market.title}-${row[0]}-${rowIndex}`}
+                className={`border-b border-[#162439] text-xs ${
+                  rowIndex % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
+                }`}
+              >
+                {row.map((cell, cellIndex) => (
+                  <td
+                    key={`${market.title}-${row[0]}-${cellIndex}`}
+                    className={`px-2 py-1.5 ${
+                      cellIndex === 0
+                        ? "w-[18%] text-left"
+                        : cellIndex === 1
+                          ? "w-[30%] text-left truncate"
+                          : cellIndex === 2
+                            ? "w-[28%] text-right"
+                            : "w-[24%] text-right"
+                    }`}
+                    title={cell}
+                  >
+                    <span
+                      className={cellClassName(
+                        cell,
+                        cellIndex,
+                        market.greenColumns,
+                        [],
+                        market.deltaColumns,
+                        [],
+                      )}
+                    >
+                      {cell}
+                    </span>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -1985,18 +2681,8 @@ function RepoQuoteSectionBoard({
               <span className="text-right text-xs font-semibold text-amber-300">
                 {group.averageRate}
               </span>
-              <span
-                className="truncate pl-3 text-right text-xs text-slate-300"
-                title={summarizeAccountRequirements(group.rows)}
-              >
-                {summarizeAccountRequirements(group.rows)}
-              </span>
-              <span
-                className="truncate pl-3 text-right text-xs text-slate-300"
-                title={group.collateral}
-              >
-                {group.collateral}
-              </span>
+              <span aria-hidden="true" />
+              <span aria-hidden="true" />
               <span />
             </div>
             {displayLevel === 1 ? (
@@ -2170,7 +2856,7 @@ function RankBadge({ rank }: { rank: QuoteRank }) {
 function RightSidebar() {
   const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
   const [historyRange, setHistoryRange] = useState<HistoryRange>("5d");
-  const [rightLowerTab, setRightLowerTab] = useState<RightLowerTab>("cfets");
+  const [rightLowerTab, setRightLowerTab] = useState<RightLowerTab>("matrix");
   const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
 
   return (
@@ -2232,8 +2918,9 @@ function RightLowerPanel({
         ))}
       </div>
       <div className="min-h-0 overflow-hidden p-2">
-        {activeTab === "cfets" ? <CfetsDailyPanel /> : null}
-        {activeTab === "fund-structure" ? <FundStructurePanel /> : null}
+        {activeTab === "matrix" && <CfetsMatrixPanel includeDaily />}
+        {activeTab === "inst" && <CfetsInstPanel />}
+        {activeTab === "bond" && <CfetsBondPanel />}
       </div>
     </section>
   );
@@ -2250,6 +2937,15 @@ function IntradayPanel({
     overlayProduct === "none"
       ? null
       : buildOverlaySeries(intradaySeries, overlayProduct);
+  const volumeMax = Math.max(...intradayVolumeSeries);
+  const barValues = overlaySeries
+    ? intradaySeries.map((value, index) =>
+        Number(((value - overlaySeries[index]) * 100).toFixed(1)),
+      )
+    : intradayVolumeSeries;
+  const barMax = overlaySeries
+    ? Math.max(...(barValues as number[]).map(Math.abs), 0.1)
+    : volumeMax;
   const min = Math.min(...intradaySeries, ...(overlaySeries ?? [])) - 0.01;
   const max = Math.max(...intradaySeries, ...(overlaySeries ?? [])) + 0.01;
   const mainPath = buildLinePath(intradaySeries, 680, 178, min, max);
@@ -2257,6 +2953,9 @@ function IntradayPanel({
   const overlayPath = overlaySeries
     ? buildLinePath(overlaySeries, 680, 178, min, max)
     : null;
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(intradaySeries.length);
+  const ti = tooltipState?.index ?? null;
 
   return (
     <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
@@ -2264,7 +2963,7 @@ function IntradayPanel({
         <div className="flex items-center gap-3">
           <div className="text-sm font-semibold text-slate-100">当日分时</div>
           <div className="rounded border border-[#264167] bg-[#13223a] px-1.5 py-0.5 text-[10px] font-medium text-blue-300">
-            R001
+            DR001
           </div>
           <OverlayProductSelect
             value={overlayProduct}
@@ -2274,17 +2973,22 @@ function IntradayPanel({
         <div className="text-xs text-slate-400">
           {overlayProduct !== "none"
             ? "盘中加权利率 / 利差(bp)"
-            : "盘中加权利率"}
+            : "盘中加权利率 / 成交量"}
         </div>
       </div>
-      <div className="grid min-h-0 grid-rows-[1fr_auto] px-3 pb-2 pt-2">
+      <div className="grid min-h-0 grid-rows-[68fr_22fr_auto] px-3 pb-2 pt-2">
         <div className="grid min-h-0 grid-cols-[3rem_1fr]">
           <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
             {buildAxisLabels(min, max, 4).map((tick) => (
               <div key={tick}>{tick}</div>
             ))}
           </div>
-          <div className="relative min-h-0">
+          <div
+            ref={containerRef}
+            className="relative min-h-0"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
             {[0, 1, 2, 3].map((index) => (
               <div
                 key={`intraday-grid-${index}`}
@@ -2335,8 +3039,72 @@ function IntradayPanel({
                     strokeLinejoin="round"
                   />
                 ) : null}
+                {ti !== null ? (
+                  <line
+                    x1={(ti / (intradaySeries.length - 1)) * 680}
+                    x2={(ti / (intradaySeries.length - 1)) * 680}
+                    y1={0}
+                    y2={178}
+                    stroke="#5ea3ff"
+                    strokeWidth="1"
+                    strokeDasharray="4 3"
+                    strokeOpacity="0.6"
+                  />
+                ) : null}
               </svg>
             </div>
+            {tooltipState !== null && ti !== null && (
+              <ChartTooltip
+                clientX={tooltipState.clientX}
+                clientY={tooltipState.clientY}
+              >
+                <div className="mb-1 font-medium text-slate-400">
+                  {intradayAllTimeLabels[ti]}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: chartPalette.blue }}
+                  />
+                  <span className="text-slate-400">DR001</span>
+                  <span className="ml-1 font-semibold text-slate-100">
+                    {intradaySeries[ti].toFixed(3)}%
+                  </span>
+                </div>
+                {overlaySeries && (
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ backgroundColor: chartPalette.amber }}
+                    />
+                    <span className="text-slate-400">
+                      {overlayProductLabel(overlayProduct)}
+                    </span>
+                    <span className="ml-1 font-semibold text-slate-100">
+                      {overlaySeries[ti].toFixed(3)}%
+                    </span>
+                  </div>
+                )}
+                {overlaySeries ? (
+                  <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
+                    利差{" "}
+                    <span
+                      className={`font-semibold ${(barValues as number[])[ti] >= 0 ? "text-red-400" : "text-emerald-400"}`}
+                    >
+                      {(barValues as number[])[ti] > 0 ? "+" : ""}
+                      {(barValues as number[])[ti]}bp
+                    </span>
+                  </div>
+                ) : (
+                  <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
+                    成交量{" "}
+                    <span className="font-semibold text-slate-100">
+                      {intradayVolumeSeries[ti]}亿
+                    </span>
+                  </div>
+                )}
+              </ChartTooltip>
+            )}
             <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-300">
               <LegendDot color={chartPalette.blue} label="加权平均(%)" />
               {overlayProduct !== "none" ? (
@@ -2346,6 +3114,89 @@ function IntradayPanel({
                 />
               ) : null}
             </div>
+          </div>
+        </div>
+        <div className="grid min-h-0 grid-cols-[3rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
+          <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+            {overlaySeries
+              ? (() => {
+                  const _bv = barValues as number[];
+                  const _mn = Math.min(..._bv);
+                  const _mx = Math.max(..._bv);
+                  return Array.from({ length: 5 }, (_, i) => {
+                    const v = _mx - ((_mx - _mn) * i) / 4;
+                    return <div key={String(v)}>{v.toFixed(1)}</div>;
+                  });
+                })()
+              : ["900", "600", "300", "0"].map((tick) => (
+                  <div key={tick}>{tick}</div>
+                ))}
+          </div>
+          <div className="relative min-h-0">
+            {overlaySeries ? (
+              <>
+                <div className="absolute inset-x-0 top-0 flex items-center gap-[4px] bottom-1">
+                  {(barValues as number[]).map((value, index) => {
+                    const barPct = (Math.abs(value) / (barMax as number)) * 35;
+                    const isPos = value >= 0;
+                    return (
+                      <div
+                        key={`intraday-bar-${index}`}
+                        className="flex min-w-0 flex-1 flex-col"
+                        style={{ height: "100%" }}
+                      >
+                        {isPos ? (
+                          <>
+                            <div style={{ height: `${50 - barPct}%` }} />
+                            <div
+                              className="min-h-0 rounded-[2px]"
+                              style={{
+                                height: `${barPct}%`,
+                                backgroundColor: "#ef5a6f",
+                                opacity: 0.92,
+                              }}
+                            />
+                            <div style={{ flex: 1 }} />
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ flex: 1 }} />
+                            <div
+                              className="min-h-0 rounded-[2px]"
+                              style={{
+                                height: `${barPct}%`,
+                                backgroundColor: "#2fc3de",
+                                opacity: 0.92,
+                              }}
+                            />
+                            <div style={{ height: `${50 - barPct}%` }} />
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <>
+                <span className="absolute top-0.5 left-0.5 text-[9px] text-slate-500 z-10 pointer-events-none">
+                  成交量
+                </span>
+                <div className="absolute inset-x-0 top-0 flex items-end gap-[4px] bottom-1">
+                  {(barValues as number[]).map((value, index) => (
+                    <div
+                      key={`intraday-bar-${index}`}
+                      className="min-w-0 flex-1 rounded-t-[2px]"
+                      style={{
+                        height: `${(value / (barMax as number)) * 100}%`,
+                        backgroundColor:
+                          index % 4 === 0 ? "#3b82f6" : "#275f9f",
+                      }}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
         <div className="grid grid-cols-[3rem_1fr] pt-2">
@@ -2391,7 +3242,7 @@ function HistoryClosePanel({
       : buildHistoricalSeries(activeRange, compareProduct);
   const spreadValues = compareSeries
     ? dataset.close.map((value, index) =>
-        Number(((value - compareSeries[index]) * 10000).toFixed(1)),
+        Number(((value - compareSeries[index]) * 100).toFixed(1)),
       )
     : null;
   const min =
@@ -2415,6 +3266,9 @@ function HistoryClosePanel({
   const compareLinePath = compareSeries
     ? buildLinePath(compareSeries, 720, 186, min, max)
     : null;
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(dataset.close.length);
+  const ti = tooltipState?.index ?? null;
 
   return (
     <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
@@ -2423,7 +3277,7 @@ function HistoryClosePanel({
           <div className="text-sm font-semibold text-slate-100">收盘价走势</div>
           <div className="text-xs text-slate-400">
             产品：
-            <span className="ml-1 text-slate-200">R001</span>
+            <span className="ml-1 text-slate-200">DR001</span>
           </div>
           <label className="flex items-center gap-1 text-xs text-slate-400">
             <span>对比</span>
@@ -2459,9 +3313,6 @@ function HistoryClosePanel({
         className="grid min-h-0 px-3 pb-2 pt-2"
         style={{
           gridTemplateRows: "68fr 24fr auto",
-          gridTemplateRows: "68fr 24fr auto",
-          gridTemplateRows: "68fr 24fr auto",
-          gridTemplateRows: "68fr 24fr auto",
         }}
       >
         <div className="grid min-h-0 grid-cols-[3.25rem_1fr]">
@@ -2470,7 +3321,12 @@ function HistoryClosePanel({
               <div key={label}>{label}</div>
             ))}
           </div>
-          <div className="relative min-h-0">
+          <div
+            ref={containerRef}
+            className="relative min-h-0"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
             {[0, 1, 2, 3].map((index) => (
               <div
                 key={`k-grid-${index}`}
@@ -2520,6 +3376,18 @@ function HistoryClosePanel({
                   strokeLinejoin="round"
                 />
               ) : null}
+              {ti !== null ? (
+                <line
+                  x1={(ti / (dataset.close.length - 1)) * 720}
+                  x2={(ti / (dataset.close.length - 1)) * 720}
+                  y1={0}
+                  y2={186}
+                  stroke="#5ea3ff"
+                  strokeWidth="1"
+                  strokeDasharray="4 3"
+                  strokeOpacity="0.6"
+                />
+              ) : null}
             </svg>
             <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-300">
               <LegendDot color={chartPalette.blue} label="收盘价" />
@@ -2539,60 +3407,125 @@ function HistoryClosePanel({
                 />
               ) : null}
             </div>
+            {tooltipState !== null && ti !== null && (
+              <ChartTooltip
+                clientX={tooltipState.clientX}
+                clientY={tooltipState.clientY}
+              >
+                <div className="mb-1 font-medium text-slate-400">
+                  {dataset.labels[ti]}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: chartPalette.blue }}
+                  />
+                  <span className="text-slate-400">DR001</span>
+                  <span className="ml-1 font-semibold text-slate-100">
+                    {dataset.close[ti].toFixed(4)}%
+                  </span>
+                </div>
+                {overlaySeries && (
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ backgroundColor: chartPalette.amber }}
+                    />
+                    <span className="text-slate-400">
+                      {overlayProductLabel(overlayProduct)}
+                    </span>
+                    <span className="ml-1 font-semibold text-slate-100">
+                      {overlaySeries[ti].toFixed(4)}%
+                    </span>
+                  </div>
+                )}
+                {compareSeries && (
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ backgroundColor: chartPalette.violet }}
+                    />
+                    <span className="text-slate-400">
+                      {compareProductOptions.find(
+                        (o) => o.id === compareProduct,
+                      )?.label ?? ""}
+                    </span>
+                    <span className="ml-1 font-semibold text-slate-100">
+                      {compareSeries[ti].toFixed(4)}%
+                    </span>
+                  </div>
+                )}
+                {spreadValues && (
+                  <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
+                    利差{" "}
+                    <span
+                      className={`font-semibold ${spreadValues[ti] >= 0 ? "text-red-400" : "text-emerald-400"}`}
+                    >
+                      {spreadValues[ti] > 0 ? "+" : ""}
+                      {spreadValues[ti]}bp
+                    </span>
+                  </div>
+                )}
+                <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
+                  成交量{" "}
+                  <span className="font-semibold text-slate-100">
+                    {dataset.volume[ti]}亿
+                  </span>
+                </div>
+              </ChartTooltip>
+            )}
           </div>
         </div>
         {compareProduct !== "none" && spreadValues ? (
           <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
             <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
               {(() => {
-                const _mn = Math.min(...spreadValues);
-                const _mx = Math.max(...spreadValues);
+                const dMax = Math.max(...spreadValues, 0);
+                const dMin = Math.min(...spreadValues, 0);
+                const pad = (dMax - dMin) * 0.15 || 1;
+                const rTop = dMax + pad;
+                const rBot = dMin - pad;
+                const rng = rTop - rBot;
                 return Array.from({ length: 5 }, (_, i) => {
-                  const v = _mx - ((_mx - _mn) * i) / 4;
-                  return <div key={String(v)}>{v.toFixed(1)}</div>;
+                  const v = rTop - (rng * i) / 4;
+                  return <div key={i}>{v.toFixed(1)}</div>;
                 });
               })()}
             </div>
             <div className="relative min-h-0">
               <div className="absolute inset-x-0 top-0 flex items-center gap-[4px] bottom-1">
                 {(() => {
-                  const maxAbs = Math.max(...spreadValues.map(Math.abs), 0.1);
+                  const dMax = Math.max(...spreadValues, 0);
+                  const dMin = Math.min(...spreadValues, 0);
+                  const pad = (dMax - dMin) * 0.15 || 1;
+                  const rTop = dMax + pad;
+                  const rBot = dMin - pad;
+                  const rng = rTop - rBot;
                   return spreadValues.map((value, index) => {
-                    const barPct = (Math.abs(value) / maxAbs) * 35;
                     const isPos = value >= 0;
+                    const spaceTop = isPos
+                      ? ((rTop - value) / rng) * 100
+                      : (rTop / rng) * 100;
+                    const barH = (Math.abs(value) / rng) * 100;
+                    const spaceBot = isPos
+                      ? (-rBot / rng) * 100
+                      : ((value - rBot) / rng) * 100;
                     return (
                       <div
                         key={`spread-${index}`}
                         className="flex min-w-0 flex-1 flex-col"
                         style={{ height: "100%" }}
                       >
-                        {isPos ? (
-                          <>
-                            <div style={{ height: `${50 - barPct}%` }} />
-                            <div
-                              className="min-h-0 rounded-[2px]"
-                              style={{
-                                height: `${barPct}%`,
-                                backgroundColor: "#ef5a6f",
-                                opacity: 0.92,
-                              }}
-                            />
-                            <div style={{ flex: 1 }} />
-                          </>
-                        ) : (
-                          <>
-                            <div style={{ flex: 1 }} />
-                            <div
-                              className="min-h-0 rounded-[2px]"
-                              style={{
-                                height: `${barPct}%`,
-                                backgroundColor: "#2fc3de",
-                                opacity: 0.92,
-                              }}
-                            />
-                            <div style={{ height: `${50 - barPct}%` }} />
-                          </>
-                        )}
+                        <div style={{ height: `${spaceTop}%` }} />
+                        <div
+                          className="min-h-0 rounded-[2px]"
+                          style={{
+                            height: `${barH}%`,
+                            backgroundColor: isPos ? "#ef5a6f" : "#2fc3de",
+                            opacity: 0.92,
+                          }}
+                        />
+                        <div style={{ height: `${spaceBot}%` }} />
                       </div>
                     );
                   });
@@ -2608,6 +3541,9 @@ function HistoryClosePanel({
               ))}
             </div>
             <div className="relative min-h-0">
+              <span className="absolute top-0.5 left-0.5 text-[9px] text-slate-500 z-10 pointer-events-none">
+                成交量
+              </span>
               <div className="absolute inset-0 flex items-end gap-[4px]">
                 {dataset.volume.map((value, index) => (
                   <div
@@ -2646,36 +3582,906 @@ function HistoryClosePanel({
   );
 }
 
+// ── 矩阵数据（逆回购方 × 正回购方，加权利率 %，null = 无交易）──
+const cfetsMatrixRowLabels = ["大型银行", "中小型银行", "其他"] as const;
+const cfetsMatrixColLabels = [
+  "大型银行",
+  "中小型银行",
+  "基金公司及产品",
+  "其他",
+] as const;
+const cfetsMatrixRates: (number | null)[][] = [
+  [1.2384, 1.2593, null, 1.3076],
+  [1.1821, 1.2603, null, 1.3119],
+  [1.3067, 1.3067, 1.4071, 1.3384],
+];
+
+// ── 机构 × 期限数据（金额单位：百万，显示时换算为亿）──
+type CfetsTermRow = {
+  term: string;
+  buyRate: number | null;
+  buyAmt: number | null;
+  sellRate: number | null;
+  sellAmt: number | null;
+  netInflow: number | null;
+  sellBalance: number | null;
+};
+type CfetsInstKey =
+  | "大型银行"
+  | "中小型银行"
+  | "证券公司"
+  | "保险公司"
+  | "基金公司及产品"
+  | "货币市场基金"
+  | "理财子公司及理财类产品"
+  | "其他";
+const cfetsInstLabels: CfetsInstKey[] = [
+  "大型银行",
+  "中小型银行",
+  "证券公司",
+  "保险公司",
+  "基金公司及产品",
+  "货币市场基金",
+  "理财子公司及理财类产品",
+  "其他",
+];
+const cfetsInstData: Record<CfetsInstKey, CfetsTermRow[]> = {
+  大型银行: [
+    {
+      term: "R001",
+      buyRate: 1.2269,
+      buyAmt: 596900.73,
+      sellRate: 1.2576,
+      sellAmt: 1794867.33,
+      netInflow: -330152.08,
+      sellBalance: 1794867.33,
+    },
+    {
+      term: "R007",
+      buyRate: 1.4302,
+      buyAmt: 15500,
+      sellRate: 1.4606,
+      sellAmt: 52404.88,
+      netInflow: 235768.7,
+      sellBalance: 2569916.13,
+    },
+    {
+      term: "R014",
+      buyRate: 1.45,
+      buyAmt: 1000,
+      sellRate: 1.4581,
+      sellAmt: 3100,
+      netInflow: 69473.21,
+      sellBalance: 786323.15,
+    },
+    {
+      term: "R021",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 1497.6,
+      sellBalance: 187785.45,
+    },
+    {
+      term: "R1M",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: 1.68,
+      sellAmt: 180,
+      netInflow: 16420.13,
+      sellBalance: 82666.64,
+    },
+    {
+      term: "R2M",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 1000,
+      sellBalance: 18788.82,
+    },
+  ],
+  中小型银行: [
+    {
+      term: "R001",
+      buyRate: 1.2509,
+      buyAmt: 1078715.08,
+      sellRate: 1.2563,
+      sellAmt: 454660.22,
+      netInflow: 14675.74,
+      sellBalance: 454660.22,
+    },
+    {
+      term: "R007",
+      buyRate: 1.4284,
+      buyAmt: 50123.71,
+      sellRate: 1.4226,
+      sellAmt: 35404.91,
+      netInflow: -147440.66,
+      sellBalance: 673011.98,
+    },
+    {
+      term: "R014",
+      buyRate: 1.4504,
+      buyAmt: 3278,
+      sellRate: 1.4168,
+      sellAmt: 3278,
+      netInflow: -34544.37,
+      sellBalance: 419214.42,
+    },
+    {
+      term: "R021",
+      buyRate: 1.4271,
+      buyAmt: 350,
+      sellRate: 1.4271,
+      sellAmt: 350,
+      netInflow: 402.4,
+      sellBalance: 70763.84,
+    },
+    {
+      term: "R1M",
+      buyRate: 1.4684,
+      buyAmt: 980,
+      sellRate: 1.4791,
+      sellAmt: 1480,
+      netInflow: -2123.5,
+      sellBalance: 108500.42,
+    },
+    {
+      term: "R3M",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: 1.68,
+      sellAmt: 300,
+      netInflow: -300,
+      sellBalance: 849.7,
+    },
+  ],
+  证券公司: [
+    {
+      term: "R001",
+      buyRate: 1.2984,
+      buyAmt: 72056.66,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 30407.11,
+      sellBalance: null,
+    },
+    {
+      term: "R007",
+      buyRate: 1.4194,
+      buyAmt: 1400.15,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: -18722.41,
+      sellBalance: 71880.95,
+    },
+    {
+      term: "R014",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: -5560,
+      sellBalance: 26977.39,
+    },
+  ],
+  保险公司: [
+    {
+      term: "R001",
+      buyRate: 1.2961,
+      buyAmt: 213984.28,
+      sellRate: 1.304,
+      sellAmt: 77381.77,
+      netInflow: 54890.05,
+      sellBalance: 77381.77,
+    },
+    {
+      term: "R007",
+      buyRate: 1.5186,
+      buyAmt: 22338.93,
+      sellRate: 1.3379,
+      sellAmt: 1763,
+      netInflow: -38242.93,
+      sellBalance: 324436.44,
+    },
+    {
+      term: "R014",
+      buyRate: 1.4,
+      buyAmt: 900,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: -22349.84,
+      sellBalance: 122083.18,
+    },
+    {
+      term: "R021",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: -2000,
+      sellBalance: 10137.81,
+    },
+    {
+      term: "R1M",
+      buyRate: 1.5,
+      buyAmt: 500,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: -14000,
+      sellBalance: 1901.24,
+    },
+  ],
+  基金公司及产品: [
+    {
+      term: "R001",
+      buyRate: 1.4071,
+      buyAmt: 350,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 2212,
+      sellBalance: null,
+    },
+    {
+      term: "R007",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 5409,
+      sellBalance: 190266.03,
+    },
+    {
+      term: "R014",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: -166,
+      sellBalance: 78201.47,
+    },
+  ],
+  货币市场基金: [
+    {
+      term: "R001",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: -3954.94,
+      sellBalance: null,
+    },
+    {
+      term: "R007",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: -1500,
+      sellBalance: 558565.45,
+    },
+    {
+      term: "R014",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 511,
+      sellBalance: 1071531.14,
+    },
+  ],
+  理财子公司及理财类产品: [
+    {
+      term: "R001",
+      buyRate: 1.3088,
+      buyAmt: 329386.98,
+      sellRate: 1.4665,
+      sellAmt: 5617.05,
+      netInflow: 181449.19,
+      sellBalance: 5617.05,
+    },
+    {
+      term: "R007",
+      buyRate: 1.4549,
+      buyAmt: 5910.42,
+      sellRate: 1.5797,
+      sellAmt: 6094.32,
+      netInflow: -36067.79,
+      sellBalance: 377838.42,
+    },
+    {
+      term: "R014",
+      buyRate: 1.4417,
+      buyAmt: 1375,
+      sellRate: 1.6132,
+      sellAmt: 175,
+      netInflow: -11263,
+      sellBalance: 306395.06,
+    },
+    {
+      term: "R021",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 0,
+      sellBalance: 27593.06,
+    },
+    {
+      term: "R1M",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: -246.63,
+      sellBalance: 7257.14,
+    },
+  ],
+  其他: [
+    {
+      term: "R001",
+      buyRate: 1.3122,
+      buyAmt: 58041.78,
+      sellRate: 1.3523,
+      sellAmt: 16909.14,
+      netInflow: 50472.94,
+      sellBalance: 16909.14,
+    },
+    {
+      term: "R007",
+      buyRate: 1.5037,
+      buyAmt: 2090,
+      sellRate: 1.4866,
+      sellAmt: 1696.1,
+      netInflow: 796.08,
+      sellBalance: 632612.62,
+    },
+    {
+      term: "R014",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 3899,
+      sellBalance: 384370,
+    },
+    {
+      term: "R1M",
+      buyRate: 1.68,
+      buyAmt: 180,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 450,
+      sellBalance: 46531.46,
+    },
+    {
+      term: "R3M",
+      buyRate: 1.68,
+      buyAmt: 300,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 300,
+      sellBalance: 8628.78,
+    },
+  ],
+};
+
+// ── 机构 × 债券类型数据（金额单位：百万）──
+type CfetsInstPeriod = "R001" | "R007" | "R014" | "R021" | "R1M";
+const cfetsInstPeriodLabels: CfetsInstPeriod[] = [
+  "R001",
+  "R007",
+  "R014",
+  "R021",
+  "R1M",
+];
+type CfetsBondKey = "利率债" | "信用债" | "同业存单";
+type CfetsBondRow = {
+  inst: string;
+  buyRate: number | null;
+  buyAmt: number | null;
+  sellRate: number | null;
+  sellAmt: number | null;
+};
+const cfetsBondLabels: CfetsBondKey[] = ["利率债", "信用债", "同业存单"];
+const cfetsBondData: Record<CfetsBondKey, CfetsBondRow[]> = {
+  利率债: [
+    {
+      inst: "大型银行",
+      buyRate: 1.232,
+      buyAmt: 608301.28,
+      sellRate: 1.2597,
+      sellAmt: 1717212.35,
+    },
+    {
+      inst: "中小型银行",
+      buyRate: 1.259,
+      buyAmt: 1121054.59,
+      sellRate: 1.2486,
+      sellAmt: 342364.61,
+    },
+    {
+      inst: "证券公司",
+      buyRate: 1.2915,
+      buyAmt: 53468.15,
+      sellRate: null,
+      sellAmt: null,
+    },
+    {
+      inst: "保险公司",
+      buyRate: 1.3144,
+      buyAmt: 198955.8,
+      sellRate: 1.2242,
+      sellAmt: 10280.59,
+    },
+    {
+      inst: "理财子公司及理财类产品",
+      buyRate: 1.2698,
+      buyAmt: 58431.77,
+      sellRate: 1.6512,
+      sellAmt: 2374.15,
+    },
+    {
+      inst: "其他",
+      buyRate: 1.3005,
+      buyAmt: 32227.11,
+      sellRate: 1.3638,
+      sellAmt: 207,
+    },
+  ],
+  信用债: [
+    {
+      inst: "大型银行",
+      buyRate: 1.3019,
+      buyAmt: 2099.45,
+      sellRate: 1.3461,
+      sellAmt: 28564.6,
+    },
+    {
+      inst: "中小型银行",
+      buyRate: 1.3248,
+      buyAmt: 8790,
+      sellRate: 1.3496,
+      sellAmt: 32475.21,
+    },
+    {
+      inst: "证券公司",
+      buyRate: 1.3292,
+      buyAmt: 16055.08,
+      sellRate: null,
+      sellAmt: null,
+    },
+    {
+      inst: "保险公司",
+      buyRate: 1.3378,
+      buyAmt: 33301.4,
+      sellRate: 1.3565,
+      sellAmt: 29535.56,
+    },
+    {
+      inst: "基金公司及产品",
+      buyRate: 1.4,
+      buyAmt: 208,
+      sellRate: null,
+      sellAmt: null,
+    },
+    {
+      inst: "理财子公司及理财类产品",
+      buyRate: 1.4136,
+      buyAmt: 39731.76,
+      sellRate: 1.5118,
+      sellAmt: 7877.22,
+    },
+    {
+      inst: "其他",
+      buyRate: 1.4284,
+      buyAmt: 8372.2,
+      sellRate: 1.4283,
+      sellAmt: 10105.3,
+    },
+  ],
+  同业存单: [
+    {
+      inst: "大型银行",
+      buyRate: 1.27,
+      buyAmt: 3000,
+      sellRate: 1.3064,
+      sellAmt: 104775.26,
+    },
+    {
+      inst: "中小型银行",
+      buyRate: 1.2755,
+      buyAmt: 3602.2,
+      sellRate: 1.3104,
+      sellAmt: 120633.3,
+    },
+    {
+      inst: "证券公司",
+      buyRate: 1.3109,
+      buyAmt: 3933.58,
+      sellRate: null,
+      sellAmt: null,
+    },
+    {
+      inst: "保险公司",
+      buyRate: 1.3203,
+      buyAmt: 5466,
+      sellRate: 1.287,
+      sellAmt: 39328.63,
+    },
+    {
+      inst: "基金公司及产品",
+      buyRate: 1.4176,
+      buyAmt: 142,
+      sellRate: null,
+      sellAmt: null,
+    },
+    {
+      inst: "理财子公司及理财类产品",
+      buyRate: 1.3053,
+      buyAmt: 238508.87,
+      sellRate: 1.4175,
+      sellAmt: 1635,
+    },
+    {
+      inst: "其他",
+      buyRate: 1.3114,
+      buyAmt: 20012.47,
+      sellRate: 1.2868,
+      sellAmt: 8292.94,
+    },
+  ],
+};
+
+function fmtAmt(百万: number | null): string {
+  if (百万 === null) return "—";
+  return (百万 / 100).toFixed(1) + "亿";
+}
+function fmtRate(rate: number | null): string {
+  if (rate === null) return "—";
+  return rate.toFixed(4) + "%";
+}
+function fmtNetInflow(百万: number | null): string {
+  if (百万 === null) return "—";
+  const v = (百万 / 100).toFixed(1);
+  return 百万 >= 0 ? "+" + v + "亿" : v + "亿";
+}
+
+// ── 指标定义 ──────────────────────────────────────────────
+const cfetsMetricDefs: {
+  key: CfetsMetricKey;
+  label: string;
+  desc: string;
+  chartType: "line" | "stackedBar" | "divergeBar";
+}[] = [
+  {
+    key: "buyRate",
+    label: "正回购利率",
+    desc: "以债券质押融入资金的加权利率，利率越高说明融资成本越贵",
+    chartType: "line",
+  },
+  {
+    key: "sellRate",
+    label: "逆回购利率",
+    desc: "以债券质押融出资金的加权利率，利率越高说明融出资金收益越高",
+    chartType: "line",
+  },
+  {
+    key: "buyAmt",
+    label: "正回购金额",
+    desc: "各机构当日质押式融入资金规模（亿元），反映融资需求强度",
+    chartType: "stackedBar",
+  },
+  {
+    key: "sellAmt",
+    label: "逆回购金额",
+    desc: "各机构当日质押式融出资金规模（亿元），反映市场流动性供给",
+    chartType: "stackedBar",
+  },
+  {
+    key: "netInflow",
+    label: "机构资金结构",
+    desc: "各机构质押式回购融入融出结构，堆叠柱展示每日各机构分布（亿元）",
+    chartType: "divergeBar",
+  },
+];
+
+const cfetsBondMetricDefs = cfetsMetricDefs.filter(
+  (d) => d.key !== "netInflow",
+);
+
+// ── 趋势数据生成 ──────────────────────────────────────────
+function generateTradingDates(endDate: string, count: number): string[] {
+  const [y, m, d] = endDate.split("-").map(Number);
+  const end = new Date(y, m - 1, d);
+  const dates: string[] = [];
+  let cur = new Date(end);
+  while (dates.length < count) {
+    const dow = cur.getDay();
+    if (dow !== 0 && dow !== 6) {
+      dates.unshift(
+        `${cur.getMonth() + 1}/${String(cur.getDate()).padStart(2, "0")}`,
+      );
+    }
+    cur.setDate(cur.getDate() - 1);
+  }
+  return dates;
+}
+
+function randomWalk(
+  anchor: number,
+  count: number,
+  dailyVol: number,
+  _seed: number,
+): number[] {
+  const result: number[] = new Array(count);
+  result[count - 1] = anchor;
+  for (let i = count - 2; i >= 0; i--) {
+    // 离散跳跃：40% 小幅 + 38% 中等 + 22% 大幅，强随机锯齿
+    const r = Math.random();
+    let jump: number;
+    if (r < 0.4) {
+      jump = (Math.random() - 0.5) * dailyVol * 1.5;
+    } else if (r < 0.78) {
+      jump = (Math.random() - 0.5) * dailyVol * 7;
+    } else {
+      jump = (Math.random() - 0.5) * dailyVol * 18;
+    }
+    result[i] = Math.max(0, Number((result[i + 1] + jump).toFixed(4)));
+  }
+  return result;
+}
+
+const cfetsTrendCounts: Record<FundStructureRange, number> = {
+  "14d": 14,
+  "1m": 22,
+  "6m": 130,
+};
+
+// 机构图例顺序：大行/股份行/理财/理财子/券商/基金/保险
+// 锚点取自 2026-01-04 真实数据，顺序对应 fundStructureLegendItems
+const cfetsInstAnchors: Record<
+  CfetsInstPeriod,
+  Record<CfetsMetricKey, number[]>
+> = {
+  R001: {
+    buyRate: [1.201, 1.225, 1.283, 1.283, 1.273, 1.382, 1.271],
+    sellRate: [
+      1.232,
+      1.231,
+      1.441,
+      1.441,
+      null as unknown as number,
+      null as unknown as number,
+      1.279,
+    ],
+    buyAmt: [4500, 8500, 2500, 2500, 550, 3, 1600],
+    sellAmt: [14000, 3500, 40, 40, 0, 0, 600],
+    netInflow: [-2600, 110, 1400, 1400, 230, 60, 420],
+  },
+  R007: {
+    buyRate: [1.245, 1.269, 1.327, 1.327, 1.317, 1.426, 1.315],
+    sellRate: [
+      1.276,
+      1.275,
+      1.485,
+      1.485,
+      null as unknown as number,
+      null as unknown as number,
+      1.323,
+    ],
+    buyAmt: [1200, 1900, 680, 680, 145, 1, 440],
+    sellAmt: [3200, 880, 13, 13, 0, 0, 140],
+    netInflow: [-570, 30, 350, 350, 60, 12, 105],
+  },
+  R014: {
+    buyRate: [1.268, 1.292, 1.351, 1.351, 1.342, 1.451, 1.338],
+    sellRate: [
+      1.301,
+      1.3,
+      1.511,
+      1.511,
+      null as unknown as number,
+      null as unknown as number,
+      1.348,
+    ],
+    buyAmt: [220, 320, 95, 95, 22, 0, 85],
+    sellAmt: [620, 140, 2, 2, 0, 0, 28],
+    netInflow: [-108, 4, 55, 55, 12, 3, 20],
+  },
+  R021: {
+    buyRate: [1.292, 1.317, 1.376, 1.376, 1.368, 1.478, 1.363],
+    sellRate: [
+      1.327,
+      1.326,
+      1.538,
+      1.538,
+      null as unknown as number,
+      null as unknown as number,
+      1.374,
+    ],
+    buyAmt: [42, 62, 18, 18, 4, 0, 15],
+    sellAmt: [125, 26, 0.5, 0.5, 0, 0, 6],
+    netInflow: [-22, 1, 10, 10, 2, 0.5, 4],
+  },
+  R1M: {
+    buyRate: [1.315, 1.341, 1.402, 1.402, 1.395, 1.506, 1.389],
+    sellRate: [
+      1.354,
+      1.353,
+      1.566,
+      1.566,
+      null as unknown as number,
+      null as unknown as number,
+      1.401,
+    ],
+    buyAmt: [5, 7, 1, 1, 0.5, 0, 2],
+    sellAmt: [4, 1, 0.1, 0.1, 0, 0, 0.2],
+    netInflow: [-1, 0.2, 0.5, 0.5, 0.1, 0.05, 0.5],
+  },
+};
+
+function buildInstTrendBlock(
+  period: CfetsInstPeriod,
+  metricKey: CfetsMetricKey,
+  range: FundStructureRange,
+): CfetsTrendBlock {
+  const count = cfetsTrendCounts[range];
+  const dates = generateTradingDates("2026-01-04", count);
+  const anchors = cfetsInstAnchors[period][metricKey];
+  const isRate = metricKey === "buyRate" || metricKey === "sellRate";
+  const vol = isRate ? 0.04 : metricKey === "netInflow" ? 800 : 2000;
+  const series = anchors.map((anchor, i) => {
+    const base = anchor ?? 0;
+    return randomWalk(base, count, vol, (i + 1) * 7 + metricKey.length);
+  });
+  return { dates, series };
+}
+
+const cfetsInstTrend: Record<
+  CfetsInstPeriod,
+  Record<CfetsMetricKey, Record<FundStructureRange, CfetsTrendBlock>>
+> = Object.fromEntries(
+  cfetsInstPeriodLabels.map((period) => [
+    period,
+    Object.fromEntries(
+      (
+        [
+          "buyRate",
+          "sellRate",
+          "buyAmt",
+          "sellAmt",
+          "netInflow",
+        ] as CfetsMetricKey[]
+      ).map((mk) => [
+        mk,
+        Object.fromEntries(
+          (["14d", "1m", "6m"] as FundStructureRange[]).map((r) => [
+            r,
+            buildInstTrendBlock(period, mk, r),
+          ]),
+        ),
+      ]),
+    ),
+  ]),
+) as Record<
+  CfetsInstPeriod,
+  Record<CfetsMetricKey, Record<FundStructureRange, CfetsTrendBlock>>
+>;
+
+// 债券趋势锚点：[大行, 股份行, 理财, 理财子, 券商, 基金, 保险]
+const cfetsBondAnchors: Record<
+  CfetsBondKey,
+  Record<Exclude<CfetsMetricKey, "netInflow">, number[]>
+> = {
+  利率债: {
+    buyRate: [
+      1.232,
+      1.259,
+      1.27,
+      1.27,
+      1.292,
+      null as unknown as number,
+      1.314,
+    ],
+    sellRate: [
+      1.26,
+      1.249,
+      1.651,
+      1.651,
+      null as unknown as number,
+      null as unknown as number,
+      1.224,
+    ],
+    buyAmt: [6083, 11211, 584, 584, 535, 0, 1990],
+    sellAmt: [17172, 3424, 24, 24, 0, 0, 103],
+  },
+  信用债: {
+    buyRate: [1.302, 1.325, 1.414, 1.414, 1.329, 1.4, 1.338],
+    sellRate: [
+      1.346,
+      1.35,
+      1.512,
+      1.512,
+      null as unknown as number,
+      null as unknown as number,
+      1.357,
+    ],
+    buyAmt: [21, 88, 397, 397, 161, 2, 333],
+    sellAmt: [286, 325, 79, 79, 0, 0, 295],
+  },
+  同业存单: {
+    buyRate: [1.27, 1.276, 1.305, 1.305, 1.311, 1.418, 1.32],
+    sellRate: [
+      1.306,
+      1.31,
+      1.418,
+      1.418,
+      null as unknown as number,
+      null as unknown as number,
+      1.287,
+    ],
+    buyAmt: [30, 36, 2385, 2385, 39, 1, 55],
+    sellAmt: [1048, 1206, 16, 16, 0, 0, 393],
+  },
+};
+
+function buildBondTrendBlock(
+  bondKey: CfetsBondKey,
+  metricKey: Exclude<CfetsMetricKey, "netInflow">,
+  range: FundStructureRange,
+): CfetsTrendBlock {
+  const count = cfetsTrendCounts[range];
+  const dates = generateTradingDates("2026-01-04", count);
+  const anchors = cfetsBondAnchors[bondKey][metricKey];
+  const isRate = metricKey === "buyRate" || metricKey === "sellRate";
+  const vol = isRate ? 0.035 : 1400;
+  const series = anchors.map((anchor, i) => {
+    const base = anchor ?? 0;
+    return randomWalk(base, count, vol, (i + 3) * 11 + bondKey.length);
+  });
+  return { dates, series };
+}
+
+const cfetsBondTrend: Record<
+  CfetsBondKey,
+  Record<
+    Exclude<CfetsMetricKey, "netInflow">,
+    Record<FundStructureRange, CfetsTrendBlock>
+  >
+> = Object.fromEntries(
+  (["利率债", "信用债", "同业存单"] as CfetsBondKey[]).map((bk) => [
+    bk,
+    Object.fromEntries(
+      (
+        ["buyRate", "sellRate", "buyAmt", "sellAmt"] as Exclude<
+          CfetsMetricKey,
+          "netInflow"
+        >[]
+      ).map((mk) => [
+        mk,
+        Object.fromEntries(
+          (["14d", "1m", "6m"] as FundStructureRange[]).map((r) => [
+            r,
+            buildBondTrendBlock(bk, mk, r),
+          ]),
+        ),
+      ]),
+    ),
+  ]),
+) as Record<
+  CfetsBondKey,
+  Record<
+    Exclude<CfetsMetricKey, "netInflow">,
+    Record<FundStructureRange, CfetsTrendBlock>
+  >
+>;
+
 function CfetsDailyPanel() {
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_auto_1fr] gap-2">
-      <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-        {cfetsSummaryCards.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-lg border border-[#223754] bg-[#0f1a2d] px-3 py-2"
-          >
-            <div className="text-[11px] text-slate-500">{card.label}</div>
-            <div
-              className={`mt-1 text-base font-semibold ${card.tone === "good" ? "text-emerald-300" : card.tone === "alert" ? "text-amber-300" : "text-slate-100"}`}
-            >
-              {card.value}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-2 gap-2 text-xs xl:grid-cols-4">
-        {cfetsDetailRows.map((row) => (
-          <div
-            key={row[0]}
-            className="rounded-lg border border-[#1d3250] bg-[#0d1726] px-3 py-2"
-          >
-            <div className="text-slate-500">{row[0]}</div>
-            <div className="mt-1 font-semibold text-slate-100">{row[1]}</div>
-            <div className="mt-1 text-slate-400">{row[2]}</div>
-          </div>
-        ))}
-      </div>
+    <div className="h-full min-h-0 overflow-hidden">
       <div className="overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
         <table className="min-w-full text-xs">
           <thead className="bg-[#101d32] text-slate-400">
@@ -2714,11 +4520,763 @@ function CfetsDailyPanel() {
   );
 }
 
-function AuxTabPanel({ type }: { type: Exclude<RightLowerTab, "cfets"> }) {
-  if (type === "fund-structure") {
-    return <FundStructurePanel />;
+// ─── 矩阵面板 ───────────────────────────────────────────────
+function CfetsMatrixPanel({
+  includeDaily = false,
+}: {
+  includeDaily?: boolean;
+}) {
+  const [modal, setModal] = useState<{
+    rowLabel: string;
+    colLabel: string;
+    rate: number;
+  } | null>(null);
+
+  const allRates = cfetsMatrixRates
+    .flat()
+    .filter((v): v is number => v !== null);
+  const minRate = Math.min(...allRates);
+  const maxRate = Math.max(...allRates);
+
+  function rateColor(rate: number): string {
+    const t = (rate - minRate) / (maxRate - minRate || 1);
+    const r = Math.round(26 + t * (180 - 26));
+    const g = Math.round(61 + t * (92 - 61));
+    const b = Math.round(94 + t * (14 - 94));
+    return `rgb(${r},${g},${b})`;
   }
-  return null;
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden p-1">
+      <div className="shrink-0 space-y-3">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-xs">
+            <thead>
+              <tr>
+                <th className="px-2 py-1.5 text-left text-[10px] font-medium text-slate-500">
+                  逆\正
+                </th>
+                {cfetsMatrixColLabels.map((col) => (
+                  <th
+                    key={col}
+                    className="px-2 py-1.5 text-center text-[10px] font-medium text-slate-400"
+                  >
+                    {col}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {cfetsMatrixRowLabels.map((row, ri) => (
+                <tr key={row}>
+                  <td className="py-1.5 pr-3 text-[11px] font-medium text-slate-300">
+                    {row}
+                  </td>
+                  {cfetsMatrixColLabels.map((col, ci) => {
+                    const rate = cfetsMatrixRates[ri][ci];
+                    return (
+                      <td key={col} className="px-1 py-1">
+                        {rate === null ? (
+                          <div className="flex h-8 w-full items-center justify-center rounded text-[10px] text-slate-600 bg-[#0a1322]">
+                            —
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className="flex h-8 w-full cursor-pointer items-center justify-center rounded text-[11px] font-semibold text-white transition-opacity hover:opacity-80"
+                            style={{ backgroundColor: rateColor(rate) }}
+                            onClick={() =>
+                              setModal({ rowLabel: row, colLabel: col, rate })
+                            }
+                          >
+                            {rate.toFixed(4)}
+                          </button>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex items-center gap-2 text-[10px] text-slate-500">
+          <span>低利率</span>
+          <div
+            className="h-2 w-24 rounded"
+            style={{
+              background: `linear-gradient(to right, ${rateColor(minRate)}, ${rateColor(maxRate)})`,
+            }}
+          />
+          <span>高利率</span>
+        </div>
+      </div>
+
+      {modal && (
+        <div
+          className="fixed inset-0 z-[400] flex items-center justify-center bg-black/50"
+          onClick={() => setModal(null)}
+        >
+          <div
+            className="w-80 rounded-xl border border-[#1d3250] bg-[#0a1322] p-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-start justify-between">
+              <div>
+                <div className="text-xs font-semibold text-slate-200">
+                  {modal.rowLabel} → {modal.colLabel}
+                </div>
+                <div className="mt-0.5 text-[10px] text-slate-500">
+                  逆回购方 → 正回购方，加权利率
+                </div>
+              </div>
+              <button
+                type="button"
+                className="text-slate-500 hover:text-slate-300"
+                onClick={() => setModal(null)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="mb-3 rounded-lg bg-[#0e1827] px-3 py-2 text-center">
+              <span className="text-xl font-semibold text-amber-300">
+                {modal.rate.toFixed(4)}%
+              </span>
+            </div>
+            <div className="text-[10px] text-slate-500">
+              正回购方（{modal.colLabel}）期限明细：
+            </div>
+            <table className="mt-1.5 w-full text-[11px]">
+              <thead>
+                <tr className="text-slate-500">
+                  <th className="py-1 text-left font-normal">期限</th>
+                  <th className="py-1 text-right font-normal">正回购利率</th>
+                  <th className="py-1 text-right font-normal">正回购额</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(cfetsInstData[modal.colLabel as CfetsInstKey] ?? [])
+                  .filter((r) => r.buyRate !== null)
+                  .map((r) => (
+                    <tr
+                      key={r.term}
+                      className="border-t border-[#162439] text-slate-300"
+                    >
+                      <td className="py-1">{r.term}</td>
+                      <td className="py-1 text-right">{fmtRate(r.buyRate)}</td>
+                      <td className="py-1 text-right">{fmtAmt(r.buyAmt)}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {includeDaily && (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
+            <table className="min-w-full text-xs">
+              <thead className="bg-[#101d32] text-slate-400">
+                <tr>
+                  {["日期", "公开市场操作", "净投放", "MLF", "关注点"].map(
+                    (column) => (
+                      <th
+                        key={column}
+                        className="px-3 py-2 text-left font-medium"
+                      >
+                        {column}
+                      </th>
+                    ),
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["2026-04-22", "逆回购 7D", "+40亿", "--", "短端偏稳"],
+                  ["2026-04-21", "逆回购到期", "-10亿", "--", "大行融出维持"],
+                  ["2026-04-20", "逆回购 7D", "+5亿", "--", "非银需求回升"],
+                  [
+                    "2026-04-17",
+                    "逆回购 7D",
+                    "+1985亿",
+                    "--",
+                    "月内跨季预期升温",
+                  ],
+                ].map((row) => (
+                  <tr
+                    key={row[0]}
+                    className="border-t border-[#162439] text-slate-300"
+                  >
+                    {row.map((cell, index) => (
+                      <td key={`${row[0]}-${index}`} className="px-3 py-2">
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── 通用多系列图表 ──────────────────────────────────────────
+const instColors = fundStructureLegendItems.map(
+  (i) => i.color,
+) as readonly string[];
+
+function MultiSeriesChart({
+  block,
+  chartType,
+  unitLabel = "",
+}: {
+  block: CfetsTrendBlock;
+  chartType: "line" | "stackedBar" | "divergeBar";
+  unitLabel?: string;
+}) {
+  const { dates, series } = block;
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(dates.length);
+  const VW = 480;
+  const VH = 100;
+  const xStep = Math.max(1, Math.ceil(dates.length / 6));
+  const xLabels = dates.filter(
+    (_, i) => i % xStep === 0 || i === dates.length - 1,
+  );
+
+  if (chartType === "line") {
+    const flat = series.flat().filter((v) => v > 0);
+    const rawMin = Math.min(...flat);
+    const rawMax = Math.max(...flat);
+    const pad = (rawMax - rawMin) * 0.12 || 0.02;
+    const min = Math.max(0, rawMin - pad);
+    const max = rawMax + pad;
+    const yTicks = Array.from({ length: 4 }, (_, i) =>
+      Number((max - ((max - min) * i) / 3).toFixed(4)).toString(),
+    );
+    const crossX =
+      tooltipState != null
+        ? (tooltipState.index / (dates.length - 1)) * VW
+        : null;
+    return (
+      <div className="flex min-h-0 flex-1 flex-col gap-1">
+        <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr]">
+          <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+            {yTicks.map((t) => (
+              <div key={t}>{t}</div>
+            ))}
+          </div>
+          <div
+            ref={containerRef}
+            className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[#2a4164]"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
+            <svg
+              viewBox={`0 0 ${VW} ${VH}`}
+              preserveAspectRatio="none"
+              className="absolute inset-0 h-full w-full"
+            >
+              {[0, 1, 2, 3].map((gi) => (
+                <line
+                  key={gi}
+                  x1="0"
+                  x2={VW}
+                  y1={(gi / 3) * VH}
+                  y2={(gi / 3) * VH}
+                  stroke="#1d3250"
+                  strokeWidth="0.5"
+                />
+              ))}
+              {series.map((vals, si) =>
+                Math.min(...vals) > 0 ? (
+                  <path
+                    key={si}
+                    d={buildLinePath(vals, VW, VH, min, max)}
+                    fill="none"
+                    stroke={instColors[si]}
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity={0.9}
+                  />
+                ) : null,
+              )}
+              {crossX != null && (
+                <line
+                  x1={crossX}
+                  x2={crossX}
+                  y1="0"
+                  y2={VH}
+                  stroke="#4a7ab5"
+                  strokeWidth="0.7"
+                  strokeDasharray="3 2"
+                />
+              )}
+            </svg>
+            {tooltipState &&
+              series.map((vals, si) =>
+                Math.min(...vals) > 0 ? (
+                  <div
+                    key={si}
+                    className="pointer-events-none absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#0a1322]"
+                    style={{
+                      left: `${(tooltipState.index / (dates.length - 1)) * 100}%`,
+                      top: `${((max - vals[tooltipState.index]) / (max - min)) * 100}%`,
+                      backgroundColor: instColors[si],
+                    }}
+                  />
+                ) : null,
+              )}
+          </div>
+        </div>
+        <div className="grid grid-cols-[2.8rem_1fr]">
+          <div />
+          <div className="relative h-4">
+            {xLabels.map((label) => (
+              <span
+                key={label}
+                className="absolute -translate-x-1/2 text-[9px] text-slate-600"
+                style={{
+                  left: `${(dates.indexOf(label) / (dates.length - 1)) * 100}%`,
+                }}
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+        {tooltipState && (
+          <ChartTooltip
+            clientX={tooltipState.clientX}
+            clientY={tooltipState.clientY}
+          >
+            <div className="mb-1 text-[11px] font-semibold text-slate-300">
+              {dates[tooltipState.index]}
+            </div>
+            {series.map((vals, si) =>
+              vals[0] > 0 ? (
+                <div
+                  key={si}
+                  className="flex items-center gap-2 py-0.5 text-[11px]"
+                >
+                  <span
+                    className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
+                    style={{ backgroundColor: instColors[si] }}
+                  />
+                  <span className="text-slate-400">
+                    {fundStructureLegendItems[si].label}
+                  </span>
+                  <span className="ml-auto pl-3 font-semibold text-slate-200">
+                    {vals[tooltipState.index].toFixed(4)}
+                    {unitLabel}
+                  </span>
+                </div>
+              ) : null,
+            )}
+          </ChartTooltip>
+        )}
+      </div>
+    );
+  }
+
+  if (chartType === "stackedBar") {
+    const dailyTotals = dates.map((_, di) =>
+      series.reduce((s, vals) => s + (vals[di] ?? 0), 0),
+    );
+    const maxTotal = Math.max(...dailyTotals, 1);
+    const yTicks = Array.from({ length: 3 }, (_, i) =>
+      Math.round((maxTotal * (3 - i)) / 3),
+    );
+    return (
+      <div className="flex min-h-0 flex-1 flex-col gap-1">
+        <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr]">
+          <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+            {[...yTicks, 0].map((t) => (
+              <div key={t}>{t}</div>
+            ))}
+          </div>
+          <div
+            ref={containerRef}
+            className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[#2a4164]"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                style={{ top: `${(i / 3) * 100}%` }}
+              />
+            ))}
+            <div className="absolute inset-x-1 bottom-1 top-1 flex items-end gap-[2px]">
+              {dates.map((_, di) => {
+                const total = dailyTotals[di];
+                return (
+                  <div
+                    key={di}
+                    className="flex min-w-0 flex-1 flex-col justify-end overflow-hidden rounded-t-[2px]"
+                    style={{ height: `${(total / maxTotal) * 100}%` }}
+                  >
+                    {series.map((vals, si) => {
+                      const pct = total > 0 ? (vals[di] / total) * 100 : 0;
+                      return pct > 0 ? (
+                        <div
+                          key={si}
+                          style={{
+                            height: `${pct}%`,
+                            backgroundColor: instColors[si],
+                            opacity: 0.85,
+                          }}
+                        />
+                      ) : null;
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+            {tooltipState && (
+              <div
+                className="pointer-events-none absolute inset-y-0 w-px bg-[#4a7ab5]/60"
+                style={{
+                  left: `${(tooltipState.index / (dates.length - 1)) * 100}%`,
+                }}
+              />
+            )}
+          </div>
+        </div>
+        <div className="grid grid-cols-[2.8rem_1fr]">
+          <div />
+          <div className="relative h-4">
+            {xLabels.map((label) => (
+              <span
+                key={label}
+                className="absolute -translate-x-1/2 text-[9px] text-slate-600"
+                style={{
+                  left: `${(dates.indexOf(label) / (dates.length - 1)) * 100}%`,
+                }}
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+        {tooltipState && (
+          <ChartTooltip
+            clientX={tooltipState.clientX}
+            clientY={tooltipState.clientY}
+          >
+            <div className="mb-1 text-[11px] font-semibold text-slate-300">
+              {dates[tooltipState.index]}
+            </div>
+            {series.map((vals, si) =>
+              vals[tooltipState.index] > 0 ? (
+                <div
+                  key={si}
+                  className="flex items-center gap-2 py-0.5 text-[11px]"
+                >
+                  <span
+                    className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
+                    style={{ backgroundColor: instColors[si] }}
+                  />
+                  <span className="text-slate-400">
+                    {fundStructureLegendItems[si].label}
+                  </span>
+                  <span className="ml-auto pl-3 font-semibold text-slate-200">
+                    {vals[tooltipState.index].toFixed(0)}亿
+                  </span>
+                </div>
+              ) : null,
+            )}
+          </ChartTooltip>
+        )}
+      </div>
+    );
+  }
+
+  // divergeBar（净融入）—— 仅取 series[0]（全市场合计）
+  const netVals = series[0];
+  const absMax = Math.max(
+    Math.abs(Math.min(...netVals)),
+    Math.abs(Math.max(...netVals)),
+    1,
+  );
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-1">
+      <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr]">
+        <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+          {[
+            absMax,
+            Math.round(absMax / 2),
+            0,
+            -Math.round(absMax / 2),
+            -absMax,
+          ].map((t) => (
+            <div key={t}>{t > 0 ? `+${t}` : t}</div>
+          ))}
+        </div>
+        <div
+          ref={containerRef}
+          className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[#2a4164]"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div className="absolute inset-x-0 top-1/2 border-t border-[#3a5a80]" />
+          <div className="absolute inset-x-1 bottom-1 top-1 flex items-center gap-[2px]">
+            {netVals.map((val, di) => {
+              const isPos = val >= 0;
+              const pct = (Math.abs(val) / absMax) * 47;
+              return (
+                <div
+                  key={di}
+                  className="flex min-w-0 flex-1 flex-col"
+                  style={{ height: "100%" }}
+                >
+                  {isPos ? (
+                    <>
+                      <div style={{ flex: 1 }} />
+                      <div
+                        className="rounded-t-[2px]"
+                        style={{
+                          height: `${pct}%`,
+                          backgroundColor: "#ef5a6f",
+                          opacity: 0.85,
+                        }}
+                      />
+                      <div style={{ height: "50%" }} />
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ height: "50%" }} />
+                      <div
+                        className="rounded-b-[2px]"
+                        style={{
+                          height: `${pct}%`,
+                          backgroundColor: "#2fc3de",
+                          opacity: 0.85,
+                        }}
+                      />
+                      <div style={{ flex: 1 }} />
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {tooltipState && (
+            <div
+              className="pointer-events-none absolute inset-y-0 w-px bg-[#4a7ab5]/60"
+              style={{
+                left: `${(tooltipState.index / (dates.length - 1)) * 100}%`,
+              }}
+            />
+          )}
+        </div>
+      </div>
+      <div className="grid grid-cols-[2.8rem_1fr]">
+        <div />
+        <div className="relative h-4">
+          {xLabels.map((label) => (
+            <span
+              key={label}
+              className="absolute -translate-x-1/2 text-[9px] text-slate-600"
+              style={{
+                left: `${(dates.indexOf(label) / (dates.length - 1)) * 100}%`,
+              }}
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+      </div>
+      {tooltipState && (
+        <ChartTooltip
+          clientX={tooltipState.clientX}
+          clientY={tooltipState.clientY}
+        >
+          <div className="mb-1 text-[11px] font-semibold text-slate-300">
+            {dates[tooltipState.index]}
+          </div>
+          <div className="text-[11px] text-slate-400">
+            净融入{" "}
+            <span
+              className={`font-semibold ${netVals[tooltipState.index] >= 0 ? "text-red-400" : "text-emerald-400"}`}
+            >
+              {netVals[tooltipState.index] >= 0 ? "+" : ""}
+              {netVals[tooltipState.index].toFixed(0)}亿
+            </span>
+          </div>
+        </ChartTooltip>
+      )}
+    </div>
+  );
+}
+
+// ─── 机构面板 ───────────────────────────────────────────────
+function CfetsInstPanel() {
+  const [period, setPeriod] = useState<CfetsInstPeriod>("R001");
+  const [range, setRange] = useState<FundStructureRange>("14d");
+  const [metricKey, setMetricKey] = useState<CfetsMetricKey>("buyRate");
+  const metricDef = cfetsMetricDefs.find((d) => d.key === metricKey)!;
+  const block =
+    metricKey !== "netInflow"
+      ? cfetsInstTrend[period][metricKey][range]
+      : null!;
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      {/* 控件行 */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            {cfetsInstPeriodLabels.map((pt) => (
+              <button
+                key={pt}
+                type="button"
+                className={`rounded-md px-2 py-1 text-[11px] transition-colors ${
+                  period === pt
+                    ? "bg-[#1f3d6b] font-semibold text-slate-100"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+                onClick={() => setPeriod(pt)}
+              >
+                {pt}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-3 text-[11px] text-slate-400 ml-2">
+            {fundStructureLegendItems.map((item) => (
+              <LegendDot
+                key={item.label}
+                color={item.color}
+                label={item.label}
+              />
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            className="rounded border border-[#253754] bg-[#0e1827] px-2 py-1 text-[11px] text-slate-200 focus:outline-none"
+            value={metricKey}
+            onChange={(e) => setMetricKey(e.target.value as CfetsMetricKey)}
+          >
+            {cfetsMetricDefs.map((d) => (
+              <option key={d.key} value={d.key}>
+                {d.label}
+              </option>
+            ))}
+          </select>
+          <div className="flex gap-1">
+            {fundStructureRangeTabs.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                className={auxTabClass(t.id === range)}
+                onClick={() => setRange(t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      {/* 图表 */}
+      {metricKey === "netInflow" ? (
+        <div className="min-h-0 flex-1">
+          <FundStructureBars range={range} />
+        </div>
+      ) : (
+        <MultiSeriesChart
+          block={block}
+          chartType={metricDef.chartType}
+          unitLabel={metricDef.chartType === "line" ? "%" : ""}
+        />
+      )}
+      {/* 说明 */}
+      <div className="text-[10px] text-slate-500">{metricDef.desc}</div>
+    </div>
+  );
+}
+
+// ─── 债券面板 ───────────────────────────────────────────────
+function CfetsBondPanel() {
+  const [bondType, setBondType] = useState<CfetsBondKey>("利率债");
+  const [range, setRange] = useState<FundStructureRange>("14d");
+  const [metricKey, setMetricKey] =
+    useState<Exclude<CfetsMetricKey, "netInflow">>("buyRate");
+  const metricDef = cfetsBondMetricDefs.find((d) => d.key === metricKey)!;
+  const block = cfetsBondTrend[bondType][metricKey][range];
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      {/* 控件行 */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1">
+          {cfetsBondLabels.map((bt) => (
+            <button
+              key={bt}
+              type="button"
+              className={`rounded-md px-2.5 py-1 text-[11px] transition-colors ${
+                bondType === bt
+                  ? "bg-[#1f3d6b] font-semibold text-slate-100"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+              onClick={() => setBondType(bt)}
+            >
+              {bt}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            className="rounded border border-[#253754] bg-[#0e1827] px-2 py-1 text-[11px] text-slate-200 focus:outline-none"
+            value={metricKey}
+            onChange={(e) =>
+              setMetricKey(
+                e.target.value as Exclude<CfetsMetricKey, "netInflow">,
+              )
+            }
+          >
+            {cfetsBondMetricDefs.map((d) => (
+              <option key={d.key} value={d.key}>
+                {d.label}
+              </option>
+            ))}
+          </select>
+          <div className="flex gap-1">
+            {fundStructureRangeTabs.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                className={auxTabClass(t.id === range)}
+                onClick={() => setRange(t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      {/* 图例 */}
+      <div className="flex flex-wrap gap-3 text-[11px] text-slate-400">
+        {fundStructureLegendItems.map((item) => (
+          <LegendDot key={item.label} color={item.color} label={item.label} />
+        ))}
+      </div>
+      {/* 图表 */}
+      <MultiSeriesChart
+        block={block}
+        chartType={metricDef.chartType}
+        unitLabel={metricDef.chartType === "line" ? "%" : ""}
+      />
+      {/* 说明 */}
+      <div className="text-[10px] text-slate-500">{metricDef.desc}</div>
+    </div>
+  );
 }
 
 function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
@@ -2738,6 +5296,13 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
   const oneYearPath = buildLinePath(ncdOneYearSeries, width, height, min, max);
   const area = buildAreaPath(ncdTrendSeries, width, height, min, max);
   const labels = compact ? compactAuxChartLabels : auxChartLabels;
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(ncdTrendSeries.length);
+  const ti = tooltipState?.index ?? null;
+
+  const yTicks = Array.from({ length: 4 }, (_, i) =>
+    Number((max - ((max - min) * i) / 3).toFixed(3)).toString(),
+  );
 
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
@@ -2749,51 +5314,115 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
         </div>
         <span>近14天</span>
       </div>
-      <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]">
-        {[0, 1, 2, 3].map((index) => (
-          <div
-            key={`ncd-grid-${index}`}
-            className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
-            style={{ top: `${(index / 3) * 100}%` }}
-          />
-        ))}
-        <svg
-          className="absolute inset-0 h-full w-full"
-          preserveAspectRatio="none"
-          viewBox={`0 0 ${width} ${height}`}
+      <div className="grid min-h-0 grid-cols-[2.8rem_1fr] gap-1">
+        <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+          {yTicks.map((t) => (
+            <div key={t}>{t}%</div>
+          ))}
+        </div>
+        <div
+          ref={containerRef}
+          className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
         >
-          <defs>
-            <linearGradient id="ncd-fill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#5ea3ff" stopOpacity="0.24" />
-              <stop offset="100%" stopColor="#5ea3ff" stopOpacity="0.04" />
-            </linearGradient>
-          </defs>
-          <path d={area} fill="url(#ncd-fill)" />
-          <path
-            d={oneMonthPath}
-            fill="none"
-            stroke={chartPalette.blue}
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d={threeMonthPath}
-            fill="none"
-            stroke={chartPalette.emerald}
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d={oneYearPath}
-            fill="none"
-            stroke={chartPalette.amber}
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+          {[0, 1, 2, 3].map((index) => (
+            <div
+              key={`ncd-grid-${index}`}
+              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              style={{ top: `${(index / 3) * 100}%` }}
+            />
+          ))}
+          <svg
+            className="absolute inset-0 h-full w-full"
+            preserveAspectRatio="none"
+            viewBox={`0 0 ${width} ${height}`}
+          >
+            <defs>
+              <linearGradient id="ncd-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#5ea3ff" stopOpacity="0.24" />
+                <stop offset="100%" stopColor="#5ea3ff" stopOpacity="0.04" />
+              </linearGradient>
+            </defs>
+            <path d={area} fill="url(#ncd-fill)" />
+            <path
+              d={oneMonthPath}
+              fill="none"
+              stroke={chartPalette.blue}
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d={threeMonthPath}
+              fill="none"
+              stroke={chartPalette.emerald}
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d={oneYearPath}
+              fill="none"
+              stroke={chartPalette.amber}
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            {ti !== null ? (
+              <line
+                x1={(ti / (ncdTrendSeries.length - 1)) * width}
+                x2={(ti / (ncdTrendSeries.length - 1)) * width}
+                y1={0}
+                y2={height}
+                stroke="#5ea3ff"
+                strokeWidth="1"
+                strokeDasharray="4 3"
+                strokeOpacity="0.6"
+              />
+            ) : null}
+          </svg>
+          {tooltipState !== null && ti !== null && (
+            <ChartTooltip
+              clientX={tooltipState.clientX}
+              clientY={tooltipState.clientY}
+            >
+              <div className="mb-1 font-medium text-slate-400">
+                {auxChartLabels[ti]}
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: chartPalette.blue }}
+                />
+                <span className="text-slate-400">1M</span>
+                <span className="ml-1 font-semibold text-slate-100">
+                  {ncdTrendSeries[ti].toFixed(3)}%
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: chartPalette.emerald }}
+                />
+                <span className="text-slate-400">3M</span>
+                <span className="ml-1 font-semibold text-slate-100">
+                  {ncdThreeMonthSeries[ti].toFixed(3)}%
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: chartPalette.amber }}
+                />
+                <span className="text-slate-400">1Y</span>
+                <span className="ml-1 font-semibold text-slate-100">
+                  {ncdOneYearSeries[ti].toFixed(3)}%
+                </span>
+              </div>
+            </ChartTooltip>
+          )}
+        </div>
       </div>
       <div
         className={`grid ${compact ? "grid-cols-7" : "grid-cols-14"} text-center text-[9px] text-slate-400`}
@@ -2806,12 +5435,739 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
   );
 }
 
+function NcdPrimaryTrendPanel({ period }: { period: NcdPeriod }) {
+  const [range, setRange] = useState<NcdTrendRange>("14d");
+  const off = NCD_PERIOD_OFFSET[period];
+  const count = NCD_TREND_COUNTS[range];
+
+  const gov = shiftSeries(ncdPrimaryGovBase6m.slice(-count), off);
+  const aaa = shiftSeries(ncdPrimaryAAABase6m.slice(-count), off);
+  const aaPlus = shiftSeries(ncdPrimaryAAPlsBase6m.slice(-count), off);
+  const aa = shiftSeries(ncdPrimaryAABase6m.slice(-count), off);
+  const dates = ncdTrendDates6m.slice(-count);
+
+  const allFlat = [...gov, ...aaa, ...aaPlus, ...aa];
+  const rawMin = Math.min(...allFlat);
+  const rawMax = Math.max(...allFlat);
+  const pad = (rawMax - rawMin) * 0.15 || 0.02;
+  const min = Math.max(0, rawMin - pad);
+  const max = rawMax + pad;
+
+  const W = 600;
+  const H = 148;
+  const XAXIS_H = 14;
+  const TOTAL_H = H + XAXIS_H;
+
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(count);
+  const ti = tooltipState?.index ?? null;
+
+  const yTicks = Array.from({ length: 4 }, (_, i) =>
+    Number((max - ((max - min) * i) / 3).toFixed(3)).toString(),
+  );
+
+  // X-axis: tick every day, label every N days
+  const labelStep =
+    range === "14d" ? 1 : range === "1m" ? 2 : range === "3m" ? 7 : 14;
+  const xLabels = dates
+    .map((d, i) => ({ d, i }))
+    .filter(({ i }) => i % labelStep === 0 || i === count - 1);
+
+  const series = [
+    { data: gov, color: "#a78bfa", label: "国有/股份制", dash: "" },
+    { data: aaa, color: chartPalette.blue, label: "AAA", dash: "" },
+    { data: aaPlus, color: chartPalette.emerald, label: "AA+", dash: "5 3" },
+    { data: aa, color: chartPalette.amber, label: "AA", dash: "2 2" },
+  ];
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+      {/* header: legend + range tabs */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
+        {series.map((s) => (
+          <LegendDot key={s.label} color={s.color} label={s.label} />
+        ))}
+        <div className="ml-auto flex items-center gap-1">
+          {ncdTrendRangeTabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              className={auxTabClass(range === tab.id)}
+              onClick={() => setRange(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {/* chart */}
+      <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr] gap-x-1">
+        {/* y-axis: top portion only (bottom 20px reserved for x-axis) */}
+        <div className="flex flex-col justify-between pb-5 pr-1 text-right text-[10px] text-slate-500">
+          {yTicks.map((t) => (
+            <div key={t}>{t}%</div>
+          ))}
+        </div>
+        {/* chart area — x-axis ticks + labels are absolutely inside */}
+        <div
+          ref={containerRef}
+          className="relative min-h-0 cursor-crosshair overflow-hidden rounded-md border border-dashed border-[#2f456b]"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              style={{ top: `${(i / 3) * 100}%` }}
+            />
+          ))}
+          {/* line chart — occupies top 85% so bottom 15% is reserved for x-axis */}
+          <svg
+            className="absolute inset-x-0 top-0 w-full"
+            style={{ height: "calc(100% - 20px)" }}
+            preserveAspectRatio="none"
+            viewBox={`0 0 ${W} ${H}`}
+          >
+            {series.map((s) => (
+              <path
+                key={s.label}
+                d={buildLinePath(s.data, W, H, min, max)}
+                fill="none"
+                stroke={s.color}
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeDasharray={s.dash || undefined}
+              />
+            ))}
+            {ti !== null && (
+              <line
+                x1={(ti / (count - 1)) * W}
+                x2={(ti / (count - 1)) * W}
+                y1={0}
+                y2={H}
+                stroke="#7090b0"
+                strokeWidth="1"
+                strokeDasharray="4 3"
+              />
+            )}
+          </svg>
+          {/* x-axis row: per-day ticks + date labels, pinned to bottom */}
+          <div className="absolute inset-x-0 bottom-0 h-5">
+            {/* tick marks — fixed 4px tall SVG */}
+            <svg
+              className="absolute inset-x-0 top-0 w-full"
+              height="4"
+              preserveAspectRatio="none"
+              viewBox={`0 0 ${W} 4`}
+            >
+              {dates.map((_, i) => (
+                <line
+                  key={i}
+                  x1={(i / (count - 1)) * W}
+                  x2={(i / (count - 1)) * W}
+                  y1={0}
+                  y2={4}
+                  stroke="#2a4060"
+                  strokeWidth="1.5"
+                />
+              ))}
+            </svg>
+            {/* date labels below ticks */}
+            {xLabels.map(({ d, i }) => (
+              <span
+                key={i}
+                className="absolute top-[5px] -translate-x-1/2 text-[9px] leading-none text-slate-400"
+                style={{ left: `${(i / (count - 1)) * 100}%` }}
+              >
+                {d}
+              </span>
+            ))}
+          </div>
+          {tooltipState !== null && ti !== null && (
+            <ChartTooltip
+              clientX={tooltipState.clientX}
+              clientY={tooltipState.clientY}
+            >
+              <div className="mb-1 text-[11px] font-medium text-slate-400">
+                {dates[ti]}
+              </div>
+              {series.map((s) => (
+                <div key={s.label} className="flex items-center gap-2">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: s.color }}
+                  />
+                  <span className="text-slate-400">{s.label}</span>
+                  <span className="ml-1 font-semibold text-slate-100">
+                    {s.data[ti].toFixed(3)}%
+                  </span>
+                </div>
+              ))}
+            </ChartTooltip>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NcdLinkedChartPane({
+  series,
+  dates,
+  range,
+  count,
+  externalHoverIndex,
+  onHoverChange,
+}: {
+  series: Array<{ data: number[]; color: string; label: string; dash: string }>;
+  dates: string[];
+  range: NcdTrendRange;
+  count: number;
+  externalHoverIndex: number | null;
+  onHoverChange: (i: number | null) => void;
+}) {
+  const allFlat = series.flatMap((s) => s.data);
+  const rawMin = Math.min(...allFlat);
+  const rawMax = Math.max(...allFlat);
+  const pad = (rawMax - rawMin) * 0.15 || 0.02;
+  const min = Math.max(0, rawMin - pad);
+  const max = rawMax + pad;
+  const W = 600;
+  const H = 148;
+  const {
+    tooltipState,
+    containerRef,
+    handleMouseMove: rawHMM,
+    handleMouseLeave: rawHML,
+  } = useChartTooltip(count);
+  const ti = tooltipState?.index ?? null;
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    rawHMM(e);
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect || rect.width === 0) return;
+    const x = e.clientX - rect.left;
+    const index = Math.max(
+      0,
+      Math.min(count - 1, Math.round((x / rect.width) * (count - 1))),
+    );
+    onHoverChange(index);
+  };
+  const handleMouseLeave = () => {
+    rawHML();
+    onHoverChange(null);
+  };
+
+  const crosshairIdx = externalHoverIndex !== null ? externalHoverIndex : ti;
+  const yTicks = Array.from({ length: 4 }, (_, i) =>
+    Number((max - ((max - min) * i) / 3).toFixed(3)).toString(),
+  );
+  const labelStep =
+    range === "14d" ? 1 : range === "1m" ? 2 : range === "3m" ? 7 : 14;
+  const xLabels = dates
+    .map((d, i) => ({ d, i }))
+    .filter(({ i }) => i % labelStep === 0 || i === count - 1);
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-1 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+      <div className="flex flex-wrap items-center gap-x-3 text-[11px] text-slate-400">
+        {series.map((s) => (
+          <LegendDot key={s.label} color={s.color} label={s.label} />
+        ))}
+      </div>
+      <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr] gap-x-1">
+        <div className="flex flex-col justify-between pb-5 pr-1 text-right text-[10px] text-slate-500">
+          {yTicks.map((t) => (
+            <div key={t}>{t}%</div>
+          ))}
+        </div>
+        <div
+          ref={containerRef}
+          className="relative min-h-0 cursor-crosshair overflow-hidden rounded-md border border-dashed border-[#2f456b]"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              style={{ top: `${(i / 3) * 100}%` }}
+            />
+          ))}
+          <svg
+            className="absolute inset-x-0 top-0 w-full"
+            style={{ height: "calc(100% - 20px)" }}
+            preserveAspectRatio="none"
+            viewBox={`0 0 ${W} ${H}`}
+          >
+            {series.map((s) => (
+              <path
+                key={s.label}
+                d={buildLinePath(s.data, W, H, min, max)}
+                fill="none"
+                stroke={s.color}
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeDasharray={s.dash || undefined}
+              />
+            ))}
+            {crosshairIdx !== null && (
+              <line
+                x1={(crosshairIdx / (count - 1)) * W}
+                x2={(crosshairIdx / (count - 1)) * W}
+                y1={0}
+                y2={H}
+                stroke="#7090b0"
+                strokeWidth="1"
+                strokeDasharray="4 3"
+              />
+            )}
+          </svg>
+          <div className="absolute inset-x-0 bottom-0 h-5">
+            <svg
+              className="absolute inset-x-0 top-0 w-full"
+              height="4"
+              preserveAspectRatio="none"
+              viewBox={`0 0 ${W} 4`}
+            >
+              {dates.map((_, i) => (
+                <line
+                  key={i}
+                  x1={(i / (count - 1)) * W}
+                  x2={(i / (count - 1)) * W}
+                  y1={0}
+                  y2={4}
+                  stroke="#2a4060"
+                  strokeWidth="1.5"
+                />
+              ))}
+            </svg>
+            {xLabels.map(({ d, i }) => (
+              <span
+                key={i}
+                className="absolute top-[5px] -translate-x-1/2 text-[9px] leading-none text-slate-400"
+                style={{ left: `${(i / (count - 1)) * 100}%` }}
+              >
+                {d}
+              </span>
+            ))}
+          </div>
+          {tooltipState !== null && ti !== null && (
+            <ChartTooltip
+              clientX={tooltipState.clientX}
+              clientY={tooltipState.clientY}
+            >
+              <div className="mb-1 text-[11px] font-medium text-slate-400">
+                {dates[ti]}
+              </div>
+              {series.map((s) => (
+                <div key={s.label} className="flex items-center gap-2">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: s.color }}
+                  />
+                  <span className="text-slate-400">{s.label}</span>
+                  <span className="ml-1 font-semibold text-slate-100">
+                    {s.data[ti].toFixed(3)}%
+                  </span>
+                </div>
+              ))}
+            </ChartTooltip>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NcdExpandedDualView({ period }: { period: NcdPeriod }) {
+  const [range, setRange] = useState<NcdTrendRange>("14d");
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const count = NCD_TREND_COUNTS[range];
+  const off = NCD_PERIOD_OFFSET[period];
+  const dates = ncdTrendDates6m.slice(-count);
+
+  const primarySeries = [
+    {
+      data: shiftSeries(ncdPrimaryGovBase6m.slice(-count), off),
+      color: "#a78bfa",
+      label: "国有/股份制",
+      dash: "",
+    },
+    {
+      data: shiftSeries(ncdPrimaryAAABase6m.slice(-count), off),
+      color: chartPalette.blue,
+      label: "AAA",
+      dash: "",
+    },
+    {
+      data: shiftSeries(ncdPrimaryAAPlsBase6m.slice(-count), off),
+      color: chartPalette.emerald,
+      label: "AA+",
+      dash: "5 3",
+    },
+    {
+      data: shiftSeries(ncdPrimaryAABase6m.slice(-count), off),
+      color: chartPalette.amber,
+      label: "AA",
+      dash: "2 2",
+    },
+  ];
+
+  const secondarySeries = [
+    {
+      data: ncdSecondaryGov6m.slice(-count),
+      color: "#a78bfa",
+      label: "国有/股份制",
+      dash: "",
+    },
+    {
+      data: ncdSecondaryAAA6m.slice(-count),
+      color: chartPalette.blue,
+      label: "AAA",
+      dash: "",
+    },
+    {
+      data: ncdSecondaryAAPlus6m.slice(-count),
+      color: chartPalette.emerald,
+      label: "AA+",
+      dash: "5 3",
+    },
+    {
+      data: ncdSecondaryAA6m.slice(-count),
+      color: chartPalette.amber,
+      label: "AA",
+      dash: "2 2",
+    },
+  ];
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      <div className="flex items-center justify-end gap-1">
+        {ncdTrendRangeTabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            className={auxTabClass(range === tab.id)}
+            onClick={() => setRange(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="mb-1 text-[11px] font-medium text-slate-400">一级</div>
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <NcdLinkedChartPane
+            series={primarySeries}
+            dates={dates}
+            range={range}
+            count={count}
+            externalHoverIndex={hoverIndex}
+            onHoverChange={setHoverIndex}
+          />
+        </div>
+      </div>
+      <div className="h-px bg-[#1e2f48]" />
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="mb-1 text-[11px] font-medium text-slate-400">二级</div>
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <NcdLinkedChartPane
+            series={secondarySeries}
+            dates={dates}
+            range={range}
+            count={count}
+            externalHoverIndex={hoverIndex}
+            onHoverChange={setHoverIndex}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NcdPrimaryTable({ period }: { period: NcdPeriod }) {
+  const off = NCD_PERIOD_OFFSET[period];
+  const groups: NcdPrimaryGroup[] = ncdPrimary1MGroups.map((g) => ({
+    ...g,
+    rows: g.rows.map((r) => ({
+      ...r,
+      rate: (parseFloat(r.rate) + off).toFixed(3),
+    })),
+  }));
+  const maxRows = Math.max(...groups.map((g) => g.rows.length));
+  return (
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
+      <div className="flex items-baseline gap-2 border-b border-[#1c3050] bg-[#101d32] px-3 py-1.5">
+        <span className="text-[11px] font-semibold text-slate-200">
+          {period}
+        </span>
+        <span className="text-[11px] text-slate-500">(周一 26-06-08)</span>
+      </div>
+      <div
+        className="grid overflow-y-auto"
+        style={{
+          gridTemplateColumns: `repeat(${groups.length}, 1fr)`,
+          gridAutoRows: "min-content",
+        }}
+      >
+        {groups.map((group) => (
+          <div
+            key={group.label}
+            className="border-b border-r border-[#1c3050] bg-[#0f1d30] px-2 py-1 text-center text-[11px] font-medium text-slate-400 last:border-r-0"
+          >
+            {group.label}
+          </div>
+        ))}
+        {Array.from({ length: maxRows }, (_, rowIdx) =>
+          groups.map((group) => {
+            const row = group.rows[rowIdx];
+            return (
+              <div
+                key={`${group.label}-${rowIdx}`}
+                className="flex items-center justify-between border-b border-r border-[#172436] px-2 py-[5px] last:border-r-0"
+                style={{
+                  borderBottomColor:
+                    rowIdx === maxRows - 1 ? "transparent" : undefined,
+                }}
+              >
+                {row ? (
+                  <>
+                    <span className="truncate text-xs text-slate-300">
+                      {row.name}
+                      {row.marker && (
+                        <span className="ml-0.5 text-[9px] text-slate-500">
+                          ▲
+                        </span>
+                      )}
+                    </span>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <span className="font-mono text-xs text-amber-400">
+                        {row.rate}
+                      </span>
+                      {row.change && (
+                        <span className="text-[11px] text-emerald-400">
+                          {row.change}
+                        </span>
+                      )}
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            );
+          }),
+        )}
+      </div>
+    </div>
+  );
+}
+
+function NcdPrimaryExpandedTable() {
+  return (
+    <div className="h-full overflow-auto">
+      <table className="w-full border-collapse text-xs">
+        <thead className="sticky top-0 z-10">
+          <tr className="bg-[#101d32]">
+            <th className="w-20 border-b border-r border-[#1c3050] px-2 py-2 text-left text-[11px] text-slate-500" />
+            {ncdPrimaryPeriods.map((p) => {
+              const h = ncdColHeaders[p];
+              return (
+                <th
+                  key={p}
+                  className="border-b border-r border-[#1c3050] px-2 py-2 text-center last:border-r-0"
+                >
+                  <div className="flex items-baseline justify-center gap-1">
+                    <span className="font-semibold text-slate-200">{p}</span>
+                    <span className="text-[10px] text-slate-500">
+                      ({h.dow} {h.date})
+                    </span>
+                    {h.count && (
+                      <span className="rounded bg-blue-500/20 px-1 text-[10px] text-blue-300">
+                        {h.count}
+                      </span>
+                    )}
+                  </div>
+                </th>
+              );
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {ncdAllPeriodsData.map((group) => (
+            <tr key={group.label} className="align-top">
+              <td className="border-b border-r border-[#1c3050] bg-[#0f1d30] px-2 py-2 text-[11px] font-medium text-slate-400">
+                {group.label}
+              </td>
+              {ncdPrimaryPeriods.map((p) => {
+                const cells = group.cells[p];
+                return (
+                  <td
+                    key={p}
+                    className="border-b border-r border-[#172436] px-2 py-1.5 last:border-r-0"
+                  >
+                    {cells.length > 0 ? (
+                      <div className="flex flex-col gap-[3px]">
+                        {cells.map((cell) => (
+                          <div
+                            key={cell.name}
+                            className="flex items-center justify-between gap-1"
+                          >
+                            <span className="truncate text-[11px] text-slate-300">
+                              {cell.name}
+                            </span>
+                            <div className="flex shrink-0 items-center gap-1">
+                              <span className="font-mono text-[11px] text-amber-400">
+                                {cell.rate}
+                              </span>
+                              {cell.change && (
+                                <span className="text-[10px] text-emerald-400">
+                                  +{cell.change}
+                                </span>
+                              )}
+                              {cell.limitNonBank && (
+                                <span className="rounded bg-slate-700/60 px-0.5 text-[9px] text-slate-400">
+                                  限非
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center text-[10px] text-slate-600">
+                        —
+                      </div>
+                    )}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function FundStructureBars({ range }: { range: FundStructureRange }) {
+  const yTicks = [5000, 4000, 3000, 2000, 1000, 0] as const;
+  const { bars, labels } = fundStructureRangeData[range];
+  const [hoveredBar, setHoveredBar] = useState<{
+    index: number;
+    clientX: number;
+    clientY: number;
+  } | null>(null);
+
+  return (
+    <div className="grid h-full min-h-0 grid-cols-[3rem_1fr] gap-2">
+      <div className="flex flex-col justify-between pb-2 pt-1 text-right text-[10px] text-slate-400">
+        {yTicks.map((tick) => (
+          <div key={tick}>{tick.toLocaleString()}</div>
+        ))}
+      </div>
+      <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]">
+        {yTicks.map((tick, index) => (
+          <div
+            key={`fund-grid-${tick}`}
+            className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+            style={{ top: `${(index / (yTicks.length - 1)) * 100}%` }}
+          />
+        ))}
+        <div
+          className="absolute inset-x-3 bottom-2 top-2 flex items-end gap-1.5"
+          onMouseLeave={() => setHoveredBar(null)}
+        >
+          {bars.map((values, index) => (
+            <div
+              key={`fund-bar-${range}-${index}`}
+              className="flex h-full min-w-0 flex-1 cursor-pointer items-end"
+              onMouseEnter={(e) =>
+                setHoveredBar({ index, clientX: e.clientX, clientY: e.clientY })
+              }
+              onMouseMove={(e) =>
+                setHoveredBar((prev) =>
+                  prev?.index === index
+                    ? { index, clientX: e.clientX, clientY: e.clientY }
+                    : prev,
+                )
+              }
+            >
+              <div
+                className="flex h-full w-full flex-col justify-end overflow-hidden rounded-t-[3px] transition-opacity"
+                style={{
+                  opacity:
+                    hoveredBar === null || hoveredBar.index === index
+                      ? 0.9
+                      : 0.45,
+                }}
+              >
+                {values.map((value, partIndex) => (
+                  <div
+                    key={`fund-bar-${range}-${index}-${partIndex}`}
+                    className={
+                      partIndex === values.length - 1 ? "rounded-t-[3px]" : ""
+                    }
+                    style={{
+                      height: `${(value / 5000) * 100}%`,
+                      backgroundColor:
+                        fundStructureLegendItems[partIndex].color,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        {hoveredBar !== null && (
+          <ChartTooltip
+            clientX={hoveredBar.clientX}
+            clientY={hoveredBar.clientY}
+          >
+            <div className="mb-1 font-medium text-slate-400">
+              {labels[hoveredBar.index]}
+            </div>
+            <div className="mb-1 text-slate-300">
+              合计{" "}
+              <span className="font-semibold text-slate-100">
+                {bars[hoveredBar.index]
+                  .reduce((s, v) => s + v, 0)
+                  .toLocaleString()}
+                亿
+              </span>
+            </div>
+            {fundStructureLegendItems.map((item, i) => (
+              <div key={item.label} className="flex items-center gap-2">
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: item.color }}
+                />
+                <span className="text-slate-400">{item.label}</span>
+                <span className="ml-1 font-semibold text-slate-100">
+                  {bars[hoveredBar.index][i].toLocaleString()}亿
+                </span>
+              </div>
+            ))}
+          </ChartTooltip>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function FundStructurePanel() {
   const yTicks = [5000, 4000, 3000, 2000, 1000, 0] as const;
   const [range, setRange] = useState<FundStructureRange>("14d");
   const { bars, labels } = fundStructureRangeData[range];
   const rangeSummary =
     range === "14d" ? "近14天" : range === "1m" ? "近1月" : "近半年";
+  const [hoveredBar, setHoveredBar] = useState<{
+    index: number;
+    clientX: number;
+    clientY: number;
+  } | null>(null);
 
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
@@ -2837,7 +6193,7 @@ function FundStructurePanel() {
           <span>{rangeSummary}</span>
         </div>
       </div>
-      <div className="grid min-h-0 grid-cols-[3rem_1fr] gap-2">
+      <div className="grid h-full min-h-0 grid-cols-[3rem_1fr] gap-2">
         <div className="flex flex-col justify-between pb-2 pt-1 text-right text-[10px] text-slate-400">
           {yTicks.map((tick) => (
             <div key={tick}>{tick.toLocaleString()}</div>
@@ -2851,13 +6207,38 @@ function FundStructurePanel() {
               style={{ top: `${(index / (yTicks.length - 1)) * 100}%` }}
             />
           ))}
-          <div className="absolute inset-x-3 bottom-2 top-2 flex items-end gap-1.5">
+          <div
+            className="absolute inset-x-3 bottom-2 top-2 flex items-end gap-1.5"
+            onMouseLeave={() => setHoveredBar(null)}
+          >
             {bars.map((values, index) => (
               <div
                 key={`fund-bar-${range}-${index}`}
-                className="flex h-full min-w-0 flex-1 items-end"
+                className="flex h-full min-w-0 flex-1 cursor-pointer items-end"
+                onMouseEnter={(e) =>
+                  setHoveredBar({
+                    index,
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                  })
+                }
+                onMouseMove={(e) =>
+                  setHoveredBar((prev) =>
+                    prev?.index === index
+                      ? { index, clientX: e.clientX, clientY: e.clientY }
+                      : prev,
+                  )
+                }
               >
-                <div className="flex h-full w-full flex-col justify-end overflow-hidden rounded-t-[3px]">
+                <div
+                  className="flex h-full w-full flex-col justify-end overflow-hidden rounded-t-[3px] transition-opacity"
+                  style={{
+                    opacity:
+                      hoveredBar === null || hoveredBar.index === index
+                        ? 0.9
+                        : 0.45,
+                  }}
+                >
                   {values.map((value, partIndex) => (
                     <div
                       key={`fund-bar-${range}-${index}-${partIndex}`}
@@ -2868,7 +6249,6 @@ function FundStructurePanel() {
                         height: `${(value / 5000) * 100}%`,
                         backgroundColor:
                           fundStructureLegendItems[partIndex].color,
-                        opacity: 0.9,
                       }}
                     />
                   ))}
@@ -2876,6 +6256,37 @@ function FundStructurePanel() {
               </div>
             ))}
           </div>
+          {hoveredBar !== null && (
+            <ChartTooltip
+              clientX={hoveredBar.clientX}
+              clientY={hoveredBar.clientY}
+            >
+              <div className="mb-1 font-medium text-slate-400">
+                {labels[hoveredBar.index]}
+              </div>
+              <div className="mb-1 text-slate-300">
+                合计{" "}
+                <span className="font-semibold text-slate-100">
+                  {bars[hoveredBar.index]
+                    .reduce((s, v) => s + v, 0)
+                    .toLocaleString()}
+                  亿
+                </span>
+              </div>
+              {fundStructureLegendItems.map((item, i) => (
+                <div key={item.label} className="flex items-center gap-2">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-slate-400">{item.label}</span>
+                  <span className="ml-1 font-semibold text-slate-100">
+                    {bars[hoveredBar.index][i].toLocaleString()}亿
+                  </span>
+                </div>
+              ))}
+            </ChartTooltip>
+          )}
         </div>
       </div>
       <div className="grid shrink-0 grid-cols-[3rem_1fr]">
@@ -3336,6 +6747,76 @@ function TrendLine({
   );
 }
 
+const intradayAllTimeLabels: string[] = (() => {
+  const segments = [
+    { start: "09:30", count: 5 },
+    { start: "10:00", count: 5 },
+    { start: "10:30", count: 5 },
+    { start: "11:00", count: 5 },
+    { start: "13:30", count: 5 },
+    { start: "14:00", count: 5 },
+    { start: "14:30", count: 5 },
+    { start: "15:00", count: 5 },
+  ];
+  return segments.flatMap(({ start, count }) => {
+    const [h, m] = start.split(":").map(Number);
+    return Array.from({ length: count }, (_, i) => {
+      const total = h * 60 + m + i * 6;
+      return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+    });
+  });
+})();
+
+function useChartTooltip(dataLength: number) {
+  const [state, setState] = useState<{
+    index: number;
+    clientX: number;
+    clientY: number;
+  } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect || rect.width === 0) return;
+    const x = e.clientX - rect.left;
+    const index = Math.max(
+      0,
+      Math.min(dataLength - 1, Math.round((x / rect.width) * (dataLength - 1))),
+    );
+    setState({ index, clientX: e.clientX, clientY: e.clientY });
+  }
+
+  function handleMouseLeave() {
+    setState(null);
+  }
+
+  return {
+    tooltipState: state,
+    containerRef,
+    handleMouseMove,
+    handleMouseLeave,
+  };
+}
+
+function ChartTooltip({
+  clientX,
+  clientY,
+  children,
+}: {
+  clientX: number;
+  clientY: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="pointer-events-none fixed z-[200] rounded-lg border border-[#2a4a6e] bg-[#0e1d31]/95 px-3 py-2 text-xs text-slate-200 shadow-xl backdrop-blur-sm"
+      style={{ left: clientX + 14, top: clientY - 10 }}
+    >
+      {children}
+    </div>
+  );
+}
+
 function LegendDot({ color, label }: { color: string; label: string }) {
   return (
     <span className="inline-flex items-center gap-1.5">
@@ -3393,14 +6874,9 @@ function buildOverlaySeries(
   product: OverlayProduct,
 ) {
   const delta =
-    product === "dr007" ? 0.018 : product === "gc007" ? -0.012 : 0.006;
+    product === "dr007" ? 0.012 : product === "gc007" ? -0.008 : 0.004;
   return values.map(
-    (value, index) =>
-      value +
-      delta +
-      Math.sin(index / 2.1) * 0.022 +
-      Math.cos(index / 5.7) * 0.016 +
-      Math.sin(index / 1.3) * 0.009,
+    (value, index) => value + delta + Math.sin(index / 3.2) * 0.0025,
   );
 }
 
@@ -3420,8 +6896,7 @@ function buildHistoricalSeries(
     const wave =
       Math.sin(index / config.waveDivisor) * config.waveAmplitude +
       Math.cos(index / (config.waveDivisor + 3.4)) *
-        (config.waveAmplitude * 0.65) +
-      Math.sin(index / 2.7) * (config.waveAmplitude * 0.4);
+        (config.waveAmplitude * 0.55);
     return Number((value + config.offset + wave).toFixed(4));
   });
 }
@@ -3431,11 +6906,11 @@ function getProductSeriesConfig(
 ) {
   switch (product) {
     case "dr007":
-      return { offset: 0.008, waveAmplitude: 0.0012, waveDivisor: 4.2 };
+      return { offset: 0.00115, waveAmplitude: 0.00015, waveDivisor: 5.8 };
     case "gc007":
-      return { offset: 0.012, waveAmplitude: 0.0015, waveDivisor: 3.8 };
+      return { offset: 0.00172, waveAmplitude: 0.00018, waveDivisor: 6.5 };
     case "r007":
-      return { offset: 0.01, waveAmplitude: 0.0011, waveDivisor: 5.3 };
+      return { offset: 0.00138, waveAmplitude: 0.00014, waveDivisor: 5.1 };
     default:
       return { offset: 0, waveAmplitude: 0, waveDivisor: 6 };
   }
@@ -3472,49 +6947,22 @@ function buildAxisTickLabels(labels: readonly string[], maxVisible: number) {
 
 function buildSixMonthDailyDataset() {
   const labels: string[] = [];
-  const close: number[] = [];
-  const volume: number[] = [];
   const cursor = new Date("2025-11-04T00:00:00");
   const points = 126;
 
   while (labels.length < points) {
     const day = cursor.getDay();
     if (day !== 0 && day !== 6) {
-      const index = labels.length;
-      const progress = index / (points - 1);
-
-      let baseline: number;
-      if (progress < 0.68) {
-        baseline = 1.268 - (progress / 0.68) * 0.042;
-      } else if (progress < 0.82) {
-        baseline = 1.226 - ((progress - 0.68) / 0.14) * 0.011;
-      } else {
-        baseline = 1.215 + ((progress - 0.82) / 0.18) * 0.021;
-      }
-
-      const wave =
-        Math.sin(index / 3.4) * 0.042 +
-        Math.cos(index / 6.1) * 0.028 +
-        Math.sin(index / 1.9) * 0.018 +
-        Math.cos(index / 8.7) * 0.012;
-      const value = Number((baseline + wave).toFixed(4));
-      const amount = Math.round(
-        2280 +
-          Math.sin(index / 3.8) * 620 +
-          Math.cos(index / 5.2) * 480 +
-          Math.sin(index / 2.1) * 350 +
-          progress * 960,
-      );
-
       labels.push(`${cursor.getMonth() + 1}/${cursor.getDate()}`);
-      close.push(value);
-      volume.push(amount);
     }
-
     cursor.setDate(cursor.getDate() + 1);
   }
 
-  return { labels, close, volume };
+  // 用 randomWalk 替代 sin/cos，三步趋势模拟下行→平稳→反弹
+  const closeWalk = randomWalk(1.215, points, 0.006, 7);
+  const volumeWalk = randomWalk(2280, points, 200, 8).map((v) => Math.round(v));
+
+  return { labels, close: closeWalk, volume: volumeWalk };
 }
 
 function buildCandlesFromSeries(values: readonly number[]) {
@@ -3598,6 +7046,279 @@ function PanelCard({
         )}
       </div>
     </section>
+  );
+}
+
+function useHoverPopover(enterDelay = 80, leaveDelay = 120) {
+  const [visible, setVisible] = useState(false);
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+  const enterTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
+
+  function scheduleShow() {
+    if (leaveTimer.current) clearTimeout(leaveTimer.current);
+    enterTimer.current = setTimeout(() => {
+      setAnchorRect(anchorRef.current?.getBoundingClientRect() ?? null);
+      setVisible(true);
+    }, enterDelay);
+  }
+
+  function scheduleHide() {
+    if (enterTimer.current) clearTimeout(enterTimer.current);
+    leaveTimer.current = setTimeout(() => setVisible(false), leaveDelay);
+  }
+
+  function cancelHide() {
+    if (leaveTimer.current) clearTimeout(leaveTimer.current);
+  }
+
+  return {
+    visible,
+    anchorRect,
+    anchorRef,
+    scheduleShow,
+    scheduleHide,
+    cancelHide,
+  };
+}
+
+const sentimentSeriesConfig = [
+  { key: "total" as const, label: "全市场", color: "#e2e8f0" },
+  { key: "bigBank" as const, label: "大行", color: "#4ade80" },
+  { key: "smallBank" as const, label: "中小行", color: "#60a5fa" },
+  { key: "nonBank" as const, label: "非银机构", color: "#fb923c" },
+] as const;
+
+function SentimentPopoverPanel({
+  anchorRect,
+  onEnter,
+  onLeave,
+}: {
+  anchorRect: DOMRect;
+  onEnter: () => void;
+  onLeave: () => void;
+}) {
+  const [tab, setTab] = useState<SentimentTab>("trend");
+  const data = tab === "trend" ? sentimentTrendData : sentimentRealtimeData;
+  const VW = 380;
+  const VH = 120;
+
+  const allValues = data.flatMap((p) =>
+    sentimentSeriesConfig.map(({ key }) => p[key]),
+  );
+  const dataMin = Math.floor(Math.min(...allValues)) - 1;
+  const dataMax = Math.ceil(Math.max(...allValues)) + 1;
+
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(data.length);
+
+  const panelWidth = 440;
+  const left = Math.min(
+    anchorRect.right - panelWidth,
+    window.innerWidth - panelWidth - 8,
+  );
+  const top = anchorRect.bottom + 8;
+
+  const xTickIndices =
+    data.length <= 8
+      ? data.map((_, i) => i)
+      : Array.from({ length: 5 }, (_, i) =>
+          Math.round((i / 4) * (data.length - 1)),
+        );
+
+  const yTicks = Array.from({ length: 5 }, (_, i) =>
+    Math.round(dataMax - ((dataMax - dataMin) * i) / 4),
+  );
+
+  const crosshairX =
+    tooltipState != null ? (tooltipState.index / (data.length - 1)) * VW : null;
+
+  return (
+    <div
+      className="fixed z-[300] overflow-hidden rounded-xl border border-[#1d3250] bg-[#0a1322] shadow-2xl"
+      style={{ left, top, width: panelWidth }}
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+    >
+      <div className="flex items-center gap-2 border-b border-[#1a2c45] bg-[#0e1827] px-3 py-2">
+        <span className="text-xs font-semibold text-slate-200">资金情绪</span>
+        <div className="flex gap-0.5 rounded-md bg-[#0a1322] p-0.5">
+          {(["realtime", "trend"] as const).map((t) => (
+            <button
+              key={t}
+              className={`rounded px-2.5 py-0.5 text-[11px] transition-colors ${
+                tab === t
+                  ? "bg-[#c69b3a] font-semibold text-white"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+              type="button"
+              onClick={() => setTab(t)}
+            >
+              {t === "realtime" ? "实时" : "走势"}
+            </button>
+          ))}
+        </div>
+        {tab === "trend" && (
+          <span className="text-[10px] text-slate-500">
+            2026-04-07 → 2026-05-07
+          </span>
+        )}
+        <span className="ml-auto cursor-default select-none text-[11px] text-slate-600">
+          ?
+        </span>
+      </div>
+
+      <div className="flex gap-4 px-3 pb-1 pt-2 text-[11px] text-slate-400">
+        {sentimentSeriesConfig.map(({ key, label, color }) => (
+          <LegendDot key={key} color={color} label={label} />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-[36px_1fr] px-1 pb-1">
+        <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+          {yTicks.map((tick) => (
+            <div key={tick}>{tick}</div>
+          ))}
+        </div>
+        <div
+          ref={containerRef}
+          className="relative cursor-crosshair"
+          style={{ height: 140 }}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
+          <svg
+            viewBox={`0 0 ${VW} ${VH}`}
+            preserveAspectRatio="none"
+            className="absolute inset-0 h-full w-full overflow-visible"
+          >
+            {yTicks.map((_, gi) => (
+              <line
+                key={`sg-${gi}`}
+                x1="0"
+                x2={VW}
+                y1={(gi / (yTicks.length - 1)) * VH}
+                y2={(gi / (yTicks.length - 1)) * VH}
+                stroke="#1d3250"
+                strokeWidth="0.5"
+              />
+            ))}
+            {sentimentSeriesConfig.map(({ key, color }) => (
+              <path
+                key={key}
+                d={buildLinePath(
+                  data.map((p) => p[key]),
+                  VW,
+                  VH,
+                  dataMin,
+                  dataMax,
+                )}
+                fill="none"
+                stroke={color}
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                opacity={0.9}
+              />
+            ))}
+            {crosshairX !== null && (
+              <line
+                x1={crosshairX}
+                x2={crosshairX}
+                y1="0"
+                y2={VH}
+                stroke="#4a7ab5"
+                strokeWidth="0.8"
+                strokeDasharray="3 2"
+              />
+            )}
+          </svg>
+          {tooltipState &&
+            sentimentSeriesConfig.map(({ key, color }) => {
+              const v = data[tooltipState.index][key];
+              const cx = (tooltipState.index / (data.length - 1)) * 100;
+              const cy = ((dataMax - v) / (dataMax - dataMin)) * 100;
+              return (
+                <div
+                  key={key}
+                  className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#0a1322]"
+                  style={{
+                    left: `${cx}%`,
+                    top: `${cy}%`,
+                    backgroundColor: color,
+                  }}
+                />
+              );
+            })}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-[36px_1fr] pb-2">
+        <div />
+        <div className="relative h-4 px-1">
+          {xTickIndices.map((idx) => (
+            <span
+              key={idx}
+              className="absolute -translate-x-1/2 text-[9px] text-slate-600"
+              style={{ left: `${(idx / (data.length - 1)) * 100}%` }}
+            >
+              {data[idx].label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {tooltipState && (
+        <ChartTooltip
+          clientX={tooltipState.clientX}
+          clientY={tooltipState.clientY}
+        >
+          <div className="mb-1.5 font-semibold text-slate-200">
+            {data[tooltipState.index].label}
+          </div>
+          {sentimentSeriesConfig.map(({ key, label, color }) => (
+            <div key={key} className="flex items-center gap-2 py-0.5">
+              <span
+                className="h-2 w-2 flex-shrink-0 rounded-full"
+                style={{ backgroundColor: color }}
+              />
+              <span className="text-slate-400">{label}</span>
+              <span className="ml-auto pl-4 font-semibold text-slate-200">
+                {data[tooltipState.index][key]}
+              </span>
+            </div>
+          ))}
+        </ChartTooltip>
+      )}
+    </div>
+  );
+}
+
+function SentimentChipWithPopover() {
+  const {
+    visible,
+    anchorRect,
+    anchorRef,
+    scheduleShow,
+    scheduleHide,
+    cancelHide,
+  } = useHoverPopover();
+  return (
+    <div
+      ref={anchorRef}
+      onMouseEnter={scheduleShow}
+      onMouseLeave={scheduleHide}
+    >
+      <InfoChip label="资金情绪" value="51 / 47 / 50 / 49" tone="neutral" />
+      {visible && anchorRect && (
+        <SentimentPopoverPanel
+          anchorRect={anchorRect}
+          onEnter={cancelHide}
+          onLeave={scheduleHide}
+        />
+      )}
+    </div>
   );
 }
 
