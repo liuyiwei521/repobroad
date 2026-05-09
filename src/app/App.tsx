@@ -3557,6 +3557,14 @@ const cfetsInstData: Record<CfetsInstKey, CfetsTermRow[]> = {
 };
 
 // ── 机构 × 债券类型数据（金额单位：百万）──
+type CfetsInstPeriod = "R001" | "R007" | "R014" | "R021" | "R1M";
+const cfetsInstPeriodLabels: CfetsInstPeriod[] = [
+  "R001",
+  "R007",
+  "R014",
+  "R021",
+  "R1M",
+];
 type CfetsBondKey = "利率债" | "信用债" | "同业存单";
 type CfetsBondRow = {
   inst: string;
@@ -3822,29 +3830,95 @@ const cfetsTrendCounts: Record<FundStructureRange, number> = {
 
 // 机构图例顺序：大行/股份行/理财/理财子/券商/基金/保险
 // 锚点取自 2026-01-04 真实数据，顺序对应 fundStructureLegendItems
-const cfetsInstAnchors: Record<CfetsMetricKey, number[]> = {
-  buyRate: [1.2269, 1.2509, 1.3088, 1.3088, 1.2984, 1.4071, 1.2961],
-  sellRate: [
-    1.2576,
-    1.2563,
-    1.4665,
-    1.4665,
-    null as unknown as number,
-    null as unknown as number,
-    1.304,
-  ],
-  buyAmt: [5969, 10787, 3294, 3294, 721, 4, 2140], // 亿，R001+R007合计
-  sellAmt: [17949, 4547, 56, 56, 0, 0, 774],
-  netInflow: [-3302, 147, 1815, 1815, 304, 76, 549],
+const cfetsInstAnchors: Record<
+  CfetsInstPeriod,
+  Record<CfetsMetricKey, number[]>
+> = {
+  R001: {
+    buyRate: [1.201, 1.225, 1.283, 1.283, 1.273, 1.382, 1.271],
+    sellRate: [
+      1.232,
+      1.231,
+      1.441,
+      1.441,
+      null as unknown as number,
+      null as unknown as number,
+      1.279,
+    ],
+    buyAmt: [4500, 8500, 2500, 2500, 550, 3, 1600],
+    sellAmt: [14000, 3500, 40, 40, 0, 0, 600],
+    netInflow: [-2600, 110, 1400, 1400, 230, 60, 420],
+  },
+  R007: {
+    buyRate: [1.245, 1.269, 1.327, 1.327, 1.317, 1.426, 1.315],
+    sellRate: [
+      1.276,
+      1.275,
+      1.485,
+      1.485,
+      null as unknown as number,
+      null as unknown as number,
+      1.323,
+    ],
+    buyAmt: [1200, 1900, 680, 680, 145, 1, 440],
+    sellAmt: [3200, 880, 13, 13, 0, 0, 140],
+    netInflow: [-570, 30, 350, 350, 60, 12, 105],
+  },
+  R014: {
+    buyRate: [1.268, 1.292, 1.351, 1.351, 1.342, 1.451, 1.338],
+    sellRate: [
+      1.301,
+      1.3,
+      1.511,
+      1.511,
+      null as unknown as number,
+      null as unknown as number,
+      1.348,
+    ],
+    buyAmt: [220, 320, 95, 95, 22, 0, 85],
+    sellAmt: [620, 140, 2, 2, 0, 0, 28],
+    netInflow: [-108, 4, 55, 55, 12, 3, 20],
+  },
+  R021: {
+    buyRate: [1.292, 1.317, 1.376, 1.376, 1.368, 1.478, 1.363],
+    sellRate: [
+      1.327,
+      1.326,
+      1.538,
+      1.538,
+      null as unknown as number,
+      null as unknown as number,
+      1.374,
+    ],
+    buyAmt: [42, 62, 18, 18, 4, 0, 15],
+    sellAmt: [125, 26, 0.5, 0.5, 0, 0, 6],
+    netInflow: [-22, 1, 10, 10, 2, 0.5, 4],
+  },
+  R1M: {
+    buyRate: [1.315, 1.341, 1.402, 1.402, 1.395, 1.506, 1.389],
+    sellRate: [
+      1.354,
+      1.353,
+      1.566,
+      1.566,
+      null as unknown as number,
+      null as unknown as number,
+      1.401,
+    ],
+    buyAmt: [5, 7, 1, 1, 0.5, 0, 2],
+    sellAmt: [4, 1, 0.1, 0.1, 0, 0, 0.2],
+    netInflow: [-1, 0.2, 0.5, 0.5, 0.1, 0.05, 0.5],
+  },
 };
 
 function buildInstTrendBlock(
+  period: CfetsInstPeriod,
   metricKey: CfetsMetricKey,
   range: FundStructureRange,
 ): CfetsTrendBlock {
   const count = cfetsTrendCounts[range];
   const dates = generateTradingDates("2026-01-04", count);
-  const anchors = cfetsInstAnchors[metricKey];
+  const anchors = cfetsInstAnchors[period][metricKey];
   const isRate = metricKey === "buyRate" || metricKey === "sellRate";
   const vol = isRate ? 0.04 : metricKey === "netInflow" ? 800 : 2000;
   const series = anchors.map((anchor, i) => {
@@ -3855,27 +3929,35 @@ function buildInstTrendBlock(
 }
 
 const cfetsInstTrend: Record<
-  CfetsMetricKey,
-  Record<FundStructureRange, CfetsTrendBlock>
+  CfetsInstPeriod,
+  Record<CfetsMetricKey, Record<FundStructureRange, CfetsTrendBlock>>
 > = Object.fromEntries(
-  (
-    [
-      "buyRate",
-      "sellRate",
-      "buyAmt",
-      "sellAmt",
-      "netInflow",
-    ] as CfetsMetricKey[]
-  ).map((mk) => [
-    mk,
+  cfetsInstPeriodLabels.map((period) => [
+    period,
     Object.fromEntries(
-      (["14d", "1m", "6m"] as FundStructureRange[]).map((r) => [
-        r,
-        buildInstTrendBlock(mk, r),
+      (
+        [
+          "buyRate",
+          "sellRate",
+          "buyAmt",
+          "sellAmt",
+          "netInflow",
+        ] as CfetsMetricKey[]
+      ).map((mk) => [
+        mk,
+        Object.fromEntries(
+          (["14d", "1m", "6m"] as FundStructureRange[]).map((r) => [
+            r,
+            buildInstTrendBlock(period, mk, r),
+          ]),
+        ),
       ]),
     ),
   ]),
-) as Record<CfetsMetricKey, Record<FundStructureRange, CfetsTrendBlock>>;
+) as Record<
+  CfetsInstPeriod,
+  Record<CfetsMetricKey, Record<FundStructureRange, CfetsTrendBlock>>
+>;
 
 // 债券趋势锚点：[大行, 股份行, 理财, 理财子, 券商, 基金, 保险]
 const cfetsBondAnchors: Record<
@@ -4624,20 +4706,45 @@ function MultiSeriesChart({
 
 // ─── 机构面板 ───────────────────────────────────────────────
 function CfetsInstPanel() {
+  const [period, setPeriod] = useState<CfetsInstPeriod>("R001");
   const [range, setRange] = useState<FundStructureRange>("14d");
   const [metricKey, setMetricKey] = useState<CfetsMetricKey>("buyRate");
   const metricDef = cfetsMetricDefs.find((d) => d.key === metricKey)!;
   const block =
-    metricKey !== "netInflow" ? cfetsInstTrend[metricKey][range] : null!;
+    metricKey !== "netInflow"
+      ? cfetsInstTrend[period][metricKey][range]
+      : null!;
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
       {/* 控件行 */}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap gap-3 text-[11px] text-slate-400">
-          {fundStructureLegendItems.map((item) => (
-            <LegendDot key={item.label} color={item.color} label={item.label} />
-          ))}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            {cfetsInstPeriodLabels.map((pt) => (
+              <button
+                key={pt}
+                type="button"
+                className={`rounded-md px-2 py-1 text-[11px] transition-colors ${
+                  period === pt
+                    ? "bg-[#1f3d6b] font-semibold text-slate-100"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+                onClick={() => setPeriod(pt)}
+              >
+                {pt}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-3 text-[11px] text-slate-400 ml-2">
+            {fundStructureLegendItems.map((item) => (
+              <LegendDot
+                key={item.label}
+                color={item.color}
+                label={item.label}
+              />
+            ))}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <select

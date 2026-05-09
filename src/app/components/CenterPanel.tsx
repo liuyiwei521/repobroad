@@ -974,7 +974,7 @@ function QuoteSection({
         <table className="w-full text-xs border-collapse">
           <thead>
             <tr className="bg-gray-100 border-b border-gray-300">
-              <th className="min-w-[100px] px-3 py-2 text-left font-bold text-gray-700 border-r border-gray-200 whitespace-nowrap">
+              <th className="min-w-[140px] px-3 py-2 text-left font-bold text-gray-700 border-r border-gray-200 whitespace-nowrap">
                 期限
               </th>
               <th className="px-3 py-2 text-right font-bold text-gray-700 border-r border-gray-200">
@@ -989,7 +989,7 @@ function QuoteSection({
               <th className="px-3 py-2 text-right font-bold text-gray-700 border-r border-gray-200">
                 正回购量(亿)
               </th>
-              <th className="px-3 py-2 text-center font-bold text-gray-700">
+              <th className="w-12 px-1 py-2 text-center font-bold text-gray-700">
                 操作
               </th>
             </tr>
@@ -1027,13 +1027,13 @@ function QuoteSection({
                   <td className="px-3 py-2 text-right text-gray-800 font-mono font-medium border-r border-gray-200">
                     {quote.askVolume.toLocaleString()}
                   </td>
-                  <td className="px-3 py-2 text-center">
+                  <td className="px-1 py-2 text-center">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         onSendToTrade(quote);
                       }}
-                      className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded font-medium transition-colors shadow-sm"
+                      className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded font-medium transition-colors shadow-sm"
                     >
                       <Send size={10} />
                       发送
