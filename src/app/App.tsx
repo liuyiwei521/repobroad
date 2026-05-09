@@ -1044,6 +1044,10 @@ const cfetsDetailRows = [
 const ncdTrendSeries = randomWalk(2.03, 14, 0.015, 15);
 const ncdThreeMonthSeries = randomWalk(2.07, 14, 0.015, 16);
 const ncdOneYearSeries = randomWalk(2.13, 14, 0.015, 17);
+const ncdSecondaryGov6m = randomWalk(1.98, 130, 0.006, 40);
+const ncdSecondaryAAA6m = randomWalk(2.03, 130, 0.006, 41);
+const ncdSecondaryAAPlus6m = randomWalk(2.08, 130, 0.007, 42);
+const ncdSecondaryAA6m = randomWalk(2.13, 130, 0.007, 43);
 const auxChartLabels = [
   "4/9",
   "4/10",
@@ -1104,6 +1108,27 @@ const ncdPrimaryAABase = [
   2.15,
 ];
 
+type NcdTrendRange = "14d" | "1m" | "3m" | "6m";
+const NCD_TREND_COUNTS: Record<NcdTrendRange, number> = {
+  "14d": 14,
+  "1m": 22,
+  "3m": 65,
+  "6m": 130,
+};
+const ncdTrendRangeTabs: Array<{ id: NcdTrendRange; label: string }> = [
+  { id: "14d", label: "14D" },
+  { id: "1m", label: "1M" },
+  { id: "3m", label: "3M" },
+  { id: "6m", label: "6M" },
+];
+
+// 6M (130 pts) base series — last point anchored to 14d series tail
+const ncdPrimaryGovBase6m = randomWalk(2.0, 130, 0.006, 20);
+const ncdPrimaryAAABase6m = randomWalk(2.05, 130, 0.006, 21);
+const ncdPrimaryAAPlsBase6m = randomWalk(2.1, 130, 0.007, 22);
+const ncdPrimaryAABase6m = randomWalk(2.15, 130, 0.007, 23);
+const ncdTrendDates6m = generateTradingDates("2026-01-04", 130);
+
 function shiftSeries(base: number[], offset: number): number[] {
   return base.map((v) => parseFloat((v + offset).toFixed(4)));
 }
@@ -1120,6 +1145,13 @@ const ncdPrimary1MGroups: NcdPrimaryGroup[] = [
   {
     label: "国有/股份制",
     rows: [
+      { name: "浦发银行", rate: "1.320" },
+      { name: "渤海银行", rate: "1.330" },
+    ],
+  },
+  {
+    label: "AAA",
+    rows: [
       { name: "成都银行", rate: "1.300" },
       { name: "哈尔滨银行", rate: "1.300" },
       { name: "宁波银行", rate: "1.315" },
@@ -1128,28 +1160,347 @@ const ncdPrimary1MGroups: NcdPrimaryGroup[] = [
     ],
   },
   {
-    label: "AAA",
-    rows: [
-      { name: "徽商银行", rate: "1.330" },
-      { name: "苏州银行", rate: "1.335" },
-      { name: "东莞银行", rate: "1.340", change: "+5.0" },
-    ],
-  },
-  {
     label: "AA+",
     rows: [
       { name: "南粤银行", rate: "1.310" },
       { name: "江门农商行", rate: "1.330" },
-      { name: "威海银行", rate: "1.380", change: "+5.0" },
+      { name: "富民银行", rate: "1.500", marker: true },
     ],
   },
   {
     label: "AA",
     rows: [
-      { name: "富民银行", rate: "1.500", marker: true },
-      { name: "长沙银行", rate: "1.480" },
-      { name: "蒙商银行", rate: "1.520", change: "+2.5" },
+      { name: "威海银行", rate: "1.380", change: "+5.0" },
+      { name: "蒙商银行", rate: "1.420" },
     ],
+  },
+];
+
+type NcdAllPeriodCell = {
+  name: string;
+  rate: string;
+  change?: string;
+  limitNonBank?: boolean;
+};
+type NcdAllPeriodGroup = {
+  label: string;
+  cells: Record<NcdPeriod, NcdAllPeriodCell[]>;
+};
+
+const ncdColHeaders: Record<
+  NcdPeriod,
+  { dow: string; date: string; count?: string }
+> = {
+  "1M": { dow: "周一", date: "26-06-08" },
+  "3M": { dow: "周六", date: "26-08-08", count: "2/2" },
+  "6M": { dow: "周日", date: "26-11-08", count: "1/1" },
+  "9M": { dow: "周一", date: "27-02-08", count: "7/4" },
+  "1Y": { dow: "周六", date: "27-05-08", count: "2/2" },
+};
+
+const ncdAllPeriodsData: NcdAllPeriodGroup[] = [
+  {
+    label: "国有/股份制",
+    cells: {
+      "1M": [],
+      "3M": [
+        { name: "浦发银行", rate: "1.33" },
+        { name: "渤海银行", rate: "1.36" },
+      ],
+      "6M": [{ name: "渤海银行", rate: "1.41" }],
+      "9M": [{ name: "渤海银行", rate: "1.41" }],
+      "1Y": [{ name: "渤海银行", rate: "1.46" }],
+    },
+  },
+  {
+    label: "AAA",
+    cells: {
+      "1M": [
+        { name: "成都银行", rate: "1.300" },
+        { name: "哈尔滨银行", rate: "1.300" },
+        { name: "宁波银行", rate: "1.315" },
+        { name: "桂林银行", rate: "1.320" },
+        { name: "渝农商行", rate: "1.325", change: "+2.5" },
+      ],
+      "3M": [
+        { name: "成都银行", rate: "1.350" },
+        { name: "桂林银行", rate: "1.360" },
+        { name: "唐山银行", rate: "1.360" },
+        { name: "日照银行", rate: "1.360" },
+        { name: "大连银行", rate: "1.390" },
+        { name: "富滇银行", rate: "1.390" },
+        { name: "哈尔滨银行", rate: "1.390" },
+      ],
+      "6M": [
+        { name: "南京银行", rate: "1.390" },
+        { name: "徽商银行", rate: "1.400" },
+        { name: "九江银行", rate: "1.400" },
+        { name: "成都银行", rate: "1.400" },
+        { name: "广州农商行", rate: "1.410" },
+        { name: "宁波银行", rate: "1.420" },
+        { name: "富滇银行", rate: "1.420" },
+        { name: "桂林银行", rate: "1.420" },
+        { name: "唐山银行", rate: "1.420" },
+        { name: "哈尔滨银行", rate: "1.430" },
+        { name: "大连银行", rate: "1.430" },
+      ],
+      "9M": [
+        { name: "徽商银行", rate: "1.430" },
+        { name: "南京银行", rate: "1.430" },
+        { name: "广州农商行", rate: "1.430" },
+        { name: "成都银行", rate: "1.440" },
+        { name: "唐山银行", rate: "1.440" },
+        { name: "汉口银行", rate: "1.440" },
+        { name: "桂林银行", rate: "1.440" },
+        { name: "日照银行", rate: "1.450" },
+        { name: "宁波银行", rate: "1.450" },
+        { name: "富滇银行", rate: "1.460" },
+        { name: "大连银行", rate: "1.460" },
+        { name: "哈尔滨银行", rate: "1.460" },
+      ],
+      "1Y": [
+        { name: "广州农商行", rate: "1.450" },
+        { name: "南京银行", rate: "1.450" },
+        { name: "徽商银行", rate: "1.450" },
+        { name: "九江银行", rate: "1.460" },
+        { name: "唐山银行", rate: "1.460" },
+        { name: "汉口银行", rate: "1.460" },
+        { name: "成都银行", rate: "1.460" },
+        { name: "桂林银行", rate: "1.460" },
+        { name: "宁波银行", rate: "1.460" },
+        { name: "东莞银行", rate: "1.465" },
+        { name: "杭州银行", rate: "1.470" },
+        { name: "日照银行", rate: "1.470" },
+        { name: "大连银行", rate: "1.480" },
+        { name: "哈尔滨银行", rate: "1.480" },
+        { name: "富滇银行", rate: "1.480" },
+        { name: "渝农商行", rate: "1.480", limitNonBank: true },
+      ],
+    },
+  },
+  {
+    label: "AA+",
+    cells: {
+      "1M": [
+        { name: "南粤银行", rate: "1.310" },
+        { name: "江门农商行", rate: "1.330" },
+        { name: "东营银行", rate: "1.350" },
+        { name: "廊坊银行", rate: "1.360" },
+        { name: "绍兴银行", rate: "1.370" },
+        { name: "台州银行", rate: "1.375" },
+        { name: "温州银行", rate: "1.380" },
+        { name: "广州银行", rate: "1.385" },
+        { name: "贵阳银行", rate: "1.390" },
+        { name: "郑州银行", rate: "1.395" },
+        { name: "青岛农商行", rate: "1.400" },
+        { name: "无锡农商行", rate: "1.410" },
+        { name: "苏农银行", rate: "1.420" },
+        { name: "江阴银行", rate: "1.430" },
+        { name: "张家港行", rate: "1.435" },
+        { name: "富民银行", rate: "1.500", limitNonBank: true },
+      ],
+      "3M": [
+        { name: "长沙农商行", rate: "1.380" },
+        { name: "江门农商行", rate: "1.410" },
+        { name: "秦农农商行", rate: "1.420" },
+        { name: "南粤银行", rate: "1.420" },
+        { name: "中山农商行", rate: "1.420" },
+        { name: "台州银行", rate: "1.425" },
+        { name: "广州银行", rate: "1.428" },
+        { name: "东营银行", rate: "1.430" },
+        { name: "廊坊银行", rate: "1.430" },
+        { name: "温州银行", rate: "1.432" },
+        { name: "南海农商行", rate: "1.435" },
+        { name: "绍兴银行", rate: "1.438" },
+        { name: "贵阳银行", rate: "1.438" },
+        { name: "张家口银行", rate: "1.440" },
+        { name: "顺德农商行", rate: "1.440" },
+        { name: "郑州银行", rate: "1.442" },
+        { name: "青岛农商行", rate: "1.445" },
+        { name: "无锡农商行", rate: "1.448" },
+        { name: "苏农银行", rate: "1.450" },
+        { name: "江阴银行", rate: "1.452" },
+        { name: "张家港行", rate: "1.455" },
+      ],
+      "6M": [
+        { name: "长沙农商行", rate: "1.410" },
+        { name: "秦农农商行", rate: "1.430" },
+        { name: "中山农商行", rate: "1.430" },
+        { name: "台州银行", rate: "1.432" },
+        { name: "东营银行", rate: "1.435" },
+        { name: "广州银行", rate: "1.438" },
+        { name: "江门农商行", rate: "1.440" },
+        { name: "南粤银行", rate: "1.440" },
+        { name: "廊坊银行", rate: "1.440" },
+        { name: "温州银行", rate: "1.442" },
+        { name: "南海农商行", rate: "1.445" },
+        { name: "贵阳银行", rate: "1.448" },
+        { name: "顺德农商行", rate: "1.450" },
+        { name: "绍兴银行", rate: "1.450" },
+        { name: "张家口银行", rate: "1.450" },
+        { name: "郑州银行", rate: "1.452" },
+        { name: "青岛农商行", rate: "1.455" },
+        { name: "石嘴山银行", rate: "1.460" },
+        { name: "无锡农商行", rate: "1.460" },
+        { name: "苏农银行", rate: "1.462" },
+        { name: "江阴银行", rate: "1.465" },
+        { name: "张家港行", rate: "1.468" },
+      ],
+      "9M": [
+        { name: "长沙农商行", rate: "1.440" },
+        { name: "秦农农商行", rate: "1.440" },
+        { name: "新疆银行", rate: "1.450" },
+        { name: "中山农商行", rate: "1.450" },
+        { name: "台州银行", rate: "1.450" },
+        { name: "东营银行", rate: "1.450" },
+        { name: "广州银行", rate: "1.452" },
+        { name: "廊坊银行", rate: "1.455" },
+        { name: "温州银行", rate: "1.455" },
+        { name: "南海农商行", rate: "1.458" },
+        { name: "贵阳银行", rate: "1.460" },
+        { name: "江门农商行", rate: "1.460" },
+        { name: "顺德农商行", rate: "1.460" },
+        { name: "绍兴银行", rate: "1.462" },
+        { name: "长安银行", rate: "1.460", limitNonBank: true },
+        { name: "郑州银行", rate: "1.465" },
+        { name: "青岛农商行", rate: "1.468" },
+        { name: "石嘴山银行", rate: "1.470" },
+        { name: "无锡农商行", rate: "1.470" },
+        { name: "苏农银行", rate: "1.472" },
+        { name: "江阴银行", rate: "1.475" },
+        { name: "张家港行", rate: "1.478" },
+      ],
+      "1Y": [
+        { name: "长沙农商行", rate: "1.450" },
+        { name: "秦农农商行", rate: "1.450" },
+        { name: "南粤银行", rate: "1.460" },
+        { name: "台州银行", rate: "1.462" },
+        { name: "东营银行", rate: "1.465" },
+        { name: "广州银行", rate: "1.465" },
+        { name: "中山农商行", rate: "1.470" },
+        { name: "新疆银行", rate: "1.470" },
+        { name: "廊坊银行", rate: "1.470" },
+        { name: "温州银行", rate: "1.470" },
+        { name: "江门农商行", rate: "1.470" },
+        { name: "贵阳银行", rate: "1.472" },
+        { name: "南海农商行", rate: "1.472" },
+        { name: "顺德农商行", rate: "1.475" },
+        { name: "绍兴银行", rate: "1.478" },
+        { name: "郑州银行", rate: "1.478" },
+        { name: "长安银行", rate: "1.480", limitNonBank: true },
+        { name: "石嘴山银行", rate: "1.485" },
+        { name: "青岛农商行", rate: "1.485" },
+        { name: "无锡农商行", rate: "1.488" },
+        { name: "苏农银行", rate: "1.490" },
+        { name: "江阴银行", rate: "1.492" },
+        { name: "张家港行", rate: "1.495" },
+      ],
+    },
+  },
+  {
+    label: "AA",
+    cells: {
+      "1M": [
+        { name: "威海银行", rate: "1.380", change: "+5.0" },
+        { name: "蒙商银行", rate: "1.420" },
+        { name: "乌鲁木齐银行", rate: "1.450" },
+        { name: "齐商银行", rate: "1.460" },
+        { name: "葫芦岛银行", rate: "1.480" },
+        { name: "盐城银行", rate: "1.490" },
+        { name: "晋商银行", rate: "1.495" },
+        { name: "泸州银行", rate: "1.500" },
+        { name: "昆仑银行", rate: "1.505" },
+        { name: "宁夏银行", rate: "1.510" },
+        { name: "吉林银行", rate: "1.515" },
+        { name: "贵州银行", rate: "1.520" },
+        { name: "九台农商行", rate: "1.525" },
+        { name: "大庆银行", rate: "1.530" },
+        { name: "湖北银行", rate: "1.535" },
+      ],
+      "3M": [
+        { name: "威海银行", rate: "1.420" },
+        { name: "泰安银行", rate: "1.450" },
+        { name: "蒙商银行", rate: "1.460" },
+        { name: "乌鲁木齐银行", rate: "1.470" },
+        { name: "齐商银行", rate: "1.475" },
+        { name: "龙江银行", rate: "1.480" },
+        { name: "盐城银行", rate: "1.485" },
+        { name: "葫芦岛银行", rate: "1.490" },
+        { name: "晋商银行", rate: "1.492" },
+        { name: "赤峰银行", rate: "1.495" },
+        { name: "泸州银行", rate: "1.498" },
+        { name: "甘肃银行", rate: "1.500" },
+        { name: "昆仑银行", rate: "1.502" },
+        { name: "宁夏银行", rate: "1.505" },
+        { name: "吉林银行", rate: "1.508" },
+        { name: "贵州银行", rate: "1.510" },
+        { name: "九台农商行", rate: "1.515" },
+        { name: "大庆银行", rate: "1.518" },
+        { name: "湖北银行", rate: "1.520" },
+      ],
+      "6M": [
+        { name: "威海银行", rate: "1.450" },
+        { name: "泰安银行", rate: "1.470" },
+        { name: "乌鲁木齐银行", rate: "1.480" },
+        { name: "蒙商银行", rate: "1.480" },
+        { name: "齐商银行", rate: "1.485" },
+        { name: "盐城银行", rate: "1.490" },
+        { name: "龙江银行", rate: "1.500" },
+        { name: "晋商银行", rate: "1.500" },
+        { name: "葫芦岛银行", rate: "1.505" },
+        { name: "泸州银行", rate: "1.508" },
+        { name: "赤峰银行", rate: "1.510" },
+        { name: "甘肃银行", rate: "1.515" },
+        { name: "昆仑银行", rate: "1.518" },
+        { name: "宁夏银行", rate: "1.520" },
+        { name: "吉林银行", rate: "1.522" },
+        { name: "贵州银行", rate: "1.525" },
+        { name: "九台农商行", rate: "1.528" },
+        { name: "大庆银行", rate: "1.530" },
+        { name: "湖北银行", rate: "1.535" },
+      ],
+      "9M": [
+        { name: "威海银行", rate: "1.470" },
+        { name: "泰安银行", rate: "1.490" },
+        { name: "乌鲁木齐银行", rate: "1.495" },
+        { name: "蒙商银行", rate: "1.500" },
+        { name: "盐城银行", rate: "1.502" },
+        { name: "齐商银行", rate: "1.505" },
+        { name: "晋商银行", rate: "1.508" },
+        { name: "龙江银行", rate: "1.510" },
+        { name: "泸州银行", rate: "1.512" },
+        { name: "赤峰银行", rate: "1.520" },
+        { name: "甘肃银行", rate: "1.525" },
+        { name: "昆仑银行", rate: "1.528" },
+        { name: "宁夏银行", rate: "1.530" },
+        { name: "吉林银行", rate: "1.532" },
+        { name: "贵州银行", rate: "1.535" },
+        { name: "九台农商行", rate: "1.538" },
+        { name: "大庆银行", rate: "1.540" },
+        { name: "湖北银行", rate: "1.545" },
+      ],
+      "1Y": [
+        { name: "威海银行", rate: "1.490" },
+        { name: "泰安银行", rate: "1.510" },
+        { name: "乌鲁木齐银行", rate: "1.515" },
+        { name: "齐商银行", rate: "1.518" },
+        { name: "盐城银行", rate: "1.518" },
+        { name: "蒙商银行", rate: "1.520", change: "+2.5" },
+        { name: "晋商银行", rate: "1.522" },
+        { name: "龙江银行", rate: "1.525" },
+        { name: "泸州银行", rate: "1.525" },
+        { name: "葫芦岛银行", rate: "1.530" },
+        { name: "赤峰银行", rate: "1.535" },
+        { name: "甘肃银行", rate: "1.540" },
+        { name: "昆仑银行", rate: "1.542" },
+        { name: "宁夏银行", rate: "1.545" },
+        { name: "吉林银行", rate: "1.548" },
+        { name: "贵州银行", rate: "1.550" },
+        { name: "九台农商行", rate: "1.552" },
+        { name: "大庆银行", rate: "1.555" },
+        { name: "湖北银行", rate: "1.558" },
+      ],
+    },
   },
 ];
 const fundStructureBars = [
@@ -1857,13 +2208,34 @@ function LeftNcdCard() {
           onClick={() => setExpanded(false)}
         >
           <div
-            className="flex h-[70vh] w-[860px] max-w-[95vw] flex-col overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]"
+            className="relative flex h-[85vh] w-[90vw] max-w-[1400px] flex-col overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-2.5">
-              {header(() => setExpanded(false))}
+            <button
+              onClick={() => setExpanded(false)}
+              type="button"
+              className="absolute right-3 top-3 z-10 rounded p-1 text-slate-400 hover:bg-[#1e3358] hover:text-slate-100"
+              title="收起"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path
+                  d="M2 2l4 4M2 2h3M2 2v3M12 12l-4-4M12 12H9M12 12V9"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+            <div className="min-h-0 flex-1 overflow-hidden p-3">
+              {market === "primary" && mode === "table" ? (
+                <NcdPrimaryExpandedTable />
+              ) : market === "primary" && mode === "trend" ? (
+                <NcdExpandedDualView period={period} />
+              ) : (
+                body
+              )}
             </div>
-            <div className="min-h-0 flex-1 overflow-hidden p-3">{body}</div>
           </div>
         </div>
       )}
@@ -5064,162 +5436,454 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
 }
 
 function NcdPrimaryTrendPanel({ period }: { period: NcdPeriod }) {
+  const [range, setRange] = useState<NcdTrendRange>("14d");
   const off = NCD_PERIOD_OFFSET[period];
-  const gov = shiftSeries(ncdPrimaryGovBase, off);
-  const aaa = shiftSeries(ncdPrimaryAAABase, off);
-  const aaPlus = shiftSeries(ncdPrimaryAAPlsBase, off);
-  const aa = shiftSeries(ncdPrimaryAABase, off);
-  const allSeries = [gov, aaa, aaPlus, aa];
-  const min = Math.min(...allSeries.flat()) - 0.02;
-  const max = Math.max(...allSeries.flat()) + 0.02;
-  const width = 520;
-  const height = 120;
-  const govPath = buildLinePath(gov, width, height, min, max);
-  const aaaPath = buildLinePath(aaa, width, height, min, max);
-  const aaPlusPath = buildLinePath(aaPlus, width, height, min, max);
-  const aaPath = buildLinePath(aa, width, height, min, max);
+  const count = NCD_TREND_COUNTS[range];
+
+  const gov = shiftSeries(ncdPrimaryGovBase6m.slice(-count), off);
+  const aaa = shiftSeries(ncdPrimaryAAABase6m.slice(-count), off);
+  const aaPlus = shiftSeries(ncdPrimaryAAPlsBase6m.slice(-count), off);
+  const aa = shiftSeries(ncdPrimaryAABase6m.slice(-count), off);
+  const dates = ncdTrendDates6m.slice(-count);
+
+  const allFlat = [...gov, ...aaa, ...aaPlus, ...aa];
+  const rawMin = Math.min(...allFlat);
+  const rawMax = Math.max(...allFlat);
+  const pad = (rawMax - rawMin) * 0.15 || 0.02;
+  const min = Math.max(0, rawMin - pad);
+  const max = rawMax + pad;
+
+  const W = 600;
+  const H = 148;
+  const XAXIS_H = 14;
+  const TOTAL_H = H + XAXIS_H;
+
   const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
-    useChartTooltip(gov.length);
+    useChartTooltip(count);
   const ti = tooltipState?.index ?? null;
 
   const yTicks = Array.from({ length: 4 }, (_, i) =>
     Number((max - ((max - min) * i) / 3).toFixed(3)).toString(),
   );
 
+  // X-axis: tick every day, label every N days
+  const labelStep =
+    range === "14d" ? 1 : range === "1m" ? 2 : range === "3m" ? 7 : 14;
+  const xLabels = dates
+    .map((d, i) => ({ d, i }))
+    .filter(({ i }) => i % labelStep === 0 || i === count - 1);
+
+  const series = [
+    { data: gov, color: "#a78bfa", label: "国有/股份制", dash: "" },
+    { data: aaa, color: chartPalette.blue, label: "AAA", dash: "" },
+    { data: aaPlus, color: chartPalette.emerald, label: "AA+", dash: "5 3" },
+    { data: aa, color: chartPalette.amber, label: "AA", dash: "2 2" },
+  ];
+
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+    <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+      {/* header: legend + range tabs */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
-        <LegendDot color="#a78bfa" label="国有/股份制" />
-        <LegendDot color={chartPalette.blue} label="AAA" />
-        <LegendDot color={chartPalette.emerald} label="AA+" />
-        <LegendDot color={chartPalette.amber} label="AA" />
-        <span className="ml-auto">近14天</span>
+        {series.map((s) => (
+          <LegendDot key={s.label} color={s.color} label={s.label} />
+        ))}
+        <div className="ml-auto flex items-center gap-1">
+          {ncdTrendRangeTabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              className={auxTabClass(range === tab.id)}
+              onClick={() => setRange(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
-      <div className="grid min-h-0 grid-cols-[2.8rem_1fr] gap-1">
-        <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+      {/* chart */}
+      <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr] gap-x-1">
+        {/* y-axis: top portion only (bottom 20px reserved for x-axis) */}
+        <div className="flex flex-col justify-between pb-5 pr-1 text-right text-[10px] text-slate-500">
+          {yTicks.map((t) => (
+            <div key={t}>{t}%</div>
+          ))}
+        </div>
+        {/* chart area — x-axis ticks + labels are absolutely inside */}
+        <div
+          ref={containerRef}
+          className="relative min-h-0 cursor-crosshair overflow-hidden rounded-md border border-dashed border-[#2f456b]"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              style={{ top: `${(i / 3) * 100}%` }}
+            />
+          ))}
+          {/* line chart — occupies top 85% so bottom 15% is reserved for x-axis */}
+          <svg
+            className="absolute inset-x-0 top-0 w-full"
+            style={{ height: "calc(100% - 20px)" }}
+            preserveAspectRatio="none"
+            viewBox={`0 0 ${W} ${H}`}
+          >
+            {series.map((s) => (
+              <path
+                key={s.label}
+                d={buildLinePath(s.data, W, H, min, max)}
+                fill="none"
+                stroke={s.color}
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeDasharray={s.dash || undefined}
+              />
+            ))}
+            {ti !== null && (
+              <line
+                x1={(ti / (count - 1)) * W}
+                x2={(ti / (count - 1)) * W}
+                y1={0}
+                y2={H}
+                stroke="#7090b0"
+                strokeWidth="1"
+                strokeDasharray="4 3"
+              />
+            )}
+          </svg>
+          {/* x-axis row: per-day ticks + date labels, pinned to bottom */}
+          <div className="absolute inset-x-0 bottom-0 h-5">
+            {/* tick marks — fixed 4px tall SVG */}
+            <svg
+              className="absolute inset-x-0 top-0 w-full"
+              height="4"
+              preserveAspectRatio="none"
+              viewBox={`0 0 ${W} 4`}
+            >
+              {dates.map((_, i) => (
+                <line
+                  key={i}
+                  x1={(i / (count - 1)) * W}
+                  x2={(i / (count - 1)) * W}
+                  y1={0}
+                  y2={4}
+                  stroke="#2a4060"
+                  strokeWidth="1.5"
+                />
+              ))}
+            </svg>
+            {/* date labels below ticks */}
+            {xLabels.map(({ d, i }) => (
+              <span
+                key={i}
+                className="absolute top-[5px] -translate-x-1/2 text-[9px] leading-none text-slate-400"
+                style={{ left: `${(i / (count - 1)) * 100}%` }}
+              >
+                {d}
+              </span>
+            ))}
+          </div>
+          {tooltipState !== null && ti !== null && (
+            <ChartTooltip
+              clientX={tooltipState.clientX}
+              clientY={tooltipState.clientY}
+            >
+              <div className="mb-1 text-[11px] font-medium text-slate-400">
+                {dates[ti]}
+              </div>
+              {series.map((s) => (
+                <div key={s.label} className="flex items-center gap-2">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: s.color }}
+                  />
+                  <span className="text-slate-400">{s.label}</span>
+                  <span className="ml-1 font-semibold text-slate-100">
+                    {s.data[ti].toFixed(3)}%
+                  </span>
+                </div>
+              ))}
+            </ChartTooltip>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NcdLinkedChartPane({
+  series,
+  dates,
+  range,
+  count,
+  externalHoverIndex,
+  onHoverChange,
+}: {
+  series: Array<{ data: number[]; color: string; label: string; dash: string }>;
+  dates: string[];
+  range: NcdTrendRange;
+  count: number;
+  externalHoverIndex: number | null;
+  onHoverChange: (i: number | null) => void;
+}) {
+  const allFlat = series.flatMap((s) => s.data);
+  const rawMin = Math.min(...allFlat);
+  const rawMax = Math.max(...allFlat);
+  const pad = (rawMax - rawMin) * 0.15 || 0.02;
+  const min = Math.max(0, rawMin - pad);
+  const max = rawMax + pad;
+  const W = 600;
+  const H = 148;
+  const {
+    tooltipState,
+    containerRef,
+    handleMouseMove: rawHMM,
+    handleMouseLeave: rawHML,
+  } = useChartTooltip(count);
+  const ti = tooltipState?.index ?? null;
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    rawHMM(e);
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect || rect.width === 0) return;
+    const x = e.clientX - rect.left;
+    const index = Math.max(
+      0,
+      Math.min(count - 1, Math.round((x / rect.width) * (count - 1))),
+    );
+    onHoverChange(index);
+  };
+  const handleMouseLeave = () => {
+    rawHML();
+    onHoverChange(null);
+  };
+
+  const crosshairIdx = externalHoverIndex !== null ? externalHoverIndex : ti;
+  const yTicks = Array.from({ length: 4 }, (_, i) =>
+    Number((max - ((max - min) * i) / 3).toFixed(3)).toString(),
+  );
+  const labelStep =
+    range === "14d" ? 1 : range === "1m" ? 2 : range === "3m" ? 7 : 14;
+  const xLabels = dates
+    .map((d, i) => ({ d, i }))
+    .filter(({ i }) => i % labelStep === 0 || i === count - 1);
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-1 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+      <div className="flex flex-wrap items-center gap-x-3 text-[11px] text-slate-400">
+        {series.map((s) => (
+          <LegendDot key={s.label} color={s.color} label={s.label} />
+        ))}
+      </div>
+      <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr] gap-x-1">
+        <div className="flex flex-col justify-between pb-5 pr-1 text-right text-[10px] text-slate-500">
           {yTicks.map((t) => (
             <div key={t}>{t}%</div>
           ))}
         </div>
         <div
           ref={containerRef}
-          className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]"
+          className="relative min-h-0 cursor-crosshair overflow-hidden rounded-md border border-dashed border-[#2f456b]"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
           {[0, 1, 2, 3].map((i) => (
             <div
-              key={`ncd-p-grid-${i}`}
+              key={i}
               className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
               style={{ top: `${(i / 3) * 100}%` }}
             />
           ))}
           <svg
-            className="absolute inset-0 h-full w-full"
+            className="absolute inset-x-0 top-0 w-full"
+            style={{ height: "calc(100% - 20px)" }}
             preserveAspectRatio="none"
-            viewBox={`0 0 ${width} ${height}`}
+            viewBox={`0 0 ${W} ${H}`}
           >
-            <path
-              d={govPath}
-              fill="none"
-              stroke="#a78bfa"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d={aaaPath}
-              fill="none"
-              stroke={chartPalette.blue}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeDasharray="0"
-            />
-            <path
-              d={aaPlusPath}
-              fill="none"
-              stroke={chartPalette.emerald}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeDasharray="5 3"
-            />
-            <path
-              d={aaPath}
-              fill="none"
-              stroke={chartPalette.amber}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeDasharray="2 2"
-            />
-            {ti !== null ? (
+            {series.map((s) => (
+              <path
+                key={s.label}
+                d={buildLinePath(s.data, W, H, min, max)}
+                fill="none"
+                stroke={s.color}
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeDasharray={s.dash || undefined}
+              />
+            ))}
+            {crosshairIdx !== null && (
               <line
-                x1={(ti / (gov.length - 1)) * width}
-                x2={(ti / (gov.length - 1)) * width}
+                x1={(crosshairIdx / (count - 1)) * W}
+                x2={(crosshairIdx / (count - 1)) * W}
                 y1={0}
-                y2={height}
-                stroke="#a78bfa"
+                y2={H}
+                stroke="#7090b0"
                 strokeWidth="1"
                 strokeDasharray="4 3"
-                strokeOpacity="0.6"
               />
-            ) : null}
+            )}
           </svg>
+          <div className="absolute inset-x-0 bottom-0 h-5">
+            <svg
+              className="absolute inset-x-0 top-0 w-full"
+              height="4"
+              preserveAspectRatio="none"
+              viewBox={`0 0 ${W} 4`}
+            >
+              {dates.map((_, i) => (
+                <line
+                  key={i}
+                  x1={(i / (count - 1)) * W}
+                  x2={(i / (count - 1)) * W}
+                  y1={0}
+                  y2={4}
+                  stroke="#2a4060"
+                  strokeWidth="1.5"
+                />
+              ))}
+            </svg>
+            {xLabels.map(({ d, i }) => (
+              <span
+                key={i}
+                className="absolute top-[5px] -translate-x-1/2 text-[9px] leading-none text-slate-400"
+                style={{ left: `${(i / (count - 1)) * 100}%` }}
+              >
+                {d}
+              </span>
+            ))}
+          </div>
           {tooltipState !== null && ti !== null && (
             <ChartTooltip
               clientX={tooltipState.clientX}
               clientY={tooltipState.clientY}
             >
-              <div className="mb-1 font-medium text-slate-400">
-                {auxChartLabels[ti]}
+              <div className="mb-1 text-[11px] font-medium text-slate-400">
+                {dates[ti]}
               </div>
-              <div className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#a78bfa]" />
-                <span className="text-slate-400">国有/股份制</span>
-                <span className="ml-1 font-semibold text-slate-100">
-                  {gov[ti].toFixed(3)}%
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ backgroundColor: chartPalette.blue }}
-                />
-                <span className="text-slate-400">AAA</span>
-                <span className="ml-1 font-semibold text-slate-100">
-                  {aaa[ti].toFixed(3)}%
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ backgroundColor: chartPalette.emerald }}
-                />
-                <span className="text-slate-400">AA+</span>
-                <span className="ml-1 font-semibold text-slate-100">
-                  {aaPlus[ti].toFixed(3)}%
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ backgroundColor: chartPalette.amber }}
-                />
-                <span className="text-slate-400">AA</span>
-                <span className="ml-1 font-semibold text-slate-100">
-                  {aa[ti].toFixed(3)}%
-                </span>
-              </div>
+              {series.map((s) => (
+                <div key={s.label} className="flex items-center gap-2">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: s.color }}
+                  />
+                  <span className="text-slate-400">{s.label}</span>
+                  <span className="ml-1 font-semibold text-slate-100">
+                    {s.data[ti].toFixed(3)}%
+                  </span>
+                </div>
+              ))}
             </ChartTooltip>
           )}
         </div>
       </div>
-      <div className="grid grid-cols-7 text-center text-[9px] text-slate-400">
-        {compactAuxChartLabels.map((label) => (
-          <div key={label}>{label}</div>
+    </div>
+  );
+}
+
+function NcdExpandedDualView({ period }: { period: NcdPeriod }) {
+  const [range, setRange] = useState<NcdTrendRange>("14d");
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const count = NCD_TREND_COUNTS[range];
+  const off = NCD_PERIOD_OFFSET[period];
+  const dates = ncdTrendDates6m.slice(-count);
+
+  const primarySeries = [
+    {
+      data: shiftSeries(ncdPrimaryGovBase6m.slice(-count), off),
+      color: "#a78bfa",
+      label: "国有/股份制",
+      dash: "",
+    },
+    {
+      data: shiftSeries(ncdPrimaryAAABase6m.slice(-count), off),
+      color: chartPalette.blue,
+      label: "AAA",
+      dash: "",
+    },
+    {
+      data: shiftSeries(ncdPrimaryAAPlsBase6m.slice(-count), off),
+      color: chartPalette.emerald,
+      label: "AA+",
+      dash: "5 3",
+    },
+    {
+      data: shiftSeries(ncdPrimaryAABase6m.slice(-count), off),
+      color: chartPalette.amber,
+      label: "AA",
+      dash: "2 2",
+    },
+  ];
+
+  const secondarySeries = [
+    {
+      data: ncdSecondaryGov6m.slice(-count),
+      color: "#a78bfa",
+      label: "国有/股份制",
+      dash: "",
+    },
+    {
+      data: ncdSecondaryAAA6m.slice(-count),
+      color: chartPalette.blue,
+      label: "AAA",
+      dash: "",
+    },
+    {
+      data: ncdSecondaryAAPlus6m.slice(-count),
+      color: chartPalette.emerald,
+      label: "AA+",
+      dash: "5 3",
+    },
+    {
+      data: ncdSecondaryAA6m.slice(-count),
+      color: chartPalette.amber,
+      label: "AA",
+      dash: "2 2",
+    },
+  ];
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      <div className="flex items-center justify-end gap-1">
+        {ncdTrendRangeTabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            className={auxTabClass(range === tab.id)}
+            onClick={() => setRange(tab.id)}
+          >
+            {tab.label}
+          </button>
         ))}
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="mb-1 text-[11px] font-medium text-slate-400">一级</div>
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <NcdLinkedChartPane
+            series={primarySeries}
+            dates={dates}
+            range={range}
+            count={count}
+            externalHoverIndex={hoverIndex}
+            onHoverChange={setHoverIndex}
+          />
+        </div>
+      </div>
+      <div className="h-px bg-[#1e2f48]" />
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="mb-1 text-[11px] font-medium text-slate-400">二级</div>
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <NcdLinkedChartPane
+            series={secondarySeries}
+            dates={dates}
+            range={range}
+            count={count}
+            externalHoverIndex={hoverIndex}
+            onHoverChange={setHoverIndex}
+          />
+        </div>
       </div>
     </div>
   );
@@ -5297,6 +5961,93 @@ function NcdPrimaryTable({ period }: { period: NcdPeriod }) {
           }),
         )}
       </div>
+    </div>
+  );
+}
+
+function NcdPrimaryExpandedTable() {
+  return (
+    <div className="h-full overflow-auto">
+      <table className="w-full border-collapse text-xs">
+        <thead className="sticky top-0 z-10">
+          <tr className="bg-[#101d32]">
+            <th className="w-20 border-b border-r border-[#1c3050] px-2 py-2 text-left text-[11px] text-slate-500" />
+            {ncdPrimaryPeriods.map((p) => {
+              const h = ncdColHeaders[p];
+              return (
+                <th
+                  key={p}
+                  className="border-b border-r border-[#1c3050] px-2 py-2 text-center last:border-r-0"
+                >
+                  <div className="flex items-baseline justify-center gap-1">
+                    <span className="font-semibold text-slate-200">{p}</span>
+                    <span className="text-[10px] text-slate-500">
+                      ({h.dow} {h.date})
+                    </span>
+                    {h.count && (
+                      <span className="rounded bg-blue-500/20 px-1 text-[10px] text-blue-300">
+                        {h.count}
+                      </span>
+                    )}
+                  </div>
+                </th>
+              );
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {ncdAllPeriodsData.map((group) => (
+            <tr key={group.label} className="align-top">
+              <td className="border-b border-r border-[#1c3050] bg-[#0f1d30] px-2 py-2 text-[11px] font-medium text-slate-400">
+                {group.label}
+              </td>
+              {ncdPrimaryPeriods.map((p) => {
+                const cells = group.cells[p];
+                return (
+                  <td
+                    key={p}
+                    className="border-b border-r border-[#172436] px-2 py-1.5 last:border-r-0"
+                  >
+                    {cells.length > 0 ? (
+                      <div className="flex flex-col gap-[3px]">
+                        {cells.map((cell) => (
+                          <div
+                            key={cell.name}
+                            className="flex items-center justify-between gap-1"
+                          >
+                            <span className="truncate text-[11px] text-slate-300">
+                              {cell.name}
+                            </span>
+                            <div className="flex shrink-0 items-center gap-1">
+                              <span className="font-mono text-[11px] text-amber-400">
+                                {cell.rate}
+                              </span>
+                              {cell.change && (
+                                <span className="text-[10px] text-emerald-400">
+                                  +{cell.change}
+                                </span>
+                              )}
+                              {cell.limitNonBank && (
+                                <span className="rounded bg-slate-700/60 px-0.5 text-[9px] text-slate-400">
+                                  限非
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center text-[10px] text-slate-600">
+                        —
+                      </div>
+                    )}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
