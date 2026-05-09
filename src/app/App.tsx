@@ -4928,6 +4928,10 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
     useChartTooltip(ncdTrendSeries.length);
   const ti = tooltipState?.index ?? null;
 
+  const yTicks = Array.from({ length: 4 }, (_, i) =>
+    Number((max - ((max - min) * i) / 3).toFixed(3)).toString(),
+  );
+
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
       <div className="flex items-center justify-between text-[11px] text-slate-400">
@@ -4938,108 +4942,115 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
         </div>
         <span>近14天</span>
       </div>
-      <div
-        ref={containerRef}
-        className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-      >
-        {[0, 1, 2, 3].map((index) => (
-          <div
-            key={`ncd-grid-${index}`}
-            className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
-            style={{ top: `${(index / 3) * 100}%` }}
-          />
-        ))}
-        <svg
-          className="absolute inset-0 h-full w-full"
-          preserveAspectRatio="none"
-          viewBox={`0 0 ${width} ${height}`}
+      <div className="grid min-h-0 grid-cols-[2.8rem_1fr] gap-1">
+        <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+          {yTicks.map((t) => (
+            <div key={t}>{t}%</div>
+          ))}
+        </div>
+        <div
+          ref={containerRef}
+          className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
         >
-          <defs>
-            <linearGradient id="ncd-fill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#5ea3ff" stopOpacity="0.24" />
-              <stop offset="100%" stopColor="#5ea3ff" stopOpacity="0.04" />
-            </linearGradient>
-          </defs>
-          <path d={area} fill="url(#ncd-fill)" />
-          <path
-            d={oneMonthPath}
-            fill="none"
-            stroke={chartPalette.blue}
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d={threeMonthPath}
-            fill="none"
-            stroke={chartPalette.emerald}
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d={oneYearPath}
-            fill="none"
-            stroke={chartPalette.amber}
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {ti !== null ? (
-            <line
-              x1={(ti / (ncdTrendSeries.length - 1)) * width}
-              x2={(ti / (ncdTrendSeries.length - 1)) * width}
-              y1={0}
-              y2={height}
-              stroke="#5ea3ff"
-              strokeWidth="1"
-              strokeDasharray="4 3"
-              strokeOpacity="0.6"
+          {[0, 1, 2, 3].map((index) => (
+            <div
+              key={`ncd-grid-${index}`}
+              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              style={{ top: `${(index / 3) * 100}%` }}
             />
-          ) : null}
-        </svg>
-        {tooltipState !== null && ti !== null && (
-          <ChartTooltip
-            clientX={tooltipState.clientX}
-            clientY={tooltipState.clientY}
+          ))}
+          <svg
+            className="absolute inset-0 h-full w-full"
+            preserveAspectRatio="none"
+            viewBox={`0 0 ${width} ${height}`}
           >
-            <div className="mb-1 font-medium text-slate-400">
-              {auxChartLabels[ti]}
-            </div>
-            <div className="flex items-center gap-2">
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: chartPalette.blue }}
+            <defs>
+              <linearGradient id="ncd-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#5ea3ff" stopOpacity="0.24" />
+                <stop offset="100%" stopColor="#5ea3ff" stopOpacity="0.04" />
+              </linearGradient>
+            </defs>
+            <path d={area} fill="url(#ncd-fill)" />
+            <path
+              d={oneMonthPath}
+              fill="none"
+              stroke={chartPalette.blue}
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d={threeMonthPath}
+              fill="none"
+              stroke={chartPalette.emerald}
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d={oneYearPath}
+              fill="none"
+              stroke={chartPalette.amber}
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            {ti !== null ? (
+              <line
+                x1={(ti / (ncdTrendSeries.length - 1)) * width}
+                x2={(ti / (ncdTrendSeries.length - 1)) * width}
+                y1={0}
+                y2={height}
+                stroke="#5ea3ff"
+                strokeWidth="1"
+                strokeDasharray="4 3"
+                strokeOpacity="0.6"
               />
-              <span className="text-slate-400">1M</span>
-              <span className="ml-1 font-semibold text-slate-100">
-                {ncdTrendSeries[ti].toFixed(3)}%
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: chartPalette.emerald }}
-              />
-              <span className="text-slate-400">3M</span>
-              <span className="ml-1 font-semibold text-slate-100">
-                {ncdThreeMonthSeries[ti].toFixed(3)}%
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: chartPalette.amber }}
-              />
-              <span className="text-slate-400">1Y</span>
-              <span className="ml-1 font-semibold text-slate-100">
-                {ncdOneYearSeries[ti].toFixed(3)}%
-              </span>
-            </div>
-          </ChartTooltip>
-        )}
+            ) : null}
+          </svg>
+          {tooltipState !== null && ti !== null && (
+            <ChartTooltip
+              clientX={tooltipState.clientX}
+              clientY={tooltipState.clientY}
+            >
+              <div className="mb-1 font-medium text-slate-400">
+                {auxChartLabels[ti]}
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: chartPalette.blue }}
+                />
+                <span className="text-slate-400">1M</span>
+                <span className="ml-1 font-semibold text-slate-100">
+                  {ncdTrendSeries[ti].toFixed(3)}%
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: chartPalette.emerald }}
+                />
+                <span className="text-slate-400">3M</span>
+                <span className="ml-1 font-semibold text-slate-100">
+                  {ncdThreeMonthSeries[ti].toFixed(3)}%
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: chartPalette.amber }}
+                />
+                <span className="text-slate-400">1Y</span>
+                <span className="ml-1 font-semibold text-slate-100">
+                  {ncdOneYearSeries[ti].toFixed(3)}%
+                </span>
+              </div>
+            </ChartTooltip>
+          )}
+        </div>
       </div>
       <div
         className={`grid ${compact ? "grid-cols-7" : "grid-cols-14"} text-center text-[9px] text-slate-400`}
@@ -5071,6 +5082,10 @@ function NcdPrimaryTrendPanel({ period }: { period: NcdPeriod }) {
     useChartTooltip(gov.length);
   const ti = tooltipState?.index ?? null;
 
+  const yTicks = Array.from({ length: 4 }, (_, i) =>
+    Number((max - ((max - min) * i) / 3).toFixed(3)).toString(),
+  );
+
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
@@ -5080,119 +5095,126 @@ function NcdPrimaryTrendPanel({ period }: { period: NcdPeriod }) {
         <LegendDot color={chartPalette.amber} label="AA" />
         <span className="ml-auto">近14天</span>
       </div>
-      <div
-        ref={containerRef}
-        className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-      >
-        {[0, 1, 2, 3].map((i) => (
-          <div
-            key={`ncd-p-grid-${i}`}
-            className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
-            style={{ top: `${(i / 3) * 100}%` }}
-          />
-        ))}
-        <svg
-          className="absolute inset-0 h-full w-full"
-          preserveAspectRatio="none"
-          viewBox={`0 0 ${width} ${height}`}
+      <div className="grid min-h-0 grid-cols-[2.8rem_1fr] gap-1">
+        <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+          {yTicks.map((t) => (
+            <div key={t}>{t}%</div>
+          ))}
+        </div>
+        <div
+          ref={containerRef}
+          className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
         >
-          <path
-            d={govPath}
-            fill="none"
-            stroke="#a78bfa"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d={aaaPath}
-            fill="none"
-            stroke={chartPalette.blue}
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeDasharray="0"
-          />
-          <path
-            d={aaPlusPath}
-            fill="none"
-            stroke={chartPalette.emerald}
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeDasharray="5 3"
-          />
-          <path
-            d={aaPath}
-            fill="none"
-            stroke={chartPalette.amber}
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeDasharray="2 2"
-          />
-          {ti !== null ? (
-            <line
-              x1={(ti / (gov.length - 1)) * width}
-              x2={(ti / (gov.length - 1)) * width}
-              y1={0}
-              y2={height}
-              stroke="#a78bfa"
-              strokeWidth="1"
-              strokeDasharray="4 3"
-              strokeOpacity="0.6"
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={`ncd-p-grid-${i}`}
+              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              style={{ top: `${(i / 3) * 100}%` }}
             />
-          ) : null}
-        </svg>
-        {tooltipState !== null && ti !== null && (
-          <ChartTooltip
-            clientX={tooltipState.clientX}
-            clientY={tooltipState.clientY}
+          ))}
+          <svg
+            className="absolute inset-0 h-full w-full"
+            preserveAspectRatio="none"
+            viewBox={`0 0 ${width} ${height}`}
           >
-            <div className="mb-1 font-medium text-slate-400">
-              {auxChartLabels[ti]}
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#a78bfa]" />
-              <span className="text-slate-400">国有/股份制</span>
-              <span className="ml-1 font-semibold text-slate-100">
-                {gov[ti].toFixed(3)}%
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: chartPalette.blue }}
+            <path
+              d={govPath}
+              fill="none"
+              stroke="#a78bfa"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d={aaaPath}
+              fill="none"
+              stroke={chartPalette.blue}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray="0"
+            />
+            <path
+              d={aaPlusPath}
+              fill="none"
+              stroke={chartPalette.emerald}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray="5 3"
+            />
+            <path
+              d={aaPath}
+              fill="none"
+              stroke={chartPalette.amber}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray="2 2"
+            />
+            {ti !== null ? (
+              <line
+                x1={(ti / (gov.length - 1)) * width}
+                x2={(ti / (gov.length - 1)) * width}
+                y1={0}
+                y2={height}
+                stroke="#a78bfa"
+                strokeWidth="1"
+                strokeDasharray="4 3"
+                strokeOpacity="0.6"
               />
-              <span className="text-slate-400">AAA</span>
-              <span className="ml-1 font-semibold text-slate-100">
-                {aaa[ti].toFixed(3)}%
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: chartPalette.emerald }}
-              />
-              <span className="text-slate-400">AA+</span>
-              <span className="ml-1 font-semibold text-slate-100">
-                {aaPlus[ti].toFixed(3)}%
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: chartPalette.amber }}
-              />
-              <span className="text-slate-400">AA</span>
-              <span className="ml-1 font-semibold text-slate-100">
-                {aa[ti].toFixed(3)}%
-              </span>
-            </div>
-          </ChartTooltip>
-        )}
+            ) : null}
+          </svg>
+          {tooltipState !== null && ti !== null && (
+            <ChartTooltip
+              clientX={tooltipState.clientX}
+              clientY={tooltipState.clientY}
+            >
+              <div className="mb-1 font-medium text-slate-400">
+                {auxChartLabels[ti]}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#a78bfa]" />
+                <span className="text-slate-400">国有/股份制</span>
+                <span className="ml-1 font-semibold text-slate-100">
+                  {gov[ti].toFixed(3)}%
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: chartPalette.blue }}
+                />
+                <span className="text-slate-400">AAA</span>
+                <span className="ml-1 font-semibold text-slate-100">
+                  {aaa[ti].toFixed(3)}%
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: chartPalette.emerald }}
+                />
+                <span className="text-slate-400">AA+</span>
+                <span className="ml-1 font-semibold text-slate-100">
+                  {aaPlus[ti].toFixed(3)}%
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: chartPalette.amber }}
+                />
+                <span className="text-slate-400">AA</span>
+                <span className="ml-1 font-semibold text-slate-100">
+                  {aa[ti].toFixed(3)}%
+                </span>
+              </div>
+            </ChartTooltip>
+          )}
+        </div>
       </div>
       <div className="grid grid-cols-7 text-center text-[9px] text-slate-400">
         {compactAuxChartLabels.map((label) => (
