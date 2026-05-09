@@ -4264,7 +4264,7 @@ function MultiSeriesChart({
     const rawMin = Math.min(...flat);
     const rawMax = Math.max(...flat);
     const pad = (rawMax - rawMin) * 0.12 || 0.02;
-    const min = rawMin - pad;
+    const min = Math.max(0, rawMin - pad);
     const max = rawMax + pad;
     const yTicks = Array.from({ length: 4 }, (_, i) =>
       Number((max - ((max - min) * i) / 3).toFixed(4)).toString(),
