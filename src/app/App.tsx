@@ -2447,6 +2447,9 @@ function IntradayPanel({
   const overlayPath = overlaySeries
     ? buildLinePath(overlaySeries, 680, 178, min, max)
     : null;
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(intradaySeries.length);
+  const ti = tooltipState?.index ?? null;
 
   return (
     <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
@@ -2474,7 +2477,12 @@ function IntradayPanel({
               <div key={tick}>{tick}</div>
             ))}
           </div>
-          <div className="relative min-h-0">
+          <div
+            ref={containerRef}
+            className="relative min-h-0"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
             {[0, 1, 2, 3].map((index) => (
               <div
                 key={`intraday-grid-${index}`}
@@ -2525,8 +2533,72 @@ function IntradayPanel({
                     strokeLinejoin="round"
                   />
                 ) : null}
+                {ti !== null ? (
+                  <line
+                    x1={(ti / (intradaySeries.length - 1)) * 680}
+                    x2={(ti / (intradaySeries.length - 1)) * 680}
+                    y1={0}
+                    y2={178}
+                    stroke="#5ea3ff"
+                    strokeWidth="1"
+                    strokeDasharray="4 3"
+                    strokeOpacity="0.6"
+                  />
+                ) : null}
               </svg>
             </div>
+            {tooltipState !== null && ti !== null && (
+              <ChartTooltip
+                clientX={tooltipState.clientX}
+                clientY={tooltipState.clientY}
+              >
+                <div className="mb-1 font-medium text-slate-400">
+                  {intradayAllTimeLabels[ti]}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: chartPalette.blue }}
+                  />
+                  <span className="text-slate-400">DR001</span>
+                  <span className="ml-1 font-semibold text-slate-100">
+                    {intradaySeries[ti].toFixed(3)}%
+                  </span>
+                </div>
+                {overlaySeries && (
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ backgroundColor: chartPalette.amber }}
+                    />
+                    <span className="text-slate-400">
+                      {overlayProductLabel(overlayProduct)}
+                    </span>
+                    <span className="ml-1 font-semibold text-slate-100">
+                      {overlaySeries[ti].toFixed(3)}%
+                    </span>
+                  </div>
+                )}
+                {overlaySeries ? (
+                  <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
+                    利差{" "}
+                    <span
+                      className={`font-semibold ${(barValues as number[])[ti] >= 0 ? "text-red-400" : "text-emerald-400"}`}
+                    >
+                      {(barValues as number[])[ti] > 0 ? "+" : ""}
+                      {(barValues as number[])[ti]}bp
+                    </span>
+                  </div>
+                ) : (
+                  <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
+                    成交量{" "}
+                    <span className="font-semibold text-slate-100">
+                      {intradayVolumeSeries[ti]}亿
+                    </span>
+                  </div>
+                )}
+              </ChartTooltip>
+            )}
             <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-300">
               <LegendDot color={chartPalette.blue} label="加权平均(%)" />
               {overlayProduct !== "none" ? (
@@ -2682,6 +2754,9 @@ function HistoryClosePanel({
   const compareLinePath = compareSeries
     ? buildLinePath(compareSeries, 720, 186, min, max)
     : null;
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(dataset.close.length);
+  const ti = tooltipState?.index ?? null;
 
   return (
     <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
@@ -2734,7 +2809,12 @@ function HistoryClosePanel({
               <div key={label}>{label}</div>
             ))}
           </div>
-          <div className="relative min-h-0">
+          <div
+            ref={containerRef}
+            className="relative min-h-0"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
             {[0, 1, 2, 3].map((index) => (
               <div
                 key={`k-grid-${index}`}
@@ -2784,6 +2864,18 @@ function HistoryClosePanel({
                   strokeLinejoin="round"
                 />
               ) : null}
+              {ti !== null ? (
+                <line
+                  x1={(ti / (dataset.close.length - 1)) * 720}
+                  x2={(ti / (dataset.close.length - 1)) * 720}
+                  y1={0}
+                  y2={186}
+                  stroke="#5ea3ff"
+                  strokeWidth="1"
+                  strokeDasharray="4 3"
+                  strokeOpacity="0.6"
+                />
+              ) : null}
             </svg>
             <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-300">
               <LegendDot color={chartPalette.blue} label="收盘价" />
@@ -2803,6 +2895,73 @@ function HistoryClosePanel({
                 />
               ) : null}
             </div>
+            {tooltipState !== null && ti !== null && (
+              <ChartTooltip
+                clientX={tooltipState.clientX}
+                clientY={tooltipState.clientY}
+              >
+                <div className="mb-1 font-medium text-slate-400">
+                  {dataset.labels[ti]}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: chartPalette.blue }}
+                  />
+                  <span className="text-slate-400">DR001</span>
+                  <span className="ml-1 font-semibold text-slate-100">
+                    {dataset.close[ti].toFixed(4)}%
+                  </span>
+                </div>
+                {overlaySeries && (
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ backgroundColor: chartPalette.amber }}
+                    />
+                    <span className="text-slate-400">
+                      {overlayProductLabel(overlayProduct)}
+                    </span>
+                    <span className="ml-1 font-semibold text-slate-100">
+                      {overlaySeries[ti].toFixed(4)}%
+                    </span>
+                  </div>
+                )}
+                {compareSeries && (
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ backgroundColor: chartPalette.violet }}
+                    />
+                    <span className="text-slate-400">
+                      {compareProductOptions.find(
+                        (o) => o.id === compareProduct,
+                      )?.label ?? ""}
+                    </span>
+                    <span className="ml-1 font-semibold text-slate-100">
+                      {compareSeries[ti].toFixed(4)}%
+                    </span>
+                  </div>
+                )}
+                {spreadValues && (
+                  <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
+                    利差{" "}
+                    <span
+                      className={`font-semibold ${spreadValues[ti] >= 0 ? "text-red-400" : "text-emerald-400"}`}
+                    >
+                      {spreadValues[ti] > 0 ? "+" : ""}
+                      {spreadValues[ti]}bp
+                    </span>
+                  </div>
+                )}
+                <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
+                  成交量{" "}
+                  <span className="font-semibold text-slate-100">
+                    {dataset.volume[ti]}亿
+                  </span>
+                </div>
+              </ChartTooltip>
+            )}
           </div>
         </div>
         {compareProduct !== "none" && spreadValues ? (
@@ -3000,6 +3159,9 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
   const oneYearPath = buildLinePath(ncdOneYearSeries, width, height, min, max);
   const area = buildAreaPath(ncdTrendSeries, width, height, min, max);
   const labels = compact ? compactAuxChartLabels : auxChartLabels;
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(ncdTrendSeries.length);
+  const ti = tooltipState?.index ?? null;
 
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
@@ -3011,7 +3173,12 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
         </div>
         <span>近14天</span>
       </div>
-      <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]">
+      <div
+        ref={containerRef}
+        className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]"
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+      >
         {[0, 1, 2, 3].map((index) => (
           <div
             key={`ncd-grid-${index}`}
@@ -3055,7 +3222,59 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
             strokeLinecap="round"
             strokeLinejoin="round"
           />
+          {ti !== null ? (
+            <line
+              x1={(ti / (ncdTrendSeries.length - 1)) * width}
+              x2={(ti / (ncdTrendSeries.length - 1)) * width}
+              y1={0}
+              y2={height}
+              stroke="#5ea3ff"
+              strokeWidth="1"
+              strokeDasharray="4 3"
+              strokeOpacity="0.6"
+            />
+          ) : null}
         </svg>
+        {tooltipState !== null && ti !== null && (
+          <ChartTooltip
+            clientX={tooltipState.clientX}
+            clientY={tooltipState.clientY}
+          >
+            <div className="mb-1 font-medium text-slate-400">
+              {auxChartLabels[ti]}
+            </div>
+            <div className="flex items-center gap-2">
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: chartPalette.blue }}
+              />
+              <span className="text-slate-400">1M</span>
+              <span className="ml-1 font-semibold text-slate-100">
+                {ncdTrendSeries[ti].toFixed(3)}%
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: chartPalette.emerald }}
+              />
+              <span className="text-slate-400">3M</span>
+              <span className="ml-1 font-semibold text-slate-100">
+                {ncdThreeMonthSeries[ti].toFixed(3)}%
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: chartPalette.amber }}
+              />
+              <span className="text-slate-400">1Y</span>
+              <span className="ml-1 font-semibold text-slate-100">
+                {ncdOneYearSeries[ti].toFixed(3)}%
+              </span>
+            </div>
+          </ChartTooltip>
+        )}
       </div>
       <div
         className={`grid ${compact ? "grid-cols-7" : "grid-cols-14"} text-center text-[9px] text-slate-400`}
@@ -3083,6 +3302,9 @@ function NcdPrimaryTrendPanel({ period }: { period: NcdPeriod }) {
   const aaaPath = buildLinePath(aaa, width, height, min, max);
   const aaPlusPath = buildLinePath(aaPlus, width, height, min, max);
   const aaPath = buildLinePath(aa, width, height, min, max);
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(gov.length);
+  const ti = tooltipState?.index ?? null;
 
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
@@ -3093,7 +3315,12 @@ function NcdPrimaryTrendPanel({ period }: { period: NcdPeriod }) {
         <LegendDot color={chartPalette.amber} label="AA" />
         <span className="ml-auto">近14天</span>
       </div>
-      <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]">
+      <div
+        ref={containerRef}
+        className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]"
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+      >
         {[0, 1, 2, 3].map((i) => (
           <div
             key={`ncd-p-grid-${i}`}
@@ -3141,7 +3368,66 @@ function NcdPrimaryTrendPanel({ period }: { period: NcdPeriod }) {
             strokeLinejoin="round"
             strokeDasharray="2 2"
           />
+          {ti !== null ? (
+            <line
+              x1={(ti / (gov.length - 1)) * width}
+              x2={(ti / (gov.length - 1)) * width}
+              y1={0}
+              y2={height}
+              stroke="#a78bfa"
+              strokeWidth="1"
+              strokeDasharray="4 3"
+              strokeOpacity="0.6"
+            />
+          ) : null}
         </svg>
+        {tooltipState !== null && ti !== null && (
+          <ChartTooltip
+            clientX={tooltipState.clientX}
+            clientY={tooltipState.clientY}
+          >
+            <div className="mb-1 font-medium text-slate-400">
+              {auxChartLabels[ti]}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#a78bfa]" />
+              <span className="text-slate-400">国有/股份制</span>
+              <span className="ml-1 font-semibold text-slate-100">
+                {gov[ti].toFixed(3)}%
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: chartPalette.blue }}
+              />
+              <span className="text-slate-400">AAA</span>
+              <span className="ml-1 font-semibold text-slate-100">
+                {aaa[ti].toFixed(3)}%
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: chartPalette.emerald }}
+              />
+              <span className="text-slate-400">AA+</span>
+              <span className="ml-1 font-semibold text-slate-100">
+                {aaPlus[ti].toFixed(3)}%
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: chartPalette.amber }}
+              />
+              <span className="text-slate-400">AA</span>
+              <span className="ml-1 font-semibold text-slate-100">
+                {aa[ti].toFixed(3)}%
+              </span>
+            </div>
+          </ChartTooltip>
+        )}
       </div>
       <div className="grid grid-cols-7 text-center text-[9px] text-slate-400">
         {compactAuxChartLabels.map((label) => (
@@ -3234,6 +3520,11 @@ function FundStructurePanel() {
   const { bars, labels } = fundStructureRangeData[range];
   const rangeSummary =
     range === "14d" ? "近14天" : range === "1m" ? "近1月" : "近半年";
+  const [hoveredBar, setHoveredBar] = useState<{
+    index: number;
+    clientX: number;
+    clientY: number;
+  } | null>(null);
 
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
@@ -3273,13 +3564,38 @@ function FundStructurePanel() {
               style={{ top: `${(index / (yTicks.length - 1)) * 100}%` }}
             />
           ))}
-          <div className="absolute inset-x-3 bottom-2 top-2 flex items-end gap-1.5">
+          <div
+            className="absolute inset-x-3 bottom-2 top-2 flex items-end gap-1.5"
+            onMouseLeave={() => setHoveredBar(null)}
+          >
             {bars.map((values, index) => (
               <div
                 key={`fund-bar-${range}-${index}`}
-                className="flex h-full min-w-0 flex-1 items-end"
+                className="flex h-full min-w-0 flex-1 cursor-pointer items-end"
+                onMouseEnter={(e) =>
+                  setHoveredBar({
+                    index,
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                  })
+                }
+                onMouseMove={(e) =>
+                  setHoveredBar((prev) =>
+                    prev?.index === index
+                      ? { index, clientX: e.clientX, clientY: e.clientY }
+                      : prev,
+                  )
+                }
               >
-                <div className="flex h-full w-full flex-col justify-end overflow-hidden rounded-t-[3px]">
+                <div
+                  className="flex h-full w-full flex-col justify-end overflow-hidden rounded-t-[3px] transition-opacity"
+                  style={{
+                    opacity:
+                      hoveredBar === null || hoveredBar.index === index
+                        ? 0.9
+                        : 0.45,
+                  }}
+                >
                   {values.map((value, partIndex) => (
                     <div
                       key={`fund-bar-${range}-${index}-${partIndex}`}
@@ -3290,7 +3606,6 @@ function FundStructurePanel() {
                         height: `${(value / 5000) * 100}%`,
                         backgroundColor:
                           fundStructureLegendItems[partIndex].color,
-                        opacity: 0.9,
                       }}
                     />
                   ))}
@@ -3298,6 +3613,37 @@ function FundStructurePanel() {
               </div>
             ))}
           </div>
+          {hoveredBar !== null && (
+            <ChartTooltip
+              clientX={hoveredBar.clientX}
+              clientY={hoveredBar.clientY}
+            >
+              <div className="mb-1 font-medium text-slate-400">
+                {labels[hoveredBar.index]}
+              </div>
+              <div className="mb-1 text-slate-300">
+                合计{" "}
+                <span className="font-semibold text-slate-100">
+                  {bars[hoveredBar.index]
+                    .reduce((s, v) => s + v, 0)
+                    .toLocaleString()}
+                  亿
+                </span>
+              </div>
+              {fundStructureLegendItems.map((item, i) => (
+                <div key={item.label} className="flex items-center gap-2">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-slate-400">{item.label}</span>
+                  <span className="ml-1 font-semibold text-slate-100">
+                    {bars[hoveredBar.index][i].toLocaleString()}亿
+                  </span>
+                </div>
+              ))}
+            </ChartTooltip>
+          )}
         </div>
       </div>
       <div className="grid shrink-0 grid-cols-[3rem_1fr]">
@@ -3755,6 +4101,76 @@ function TrendLine({
         strokeOpacity={0.92}
       />
     </svg>
+  );
+}
+
+const intradayAllTimeLabels: string[] = (() => {
+  const segments = [
+    { start: "09:30", count: 5 },
+    { start: "10:00", count: 5 },
+    { start: "10:30", count: 5 },
+    { start: "11:00", count: 5 },
+    { start: "13:30", count: 5 },
+    { start: "14:00", count: 5 },
+    { start: "14:30", count: 5 },
+    { start: "15:00", count: 5 },
+  ];
+  return segments.flatMap(({ start, count }) => {
+    const [h, m] = start.split(":").map(Number);
+    return Array.from({ length: count }, (_, i) => {
+      const total = h * 60 + m + i * 6;
+      return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+    });
+  });
+})();
+
+function useChartTooltip(dataLength: number) {
+  const [state, setState] = useState<{
+    index: number;
+    clientX: number;
+    clientY: number;
+  } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect || rect.width === 0) return;
+    const x = e.clientX - rect.left;
+    const index = Math.max(
+      0,
+      Math.min(dataLength - 1, Math.round((x / rect.width) * (dataLength - 1))),
+    );
+    setState({ index, clientX: e.clientX, clientY: e.clientY });
+  }
+
+  function handleMouseLeave() {
+    setState(null);
+  }
+
+  return {
+    tooltipState: state,
+    containerRef,
+    handleMouseMove,
+    handleMouseLeave,
+  };
+}
+
+function ChartTooltip({
+  clientX,
+  clientY,
+  children,
+}: {
+  clientX: number;
+  clientY: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="pointer-events-none fixed z-[200] rounded-lg border border-[#2a4a6e] bg-[#0e1d31]/95 px-3 py-2 text-xs text-slate-200 shadow-xl backdrop-blur-sm"
+      style={{ left: clientX + 14, top: clientY - 10 }}
+    >
+      {children}
+    </div>
   );
 }
 
