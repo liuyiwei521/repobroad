@@ -949,10 +949,10 @@ const trendPriceTicks = [2.107, 2.028, 1.948, 1.868] as const;
 const trendVolumeTicks = ["2k", "1k", "900", "450", "0"] as const;
 
 const intradaySeries = [
-  1.948, 1.946, 1.944, 1.945, 1.947, 1.95, 1.948, 1.946, 1.943, 1.941, 1.942,
-  1.944, 1.945, 1.943, 1.942, 1.939, 1.936, 1.934, 1.933, 1.936, 1.939, 1.943,
-  1.946, 1.948, 1.949, 1.951, 1.954, 1.956, 1.955, 1.957, 1.96, 1.963, 1.966,
-  1.968, 1.967, 1.969, 1.971, 1.974, 1.976, 1.979,
+  1.948, 1.932, 1.956, 1.921, 1.967, 1.938, 1.972, 1.925, 1.953, 1.984, 1.942,
+  1.904, 1.975, 1.913, 1.992, 1.889, 1.936, 1.964, 1.903, 1.976, 1.919, 1.993,
+  1.926, 1.948, 1.969, 1.911, 1.954, 1.886, 1.975, 1.907, 2.004, 1.963, 1.926,
+  1.988, 1.917, 2.009, 1.931, 1.974, 1.936, 1.999,
 ] as const;
 
 const intradayVolumeSeries = [
@@ -988,8 +988,8 @@ const historicalCloseDatasets: Record<
 > = {
   "5d": {
     labels: ["4/22", "4/23", "4/24", "4/25", "4/28"],
-    close: [1.18, 1.25, 1.21, 1.32, 1.28],
-    volume: [1320, 980, 1460, 1180, 1620],
+    close: [1.18, 1.31, 1.15, 1.38, 1.22],
+    volume: [1320, 980, 2260, 1180, 1920],
   },
   "1m": {
     labels: [
@@ -1023,15 +1023,14 @@ const historicalCloseDatasets: Record<
       "4/28",
     ],
     close: [
-      1.214, 1.2146, 1.2153, 1.2161, 1.2169, 1.2176, 1.2184, 1.2192, 1.2198,
-      1.2206, 1.2211, 1.2218, 1.2224, 1.223, 1.2237, 1.2243, 1.2252, 1.2261,
-      1.2268, 1.2276, 1.2284, 1.2291, 1.2302, 1.231, 1.2321, 1.2334, 1.2348,
-      1.236,
+      1.214, 1.238, 1.192, 1.256, 1.189, 1.247, 1.178, 1.269, 1.198, 1.22,
+      1.251, 1.188, 1.272, 1.203, 1.237, 1.264, 1.185, 1.246, 1.208, 1.277,
+      1.194, 1.259, 1.182, 1.281, 1.212, 1.233, 1.268, 1.206,
     ],
     volume: [
-      980, 860, 910, 1420, 1080, 1020, 1180, 1260, 940, 1100, 1320, 1240, 890,
-      1430, 1570, 1490, 1360, 1280, 1190, 1250, 1330, 1410, 1380, 1430, 1520,
-      1570, 1640, 1710,
+      980, 1460, 910, 1820, 1080, 1720, 1180, 1960, 940, 1310, 2020, 1240, 1890,
+      1430, 1970, 1490, 1160, 1680, 1190, 1850, 1330, 2110, 1080, 1930, 1520,
+      1770, 1640, 1910,
     ],
   },
   "6m": buildSixMonthDailyDataset(),
@@ -1205,36 +1204,34 @@ function App() {
 function TopBar({ currentTime }: { currentTime: Date }) {
   return (
     <header className="border-b border-[#1b2a42] bg-[#0d1726] px-4 py-2 shadow-[inset_0_-1px_0_rgba(74,101,140,0.18)]">
-      <div className="flex items-center justify-between gap-6">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="text-[20px] font-semibold tracking-[0.04em] text-slate-50">
-            资金实时行情看板
+      <div className="flex items-center gap-6">
+        <div className="text-[20px] font-semibold tracking-[0.04em] text-slate-50 shrink-0">
+          资金实时行情看板
+        </div>
+        <div className="flex flex-1 flex-wrap items-center justify-center gap-2 text-sm text-slate-400">
+          <FilterLabel>期限</FilterLabel>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {topBoardFilters.periods.map((item, index) => (
+              <ToolbarChip key={item} active={index === 0}>
+                {item}
+              </ToolbarChip>
+            ))}
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400">
-            <FilterLabel>期限</FilterLabel>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {topBoardFilters.periods.map((item, index) => (
-                <ToolbarChip key={item} active={index === 0}>
-                  {item}
-                </ToolbarChip>
-              ))}
-            </div>
-            <FilterDivider />
-            <FilterLabel>金额</FilterLabel>
-            <RangeFilterField value={topBoardFilters.amountMin} />
-            <span className="text-slate-500">~</span>
-            <RangeFilterField value={topBoardFilters.amountMax} />
-            <span className="text-slate-500">亿</span>
-            <FilterDivider />
-            <FilterLabel>利率</FilterLabel>
-            <RangeFilterField value={topBoardFilters.rateMin} />
-            <span className="text-slate-500">~</span>
-            <RangeFilterField value={topBoardFilters.rateMax} />
-            <span className="text-slate-500">%</span>
-          </div>
+          <FilterDivider />
+          <FilterLabel>金额</FilterLabel>
+          <RangeFilterField value={topBoardFilters.amountMin} />
+          <span className="text-slate-500">~</span>
+          <RangeFilterField value={topBoardFilters.amountMax} />
+          <span className="text-slate-500">亿</span>
+          <FilterDivider />
+          <FilterLabel>利率</FilterLabel>
+          <RangeFilterField value={topBoardFilters.rateMin} />
+          <span className="text-slate-500">~</span>
+          <RangeFilterField value={topBoardFilters.rateMax} />
+          <span className="text-slate-500">%</span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <InfoChip label="DR007" value="2.15%" tone="alert" />
           <InfoChip label="资金情绪" value="51 / 47 / 50 / 49" tone="neutral" />
           <StatusBadge>平衡</StatusBadge>
@@ -2253,15 +2250,6 @@ function IntradayPanel({
     overlayProduct === "none"
       ? null
       : buildOverlaySeries(intradaySeries, overlayProduct);
-  const volumeMax = Math.max(...intradayVolumeSeries);
-  const barValues = overlaySeries
-    ? intradaySeries.map((value, index) =>
-        Number(((value - overlaySeries[index]) * 10000).toFixed(1)),
-      )
-    : intradayVolumeSeries;
-  const barMax = overlaySeries
-    ? Math.max(...(barValues as number[]).map(Math.abs), 0.1)
-    : volumeMax;
   const min = Math.min(...intradaySeries, ...(overlaySeries ?? [])) - 0.01;
   const max = Math.max(...intradaySeries, ...(overlaySeries ?? [])) + 0.01;
   const mainPath = buildLinePath(intradaySeries, 680, 178, min, max);
@@ -2276,7 +2264,7 @@ function IntradayPanel({
         <div className="flex items-center gap-3">
           <div className="text-sm font-semibold text-slate-100">当日分时</div>
           <div className="rounded border border-[#264167] bg-[#13223a] px-1.5 py-0.5 text-[10px] font-medium text-blue-300">
-            DR001
+            R001
           </div>
           <OverlayProductSelect
             value={overlayProduct}
@@ -2286,10 +2274,10 @@ function IntradayPanel({
         <div className="text-xs text-slate-400">
           {overlayProduct !== "none"
             ? "盘中加权利率 / 利差(bp)"
-            : "盘中加权利率 / 成交量"}
+            : "盘中加权利率"}
         </div>
       </div>
-      <div className="grid min-h-0 grid-rows-[68fr_22fr_auto] px-3 pb-2 pt-2">
+      <div className="grid min-h-0 grid-rows-[1fr_auto] px-3 pb-2 pt-2">
         <div className="grid min-h-0 grid-cols-[3rem_1fr]">
           <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
             {buildAxisLabels(min, max, 4).map((tick) => (
@@ -2358,83 +2346,6 @@ function IntradayPanel({
                 />
               ) : null}
             </div>
-          </div>
-        </div>
-        <div className="grid min-h-0 grid-cols-[3rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
-          <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
-            {overlaySeries
-              ? (() => {
-                  const _bv = barValues as number[];
-                  const _mn = Math.min(..._bv);
-                  const _mx = Math.max(..._bv);
-                  return Array.from({ length: 5 }, (_, i) => {
-                    const v = _mx - ((_mx - _mn) * i) / 4;
-                    return <div key={String(v)}>{v.toFixed(1)}</div>;
-                  });
-                })()
-              : ["900", "600", "300", "0"].map((tick) => (
-                  <div key={tick}>{tick}</div>
-                ))}
-          </div>
-          <div className="relative min-h-0">
-            {overlaySeries ? (
-              <>
-                <div className="absolute inset-x-0 top-0 flex items-center gap-[4px] bottom-1">
-                  {(barValues as number[]).map((value, index) => {
-                    const barPct = (Math.abs(value) / (barMax as number)) * 35;
-                    const isPos = value >= 0;
-                    return (
-                      <div
-                        key={`intraday-bar-${index}`}
-                        className="flex min-w-0 flex-1 flex-col"
-                        style={{ height: "100%" }}
-                      >
-                        {isPos ? (
-                          <>
-                            <div style={{ height: `${50 - barPct}%` }} />
-                            <div
-                              className="min-h-0 rounded-[2px]"
-                              style={{
-                                height: `${barPct}%`,
-                                backgroundColor: "#ef5a6f",
-                                opacity: 0.92,
-                              }}
-                            />
-                            <div style={{ flex: 1 }} />
-                          </>
-                        ) : (
-                          <>
-                            <div style={{ flex: 1 }} />
-                            <div
-                              className="min-h-0 rounded-[2px]"
-                              style={{
-                                height: `${barPct}%`,
-                                backgroundColor: "#2fc3de",
-                                opacity: 0.92,
-                              }}
-                            />
-                            <div style={{ height: `${50 - barPct}%` }} />
-                          </>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            ) : (
-              <div className="absolute inset-x-0 top-0 flex items-end gap-[4px] bottom-1">
-                {(barValues as number[]).map((value, index) => (
-                  <div
-                    key={`intraday-bar-${index}`}
-                    className="min-w-0 flex-1 rounded-t-[2px]"
-                    style={{
-                      height: `${(value / (barMax as number)) * 100}%`,
-                      backgroundColor: index % 4 === 0 ? "#3b82f6" : "#275f9f",
-                    }}
-                  />
-                ))}
-              </div>
-            )}
           </div>
         </div>
         <div className="grid grid-cols-[3rem_1fr] pt-2">
@@ -2512,7 +2423,7 @@ function HistoryClosePanel({
           <div className="text-sm font-semibold text-slate-100">收盘价走势</div>
           <div className="text-xs text-slate-400">
             产品：
-            <span className="ml-1 text-slate-200">DR001</span>
+            <span className="ml-1 text-slate-200">R001</span>
           </div>
           <label className="flex items-center gap-1 text-xs text-slate-400">
             <span>对比</span>
@@ -3482,9 +3393,14 @@ function buildOverlaySeries(
   product: OverlayProduct,
 ) {
   const delta =
-    product === "dr007" ? 0.012 : product === "gc007" ? -0.008 : 0.004;
+    product === "dr007" ? 0.018 : product === "gc007" ? -0.012 : 0.006;
   return values.map(
-    (value, index) => value + delta + Math.sin(index / 3.2) * 0.0025,
+    (value, index) =>
+      value +
+      delta +
+      Math.sin(index / 2.1) * 0.022 +
+      Math.cos(index / 5.7) * 0.016 +
+      Math.sin(index / 1.3) * 0.009,
   );
 }
 
@@ -3504,7 +3420,8 @@ function buildHistoricalSeries(
     const wave =
       Math.sin(index / config.waveDivisor) * config.waveAmplitude +
       Math.cos(index / (config.waveDivisor + 3.4)) *
-        (config.waveAmplitude * 0.55);
+        (config.waveAmplitude * 0.65) +
+      Math.sin(index / 2.7) * (config.waveAmplitude * 0.4);
     return Number((value + config.offset + wave).toFixed(4));
   });
 }
@@ -3514,11 +3431,11 @@ function getProductSeriesConfig(
 ) {
   switch (product) {
     case "dr007":
-      return { offset: 0.00115, waveAmplitude: 0.00015, waveDivisor: 5.8 };
+      return { offset: 0.008, waveAmplitude: 0.0012, waveDivisor: 4.2 };
     case "gc007":
-      return { offset: 0.00172, waveAmplitude: 0.00018, waveDivisor: 6.5 };
+      return { offset: 0.012, waveAmplitude: 0.0015, waveDivisor: 3.8 };
     case "r007":
-      return { offset: 0.00138, waveAmplitude: 0.00014, waveDivisor: 5.1 };
+      return { offset: 0.01, waveAmplitude: 0.0011, waveDivisor: 5.3 };
     default:
       return { offset: 0, waveAmplitude: 0, waveDivisor: 6 };
   }
@@ -3576,13 +3493,17 @@ function buildSixMonthDailyDataset() {
       }
 
       const wave =
-        Math.sin(index / 6.2) * 0.015 + Math.cos(index / 11.5) * 0.01;
+        Math.sin(index / 3.4) * 0.042 +
+        Math.cos(index / 6.1) * 0.028 +
+        Math.sin(index / 1.9) * 0.018 +
+        Math.cos(index / 8.7) * 0.012;
       const value = Number((baseline + wave).toFixed(4));
       const amount = Math.round(
         2280 +
-          Math.sin(index / 7.4) * 280 +
-          Math.cos(index / 13.3) * 180 +
-          progress * 760,
+          Math.sin(index / 3.8) * 620 +
+          Math.cos(index / 5.2) * 480 +
+          Math.sin(index / 2.1) * 350 +
+          progress * 960,
       );
 
       labels.push(`${cursor.getMonth() + 1}/${cursor.getDate()}`);
