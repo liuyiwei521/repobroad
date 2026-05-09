@@ -11,7 +11,10 @@ type CompareProduct = "none" | SpreadProduct;
 type BankRateRow = {
   institution: string;
   nonBankRate: string;
+  refNonBankRate: string;
+  deltaNonBankBp: string;
   bankRate: string;
+  refBankRate: string;
   deltaBp: string;
   updatedAt: string;
 };
@@ -87,28 +90,40 @@ const initialBankRateRows: readonly BankRateRow[] = [
   {
     institution: "工商银行",
     nonBankRate: "1.95%",
+    refNonBankRate: "1.96%",
+    deltaNonBankBp: "-1",
     bankRate: "2.00%",
+    refBankRate: "2.02%",
     deltaBp: "-2",
     updatedAt: "10:53:27",
   },
   {
     institution: "建设银行",
     nonBankRate: "1.94%",
+    refNonBankRate: "1.95%",
+    deltaNonBankBp: "-1",
     bankRate: "1.99%",
+    refBankRate: "2.00%",
     deltaBp: "-1",
     updatedAt: "10:53:27",
   },
   {
     institution: "农业银行",
     nonBankRate: "1.96%",
+    refNonBankRate: "1.96%",
+    deltaNonBankBp: "0",
     bankRate: "2.01%",
+    refBankRate: "2.00%",
     deltaBp: "+1",
     updatedAt: "10:53:27",
   },
   {
     institution: "中国银行",
     nonBankRate: "1.95%",
+    refNonBankRate: "1.94%",
+    deltaNonBankBp: "+1",
     bankRate: "2.00%",
+    refBankRate: "2.00%",
     deltaBp: "0",
     updatedAt: "10:53:27",
   },
@@ -121,11 +136,11 @@ const leftSections: readonly (
   {
     layout: "table",
     title: "当日大行价格",
-    columns: ["机构", "非银利率", "银行利率", "涨跌bp", "更新时间"],
+    columns: ["机构", "非银利率", "涨跌", "银行利率", "涨跌", "更新时间"],
     rows: [],
     greenColumns: [1],
-    redColumns: [2],
-    deltaColumns: [3],
+    redColumns: [3],
+    deltaColumns: [2, 4],
     scrollable: false,
   },
   {
@@ -1095,6 +1110,82 @@ const ncdTableRows = [
   ["9M", "2.14%", "0", "2.11%", "10:53:27"],
   ["1Y", "2.13%", "-1", "2.10%", "10:53:27"],
 ] as const;
+
+type NcdPeriod = "1M" | "3M" | "6M" | "9M" | "1Y";
+const ncdPrimaryPeriods: NcdPeriod[] = ["1M", "3M", "6M", "9M", "1Y"];
+const NCD_PERIOD_OFFSET: Record<NcdPeriod, number> = {
+  "1M": 0,
+  "3M": 0.1,
+  "6M": 0.2,
+  "9M": 0.25,
+  "1Y": 0.28,
+};
+
+const ncdPrimaryGovBase = [
+  1.96, 1.95, 1.96, 1.97, 1.96, 1.97, 1.97, 1.98, 1.97, 1.98, 1.99, 1.98, 1.99,
+  2.0,
+];
+const ncdPrimaryAAABase = [
+  2.0, 2.0, 2.01, 2.02, 2.01, 2.02, 2.02, 2.03, 2.03, 2.04, 2.04, 2.03, 2.05,
+  2.05,
+];
+const ncdPrimaryAAPlsBase = [
+  2.05, 2.04, 2.06, 2.06, 2.06, 2.07, 2.07, 2.08, 2.08, 2.09, 2.09, 2.09, 2.1,
+  2.1,
+];
+const ncdPrimaryAABase = [
+  2.1, 2.1, 2.11, 2.12, 2.11, 2.12, 2.12, 2.13, 2.13, 2.14, 2.14, 2.14, 2.15,
+  2.15,
+];
+
+function shiftSeries(base: number[], offset: number): number[] {
+  return base.map((v) => parseFloat((v + offset).toFixed(4)));
+}
+
+type NcdPrimaryRow = {
+  name: string;
+  rate: string;
+  change?: string;
+  marker?: boolean;
+};
+type NcdPrimaryGroup = { label: string; rows: NcdPrimaryRow[] };
+
+const ncdPrimary1MGroups: NcdPrimaryGroup[] = [
+  {
+    label: "国有/股份制",
+    rows: [
+      { name: "成都银行", rate: "1.300" },
+      { name: "哈尔滨银行", rate: "1.300" },
+      { name: "宁波银行", rate: "1.315" },
+      { name: "桂林银行", rate: "1.320" },
+      { name: "渝农商行", rate: "1.325", change: "+2.5" },
+    ],
+  },
+  {
+    label: "AAA",
+    rows: [
+      { name: "徽商银行", rate: "1.330" },
+      { name: "苏州银行", rate: "1.335" },
+      { name: "东莞银行", rate: "1.340", change: "+5.0" },
+    ],
+  },
+  {
+    label: "AA+",
+    rows: [
+      { name: "南粤银行", rate: "1.310" },
+      { name: "江门农商行", rate: "1.330" },
+      { name: "威海银行", rate: "1.380", change: "+5.0" },
+    ],
+  },
+  {
+    label: "AA",
+    rows: [
+      { name: "富民银行", rate: "1.500", marker: true },
+      { name: "长沙银行", rate: "1.480" },
+      { name: "蒙商银行", rate: "1.520", change: "+2.5" },
+    ],
+  },
+];
 const fundStructureBars = [
   [700, 560, 360, 180, 630, 480, 640],
   [760, 420, 420, 270, 780, 610, 820],
@@ -1264,6 +1355,7 @@ function LeftSummaryPanel() {
             rows: bankRateRows.map((row) => [
               row.institution,
               row.nonBankRate,
+              row.deltaNonBankBp,
               row.bankRate,
               row.deltaBp,
               row.updatedAt,
@@ -1287,9 +1379,27 @@ function LeftSummaryPanel() {
     value: string,
   ) {
     setDraftBankRateRows((current) =>
-      current.map((row, rowIndex) =>
-        rowIndex === index ? { ...row, [field]: value } : row,
-      ),
+      current.map((row, rowIndex) => {
+        if (rowIndex !== index) return row;
+        const updated = { ...row, [field]: value };
+        if (field === "bankRate") {
+          const cur = parseFloat(value.replace("%", ""));
+          const ref = parseFloat(row.refBankRate.replace("%", ""));
+          if (!isNaN(cur) && !isNaN(ref)) {
+            const bp = Math.round((cur - ref) * 100 * 10) / 10;
+            updated.deltaBp = bp > 0 ? `+${bp}` : String(bp);
+          }
+        }
+        if (field === "nonBankRate") {
+          const cur = parseFloat(value.replace("%", ""));
+          const ref = parseFloat(row.refNonBankRate.replace("%", ""));
+          if (!isNaN(cur) && !isNaN(ref)) {
+            const bp = Math.round((cur - ref) * 100 * 10) / 10;
+            updated.deltaNonBankBp = bp > 0 ? `+${bp}` : String(bp);
+          }
+        }
+        return updated;
+      }),
     );
   }
 
@@ -1298,7 +1408,11 @@ function LeftSummaryPanel() {
   }
 
   function saveBankRateRows() {
-    setBankRateRows(draftBankRateRows.map((row) => ({ ...row })));
+    const now = new Date();
+    const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+    setBankRateRows(
+      draftBankRateRows.map((row) => ({ ...row, updatedAt: time })),
+    );
     setIsBankEditorOpen(false);
   }
 
@@ -1408,7 +1522,7 @@ function BankRateEditorModal({
                 当日大行价格手工输入
               </div>
               <div className="mt-1 text-xs text-slate-500">
-                按机构维护非银利率、银行利率、涨跌和更新时间。
+                按机构维护非银利率和银行利率，涨跌及更新时间自动计算。
               </div>
             </div>
             <button
@@ -1422,17 +1536,15 @@ function BankRateEditorModal({
         </div>
         <div className="px-5 py-4">
           <div className="overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
-            <div className="grid grid-cols-[1.1fr_1fr_1fr_0.9fr_1fr] border-b border-[#22324d] bg-[#111d30] px-4 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+            <div className="grid grid-cols-[1.4fr_1fr_1fr] border-b border-[#22324d] bg-[#111d30] px-4 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400">
               <span>机构</span>
               <span className="text-right">非银利率</span>
               <span className="text-right">银行利率</span>
-              <span className="text-right">涨跌bp</span>
-              <span className="text-right">更新时间</span>
             </div>
             {rows.map((row, index) => (
               <div
                 key={`${row.institution}-${index}`}
-                className={`grid grid-cols-[1.1fr_1fr_1fr_0.9fr_1fr] items-center gap-3 border-b border-[#162439] px-4 py-3 ${
+                className={`grid grid-cols-[1.4fr_1fr_1fr] items-center gap-3 border-b border-[#162439] px-4 py-3 ${
                   index % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
                 }`}
               >
@@ -1448,16 +1560,6 @@ function BankRateEditorModal({
                   align="right"
                   value={row.bankRate}
                   onChange={(value) => onChange(index, "bankRate", value)}
-                />
-                <ModalInput
-                  align="right"
-                  value={row.deltaBp}
-                  onChange={(value) => onChange(index, "deltaBp", value)}
-                />
-                <ModalInput
-                  align="right"
-                  value={row.updatedAt}
-                  onChange={(value) => onChange(index, "updatedAt", value)}
                 />
               </div>
             ))}
@@ -1512,53 +1614,153 @@ function ModalInput({
 }
 
 function LeftNcdCard() {
+  const [market, setMarket] = useState<"primary" | "secondary">("primary");
   const [mode, setMode] = useState<"trend" | "table">("trend");
+  const [period, setPeriod] = useState<NcdPeriod>("1M");
+  const [expanded, setExpanded] = useState(false);
 
-  return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
-      <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-sm font-semibold tracking-[0.02em] text-slate-50">
-            NCD
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              className={auxTabClass(mode === "trend")}
-              onClick={() => setMode("trend")}
-              type="button"
-            >
-              趋势图
-            </button>
-            <button
-              className={auxTabClass(mode === "table")}
-              onClick={() => setMode("table")}
-              type="button"
-            >
-              表格
-            </button>
-          </div>
-        </div>
+  const header = (onClose?: () => void) => (
+    <div className="flex items-center gap-2">
+      <div className="text-sm font-semibold tracking-[0.02em] text-slate-50">
+        NCD
       </div>
-      <div className="min-h-0 flex-1 overflow-hidden p-2">
-        {mode === "trend" ? (
-          <NcdTrendPanel compact />
-        ) : (
-          <div className="h-full min-h-0">
-            <StructuredTable
-              columns={["期限", "最新", "涨跌bp", "参考收益", "更新时间"]}
-              rows={ncdTableRows}
-              greenColumns={[1]}
-              deltaColumns={[2]}
-              fitToWidth
-              columnWidths={["14%", "18%", "16%", "22%", "30%"]}
-              compact
-              flush={false}
-              scrollY
-            />
+      <div className="flex items-center gap-1">
+        <button
+          className={auxTabClass(market === "primary")}
+          onClick={() => setMarket("primary")}
+          type="button"
+        >
+          一级
+        </button>
+        <button
+          className={auxTabClass(market === "secondary")}
+          onClick={() => setMarket("secondary")}
+          type="button"
+        >
+          二级
+        </button>
+      </div>
+      {market === "primary" && (
+        <>
+          <div className="mx-0.5 h-3 w-px bg-[#2a3f5f]" />
+          <div className="flex items-center gap-1">
+            {ncdPrimaryPeriods.map((p) => (
+              <button
+                key={p}
+                className={auxTabClass(period === p)}
+                onClick={() => setPeriod(p)}
+                type="button"
+              >
+                {p}
+              </button>
+            ))}
           </div>
+        </>
+      )}
+      <div className="ml-auto flex items-center gap-1">
+        <button
+          className={auxTabClass(mode === "trend")}
+          onClick={() => setMode("trend")}
+          type="button"
+        >
+          趋势图
+        </button>
+        <button
+          className={auxTabClass(mode === "table")}
+          onClick={() => setMode("table")}
+          type="button"
+        >
+          表格
+        </button>
+        {onClose ? (
+          <button
+            onClick={onClose}
+            type="button"
+            className="ml-1 rounded p-0.5 text-slate-400 hover:bg-[#1e3358] hover:text-slate-100"
+            title="收起"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path
+                d="M2 2l4 4M2 2h3M2 2v3M12 12l-4-4M12 12H9M12 12V9"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        ) : (
+          <button
+            onClick={() => setExpanded(true)}
+            type="button"
+            className="ml-1 rounded p-0.5 text-slate-400 hover:bg-[#1e3358] hover:text-slate-100"
+            title="展开"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path
+                d="M5 2H2v3M2 2l4 4M9 12h3V9M12 12l-4-4"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
         )}
       </div>
-    </section>
+    </div>
+  );
+
+  const body =
+    market === "primary" ? (
+      mode === "trend" ? (
+        <NcdPrimaryTrendPanel period={period} />
+      ) : (
+        <NcdPrimaryTable period={period} />
+      )
+    ) : mode === "trend" ? (
+      <NcdTrendPanel compact />
+    ) : (
+      <div className="h-full min-h-0">
+        <StructuredTable
+          columns={["期限", "最新", "涨跌bp", "参考收益", "更新时间"]}
+          rows={ncdTableRows}
+          greenColumns={[1]}
+          deltaColumns={[2]}
+          fitToWidth
+          columnWidths={["14%", "18%", "16%", "22%", "30%"]}
+          compact
+          flush={false}
+          scrollY
+        />
+      </div>
+    );
+
+  return (
+    <>
+      <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
+        <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-2.5">
+          {header()}
+        </div>
+        <div className="min-h-0 flex-1 overflow-hidden p-2">{body}</div>
+      </section>
+      {expanded && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc]"
+          onClick={() => setExpanded(false)}
+        >
+          <div
+            className="flex h-[70vh] w-[860px] max-w-[95vw] flex-col overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-2.5">
+              {header(() => setExpanded(false))}
+            </div>
+            <div className="min-h-0 flex-1 overflow-hidden p-3">{body}</div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -1654,28 +1856,32 @@ function ExchangeCoreCompactBlock({
       className="grid h-full min-h-0 overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]"
       style={{ gridTemplateRows: `auto repeat(${rowCount}, minmax(0, 1fr))` }}
     >
-      <div className="grid grid-cols-[0.7fr_1fr_1fr_0.8fr] border-b border-[#22324d] bg-[#111d30] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
-        <span className="text-left">期限</span>
-        <span className="text-left">品种</span>
-        <span className="text-right">最新</span>
-        <span className="text-right">涨跌bp</span>
+      <div className="grid grid-cols-[0.7fr_1fr_1fr_0.8fr] border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
+        <span className="px-2 py-1.5 text-left">期限</span>
+        <span className="px-2 py-1.5 text-left">品种</span>
+        <span className="px-2 py-1.5 text-right">最新</span>
+        <span className="px-2 py-1.5 text-right">涨跌bp</span>
       </div>
       {paddedRows.map((row, rowIndex) => (
         <div
           key={row ? `${row[1]}-${rowIndex}` : `empty-${rowIndex}`}
-          className={`grid grid-cols-[0.7fr_1fr_1fr_0.8fr] items-center px-4 text-xs ${
+          className={`grid grid-cols-[0.7fr_1fr_1fr_0.8fr] min-h-0 items-center text-xs ${
             rowIndex > 0 ? "border-t border-[#162439]" : ""
           }`}
         >
           {row ? (
             <>
-              <span className="font-semibold text-slate-100">{row[0]}</span>
-              <span className="font-semibold text-slate-100">{row[1]}</span>
-              <span className="text-right font-semibold text-emerald-300">
+              <span className="px-2 font-semibold text-slate-100">
+                {row[0]}
+              </span>
+              <span className="px-2 font-semibold text-slate-100">
+                {row[1]}
+              </span>
+              <span className="px-2 text-right font-semibold text-emerald-300">
                 {row[2]}
               </span>
               <span
-                className={`text-right ${cellClassName(row[3], 1, [], [], [1], [])}`}
+                className={`px-2 text-right ${cellClassName(row[3], 1, [], [], [1], [])}`}
               >
                 {row[3]}
               </span>
@@ -1705,7 +1911,7 @@ function ExchangeMarketTable({
         gridTemplateRows: `auto repeat(${displayRows.length}, minmax(0, 1fr))`,
       }}
     >
-      <div className="grid grid-cols-4 border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
+      <div className="grid grid-cols-[0.7fr_1fr_1fr_0.8fr] border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
         {market.columns.map((column, index) => (
           <div
             key={`${market.title}-${column}`}
@@ -1720,7 +1926,7 @@ function ExchangeMarketTable({
       {displayRows.map((row, rowIndex) => (
         <div
           key={`${market.title}-${row[0]}-${rowIndex}`}
-          className={`grid min-h-0 grid-cols-4 border-b border-[#162439] text-xs ${
+          className={`grid min-h-0 grid-cols-[0.7fr_1fr_1fr_0.8fr] border-b border-[#162439] text-xs ${
             rowIndex % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
           }`}
         >
@@ -1970,18 +2176,8 @@ function RepoQuoteSectionBoard({
               <span className="text-right text-xs font-semibold text-amber-300">
                 {group.averageRate}
               </span>
-              <span
-                className="truncate pl-3 text-right text-xs text-slate-300"
-                title={summarizeAccountRequirements(group.rows)}
-              >
-                {summarizeAccountRequirements(group.rows)}
-              </span>
-              <span
-                className="truncate pl-3 text-right text-xs text-slate-300"
-                title={group.collateral}
-              >
-                {group.collateral}
-              </span>
+              <span aria-hidden="true" />
+              <span aria-hidden="true" />
               <span />
             </div>
             {displayLevel === 1 ? (
@@ -2867,6 +3063,166 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
         {labels.map((label) => (
           <div key={label}>{label}</div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function NcdPrimaryTrendPanel({ period }: { period: NcdPeriod }) {
+  const off = NCD_PERIOD_OFFSET[period];
+  const gov = shiftSeries(ncdPrimaryGovBase, off);
+  const aaa = shiftSeries(ncdPrimaryAAABase, off);
+  const aaPlus = shiftSeries(ncdPrimaryAAPlsBase, off);
+  const aa = shiftSeries(ncdPrimaryAABase, off);
+  const allSeries = [gov, aaa, aaPlus, aa];
+  const min = Math.min(...allSeries.flat()) - 0.02;
+  const max = Math.max(...allSeries.flat()) + 0.02;
+  const width = 520;
+  const height = 120;
+  const govPath = buildLinePath(gov, width, height, min, max);
+  const aaaPath = buildLinePath(aaa, width, height, min, max);
+  const aaPlusPath = buildLinePath(aaPlus, width, height, min, max);
+  const aaPath = buildLinePath(aa, width, height, min, max);
+
+  return (
+    <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
+        <LegendDot color="#a78bfa" label="国有/股份制" />
+        <LegendDot color={chartPalette.blue} label="AAA" />
+        <LegendDot color={chartPalette.emerald} label="AA+" />
+        <LegendDot color={chartPalette.amber} label="AA" />
+        <span className="ml-auto">近14天</span>
+      </div>
+      <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]">
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={`ncd-p-grid-${i}`}
+            className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+            style={{ top: `${(i / 3) * 100}%` }}
+          />
+        ))}
+        <svg
+          className="absolute inset-0 h-full w-full"
+          preserveAspectRatio="none"
+          viewBox={`0 0 ${width} ${height}`}
+        >
+          <path
+            d={govPath}
+            fill="none"
+            stroke="#a78bfa"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d={aaaPath}
+            fill="none"
+            stroke={chartPalette.blue}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray="0"
+          />
+          <path
+            d={aaPlusPath}
+            fill="none"
+            stroke={chartPalette.emerald}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray="5 3"
+          />
+          <path
+            d={aaPath}
+            fill="none"
+            stroke={chartPalette.amber}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray="2 2"
+          />
+        </svg>
+      </div>
+      <div className="grid grid-cols-7 text-center text-[9px] text-slate-400">
+        {compactAuxChartLabels.map((label) => (
+          <div key={label}>{label}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function NcdPrimaryTable({ period }: { period: NcdPeriod }) {
+  const off = NCD_PERIOD_OFFSET[period];
+  const groups: NcdPrimaryGroup[] = ncdPrimary1MGroups.map((g) => ({
+    ...g,
+    rows: g.rows.map((r) => ({
+      ...r,
+      rate: (parseFloat(r.rate) + off).toFixed(3),
+    })),
+  }));
+  const maxRows = Math.max(...groups.map((g) => g.rows.length));
+  return (
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
+      <div className="flex items-baseline gap-2 border-b border-[#1c3050] bg-[#101d32] px-3 py-1.5">
+        <span className="text-[11px] font-semibold text-slate-200">
+          {period}
+        </span>
+        <span className="text-[11px] text-slate-500">(周一 26-06-08)</span>
+      </div>
+      <div
+        className="grid overflow-y-auto"
+        style={{
+          gridTemplateColumns: `repeat(${groups.length}, 1fr)`,
+          gridAutoRows: "min-content",
+        }}
+      >
+        {groups.map((group) => (
+          <div
+            key={group.label}
+            className="border-b border-r border-[#1c3050] bg-[#0f1d30] px-2 py-1 text-center text-[11px] font-medium text-slate-400 last:border-r-0"
+          >
+            {group.label}
+          </div>
+        ))}
+        {Array.from({ length: maxRows }, (_, rowIdx) =>
+          groups.map((group) => {
+            const row = group.rows[rowIdx];
+            return (
+              <div
+                key={`${group.label}-${rowIdx}`}
+                className="flex items-center justify-between border-b border-r border-[#172436] px-2 py-[5px] last:border-r-0"
+                style={{
+                  borderBottomColor:
+                    rowIdx === maxRows - 1 ? "transparent" : undefined,
+                }}
+              >
+                {row ? (
+                  <>
+                    <span className="truncate text-xs text-slate-300">
+                      {row.name}
+                      {row.marker && (
+                        <span className="ml-0.5 text-[9px] text-slate-500">
+                          ▲
+                        </span>
+                      )}
+                    </span>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <span className="font-mono text-xs text-amber-400">
+                        {row.rate}
+                      </span>
+                      {row.change && (
+                        <span className="text-[11px] text-emerald-400">
+                          {row.change}
+                        </span>
+                      )}
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            );
+          }),
+        )}
       </div>
     </div>
   );
