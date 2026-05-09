@@ -2434,7 +2434,7 @@ function IntradayPanel({
   const volumeMax = Math.max(...intradayVolumeSeries);
   const barValues = overlaySeries
     ? intradaySeries.map((value, index) =>
-        Number(((value - overlaySeries[index]) * 10000).toFixed(1)),
+        Number(((value - overlaySeries[index]) * 100).toFixed(1)),
       )
     : intradayVolumeSeries;
   const barMax = overlaySeries
@@ -2672,18 +2672,24 @@ function IntradayPanel({
                 </div>
               </>
             ) : (
-              <div className="absolute inset-x-0 top-0 flex items-end gap-[4px] bottom-1">
-                {(barValues as number[]).map((value, index) => (
-                  <div
-                    key={`intraday-bar-${index}`}
-                    className="min-w-0 flex-1 rounded-t-[2px]"
-                    style={{
-                      height: `${(value / (barMax as number)) * 100}%`,
-                      backgroundColor: index % 4 === 0 ? "#3b82f6" : "#275f9f",
-                    }}
-                  />
-                ))}
-              </div>
+              <>
+                <span className="absolute top-0.5 left-0.5 text-[9px] text-slate-500 z-10 pointer-events-none">
+                  成交量
+                </span>
+                <div className="absolute inset-x-0 top-0 flex items-end gap-[4px] bottom-1">
+                  {(barValues as number[]).map((value, index) => (
+                    <div
+                      key={`intraday-bar-${index}`}
+                      className="min-w-0 flex-1 rounded-t-[2px]"
+                      style={{
+                        height: `${(value / (barMax as number)) * 100}%`,
+                        backgroundColor:
+                          index % 4 === 0 ? "#3b82f6" : "#275f9f",
+                      }}
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -2730,7 +2736,7 @@ function HistoryClosePanel({
       : buildHistoricalSeries(activeRange, compareProduct);
   const spreadValues = compareSeries
     ? dataset.close.map((value, index) =>
-        Number(((value - compareSeries[index]) * 10000).toFixed(1)),
+        Number(((value - compareSeries[index]) * 100).toFixed(1)),
       )
     : null;
   const min =
@@ -3029,6 +3035,9 @@ function HistoryClosePanel({
               ))}
             </div>
             <div className="relative min-h-0">
+              <span className="absolute top-0.5 left-0.5 text-[9px] text-slate-500 z-10 pointer-events-none">
+                成交量
+              </span>
               <div className="absolute inset-0 flex items-end gap-[4px]">
                 {dataset.volume.map((value, index) => (
                   <div
