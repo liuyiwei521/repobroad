@@ -1536,7 +1536,7 @@ function LeftSummaryPanel() {
         ))}
         {exchangeRepoSection ? (
           <div className="flex min-h-0 flex-1 flex-col gap-3">
-            <div className="h-[284px] shrink-0 overflow-hidden">
+            <div className="h-[250px] shrink-0 overflow-hidden">
               <ExchangeRepoCard
                 title={exchangeRepoSection.title}
                 markets={exchangeRepoSection.markets}
@@ -4053,67 +4053,69 @@ function CfetsMatrixPanel({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 overflow-auto p-1">
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-xs">
-          <thead>
-            <tr>
-              <th className="px-2 py-1.5 text-left text-[10px] font-medium text-slate-500">
-                逆\正
-              </th>
-              {cfetsMatrixColLabels.map((col) => (
-                <th
-                  key={col}
-                  className="px-2 py-1.5 text-center text-[10px] font-medium text-slate-400"
-                >
-                  {col}
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden p-1">
+      <div className="shrink-0 space-y-3">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-xs">
+            <thead>
+              <tr>
+                <th className="px-2 py-1.5 text-left text-[10px] font-medium text-slate-500">
+                  逆\正
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {cfetsMatrixRowLabels.map((row, ri) => (
-              <tr key={row}>
-                <td className="py-1.5 pr-3 text-[11px] font-medium text-slate-300">
-                  {row}
-                </td>
-                {cfetsMatrixColLabels.map((col, ci) => {
-                  const rate = cfetsMatrixRates[ri][ci];
-                  return (
-                    <td key={col} className="px-1 py-1">
-                      {rate === null ? (
-                        <div className="flex h-8 w-full items-center justify-center rounded text-[10px] text-slate-600 bg-[#0a1322]">
-                          —
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          className="flex h-8 w-full cursor-pointer items-center justify-center rounded text-[11px] font-semibold text-white transition-opacity hover:opacity-80"
-                          style={{ backgroundColor: rateColor(rate) }}
-                          onClick={() =>
-                            setModal({ rowLabel: row, colLabel: col, rate })
-                          }
-                        >
-                          {rate.toFixed(4)}
-                        </button>
-                      )}
-                    </td>
-                  );
-                })}
+                {cfetsMatrixColLabels.map((col) => (
+                  <th
+                    key={col}
+                    className="px-2 py-1.5 text-center text-[10px] font-medium text-slate-400"
+                  >
+                    {col}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="flex items-center gap-2 text-[10px] text-slate-500">
-        <span>低利率</span>
-        <div
-          className="h-2 w-24 rounded"
-          style={{
-            background: `linear-gradient(to right, ${rateColor(minRate)}, ${rateColor(maxRate)})`,
-          }}
-        />
-        <span>高利率</span>
+            </thead>
+            <tbody>
+              {cfetsMatrixRowLabels.map((row, ri) => (
+                <tr key={row}>
+                  <td className="py-1.5 pr-3 text-[11px] font-medium text-slate-300">
+                    {row}
+                  </td>
+                  {cfetsMatrixColLabels.map((col, ci) => {
+                    const rate = cfetsMatrixRates[ri][ci];
+                    return (
+                      <td key={col} className="px-1 py-1">
+                        {rate === null ? (
+                          <div className="flex h-8 w-full items-center justify-center rounded text-[10px] text-slate-600 bg-[#0a1322]">
+                            —
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className="flex h-8 w-full cursor-pointer items-center justify-center rounded text-[11px] font-semibold text-white transition-opacity hover:opacity-80"
+                            style={{ backgroundColor: rateColor(rate) }}
+                            onClick={() =>
+                              setModal({ rowLabel: row, colLabel: col, rate })
+                            }
+                          >
+                            {rate.toFixed(4)}
+                          </button>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex items-center gap-2 text-[10px] text-slate-500">
+          <span>低利率</span>
+          <div
+            className="h-2 w-24 rounded"
+            style={{
+              background: `linear-gradient(to right, ${rateColor(minRate)}, ${rateColor(maxRate)})`,
+            }}
+          />
+          <span>高利率</span>
+        </div>
       </div>
 
       {modal && (
@@ -4178,48 +4180,50 @@ function CfetsMatrixPanel({
       )}
 
       {includeDaily && (
-        <div className="overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
-          <table className="min-w-full text-xs">
-            <thead className="bg-[#101d32] text-slate-400">
-              <tr>
-                {["日期", "公开市场操作", "净投放", "MLF", "关注点"].map(
-                  (column) => (
-                    <th
-                      key={column}
-                      className="px-3 py-2 text-left font-medium"
-                    >
-                      {column}
-                    </th>
-                  ),
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                ["2026-04-22", "逆回购 7D", "+40亿", "--", "短端偏稳"],
-                ["2026-04-21", "逆回购到期", "-10亿", "--", "大行融出维持"],
-                ["2026-04-20", "逆回购 7D", "+5亿", "--", "非银需求回升"],
-                [
-                  "2026-04-17",
-                  "逆回购 7D",
-                  "+1985亿",
-                  "--",
-                  "月内跨季预期升温",
-                ],
-              ].map((row) => (
-                <tr
-                  key={row[0]}
-                  className="border-t border-[#162439] text-slate-300"
-                >
-                  {row.map((cell, index) => (
-                    <td key={`${row[0]}-${index}`} className="px-3 py-2">
-                      {cell}
-                    </td>
-                  ))}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
+            <table className="min-w-full text-xs">
+              <thead className="bg-[#101d32] text-slate-400">
+                <tr>
+                  {["日期", "公开市场操作", "净投放", "MLF", "关注点"].map(
+                    (column) => (
+                      <th
+                        key={column}
+                        className="px-3 py-2 text-left font-medium"
+                      >
+                        {column}
+                      </th>
+                    ),
+                  )}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {[
+                  ["2026-04-22", "逆回购 7D", "+40亿", "--", "短端偏稳"],
+                  ["2026-04-21", "逆回购到期", "-10亿", "--", "大行融出维持"],
+                  ["2026-04-20", "逆回购 7D", "+5亿", "--", "非银需求回升"],
+                  [
+                    "2026-04-17",
+                    "逆回购 7D",
+                    "+1985亿",
+                    "--",
+                    "月内跨季预期升温",
+                  ],
+                ].map((row) => (
+                  <tr
+                    key={row[0]}
+                    className="border-t border-[#162439] text-slate-300"
+                  >
+                    {row.map((cell, index) => (
+                      <td key={`${row[0]}-${index}`} className="px-3 py-2">
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
