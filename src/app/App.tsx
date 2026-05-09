@@ -153,7 +153,7 @@ const leftSections: readonly (
     emphasisColumns: [1, 6],
     buttonColumn: 7,
     fitToWidth: true,
-    columnWidths: ["8%", "10%", "14%", "12%", "12%", "14%", "10%", "20%"],
+    columnWidths: ["14%", "10%", "14%", "12%", "12%", "14%", "10%", "14%"],
     scrollable: false,
   },
   {
@@ -1570,10 +1570,22 @@ function ExchangeRepoCard({
   markets: ExchangeMarketSplitSection["markets"];
 }) {
   const [activeView, setActiveView] = useState<"core" | "sse" | "szse">("core");
-  const filteredMarkets =
-    activeView === "core"
-      ? markets
-      : markets.filter((market) => market.id === activeView);
+
+  // 准备三种视图的数据，避免切换时重新计算
+  const coreRows = React.useMemo(
+    () => markets.flatMap((market) => market.rows.slice(0, 2)),
+    [markets],
+  );
+
+  const sseRows = React.useMemo(
+    () => markets.find((m) => m.id === "sse")?.rows || [],
+    [markets],
+  );
+
+  const szseRows = React.useMemo(
+    () => markets.find((m) => m.id === "szse")?.rows || [],
+    [markets],
+  );
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
@@ -1607,36 +1619,34 @@ function ExchangeRepoCard({
         </div>
       </div>
       <div className="min-h-0 flex-1 p-2">
-        {activeView === "core" ? (
-          <ExchangeCoreCompactBoard markets={markets} />
-        ) : (
-          <div className="grid h-full min-h-0 grid-cols-1">
-            {filteredMarkets.map((market) => (
-              <ExchangeMarketTable
-                key={`${activeView}-${market.id}`}
-                market={market}
-                rows={market.rows}
-              />
-            ))}
+        {/* 使用 CSS display 控制显示，而非条件渲染，避免 DOM 重建 */}
+        <div className="h-full min-h-0 grid grid-cols-1">
+          <div
+            style={{ display: activeView === "core" ? "grid" : "none" }}
+            className="h-full min-h-0"
+          >
+            <ExchangeCoreCompactBlock rows={coreRows} rowCount={5} />
           </div>
-        )}
+          <div
+            style={{ display: activeView === "sse" ? "grid" : "none" }}
+            className="h-full min-h-0"
+          >
+            <ExchangeMarketTable market={markets[0]} rows={sseRows} />
+          </div>
+          <div
+            style={{ display: activeView === "szse" ? "grid" : "none" }}
+            className="h-full min-h-0"
+          >
+            <ExchangeMarketTable market={markets[1]} rows={szseRows} />
+          </div>
+        </div>
       </div>
     </section>
   );
 }
-
-function ExchangeCoreCompactBoard({
-  markets,
-}: {
-  markets: ExchangeMarketSplitSection["markets"];
-}) {
-  const combinedRows = markets.flatMap((market) => market.rows.slice(0, 2));
-  return (
-    <div className="h-full min-h-0">
-      <ExchangeCoreCompactBlock rows={combinedRows} rowCount={5} />
-    </div>
-  );
-}
+// 交易所表格统一列宽配置
+const EXCHANGE_COLUMN_WIDTHS = ["0.7fr", "1fr", "1fr", "0.8fr"] as const;
+const EXCHANGE_COLUMN_PADDING = "px-4" as const;
 
 function ExchangeCoreCompactBlock({
   rows,
@@ -1654,18 +1664,22 @@ function ExchangeCoreCompactBlock({
       className="grid h-full min-h-0 overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]"
       style={{ gridTemplateRows: `auto repeat(${rowCount}, minmax(0, 1fr))` }}
     >
-      <div className="grid grid-cols-[0.7fr_1fr_1fr_0.8fr] border-b border-[#22324d] bg-[#111d30] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
-        <span className="text-left">期限</span>
-        <span className="text-left">品种</span>
-        <span className="text-right">最新</span>
-        <span className="text-right">涨跌bp</span>
+      <div
+        className={`grid border-b border-[#22324d] bg-[#111d30] py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400`}
+        style={{ gridTemplateColumns: EXCHANGE_COLUMN_WIDTHS.join(" ") }}
+      >
+        <span className={`${EXCHANGE_COLUMN_PADDING} text-left`}>期限</span>
+        <span className={`${EXCHANGE_COLUMN_PADDING} text-left`}>品种</span>
+        <span className={`${EXCHANGE_COLUMN_PADDING} text-right`}>最新</span>
+        <span className={`${EXCHANGE_COLUMN_PADDING} text-right`}>涨跌bp</span>
       </div>
       {paddedRows.map((row, rowIndex) => (
         <div
           key={row ? `${row[1]}-${rowIndex}` : `empty-${rowIndex}`}
-          className={`grid grid-cols-[0.7fr_1fr_1fr_0.8fr] items-center px-4 text-xs ${
+          className={`grid items-center ${EXCHANGE_COLUMN_PADDING} text-xs ${
             rowIndex > 0 ? "border-t border-[#162439]" : ""
           }`}
+          style={{ gridTemplateColumns: EXCHANGE_COLUMN_WIDTHS.join(" ") }}
         >
           {row ? (
             <>
@@ -1705,11 +1719,14 @@ function ExchangeMarketTable({
         gridTemplateRows: `auto repeat(${displayRows.length}, minmax(0, 1fr))`,
       }}
     >
-      <div className="grid grid-cols-4 border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
+      <div
+        className={`border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400`}
+        style={{ gridTemplateColumns: EXCHANGE_COLUMN_WIDTHS.join(" ") }}
+      >
         {market.columns.map((column, index) => (
           <div
             key={`${market.title}-${column}`}
-            className={`px-2 py-1.5 ${
+            className={`${EXCHANGE_COLUMN_PADDING} py-1.5 ${
               index === 0 ? "text-left" : "text-right"
             } ${index === 1 ? "truncate" : ""}`}
           >
@@ -1720,14 +1737,15 @@ function ExchangeMarketTable({
       {displayRows.map((row, rowIndex) => (
         <div
           key={`${market.title}-${row[0]}-${rowIndex}`}
-          className={`grid min-h-0 grid-cols-4 border-b border-[#162439] text-xs ${
+          className={`grid min-h-0 border-b border-[#162439] text-xs ${
             rowIndex % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
           }`}
+          style={{ gridTemplateColumns: EXCHANGE_COLUMN_WIDTHS.join(" ") }}
         >
           {row.map((cell, cellIndex) => (
             <div
               key={`${market.title}-${row[0]}-${cellIndex}`}
-              className={`flex min-h-0 items-center px-2 py-1.5 ${
+              className={`flex min-h-0 items-center ${EXCHANGE_COLUMN_PADDING} py-1.5 ${
                 cellIndex === 0 ? "justify-start" : "justify-end"
               } ${cellIndex === 1 ? "truncate" : ""}`}
               title={cell}
