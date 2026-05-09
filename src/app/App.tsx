@@ -4,10 +4,17 @@ type AuxChartTab = "ncd" | "institution-repo" | "fund-structure";
 type TrendMode = "intraday" | "history" | "comparison";
 type SentimentTab = "realtime" | "trend";
 type OverlayProduct = "none" | "dr007" | "gc007" | "r007";
-type RightLowerTab = "cfets" | "fund-structure";
+type RightLowerTab = "cfets" | "matrix" | "inst" | "bond" | "fund-structure";
 type HistoryRange = "5d" | "1m" | "6m";
 type SpreadProduct = "dr001" | "dr007" | "gc007" | "r007";
 type CompareProduct = "none" | SpreadProduct;
+type CfetsMetricKey =
+  | "buyRate"
+  | "sellRate"
+  | "buyAmt"
+  | "sellAmt"
+  | "netInflow";
+type CfetsTrendBlock = { dates: string[]; series: number[][] };
 
 type BankRateRow = {
   institution: string;
@@ -918,7 +925,10 @@ const compareProductOptions: Array<{ id: CompareProduct; label: string }> = [
 ];
 
 const rightLowerTabs: Array<{ id: RightLowerTab; label: string }> = [
-  { id: "cfets", label: "CFETS日报统计" },
+  { id: "cfets", label: "公开市场操作" },
+  { id: "matrix", label: "矩阵" },
+  { id: "inst", label: "机构" },
+  { id: "bond", label: "债券" },
   { id: "fund-structure", label: "机构资金结构" },
 ];
 
@@ -1933,45 +1943,54 @@ function ExchangeCoreCompactBlock({
     (_, i) => rows[i] ?? null,
   );
   return (
-    <div
-      className="grid h-full min-h-0 overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]"
-      style={{ gridTemplateRows: `auto repeat(${rowCount}, minmax(0, 1fr))` }}
-    >
-      <div className="grid grid-cols-[0.7fr_1fr_1fr_0.8fr] border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
-        <span className="px-2 py-1.5 text-left">期限</span>
-        <span className="px-2 py-1.5 text-left">品种</span>
-        <span className="px-2 py-1.5 text-right">最新</span>
-        <span className="px-2 py-1.5 text-right">涨跌bp</span>
-      </div>
-      {paddedRows.map((row, rowIndex) => (
-        <div
-          key={row ? `${row[1]}-${rowIndex}` : `empty-${rowIndex}`}
-          className={`grid grid-cols-[0.7fr_1fr_1fr_0.8fr] min-h-0 items-center text-xs ${
-            rowIndex > 0 ? "border-t border-[#162439]" : ""
-          }`}
-        >
-          {row ? (
-            <>
-              <span className="px-2 font-semibold text-slate-100">
-                {row[0]}
-              </span>
-              <span className="px-2 font-semibold text-slate-100">
-                {row[1]}
-              </span>
-              <span className="px-2 text-right font-semibold text-emerald-300">
-                {row[2]}
-              </span>
-              <span
-                className={`px-2 text-right ${cellClassName(row[3], 1, [], [], [1], [])}`}
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
+      <table className="w-full table-fixed shrink-0">
+        <thead>
+          <tr className="border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
+            <th className="w-[18%] px-2 py-1.5 text-left font-medium">期限</th>
+            <th className="w-[30%] px-2 py-1.5 text-left font-medium">品种</th>
+            <th className="w-[28%] px-2 py-1.5 text-right font-medium">最新</th>
+            <th className="w-[24%] px-2 py-1.5 text-right font-medium">
+              涨跌bp
+            </th>
+          </tr>
+        </thead>
+      </table>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <table className="w-full table-fixed">
+          <tbody>
+            {paddedRows.map((row, rowIndex) => (
+              <tr
+                key={row ? `${row[1]}-${rowIndex}` : `empty-${rowIndex}`}
+                className={`text-xs ${
+                  rowIndex > 0 ? "border-t border-[#162439]" : ""
+                }`}
               >
-                {row[3]}
-              </span>
-            </>
-          ) : (
-            <span className="col-span-4" />
-          )}
-        </div>
-      ))}
+                {row ? (
+                  <>
+                    <td className="w-[18%] px-2 py-1.5 font-semibold text-slate-100">
+                      {row[0]}
+                    </td>
+                    <td className="w-[30%] px-2 py-1.5 font-semibold text-slate-100">
+                      {row[1]}
+                    </td>
+                    <td className="w-[28%] px-2 py-1.5 text-right font-semibold text-emerald-300">
+                      {row[2]}
+                    </td>
+                    <td
+                      className={`w-[24%] px-2 py-1.5 text-right ${cellClassName(row[3], 1, [], [], [1], [])}`}
+                    >
+                      {row[3]}
+                    </td>
+                  </>
+                ) : (
+                  <td colSpan={4} />
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -1986,55 +2005,72 @@ function ExchangeMarketTable({
   const displayRows = rows ?? market.rows;
 
   return (
-    <div
-      className="grid h-full min-h-0 min-w-0 overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]"
-      style={{
-        gridTemplateRows: `auto repeat(${displayRows.length}, minmax(0, 1fr))`,
-      }}
-    >
-      <div className="grid grid-cols-[0.7fr_1fr_1fr_0.8fr] border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
-        {market.columns.map((column, index) => (
-          <div
-            key={`${market.title}-${column}`}
-            className={`px-2 py-1.5 ${
-              index === 0 ? "text-left" : "text-right"
-            } ${index === 1 ? "truncate" : ""}`}
-          >
-            {column}
-          </div>
-        ))}
-      </div>
-      {displayRows.map((row, rowIndex) => (
-        <div
-          key={`${market.title}-${row[0]}-${rowIndex}`}
-          className={`grid min-h-0 grid-cols-[0.7fr_1fr_1fr_0.8fr] border-b border-[#162439] text-xs ${
-            rowIndex % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
-          }`}
-        >
-          {row.map((cell, cellIndex) => (
-            <div
-              key={`${market.title}-${row[0]}-${cellIndex}`}
-              className={`flex min-h-0 items-center px-2 py-1.5 ${
-                cellIndex === 0 ? "justify-start" : "justify-end"
-              } ${cellIndex === 1 ? "truncate" : ""}`}
-              title={cell}
-            >
-              <span
-                className={cellClassName(
-                  cell,
-                  cellIndex,
-                  market.greenColumns,
-                  [],
-                  market.deltaColumns,
-                  [],
-                )}
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
+      <table className="w-full table-fixed shrink-0">
+        <thead>
+          <tr className="border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
+            {market.columns.map((column, index) => (
+              <th
+                key={`${market.title}-${column}`}
+                className={`px-2 py-1.5 font-medium ${
+                  index === 0
+                    ? "w-[18%] text-left"
+                    : index === 1
+                      ? "w-[30%] text-left"
+                      : index === 2
+                        ? "w-[28%] text-right"
+                        : "w-[24%] text-right"
+                }`}
               >
-                {cell}
-              </span>
-            </div>
-          ))}
-        </div>
-      ))}
+                {column}
+              </th>
+            ))}
+          </tr>
+        </thead>
+      </table>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <table className="w-full table-fixed">
+          <tbody>
+            {displayRows.map((row, rowIndex) => (
+              <tr
+                key={`${market.title}-${row[0]}-${rowIndex}`}
+                className={`border-b border-[#162439] text-xs ${
+                  rowIndex % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
+                }`}
+              >
+                {row.map((cell, cellIndex) => (
+                  <td
+                    key={`${market.title}-${row[0]}-${cellIndex}`}
+                    className={`px-2 py-1.5 ${
+                      cellIndex === 0
+                        ? "w-[18%] text-left"
+                        : cellIndex === 1
+                          ? "w-[30%] text-left truncate"
+                          : cellIndex === 2
+                            ? "w-[28%] text-right"
+                            : "w-[24%] text-right"
+                    }`}
+                    title={cell}
+                  >
+                    <span
+                      className={cellClassName(
+                        cell,
+                        cellIndex,
+                        market.greenColumns,
+                        [],
+                        market.deltaColumns,
+                        [],
+                      )}
+                    >
+                      {cell}
+                    </span>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -2494,8 +2530,11 @@ function RightLowerPanel({
         ))}
       </div>
       <div className="min-h-0 overflow-hidden p-2">
-        {activeTab === "cfets" ? <CfetsDailyPanel /> : null}
-        {activeTab === "fund-structure" ? <FundStructurePanel /> : null}
+        {activeTab === "cfets" && <CfetsDailyPanel />}
+        {activeTab === "matrix" && <CfetsMatrixPanel />}
+        {activeTab === "inst" && <CfetsInstPanel />}
+        {activeTab === "bond" && <CfetsBondPanel />}
+        {activeTab === "fund-structure" && <FundStructurePanel />}
       </div>
     </section>
   );
@@ -3157,36 +3196,816 @@ function HistoryClosePanel({
   );
 }
 
+// ── 矩阵数据（逆回购方 × 正回购方，加权利率 %，null = 无交易）──
+const cfetsMatrixRowLabels = ["大型银行", "中小型银行", "其他"] as const;
+const cfetsMatrixColLabels = [
+  "大型银行",
+  "中小型银行",
+  "基金公司及产品",
+  "其他",
+] as const;
+const cfetsMatrixRates: (number | null)[][] = [
+  [1.2384, 1.2593, null, 1.3076],
+  [1.1821, 1.2603, null, 1.3119],
+  [1.3067, 1.3067, 1.4071, 1.3384],
+];
+
+// ── 机构 × 期限数据（金额单位：百万，显示时换算为亿）──
+type CfetsTermRow = {
+  term: string;
+  buyRate: number | null;
+  buyAmt: number | null;
+  sellRate: number | null;
+  sellAmt: number | null;
+  netInflow: number | null;
+  sellBalance: number | null;
+};
+type CfetsInstKey =
+  | "大型银行"
+  | "中小型银行"
+  | "证券公司"
+  | "保险公司"
+  | "基金公司及产品"
+  | "货币市场基金"
+  | "理财子公司及理财类产品"
+  | "其他";
+const cfetsInstLabels: CfetsInstKey[] = [
+  "大型银行",
+  "中小型银行",
+  "证券公司",
+  "保险公司",
+  "基金公司及产品",
+  "货币市场基金",
+  "理财子公司及理财类产品",
+  "其他",
+];
+const cfetsInstData: Record<CfetsInstKey, CfetsTermRow[]> = {
+  大型银行: [
+    {
+      term: "R001",
+      buyRate: 1.2269,
+      buyAmt: 596900.73,
+      sellRate: 1.2576,
+      sellAmt: 1794867.33,
+      netInflow: -330152.08,
+      sellBalance: 1794867.33,
+    },
+    {
+      term: "R007",
+      buyRate: 1.4302,
+      buyAmt: 15500,
+      sellRate: 1.4606,
+      sellAmt: 52404.88,
+      netInflow: 235768.7,
+      sellBalance: 2569916.13,
+    },
+    {
+      term: "R014",
+      buyRate: 1.45,
+      buyAmt: 1000,
+      sellRate: 1.4581,
+      sellAmt: 3100,
+      netInflow: 69473.21,
+      sellBalance: 786323.15,
+    },
+    {
+      term: "R021",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 1497.6,
+      sellBalance: 187785.45,
+    },
+    {
+      term: "R1M",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: 1.68,
+      sellAmt: 180,
+      netInflow: 16420.13,
+      sellBalance: 82666.64,
+    },
+    {
+      term: "R2M",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 1000,
+      sellBalance: 18788.82,
+    },
+  ],
+  中小型银行: [
+    {
+      term: "R001",
+      buyRate: 1.2509,
+      buyAmt: 1078715.08,
+      sellRate: 1.2563,
+      sellAmt: 454660.22,
+      netInflow: 14675.74,
+      sellBalance: 454660.22,
+    },
+    {
+      term: "R007",
+      buyRate: 1.4284,
+      buyAmt: 50123.71,
+      sellRate: 1.4226,
+      sellAmt: 35404.91,
+      netInflow: -147440.66,
+      sellBalance: 673011.98,
+    },
+    {
+      term: "R014",
+      buyRate: 1.4504,
+      buyAmt: 3278,
+      sellRate: 1.4168,
+      sellAmt: 3278,
+      netInflow: -34544.37,
+      sellBalance: 419214.42,
+    },
+    {
+      term: "R021",
+      buyRate: 1.4271,
+      buyAmt: 350,
+      sellRate: 1.4271,
+      sellAmt: 350,
+      netInflow: 402.4,
+      sellBalance: 70763.84,
+    },
+    {
+      term: "R1M",
+      buyRate: 1.4684,
+      buyAmt: 980,
+      sellRate: 1.4791,
+      sellAmt: 1480,
+      netInflow: -2123.5,
+      sellBalance: 108500.42,
+    },
+    {
+      term: "R3M",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: 1.68,
+      sellAmt: 300,
+      netInflow: -300,
+      sellBalance: 849.7,
+    },
+  ],
+  证券公司: [
+    {
+      term: "R001",
+      buyRate: 1.2984,
+      buyAmt: 72056.66,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 30407.11,
+      sellBalance: null,
+    },
+    {
+      term: "R007",
+      buyRate: 1.4194,
+      buyAmt: 1400.15,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: -18722.41,
+      sellBalance: 71880.95,
+    },
+    {
+      term: "R014",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: -5560,
+      sellBalance: 26977.39,
+    },
+  ],
+  保险公司: [
+    {
+      term: "R001",
+      buyRate: 1.2961,
+      buyAmt: 213984.28,
+      sellRate: 1.304,
+      sellAmt: 77381.77,
+      netInflow: 54890.05,
+      sellBalance: 77381.77,
+    },
+    {
+      term: "R007",
+      buyRate: 1.5186,
+      buyAmt: 22338.93,
+      sellRate: 1.3379,
+      sellAmt: 1763,
+      netInflow: -38242.93,
+      sellBalance: 324436.44,
+    },
+    {
+      term: "R014",
+      buyRate: 1.4,
+      buyAmt: 900,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: -22349.84,
+      sellBalance: 122083.18,
+    },
+    {
+      term: "R021",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: -2000,
+      sellBalance: 10137.81,
+    },
+    {
+      term: "R1M",
+      buyRate: 1.5,
+      buyAmt: 500,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: -14000,
+      sellBalance: 1901.24,
+    },
+  ],
+  基金公司及产品: [
+    {
+      term: "R001",
+      buyRate: 1.4071,
+      buyAmt: 350,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 2212,
+      sellBalance: null,
+    },
+    {
+      term: "R007",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 5409,
+      sellBalance: 190266.03,
+    },
+    {
+      term: "R014",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: -166,
+      sellBalance: 78201.47,
+    },
+  ],
+  货币市场基金: [
+    {
+      term: "R001",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: -3954.94,
+      sellBalance: null,
+    },
+    {
+      term: "R007",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: -1500,
+      sellBalance: 558565.45,
+    },
+    {
+      term: "R014",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 511,
+      sellBalance: 1071531.14,
+    },
+  ],
+  理财子公司及理财类产品: [
+    {
+      term: "R001",
+      buyRate: 1.3088,
+      buyAmt: 329386.98,
+      sellRate: 1.4665,
+      sellAmt: 5617.05,
+      netInflow: 181449.19,
+      sellBalance: 5617.05,
+    },
+    {
+      term: "R007",
+      buyRate: 1.4549,
+      buyAmt: 5910.42,
+      sellRate: 1.5797,
+      sellAmt: 6094.32,
+      netInflow: -36067.79,
+      sellBalance: 377838.42,
+    },
+    {
+      term: "R014",
+      buyRate: 1.4417,
+      buyAmt: 1375,
+      sellRate: 1.6132,
+      sellAmt: 175,
+      netInflow: -11263,
+      sellBalance: 306395.06,
+    },
+    {
+      term: "R021",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 0,
+      sellBalance: 27593.06,
+    },
+    {
+      term: "R1M",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: -246.63,
+      sellBalance: 7257.14,
+    },
+  ],
+  其他: [
+    {
+      term: "R001",
+      buyRate: 1.3122,
+      buyAmt: 58041.78,
+      sellRate: 1.3523,
+      sellAmt: 16909.14,
+      netInflow: 50472.94,
+      sellBalance: 16909.14,
+    },
+    {
+      term: "R007",
+      buyRate: 1.5037,
+      buyAmt: 2090,
+      sellRate: 1.4866,
+      sellAmt: 1696.1,
+      netInflow: 796.08,
+      sellBalance: 632612.62,
+    },
+    {
+      term: "R014",
+      buyRate: null,
+      buyAmt: null,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 3899,
+      sellBalance: 384370,
+    },
+    {
+      term: "R1M",
+      buyRate: 1.68,
+      buyAmt: 180,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 450,
+      sellBalance: 46531.46,
+    },
+    {
+      term: "R3M",
+      buyRate: 1.68,
+      buyAmt: 300,
+      sellRate: null,
+      sellAmt: null,
+      netInflow: 300,
+      sellBalance: 8628.78,
+    },
+  ],
+};
+
+// ── 机构 × 债券类型数据（金额单位：百万）──
+type CfetsBondKey = "利率债" | "信用债" | "同业存单";
+type CfetsBondRow = {
+  inst: string;
+  buyRate: number | null;
+  buyAmt: number | null;
+  sellRate: number | null;
+  sellAmt: number | null;
+};
+const cfetsBondLabels: CfetsBondKey[] = ["利率债", "信用债", "同业存单"];
+const cfetsBondData: Record<CfetsBondKey, CfetsBondRow[]> = {
+  利率债: [
+    {
+      inst: "大型银行",
+      buyRate: 1.232,
+      buyAmt: 608301.28,
+      sellRate: 1.2597,
+      sellAmt: 1717212.35,
+    },
+    {
+      inst: "中小型银行",
+      buyRate: 1.259,
+      buyAmt: 1121054.59,
+      sellRate: 1.2486,
+      sellAmt: 342364.61,
+    },
+    {
+      inst: "证券公司",
+      buyRate: 1.2915,
+      buyAmt: 53468.15,
+      sellRate: null,
+      sellAmt: null,
+    },
+    {
+      inst: "保险公司",
+      buyRate: 1.3144,
+      buyAmt: 198955.8,
+      sellRate: 1.2242,
+      sellAmt: 10280.59,
+    },
+    {
+      inst: "理财子公司及理财类产品",
+      buyRate: 1.2698,
+      buyAmt: 58431.77,
+      sellRate: 1.6512,
+      sellAmt: 2374.15,
+    },
+    {
+      inst: "其他",
+      buyRate: 1.3005,
+      buyAmt: 32227.11,
+      sellRate: 1.3638,
+      sellAmt: 207,
+    },
+  ],
+  信用债: [
+    {
+      inst: "大型银行",
+      buyRate: 1.3019,
+      buyAmt: 2099.45,
+      sellRate: 1.3461,
+      sellAmt: 28564.6,
+    },
+    {
+      inst: "中小型银行",
+      buyRate: 1.3248,
+      buyAmt: 8790,
+      sellRate: 1.3496,
+      sellAmt: 32475.21,
+    },
+    {
+      inst: "证券公司",
+      buyRate: 1.3292,
+      buyAmt: 16055.08,
+      sellRate: null,
+      sellAmt: null,
+    },
+    {
+      inst: "保险公司",
+      buyRate: 1.3378,
+      buyAmt: 33301.4,
+      sellRate: 1.3565,
+      sellAmt: 29535.56,
+    },
+    {
+      inst: "基金公司及产品",
+      buyRate: 1.4,
+      buyAmt: 208,
+      sellRate: null,
+      sellAmt: null,
+    },
+    {
+      inst: "理财子公司及理财类产品",
+      buyRate: 1.4136,
+      buyAmt: 39731.76,
+      sellRate: 1.5118,
+      sellAmt: 7877.22,
+    },
+    {
+      inst: "其他",
+      buyRate: 1.4284,
+      buyAmt: 8372.2,
+      sellRate: 1.4283,
+      sellAmt: 10105.3,
+    },
+  ],
+  同业存单: [
+    {
+      inst: "大型银行",
+      buyRate: 1.27,
+      buyAmt: 3000,
+      sellRate: 1.3064,
+      sellAmt: 104775.26,
+    },
+    {
+      inst: "中小型银行",
+      buyRate: 1.2755,
+      buyAmt: 3602.2,
+      sellRate: 1.3104,
+      sellAmt: 120633.3,
+    },
+    {
+      inst: "证券公司",
+      buyRate: 1.3109,
+      buyAmt: 3933.58,
+      sellRate: null,
+      sellAmt: null,
+    },
+    {
+      inst: "保险公司",
+      buyRate: 1.3203,
+      buyAmt: 5466,
+      sellRate: 1.287,
+      sellAmt: 39328.63,
+    },
+    {
+      inst: "基金公司及产品",
+      buyRate: 1.4176,
+      buyAmt: 142,
+      sellRate: null,
+      sellAmt: null,
+    },
+    {
+      inst: "理财子公司及理财类产品",
+      buyRate: 1.3053,
+      buyAmt: 238508.87,
+      sellRate: 1.4175,
+      sellAmt: 1635,
+    },
+    {
+      inst: "其他",
+      buyRate: 1.3114,
+      buyAmt: 20012.47,
+      sellRate: 1.2868,
+      sellAmt: 8292.94,
+    },
+  ],
+};
+
+function fmtAmt(百万: number | null): string {
+  if (百万 === null) return "—";
+  return (百万 / 100).toFixed(1) + "亿";
+}
+function fmtRate(rate: number | null): string {
+  if (rate === null) return "—";
+  return rate.toFixed(4) + "%";
+}
+function fmtNetInflow(百万: number | null): string {
+  if (百万 === null) return "—";
+  const v = (百万 / 100).toFixed(1);
+  return 百万 >= 0 ? "+" + v + "亿" : v + "亿";
+}
+
+// ── 指标定义 ──────────────────────────────────────────────
+const cfetsMetricDefs: {
+  key: CfetsMetricKey;
+  label: string;
+  desc: string;
+  chartType: "line" | "stackedBar" | "divergeBar";
+}[] = [
+  {
+    key: "buyRate",
+    label: "正回购利率",
+    desc: "以债券质押融入资金的加权利率，利率越高说明融资成本越贵",
+    chartType: "line",
+  },
+  {
+    key: "sellRate",
+    label: "逆回购利率",
+    desc: "以债券质押融出资金的加权利率，利率越高说明融出资金收益越高",
+    chartType: "line",
+  },
+  {
+    key: "buyAmt",
+    label: "正回购金额",
+    desc: "各机构当日质押式融入资金规模（亿元），反映融资需求强度",
+    chartType: "stackedBar",
+  },
+  {
+    key: "sellAmt",
+    label: "逆回购金额",
+    desc: "各机构当日质押式融出资金规模（亿元），反映市场流动性供给",
+    chartType: "stackedBar",
+  },
+  {
+    key: "netInflow",
+    label: "净融入",
+    desc: "正回购金额 − 逆回购金额，正值=净融入资金，负值=净融出资金（亿元）",
+    chartType: "divergeBar",
+  },
+];
+
+const cfetsBondMetricDefs = cfetsMetricDefs.filter(
+  (d) => d.key !== "netInflow",
+);
+
+// ── 趋势数据生成 ──────────────────────────────────────────
+function generateTradingDates(endDate: string, count: number): string[] {
+  const [y, m, d] = endDate.split("-").map(Number);
+  const end = new Date(y, m - 1, d);
+  const dates: string[] = [];
+  let cur = new Date(end);
+  while (dates.length < count) {
+    const dow = cur.getDay();
+    if (dow !== 0 && dow !== 6) {
+      dates.unshift(
+        `${cur.getMonth() + 1}/${String(cur.getDate()).padStart(2, "0")}`,
+      );
+    }
+    cur.setDate(cur.getDate() - 1);
+  }
+  return dates;
+}
+
+function randomWalk(
+  anchor: number,
+  count: number,
+  dailyVol: number,
+  seed: number,
+): number[] {
+  const result: number[] = new Array(count);
+  result[count - 1] = anchor;
+  for (let i = count - 2; i >= 0; i--) {
+    const noise =
+      (((seed + i * 9301 + 49297) % 233280) / 233280 - 0.5) * 2 * dailyVol;
+    result[i] = Math.max(0, Number((result[i + 1] - noise).toFixed(4)));
+  }
+  return result;
+}
+
+const cfetsTrendCounts: Record<FundStructureRange, number> = {
+  "14d": 14,
+  "1m": 22,
+  "6m": 130,
+};
+
+// 机构图例顺序：大行/股份行/理财/理财子/券商/基金/保险
+// 锚点取自 2026-01-04 真实数据，顺序对应 fundStructureLegendItems
+const cfetsInstAnchors: Record<CfetsMetricKey, number[]> = {
+  buyRate: [1.2269, 1.2509, 1.3088, 1.3088, 1.2984, 1.4071, 1.2961],
+  sellRate: [
+    1.2576,
+    1.2563,
+    1.4665,
+    1.4665,
+    null as unknown as number,
+    null as unknown as number,
+    1.304,
+  ],
+  buyAmt: [5969, 10787, 3294, 3294, 721, 4, 2140], // 亿，R001+R007合计
+  sellAmt: [17949, 4547, 56, 56, 0, 0, 774],
+  netInflow: [-3302, 147, 1815, 1815, 304, 76, 549],
+};
+
+function buildInstTrendBlock(
+  metricKey: CfetsMetricKey,
+  range: FundStructureRange,
+): CfetsTrendBlock {
+  const count = cfetsTrendCounts[range];
+  const dates = generateTradingDates("2026-01-04", count);
+  const anchors = cfetsInstAnchors[metricKey];
+  const isRate = metricKey === "buyRate" || metricKey === "sellRate";
+  const vol = isRate ? 0.008 : metricKey === "netInflow" ? 200 : 500;
+  const series = anchors.map((anchor, i) => {
+    const base = anchor ?? 0;
+    return randomWalk(base, count, vol, (i + 1) * 7 + metricKey.length);
+  });
+  return { dates, series };
+}
+
+const cfetsInstTrend: Record<
+  CfetsMetricKey,
+  Record<FundStructureRange, CfetsTrendBlock>
+> = Object.fromEntries(
+  (
+    [
+      "buyRate",
+      "sellRate",
+      "buyAmt",
+      "sellAmt",
+      "netInflow",
+    ] as CfetsMetricKey[]
+  ).map((mk) => [
+    mk,
+    Object.fromEntries(
+      (["14d", "1m", "6m"] as FundStructureRange[]).map((r) => [
+        r,
+        buildInstTrendBlock(mk, r),
+      ]),
+    ),
+  ]),
+) as Record<CfetsMetricKey, Record<FundStructureRange, CfetsTrendBlock>>;
+
+// 债券趋势锚点：[大行, 股份行, 理财, 理财子, 券商, 基金, 保险]
+const cfetsBondAnchors: Record<
+  CfetsBondKey,
+  Record<Exclude<CfetsMetricKey, "netInflow">, number[]>
+> = {
+  利率债: {
+    buyRate: [
+      1.232,
+      1.259,
+      1.27,
+      1.27,
+      1.292,
+      null as unknown as number,
+      1.314,
+    ],
+    sellRate: [
+      1.26,
+      1.249,
+      1.651,
+      1.651,
+      null as unknown as number,
+      null as unknown as number,
+      1.224,
+    ],
+    buyAmt: [6083, 11211, 584, 584, 535, 0, 1990],
+    sellAmt: [17172, 3424, 24, 24, 0, 0, 103],
+  },
+  信用债: {
+    buyRate: [1.302, 1.325, 1.414, 1.414, 1.329, 1.4, 1.338],
+    sellRate: [
+      1.346,
+      1.35,
+      1.512,
+      1.512,
+      null as unknown as number,
+      null as unknown as number,
+      1.357,
+    ],
+    buyAmt: [21, 88, 397, 397, 161, 2, 333],
+    sellAmt: [286, 325, 79, 79, 0, 0, 295],
+  },
+  同业存单: {
+    buyRate: [1.27, 1.276, 1.305, 1.305, 1.311, 1.418, 1.32],
+    sellRate: [
+      1.306,
+      1.31,
+      1.418,
+      1.418,
+      null as unknown as number,
+      null as unknown as number,
+      1.287,
+    ],
+    buyAmt: [30, 36, 2385, 2385, 39, 1, 55],
+    sellAmt: [1048, 1206, 16, 16, 0, 0, 393],
+  },
+};
+
+function buildBondTrendBlock(
+  bondKey: CfetsBondKey,
+  metricKey: Exclude<CfetsMetricKey, "netInflow">,
+  range: FundStructureRange,
+): CfetsTrendBlock {
+  const count = cfetsTrendCounts[range];
+  const dates = generateTradingDates("2026-01-04", count);
+  const anchors = cfetsBondAnchors[bondKey][metricKey];
+  const isRate = metricKey === "buyRate" || metricKey === "sellRate";
+  const vol = isRate ? 0.007 : 300;
+  const series = anchors.map((anchor, i) => {
+    const base = anchor ?? 0;
+    return randomWalk(base, count, vol, (i + 3) * 11 + bondKey.length);
+  });
+  return { dates, series };
+}
+
+const cfetsBondTrend: Record<
+  CfetsBondKey,
+  Record<
+    Exclude<CfetsMetricKey, "netInflow">,
+    Record<FundStructureRange, CfetsTrendBlock>
+  >
+> = Object.fromEntries(
+  (["利率债", "信用债", "同业存单"] as CfetsBondKey[]).map((bk) => [
+    bk,
+    Object.fromEntries(
+      (
+        ["buyRate", "sellRate", "buyAmt", "sellAmt"] as Exclude<
+          CfetsMetricKey,
+          "netInflow"
+        >[]
+      ).map((mk) => [
+        mk,
+        Object.fromEntries(
+          (["14d", "1m", "6m"] as FundStructureRange[]).map((r) => [
+            r,
+            buildBondTrendBlock(bk, mk, r),
+          ]),
+        ),
+      ]),
+    ),
+  ]),
+) as Record<
+  CfetsBondKey,
+  Record<
+    Exclude<CfetsMetricKey, "netInflow">,
+    Record<FundStructureRange, CfetsTrendBlock>
+  >
+>;
+
 function CfetsDailyPanel() {
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_auto_1fr] gap-2">
-      <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-        {cfetsSummaryCards.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-lg border border-[#223754] bg-[#0f1a2d] px-3 py-2"
-          >
-            <div className="text-[11px] text-slate-500">{card.label}</div>
-            <div
-              className={`mt-1 text-base font-semibold ${card.tone === "good" ? "text-emerald-300" : card.tone === "alert" ? "text-amber-300" : "text-slate-100"}`}
-            >
-              {card.value}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-2 gap-2 text-xs xl:grid-cols-4">
-        {cfetsDetailRows.map((row) => (
-          <div
-            key={row[0]}
-            className="rounded-lg border border-[#1d3250] bg-[#0d1726] px-3 py-2"
-          >
-            <div className="text-slate-500">{row[0]}</div>
-            <div className="mt-1 font-semibold text-slate-100">{row[1]}</div>
-            <div className="mt-1 text-slate-400">{row[2]}</div>
-          </div>
-        ))}
-      </div>
+    <div className="h-full min-h-0 overflow-hidden">
       <div className="overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
         <table className="min-w-full text-xs">
           <thead className="bg-[#101d32] text-slate-400">
@@ -3221,6 +4040,679 @@ function CfetsDailyPanel() {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+// ─── 矩阵面板 ───────────────────────────────────────────────
+function CfetsMatrixPanel() {
+  const [modal, setModal] = useState<{
+    rowLabel: string;
+    colLabel: string;
+    rate: number;
+  } | null>(null);
+
+  const allRates = cfetsMatrixRates
+    .flat()
+    .filter((v): v is number => v !== null);
+  const minRate = Math.min(...allRates);
+  const maxRate = Math.max(...allRates);
+
+  function rateColor(rate: number): string {
+    const t = (rate - minRate) / (maxRate - minRate || 1);
+    const r = Math.round(26 + t * (180 - 26));
+    const g = Math.round(61 + t * (92 - 61));
+    const b = Math.round(94 + t * (14 - 94));
+    return `rgb(${r},${g},${b})`;
+  }
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-auto p-1">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-xs">
+          <thead>
+            <tr>
+              <th className="px-2 py-1.5 text-left text-[10px] font-medium text-slate-500">
+                逆\正
+              </th>
+              {cfetsMatrixColLabels.map((col) => (
+                <th
+                  key={col}
+                  className="px-2 py-1.5 text-center text-[10px] font-medium text-slate-400"
+                >
+                  {col}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {cfetsMatrixRowLabels.map((row, ri) => (
+              <tr key={row}>
+                <td className="py-1.5 pr-3 text-[11px] font-medium text-slate-300">
+                  {row}
+                </td>
+                {cfetsMatrixColLabels.map((col, ci) => {
+                  const rate = cfetsMatrixRates[ri][ci];
+                  return (
+                    <td key={col} className="px-1 py-1">
+                      {rate === null ? (
+                        <div className="flex h-8 w-full items-center justify-center rounded text-[10px] text-slate-600 bg-[#0a1322]">
+                          —
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          className="flex h-8 w-full cursor-pointer items-center justify-center rounded text-[11px] font-semibold text-white transition-opacity hover:opacity-80"
+                          style={{ backgroundColor: rateColor(rate) }}
+                          onClick={() =>
+                            setModal({ rowLabel: row, colLabel: col, rate })
+                          }
+                        >
+                          {rate.toFixed(4)}
+                        </button>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="flex items-center gap-2 text-[10px] text-slate-500">
+        <span>低利率</span>
+        <div
+          className="h-2 w-24 rounded"
+          style={{
+            background: `linear-gradient(to right, ${rateColor(minRate)}, ${rateColor(maxRate)})`,
+          }}
+        />
+        <span>高利率</span>
+      </div>
+
+      {modal && (
+        <div
+          className="fixed inset-0 z-[400] flex items-center justify-center bg-black/50"
+          onClick={() => setModal(null)}
+        >
+          <div
+            className="w-80 rounded-xl border border-[#1d3250] bg-[#0a1322] p-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-start justify-between">
+              <div>
+                <div className="text-xs font-semibold text-slate-200">
+                  {modal.rowLabel} → {modal.colLabel}
+                </div>
+                <div className="mt-0.5 text-[10px] text-slate-500">
+                  逆回购方 → 正回购方，加权利率
+                </div>
+              </div>
+              <button
+                type="button"
+                className="text-slate-500 hover:text-slate-300"
+                onClick={() => setModal(null)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="mb-3 rounded-lg bg-[#0e1827] px-3 py-2 text-center">
+              <span className="text-xl font-semibold text-amber-300">
+                {modal.rate.toFixed(4)}%
+              </span>
+            </div>
+            <div className="text-[10px] text-slate-500">
+              正回购方（{modal.colLabel}）期限明细：
+            </div>
+            <table className="mt-1.5 w-full text-[11px]">
+              <thead>
+                <tr className="text-slate-500">
+                  <th className="py-1 text-left font-normal">期限</th>
+                  <th className="py-1 text-right font-normal">正回购利率</th>
+                  <th className="py-1 text-right font-normal">正回购额</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(cfetsInstData[modal.colLabel as CfetsInstKey] ?? [])
+                  .filter((r) => r.buyRate !== null)
+                  .map((r) => (
+                    <tr
+                      key={r.term}
+                      className="border-t border-[#162439] text-slate-300"
+                    >
+                      <td className="py-1">{r.term}</td>
+                      <td className="py-1 text-right">{fmtRate(r.buyRate)}</td>
+                      <td className="py-1 text-right">{fmtAmt(r.buyAmt)}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── 通用多系列图表 ──────────────────────────────────────────
+const instColors = fundStructureLegendItems.map(
+  (i) => i.color,
+) as readonly string[];
+
+function MultiSeriesChart({
+  block,
+  chartType,
+  unitLabel = "",
+}: {
+  block: CfetsTrendBlock;
+  chartType: "line" | "stackedBar" | "divergeBar";
+  unitLabel?: string;
+}) {
+  const { dates, series } = block;
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(dates.length);
+  const VW = 480;
+  const VH = 100;
+  const xStep = Math.max(1, Math.ceil(dates.length / 6));
+  const xLabels = dates.filter(
+    (_, i) => i % xStep === 0 || i === dates.length - 1,
+  );
+
+  if (chartType === "line") {
+    const flat = series.flat().filter((v) => v > 0);
+    const rawMin = Math.min(...flat);
+    const rawMax = Math.max(...flat);
+    const pad = (rawMax - rawMin) * 0.12 || 0.02;
+    const min = rawMin - pad;
+    const max = rawMax + pad;
+    const yTicks = Array.from({ length: 4 }, (_, i) =>
+      (max - ((max - min) * i) / 3).toFixed(4),
+    );
+    const crossX =
+      tooltipState != null
+        ? (tooltipState.index / (dates.length - 1)) * VW
+        : null;
+    return (
+      <div className="flex min-h-0 flex-1 flex-col gap-1">
+        <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr]">
+          <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+            {yTicks.map((t) => (
+              <div key={t}>{t}</div>
+            ))}
+          </div>
+          <div
+            ref={containerRef}
+            className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[#2a4164]"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
+            <svg
+              viewBox={`0 0 ${VW} ${VH}`}
+              preserveAspectRatio="none"
+              className="absolute inset-0 h-full w-full"
+            >
+              {[0, 1, 2, 3].map((gi) => (
+                <line
+                  key={gi}
+                  x1="0"
+                  x2={VW}
+                  y1={(gi / 3) * VH}
+                  y2={(gi / 3) * VH}
+                  stroke="#1d3250"
+                  strokeWidth="0.5"
+                />
+              ))}
+              {series.map((vals, si) =>
+                vals[0] > 0 ? (
+                  <path
+                    key={si}
+                    d={buildLinePath(vals, VW, VH, min, max)}
+                    fill="none"
+                    stroke={instColors[si]}
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity={0.9}
+                  />
+                ) : null,
+              )}
+              {crossX != null && (
+                <line
+                  x1={crossX}
+                  x2={crossX}
+                  y1="0"
+                  y2={VH}
+                  stroke="#4a7ab5"
+                  strokeWidth="0.7"
+                  strokeDasharray="3 2"
+                />
+              )}
+            </svg>
+            {tooltipState &&
+              series.map((vals, si) =>
+                vals[0] > 0 ? (
+                  <div
+                    key={si}
+                    className="pointer-events-none absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#0a1322]"
+                    style={{
+                      left: `${(tooltipState.index / (dates.length - 1)) * 100}%`,
+                      top: `${((max - vals[tooltipState.index]) / (max - min)) * 100}%`,
+                      backgroundColor: instColors[si],
+                    }}
+                  />
+                ) : null,
+              )}
+          </div>
+        </div>
+        <div className="grid grid-cols-[2.8rem_1fr]">
+          <div />
+          <div className="relative h-4">
+            {xLabels.map((label) => (
+              <span
+                key={label}
+                className="absolute -translate-x-1/2 text-[9px] text-slate-600"
+                style={{
+                  left: `${(dates.indexOf(label) / (dates.length - 1)) * 100}%`,
+                }}
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+        {tooltipState && (
+          <ChartTooltip
+            clientX={tooltipState.clientX}
+            clientY={tooltipState.clientY}
+          >
+            <div className="mb-1 text-[11px] font-semibold text-slate-300">
+              {dates[tooltipState.index]}
+            </div>
+            {series.map((vals, si) =>
+              vals[0] > 0 ? (
+                <div
+                  key={si}
+                  className="flex items-center gap-2 py-0.5 text-[11px]"
+                >
+                  <span
+                    className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
+                    style={{ backgroundColor: instColors[si] }}
+                  />
+                  <span className="text-slate-400">
+                    {fundStructureLegendItems[si].label}
+                  </span>
+                  <span className="ml-auto pl-3 font-semibold text-slate-200">
+                    {vals[tooltipState.index].toFixed(4)}
+                    {unitLabel}
+                  </span>
+                </div>
+              ) : null,
+            )}
+          </ChartTooltip>
+        )}
+      </div>
+    );
+  }
+
+  if (chartType === "stackedBar") {
+    const dailyTotals = dates.map((_, di) =>
+      series.reduce((s, vals) => s + (vals[di] ?? 0), 0),
+    );
+    const maxTotal = Math.max(...dailyTotals, 1);
+    const yTicks = Array.from({ length: 3 }, (_, i) =>
+      Math.round((maxTotal * (3 - i)) / 3),
+    );
+    return (
+      <div className="flex min-h-0 flex-1 flex-col gap-1">
+        <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr]">
+          <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+            {[...yTicks, 0].map((t) => (
+              <div key={t}>{t}</div>
+            ))}
+          </div>
+          <div
+            ref={containerRef}
+            className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[#2a4164]"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                style={{ top: `${(i / 3) * 100}%` }}
+              />
+            ))}
+            <div className="absolute inset-x-1 bottom-1 top-1 flex items-end gap-[2px]">
+              {dates.map((_, di) => {
+                const total = dailyTotals[di];
+                return (
+                  <div
+                    key={di}
+                    className="flex min-w-0 flex-1 flex-col justify-end overflow-hidden rounded-t-[2px]"
+                    style={{ height: `${(total / maxTotal) * 100}%` }}
+                  >
+                    {series.map((vals, si) => {
+                      const pct = total > 0 ? (vals[di] / total) * 100 : 0;
+                      return pct > 0 ? (
+                        <div
+                          key={si}
+                          style={{
+                            height: `${pct}%`,
+                            backgroundColor: instColors[si],
+                            opacity: 0.85,
+                          }}
+                        />
+                      ) : null;
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+            {tooltipState && (
+              <div
+                className="pointer-events-none absolute inset-y-0 w-px bg-[#4a7ab5]/60"
+                style={{
+                  left: `${(tooltipState.index / (dates.length - 1)) * 100}%`,
+                }}
+              />
+            )}
+          </div>
+        </div>
+        <div className="grid grid-cols-[2.8rem_1fr]">
+          <div />
+          <div className="relative h-4">
+            {xLabels.map((label) => (
+              <span
+                key={label}
+                className="absolute -translate-x-1/2 text-[9px] text-slate-600"
+                style={{
+                  left: `${(dates.indexOf(label) / (dates.length - 1)) * 100}%`,
+                }}
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+        {tooltipState && (
+          <ChartTooltip
+            clientX={tooltipState.clientX}
+            clientY={tooltipState.clientY}
+          >
+            <div className="mb-1 text-[11px] font-semibold text-slate-300">
+              {dates[tooltipState.index]}
+            </div>
+            {series.map((vals, si) =>
+              vals[tooltipState.index] > 0 ? (
+                <div
+                  key={si}
+                  className="flex items-center gap-2 py-0.5 text-[11px]"
+                >
+                  <span
+                    className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
+                    style={{ backgroundColor: instColors[si] }}
+                  />
+                  <span className="text-slate-400">
+                    {fundStructureLegendItems[si].label}
+                  </span>
+                  <span className="ml-auto pl-3 font-semibold text-slate-200">
+                    {vals[tooltipState.index].toFixed(0)}亿
+                  </span>
+                </div>
+              ) : null,
+            )}
+          </ChartTooltip>
+        )}
+      </div>
+    );
+  }
+
+  // divergeBar（净融入）—— 仅取 series[0]（全市场合计）
+  const netVals = series[0];
+  const absMax = Math.max(
+    Math.abs(Math.min(...netVals)),
+    Math.abs(Math.max(...netVals)),
+    1,
+  );
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-1">
+      <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr]">
+        <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+          {[
+            absMax,
+            Math.round(absMax / 2),
+            0,
+            -Math.round(absMax / 2),
+            -absMax,
+          ].map((t) => (
+            <div key={t}>{t > 0 ? `+${t}` : t}</div>
+          ))}
+        </div>
+        <div
+          ref={containerRef}
+          className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[#2a4164]"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div className="absolute inset-x-0 top-1/2 border-t border-[#3a5a80]" />
+          <div className="absolute inset-x-1 bottom-1 top-1 flex items-center gap-[2px]">
+            {netVals.map((val, di) => {
+              const isPos = val >= 0;
+              const pct = (Math.abs(val) / absMax) * 47;
+              return (
+                <div
+                  key={di}
+                  className="flex min-w-0 flex-1 flex-col"
+                  style={{ height: "100%" }}
+                >
+                  {isPos ? (
+                    <>
+                      <div style={{ flex: 1 }} />
+                      <div
+                        className="rounded-t-[2px]"
+                        style={{
+                          height: `${pct}%`,
+                          backgroundColor: "#ef5a6f",
+                          opacity: 0.85,
+                        }}
+                      />
+                      <div style={{ height: "50%" }} />
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ height: "50%" }} />
+                      <div
+                        className="rounded-b-[2px]"
+                        style={{
+                          height: `${pct}%`,
+                          backgroundColor: "#2fc3de",
+                          opacity: 0.85,
+                        }}
+                      />
+                      <div style={{ flex: 1 }} />
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {tooltipState && (
+            <div
+              className="pointer-events-none absolute inset-y-0 w-px bg-[#4a7ab5]/60"
+              style={{
+                left: `${(tooltipState.index / (dates.length - 1)) * 100}%`,
+              }}
+            />
+          )}
+        </div>
+      </div>
+      <div className="grid grid-cols-[2.8rem_1fr]">
+        <div />
+        <div className="relative h-4">
+          {xLabels.map((label) => (
+            <span
+              key={label}
+              className="absolute -translate-x-1/2 text-[9px] text-slate-600"
+              style={{
+                left: `${(dates.indexOf(label) / (dates.length - 1)) * 100}%`,
+              }}
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+      </div>
+      {tooltipState && (
+        <ChartTooltip
+          clientX={tooltipState.clientX}
+          clientY={tooltipState.clientY}
+        >
+          <div className="mb-1 text-[11px] font-semibold text-slate-300">
+            {dates[tooltipState.index]}
+          </div>
+          <div className="text-[11px] text-slate-400">
+            净融入{" "}
+            <span
+              className={`font-semibold ${netVals[tooltipState.index] >= 0 ? "text-red-400" : "text-emerald-400"}`}
+            >
+              {netVals[tooltipState.index] >= 0 ? "+" : ""}
+              {netVals[tooltipState.index].toFixed(0)}亿
+            </span>
+          </div>
+        </ChartTooltip>
+      )}
+    </div>
+  );
+}
+
+// ─── 机构面板 ───────────────────────────────────────────────
+function CfetsInstPanel() {
+  const [range, setRange] = useState<FundStructureRange>("14d");
+  const [metricKey, setMetricKey] = useState<CfetsMetricKey>("buyRate");
+  const metricDef = cfetsMetricDefs.find((d) => d.key === metricKey)!;
+  const block = cfetsInstTrend[metricKey][range];
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      {/* 控件行 */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-3 text-[11px] text-slate-400">
+          {fundStructureLegendItems.map((item) => (
+            <LegendDot key={item.label} color={item.color} label={item.label} />
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            className="rounded border border-[#253754] bg-[#0e1827] px-2 py-1 text-[11px] text-slate-200 focus:outline-none"
+            value={metricKey}
+            onChange={(e) => setMetricKey(e.target.value as CfetsMetricKey)}
+          >
+            {cfetsMetricDefs.map((d) => (
+              <option key={d.key} value={d.key}>
+                {d.label}
+              </option>
+            ))}
+          </select>
+          <div className="flex gap-1">
+            {fundStructureRangeTabs.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                className={auxTabClass(t.id === range)}
+                onClick={() => setRange(t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      {/* 图表 */}
+      <MultiSeriesChart
+        block={block}
+        chartType={metricDef.chartType}
+        unitLabel={metricDef.chartType === "line" ? "%" : ""}
+      />
+      {/* 说明 */}
+      <div className="text-[10px] text-slate-500">{metricDef.desc}</div>
+    </div>
+  );
+}
+
+// ─── 债券面板 ───────────────────────────────────────────────
+function CfetsBondPanel() {
+  const [bondType, setBondType] = useState<CfetsBondKey>("利率债");
+  const [range, setRange] = useState<FundStructureRange>("14d");
+  const [metricKey, setMetricKey] =
+    useState<Exclude<CfetsMetricKey, "netInflow">>("buyRate");
+  const metricDef = cfetsBondMetricDefs.find((d) => d.key === metricKey)!;
+  const block = cfetsBondTrend[bondType][metricKey][range];
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      {/* 控件行 */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1">
+          {cfetsBondLabels.map((bt) => (
+            <button
+              key={bt}
+              type="button"
+              className={`rounded-md px-2.5 py-1 text-[11px] transition-colors ${
+                bondType === bt
+                  ? "bg-[#1f3d6b] font-semibold text-slate-100"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+              onClick={() => setBondType(bt)}
+            >
+              {bt}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            className="rounded border border-[#253754] bg-[#0e1827] px-2 py-1 text-[11px] text-slate-200 focus:outline-none"
+            value={metricKey}
+            onChange={(e) =>
+              setMetricKey(
+                e.target.value as Exclude<CfetsMetricKey, "netInflow">,
+              )
+            }
+          >
+            {cfetsBondMetricDefs.map((d) => (
+              <option key={d.key} value={d.key}>
+                {d.label}
+              </option>
+            ))}
+          </select>
+          <div className="flex gap-1">
+            {fundStructureRangeTabs.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                className={auxTabClass(t.id === range)}
+                onClick={() => setRange(t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      {/* 图例 */}
+      <div className="flex flex-wrap gap-3 text-[11px] text-slate-400">
+        {fundStructureLegendItems.map((item) => (
+          <LegendDot key={item.label} color={item.color} label={item.label} />
+        ))}
+      </div>
+      {/* 图表 */}
+      <MultiSeriesChart
+        block={block}
+        chartType={metricDef.chartType}
+        unitLabel={metricDef.chartType === "line" ? "%" : ""}
+      />
+      {/* 说明 */}
+      <div className="text-[10px] text-slate-500">{metricDef.desc}</div>
     </div>
   );
 }
