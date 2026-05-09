@@ -1,10 +1,9 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 
-type AuxChartTab = "ncd" | "institution-repo" | "fund-structure";
 type TrendMode = "intraday" | "history" | "comparison";
 type SentimentTab = "realtime" | "trend";
 type OverlayProduct = "none" | "dr007" | "gc007" | "r007";
-type RightLowerTab = "matrix" | "inst" | "bond" | "fund-structure";
+type RightLowerTab = "matrix" | "inst" | "bond";
 type HistoryRange = "5d" | "1m" | "6m";
 type SpreadProduct = "dr001" | "dr007" | "gc007" | "r007";
 type CompareProduct = "none" | SpreadProduct;
@@ -903,12 +902,6 @@ const topBoardFilters = {
   rateMax: "不限",
 } as const;
 
-const auxChartTabs: Array<{ id: AuxChartTab; label: string }> = [
-  { id: "ncd", label: "NCD" },
-  { id: "institution-repo", label: "分机构回购" },
-  { id: "fund-structure", label: "机构资金结构" },
-];
-
 const overlayProductOptions: Array<{ id: OverlayProduct; label: string }> = [
   { id: "none", label: "不叠加" },
   { id: "dr007", label: "DR007" },
@@ -926,9 +919,8 @@ const compareProductOptions: Array<{ id: CompareProduct; label: string }> = [
 
 const rightLowerTabs: Array<{ id: RightLowerTab; label: string }> = [
   { id: "matrix", label: "市场公开信息" },
-  { id: "inst", label: "机构" },
-  { id: "bond", label: "债券" },
-  { id: "fund-structure", label: "机构资金结构" },
+  { id: "inst", label: "机构分期限统计" },
+  { id: "bond", label: "机构分债券统计" },
 ];
 
 const trendModeTabs: Array<{ id: TrendMode; label: string }> = [
@@ -2517,7 +2509,6 @@ function RightLowerPanel({
         {activeTab === "matrix" && <CfetsMatrixPanel includeDaily />}
         {activeTab === "inst" && <CfetsInstPanel />}
         {activeTab === "bond" && <CfetsBondPanel />}
-        {activeTab === "fund-structure" && <FundStructurePanel />}
       </div>
     </section>
   );
@@ -3771,8 +3762,8 @@ const cfetsMetricDefs: {
   },
   {
     key: "netInflow",
-    label: "净融入",
-    desc: "正回购金额 − 逆回购金额，正值=净融入资金，负值=净融出资金（亿元）",
+    label: "机构资金结构",
+    desc: "各机构质押式回购融入融出结构，堆叠柱展示每日各机构分布（亿元）",
     chartType: "divergeBar",
   },
 ];
@@ -4632,7 +4623,8 @@ function CfetsInstPanel() {
   const [range, setRange] = useState<FundStructureRange>("14d");
   const [metricKey, setMetricKey] = useState<CfetsMetricKey>("buyRate");
   const metricDef = cfetsMetricDefs.find((d) => d.key === metricKey)!;
-  const block = cfetsInstTrend[metricKey][range];
+  const block =
+    metricKey !== "netInflow" ? cfetsInstTrend[metricKey][range] : null!;
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
@@ -4670,11 +4662,17 @@ function CfetsInstPanel() {
         </div>
       </div>
       {/* 图表 */}
-      <MultiSeriesChart
-        block={block}
-        chartType={metricDef.chartType}
-        unitLabel={metricDef.chartType === "line" ? "%" : ""}
-      />
+      {metricKey === "netInflow" ? (
+        <div className="min-h-0 flex-1">
+          <FundStructureBars range={range} />
+        </div>
+      ) : (
+        <MultiSeriesChart
+          block={block}
+          chartType={metricDef.chartType}
+          unitLabel={metricDef.chartType === "line" ? "%" : ""}
+        />
+      )}
       {/* 说明 */}
       <div className="text-[10px] text-slate-500">{metricDef.desc}</div>
     </div>
@@ -4756,13 +4754,6 @@ function CfetsBondPanel() {
       <div className="text-[10px] text-slate-500">{metricDef.desc}</div>
     </div>
   );
-}
-
-function AuxTabPanel({ type }: { type: Exclude<RightLowerTab, "cfets"> }) {
-  if (type === "fund-structure") {
-    return <FundStructurePanel />;
-  }
-  return null;
 }
 
 function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
@@ -5137,6 +5128,111 @@ function NcdPrimaryTable({ period }: { period: NcdPeriod }) {
   );
 }
 
+function FundStructureBars({ range }: { range: FundStructureRange }) {
+  const yTicks = [5000, 4000, 3000, 2000, 1000, 0] as const;
+  const { bars, labels } = fundStructureRangeData[range];
+  const [hoveredBar, setHoveredBar] = useState<{
+    index: number;
+    clientX: number;
+    clientY: number;
+  } | null>(null);
+
+  return (
+    <div className="grid h-full min-h-0 grid-cols-[3rem_1fr] gap-2">
+      <div className="flex flex-col justify-between pb-2 pt-1 text-right text-[10px] text-slate-400">
+        {yTicks.map((tick) => (
+          <div key={tick}>{tick.toLocaleString()}</div>
+        ))}
+      </div>
+      <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]">
+        {yTicks.map((tick, index) => (
+          <div
+            key={`fund-grid-${tick}`}
+            className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+            style={{ top: `${(index / (yTicks.length - 1)) * 100}%` }}
+          />
+        ))}
+        <div
+          className="absolute inset-x-3 bottom-2 top-2 flex items-end gap-1.5"
+          onMouseLeave={() => setHoveredBar(null)}
+        >
+          {bars.map((values, index) => (
+            <div
+              key={`fund-bar-${range}-${index}`}
+              className="flex h-full min-w-0 flex-1 cursor-pointer items-end"
+              onMouseEnter={(e) =>
+                setHoveredBar({ index, clientX: e.clientX, clientY: e.clientY })
+              }
+              onMouseMove={(e) =>
+                setHoveredBar((prev) =>
+                  prev?.index === index
+                    ? { index, clientX: e.clientX, clientY: e.clientY }
+                    : prev,
+                )
+              }
+            >
+              <div
+                className="flex h-full w-full flex-col justify-end overflow-hidden rounded-t-[3px] transition-opacity"
+                style={{
+                  opacity:
+                    hoveredBar === null || hoveredBar.index === index
+                      ? 0.9
+                      : 0.45,
+                }}
+              >
+                {values.map((value, partIndex) => (
+                  <div
+                    key={`fund-bar-${range}-${index}-${partIndex}`}
+                    className={
+                      partIndex === values.length - 1 ? "rounded-t-[3px]" : ""
+                    }
+                    style={{
+                      height: `${(value / 5000) * 100}%`,
+                      backgroundColor:
+                        fundStructureLegendItems[partIndex].color,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        {hoveredBar !== null && (
+          <ChartTooltip
+            clientX={hoveredBar.clientX}
+            clientY={hoveredBar.clientY}
+          >
+            <div className="mb-1 font-medium text-slate-400">
+              {labels[hoveredBar.index]}
+            </div>
+            <div className="mb-1 text-slate-300">
+              合计{" "}
+              <span className="font-semibold text-slate-100">
+                {bars[hoveredBar.index]
+                  .reduce((s, v) => s + v, 0)
+                  .toLocaleString()}
+                亿
+              </span>
+            </div>
+            {fundStructureLegendItems.map((item, i) => (
+              <div key={item.label} className="flex items-center gap-2">
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: item.color }}
+                />
+                <span className="text-slate-400">{item.label}</span>
+                <span className="ml-1 font-semibold text-slate-100">
+                  {bars[hoveredBar.index][i].toLocaleString()}亿
+                </span>
+              </div>
+            ))}
+          </ChartTooltip>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function FundStructurePanel() {
   const yTicks = [5000, 4000, 3000, 2000, 1000, 0] as const;
   const [range, setRange] = useState<FundStructureRange>("14d");
@@ -5173,7 +5269,7 @@ function FundStructurePanel() {
           <span>{rangeSummary}</span>
         </div>
       </div>
-      <div className="grid min-h-0 grid-cols-[3rem_1fr] gap-2">
+      <div className="grid h-full min-h-0 grid-cols-[3rem_1fr] gap-2">
         <div className="flex flex-col justify-between pb-2 pt-1 text-right text-[10px] text-slate-400">
           {yTicks.map((tick) => (
             <div key={tick}>{tick.toLocaleString()}</div>
