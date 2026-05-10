@@ -12,7 +12,14 @@ type CfetsMetricKey =
   | "sellRate"
   | "buyAmt"
   | "sellAmt"
-  | "netInflow";
+  | "netInflow"
+  | "netInflowAmt"
+  | "buyBalance"
+  | "sellBalance";
+type CfetsBondMetricKey = Exclude<
+  CfetsMetricKey,
+  "netInflow" | "netInflowAmt" | "buyBalance" | "sellBalance"
+>;
 type CfetsTrendBlock = { dates: string[]; series: number[][] };
 
 type BankRateRow = {
@@ -4072,7 +4079,7 @@ const cfetsMetricDefs: {
   {
     key: "buyRate",
     label: "正回购利率",
-    desc: "以债券质押融入资金的加权利率，利率越高说明融资成本越贵",
+    desc: "",
     chartType: "line",
   },
   {
@@ -4099,10 +4106,34 @@ const cfetsMetricDefs: {
     desc: "各机构质押式回购融入融出结构，堆叠柱展示每日各机构分布（亿元）",
     chartType: "divergeBar",
   },
+  {
+    key: "netInflowAmt",
+    label: "净融入金额(百万)",
+    desc: "各机构当日净融入资金（正回购金额 − 逆回购金额，单位百万元）",
+    chartType: "stackedBar",
+  },
+  {
+    key: "buyBalance",
+    label: "正回购余额(百万)",
+    desc: "各机构未到期正回购融入存量余额（单位百万元）",
+    chartType: "stackedBar",
+  },
+  {
+    key: "sellBalance",
+    label: "逆回购余额(百万)",
+    desc: "各机构未到期逆回购融出存量余额（单位百万元）",
+    chartType: "stackedBar",
+  },
 ];
 
+const INST_ONLY_METRIC_KEYS = new Set<CfetsMetricKey>([
+  "netInflow",
+  "netInflowAmt",
+  "buyBalance",
+  "sellBalance",
+]);
 const cfetsBondMetricDefs = cfetsMetricDefs.filter(
-  (d) => d.key !== "netInflow",
+  (d) => !INST_ONLY_METRIC_KEYS.has(d.key),
 );
 
 // ── 趋势数据生成 ──────────────────────────────────────────
@@ -4155,10 +4186,11 @@ const cfetsTrendCounts: Record<FundStructureRange, number> = {
 
 // 机构图例顺序：大行/股份行/理财/理财子/券商/基金/保险
 // 锚点取自 2026-01-04 真实数据，顺序对应 fundStructureLegendItems
-const cfetsInstAnchors: Record<
-  CfetsInstPeriod,
-  Record<CfetsMetricKey, number[]>
-> = {
+type CfetsInstAnchorBase = Record<
+  Exclude<CfetsMetricKey, "netInflowAmt" | "buyBalance" | "sellBalance">,
+  number[]
+>;
+const cfetsInstAnchorsBase: Record<CfetsInstPeriod, CfetsInstAnchorBase> = {
   R001: {
     buyRate: [1.201, 1.225, 1.283, 1.283, 1.273, 1.382, 1.271],
     sellRate: [
@@ -4236,6 +4268,24 @@ const cfetsInstAnchors: Record<
   },
 };
 
+// 在 base 上派生 3 个 inst-only 指标：净融入金额 / 正回购余额 / 逆回购余额（单位百万）
+const cfetsInstAnchors: Record<
+  CfetsInstPeriod,
+  Record<CfetsMetricKey, number[]>
+> = Object.fromEntries(
+  Object.entries(cfetsInstAnchorsBase).map(([period, m]) => [
+    period,
+    {
+      ...m,
+      netInflowAmt: m.sellAmt.map(
+        (s, i) => Math.round((s - m.buyAmt[i]) * 10) / 10,
+      ),
+      buyBalance: m.buyAmt.map((v) => Math.round(v * 6 * 10) / 10),
+      sellBalance: m.sellAmt.map((v) => Math.round(v * 6 * 10) / 10),
+    },
+  ]),
+) as Record<CfetsInstPeriod, Record<CfetsMetricKey, number[]>>;
+
 function buildInstTrendBlock(
   period: CfetsInstPeriod,
   metricKey: CfetsMetricKey,
@@ -4267,6 +4317,9 @@ const cfetsInstTrend: Record<
           "buyAmt",
           "sellAmt",
           "netInflow",
+          "netInflowAmt",
+          "buyBalance",
+          "sellBalance",
         ] as CfetsMetricKey[]
       ).map((mk) => [
         mk,
@@ -4287,7 +4340,7 @@ const cfetsInstTrend: Record<
 // 债券趋势锚点：[大行, 股份行, 理财, 理财子, 券商, 基金, 保险]
 const cfetsBondAnchors: Record<
   CfetsBondKey,
-  Record<Exclude<CfetsMetricKey, "netInflow">, number[]>
+  Record<CfetsBondMetricKey, number[]>
 > = {
   利率债: {
     buyRate: [
@@ -4343,7 +4396,7 @@ const cfetsBondAnchors: Record<
 
 function buildBondTrendBlock(
   bondKey: CfetsBondKey,
-  metricKey: Exclude<CfetsMetricKey, "netInflow">,
+  metricKey: CfetsBondMetricKey,
   range: FundStructureRange,
 ): CfetsTrendBlock {
   const count = cfetsTrendCounts[range];
@@ -4360,19 +4413,13 @@ function buildBondTrendBlock(
 
 const cfetsBondTrend: Record<
   CfetsBondKey,
-  Record<
-    Exclude<CfetsMetricKey, "netInflow">,
-    Record<FundStructureRange, CfetsTrendBlock>
-  >
+  Record<CfetsBondMetricKey, Record<FundStructureRange, CfetsTrendBlock>>
 > = Object.fromEntries(
   (["利率债", "信用债", "同业存单"] as CfetsBondKey[]).map((bk) => [
     bk,
     Object.fromEntries(
       (
-        ["buyRate", "sellRate", "buyAmt", "sellAmt"] as Exclude<
-          CfetsMetricKey,
-          "netInflow"
-        >[]
+        ["buyRate", "sellRate", "buyAmt", "sellAmt"] as CfetsBondMetricKey[]
       ).map((mk) => [
         mk,
         Object.fromEntries(
@@ -4386,10 +4433,7 @@ const cfetsBondTrend: Record<
   ]),
 ) as Record<
   CfetsBondKey,
-  Record<
-    Exclude<CfetsMetricKey, "netInflow">,
-    Record<FundStructureRange, CfetsTrendBlock>
-  >
+  Record<CfetsBondMetricKey, Record<FundStructureRange, CfetsTrendBlock>>
 >;
 
 function CfetsDailyPanel() {
@@ -5109,8 +5153,7 @@ function CfetsInstPanel() {
 function CfetsBondPanel() {
   const [bondType, setBondType] = useState<CfetsBondKey>("利率债");
   const [range, setRange] = useState<FundStructureRange>("14d");
-  const [metricKey, setMetricKey] =
-    useState<Exclude<CfetsMetricKey, "netInflow">>("buyRate");
+  const [metricKey, setMetricKey] = useState<CfetsBondMetricKey>("buyRate");
   const metricDef = cfetsBondMetricDefs.find((d) => d.key === metricKey)!;
   const block = cfetsBondTrend[bondType][metricKey][range];
 
@@ -5138,11 +5181,7 @@ function CfetsBondPanel() {
           <select
             className="rounded border border-[#253754] bg-[#0e1827] px-2 py-1 text-[11px] text-slate-200 focus:outline-none"
             value={metricKey}
-            onChange={(e) =>
-              setMetricKey(
-                e.target.value as Exclude<CfetsMetricKey, "netInflow">,
-              )
-            }
+            onChange={(e) => setMetricKey(e.target.value as CfetsBondMetricKey)}
           >
             {cfetsBondMetricDefs.map((d) => (
               <option key={d.key} value={d.key}>
