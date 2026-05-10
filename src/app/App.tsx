@@ -175,7 +175,7 @@ const leftSections: readonly (
     emphasisColumns: [1, 6],
     buttonColumn: 7,
     fitToWidth: true,
-    columnWidths: ["8%", "10%", "14%", "12%", "12%", "14%", "10%", "20%"],
+    columnWidths: ["14%", "10%", "14%", "12%", "12%", "14%", "10%", "14%"],
     scrollable: false,
   },
   {
@@ -2213,7 +2213,7 @@ function LeftNcdCard() {
               {market === "primary" && mode === "table" ? (
                 <NcdPrimaryExpandedTable />
               ) : market === "primary" && mode === "trend" ? (
-                <NcdExpandedDualView period={period} />
+                <NcdExpandedDualView period="1M" />
               ) : (
                 body
               )}
@@ -5324,9 +5324,8 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
 }
 
 function NcdPrimaryTrendPanel() {
-  const [period, setPeriod] = useState<NcdPeriod>("1M");
   const [range, setRange] = useState<NcdTrendRange>("14d");
-  const off = NCD_PERIOD_OFFSET[period];
+  const off = NCD_PERIOD_OFFSET["1M"];
   const count = NCD_TREND_COUNTS[range];
 
   const gov = shiftSeries(ncdPrimaryGovBase6m.slice(-count), off);
@@ -5371,21 +5370,8 @@ function NcdPrimaryTrendPanel() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
-      {/* header: period tabs + legend + range tabs */}
+      {/* header: legend + range tabs */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
-        <div className="flex items-center gap-1">
-          {ncdPrimaryPeriods.map((p) => (
-            <button
-              key={p}
-              type="button"
-              className={auxTabClass(period === p)}
-              onClick={() => setPeriod(p)}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
-        <div className="mx-0.5 h-3 w-px bg-[#2a3f5f]" />
         {series.map((s) => (
           <LegendDot key={s.label} color={s.color} label={s.label} />
         ))}
