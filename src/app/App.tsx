@@ -84,6 +84,8 @@ type ExchangeMarketSplitSection = {
   }[];
 };
 
+const TODAY_STR = "2026-05-10";
+
 const chartPalette = {
   emerald: "#34d399",
   blue: "#60a5fa",
@@ -142,7 +144,7 @@ const leftSections: readonly (
 )[] = [
   {
     layout: "table",
-    title: "当日大行价格",
+    title: "今天大行价格",
     columns: ["机构", "非银利率", "涨跌", "银行利率", "涨跌", "更新时间"],
     rows: [],
     greenColumns: [1],
@@ -939,16 +941,16 @@ const trendVolumeColors = trendVolumeSeries.map((_, index) =>
 );
 
 const trendAxisLabels = [
-  "2/22",
-  "3/1",
-  "3/7",
-  "3/13",
-  "3/20",
-  "3/27",
-  "4/2",
-  "4/8",
+  "3/12",
+  "3/19",
+  "3/25",
+  "3/31",
+  "4/7",
   "4/14",
-  "4/22",
+  "4/20",
+  "4/26",
+  "5/2",
+  "5/10",
 ] as const;
 const trendPriceTicks = [2.107, 2.028, 1.948, 1.868] as const;
 const trendVolumeTicks = ["2k", "1k", "900", "450", "0"] as const;
@@ -984,23 +986,13 @@ const historicalCloseDatasets: Record<
   }
 > = {
   "5d": (() => {
-    const labels = ["4/22", "4/23", "4/24", "4/25", "4/28"];
+    const labels = ["5/4", "5/5", "5/6", "5/7", "5/8"];
     const close = randomWalk(1.28, 5, 0.18, 1);
     const volume = randomWalk(1620, 5, 180, 2).map((v) => Math.round(v));
     return { labels, close, volume };
   })(),
   "1m": (() => {
     const labels = [
-      "3/28",
-      "3/29",
-      "3/30",
-      "3/31",
-      "4/1",
-      "4/2",
-      "4/3",
-      "4/4",
-      "4/5",
-      "4/8",
       "4/9",
       "4/10",
       "4/11",
@@ -1010,15 +1002,25 @@ const historicalCloseDatasets: Record<
       "4/15",
       "4/16",
       "4/17",
-      "4/18",
-      "4/19",
       "4/20",
       "4/21",
       "4/22",
       "4/23",
       "4/24",
       "4/25",
+      "4/26",
+      "4/27",
       "4/28",
+      "4/29",
+      "4/30",
+      "5/1",
+      "5/2",
+      "5/3",
+      "5/4",
+      "5/5",
+      "5/6",
+      "5/7",
+      "5/8",
     ];
     const close = randomWalk(1.236, 28, 0.025, 3);
     const volume = randomWalk(1710, 28, 140, 4).map((v) => Math.round(v));
@@ -1049,29 +1051,29 @@ const ncdSecondaryAAA6m = randomWalk(2.03, 130, 0.006, 41);
 const ncdSecondaryAAPlus6m = randomWalk(2.08, 130, 0.007, 42);
 const ncdSecondaryAA6m = randomWalk(2.13, 130, 0.007, 43);
 const auxChartLabels = [
-  "4/9",
-  "4/10",
-  "4/11",
-  "4/12",
-  "4/13",
-  "4/14",
-  "4/15",
-  "4/16",
-  "4/17",
-  "4/18",
-  "4/19",
-  "4/20",
-  "4/21",
-  "4/22",
+  "4/27",
+  "4/28",
+  "4/29",
+  "4/30",
+  "5/1",
+  "5/2",
+  "5/3",
+  "5/4",
+  "5/5",
+  "5/6",
+  "5/7",
+  "5/8",
+  "5/9",
+  "5/10",
 ] as const;
 const compactAuxChartLabels = [
-  "4/9",
-  "4/11",
-  "4/13",
-  "4/15",
-  "4/17",
-  "4/19",
-  "4/22",
+  "4/27",
+  "4/29",
+  "5/1",
+  "5/3",
+  "5/5",
+  "5/7",
+  "5/10",
 ] as const;
 const ncdTableRows = [
   ["1M", "2.03%", "+2", "2.01%", "10:53:27"],
@@ -1127,7 +1129,7 @@ const ncdPrimaryGovBase6m = randomWalk(2.0, 130, 0.006, 20);
 const ncdPrimaryAAABase6m = randomWalk(2.05, 130, 0.006, 21);
 const ncdPrimaryAAPlsBase6m = randomWalk(2.1, 130, 0.007, 22);
 const ncdPrimaryAABase6m = randomWalk(2.15, 130, 0.007, 23);
-const ncdTrendDates6m = generateTradingDates("2026-01-04", 130);
+const ncdTrendDates6m = generateTradingDates(TODAY_STR, 130);
 
 function shiftSeries(base: number[], offset: number): number[] {
   return base.map((v) => parseFloat((v + offset).toFixed(4)));
@@ -1753,11 +1755,8 @@ function App() {
 
 function TopBar({ currentTime }: { currentTime: Date }) {
   return (
-    <header className="border-b border-[#1b2a42] bg-[#0d1726] px-4 py-2 shadow-[inset_0_-1px_0_rgba(74,101,140,0.18)]">
-      <div
-        className="grid items-center gap-4"
-        style={{ gridTemplateColumns: "auto 1fr auto" }}
-      >
+    <header className="border-b border-[#1b2a42] bg-[#0d1726] px-3 py-2 shadow-[inset_0_-1px_0_rgba(74,101,140,0.18)]">
+      <div className="grid grid-cols-[30fr_35fr_35fr] items-center gap-3">
         <div className="text-[20px] font-semibold tracking-[0.04em] text-slate-50">
           资金实时行情看板
         </div>
@@ -1783,7 +1782,7 @@ function TopBar({ currentTime }: { currentTime: Date }) {
           <RangeFilterField value={topBoardFilters.rateMax} />
           <span className="text-slate-500">%</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-end gap-3">
           <InfoChip label="DR007" value="2.15%" tone="alert" />
           <SentimentChipWithPopover />
           <StatusBadge>平衡</StatusBadge>
@@ -1807,7 +1806,7 @@ function LeftSummaryPanel() {
       (section): section is SummaryTableSection => section.layout === "table",
     )
     .map((section) =>
-      section.title === "当日大行价格"
+      section.title === "今天大行价格"
         ? {
             ...section,
             rows: bankRateRows.map((row) => [
@@ -1888,7 +1887,7 @@ function LeftSummaryPanel() {
               bodyPaddingClassName="p-0"
               bodyFill
               actions={
-                section.title === "当日大行价格" ? (
+                section.title === "今天大行价格" ? (
                   <div className="flex items-center gap-2">
                     <button
                       className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1 text-xs font-medium text-slate-300"
@@ -1977,7 +1976,7 @@ function BankRateEditorModal({
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-base font-semibold text-slate-50">
-                当日大行价格手工输入
+                今天大行价格手工输入
               </div>
               <div className="mt-1 text-xs text-slate-500">
                 按机构维护非银利率和银行利率，涨跌及更新时间自动计算。
@@ -2573,6 +2572,26 @@ function clampRatio(value: number) {
   return Math.max(15, Math.min(85, value));
 }
 
+// 60% 行展示 amount，剩下 40% 行展示 "--"。按 id 字典序均匀取 40% 行。
+const BLANK_AMOUNT_IDS = (() => {
+  const ids: string[] = [];
+  for (const section of repoQuoteSections) {
+    for (const group of section.groups) {
+      for (const row of group.rows) ids.push(row.id);
+    }
+  }
+  ids.sort();
+  const blanks = new Set<string>();
+  ids.forEach((id, i) => {
+    if (i % 5 === 1 || i % 5 === 3) blanks.add(id);
+  });
+  return blanks;
+})();
+
+function showRowAmount(id: string): boolean {
+  return !BLANK_AMOUNT_IDS.has(id);
+}
+
 function RepoQuoteSectionBoard({
   section,
   displayLevel,
@@ -2679,7 +2698,9 @@ function RepoQuoteSectionBoard({
                       <span className="text-slate-100">{row.institution}</span>
                     </div>
                     <span className="text-right">{row.tenor}</span>
-                    <span className="text-right">{row.amount}</span>
+                    <span className="text-right">
+                      {showRowAmount(row.id) ? row.amount : "--"}
+                    </span>
                     <span className="text-right font-semibold text-amber-300">
                       {row.rate}
                     </span>
@@ -2721,7 +2742,9 @@ function RepoQuoteSectionBoard({
                       <span className="text-slate-100">{row.institution}</span>
                     </div>
                     <span className="text-right">{row.tenor}</span>
-                    <span className="text-right">{row.amount}</span>
+                    <span className="text-right">
+                      {showRowAmount(row.id) ? row.amount : "--"}
+                    </span>
                     <span className="text-right font-semibold text-amber-300">
                       {row.rate}
                     </span>
@@ -2939,7 +2962,7 @@ function IntradayPanel({
     <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
       <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101d32] px-3 py-2">
         <div className="flex items-center gap-3">
-          <div className="text-sm font-semibold text-slate-100">当日分时</div>
+          <div className="text-sm font-semibold text-slate-100">今天分时</div>
           <div className="rounded border border-[#264167] bg-[#13223a] px-1.5 py-0.5 text-[10px] font-medium text-blue-300">
             R001
           </div>
@@ -4059,13 +4082,13 @@ const cfetsMetricDefs: {
   {
     key: "buyAmt",
     label: "正回购金额",
-    desc: "各机构当日质押式融入资金规模（亿元），反映融资需求强度",
+    desc: "各机构今天质押式融入资金规模（亿元），反映融资需求强度",
     chartType: "stackedBar",
   },
   {
     key: "sellAmt",
     label: "逆回购金额",
-    desc: "各机构当日质押式融出资金规模（亿元），反映市场流动性供给",
+    desc: "各机构今天质押式融出资金规模（亿元），反映市场流动性供给",
     chartType: "stackedBar",
   },
   {
@@ -4217,7 +4240,7 @@ function buildInstTrendBlock(
   range: FundStructureRange,
 ): CfetsTrendBlock {
   const count = cfetsTrendCounts[range];
-  const dates = generateTradingDates("2026-01-04", count);
+  const dates = generateTradingDates(TODAY_STR, count);
   const anchors = cfetsInstAnchors[period][metricKey];
   const isRate = metricKey === "buyRate" || metricKey === "sellRate";
   const vol = isRate ? 0.04 : metricKey === "netInflow" ? 800 : 2000;
@@ -4322,7 +4345,7 @@ function buildBondTrendBlock(
   range: FundStructureRange,
 ): CfetsTrendBlock {
   const count = cfetsTrendCounts[range];
-  const dates = generateTradingDates("2026-01-04", count);
+  const dates = generateTradingDates(TODAY_STR, count);
   const anchors = cfetsBondAnchors[bondKey][metricKey];
   const isRate = metricKey === "buyRate" || metricKey === "sellRate";
   const vol = isRate ? 0.035 : 1400;
@@ -4374,21 +4397,19 @@ function CfetsDailyPanel() {
         <table className="min-w-full text-xs">
           <thead className="bg-[#101d32] text-slate-400">
             <tr>
-              {["日期", "公开市场操作", "净投放", "MLF", "关注点"].map(
-                (column) => (
-                  <th key={column} className="px-3 py-2 text-left font-medium">
-                    {column}
-                  </th>
-                ),
-              )}
+              {["日期", "公开市场操作", "净投放"].map((column) => (
+                <th key={column} className="px-3 py-2 text-left font-medium">
+                  {column}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {[
-              ["2026-04-22", "逆回购 7D", "+40亿", "--", "短端偏稳"],
-              ["2026-04-21", "逆回购到期", "-10亿", "--", "大行融出维持"],
-              ["2026-04-20", "逆回购 7D", "+5亿", "--", "非银需求回升"],
-              ["2026-04-17", "逆回购 7D", "+1985亿", "--", "月内跨季预期升温"],
+              ["2026-05-08", "逆回购 7D", "+40亿"],
+              ["2026-05-07", "逆回购到期", "-10亿"],
+              ["2026-05-06", "逆回购 7D", "+5亿"],
+              ["2026-05-05", "逆回购 7D", "+1985亿"],
             ].map((row) => (
               <tr
                 key={row[0]}
@@ -4567,30 +4588,22 @@ function CfetsMatrixPanel({
             <table className="min-w-full text-xs">
               <thead className="bg-[#101d32] text-slate-400">
                 <tr>
-                  {["日期", "公开市场操作", "净投放", "MLF", "关注点"].map(
-                    (column) => (
-                      <th
-                        key={column}
-                        className="px-3 py-2 text-left font-medium"
-                      >
-                        {column}
-                      </th>
-                    ),
-                  )}
+                  {["日期", "公开市场操作", "净投放"].map((column) => (
+                    <th
+                      key={column}
+                      className="px-3 py-2 text-left font-medium"
+                    >
+                      {column}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {[
-                  ["2026-04-22", "逆回购 7D", "+40亿", "--", "短端偏稳"],
-                  ["2026-04-21", "逆回购到期", "-10亿", "--", "大行融出维持"],
-                  ["2026-04-20", "逆回购 7D", "+5亿", "--", "非银需求回升"],
-                  [
-                    "2026-04-17",
-                    "逆回购 7D",
-                    "+1985亿",
-                    "--",
-                    "月内跨季预期升温",
-                  ],
+                  ["2026-05-08", "逆回购 7D", "+40亿"],
+                  ["2026-05-07", "逆回购到期", "-10亿"],
+                  ["2026-05-06", "逆回购 7D", "+5亿"],
+                  ["2026-05-05", "逆回购 7D", "+1985亿"],
                 ].map((row) => (
                   <tr
                     key={row[0]}
@@ -5566,7 +5579,7 @@ function NcdLinkedChartPane({
         ))}
       </div>
       <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr] gap-x-1">
-        <div className="flex flex-col justify-between pb-5 pr-1 text-right text-[10px] text-slate-500">
+        <div className="flex flex-col justify-between pb-7 pr-1 text-right text-[10px] text-slate-500">
           {yTicks.map((t) => (
             <div key={t}>{t}%</div>
           ))}
@@ -5586,7 +5599,7 @@ function NcdLinkedChartPane({
           ))}
           <svg
             className="absolute inset-x-0 top-0 w-full"
-            style={{ height: "calc(100% - 20px)" }}
+            style={{ height: "calc(100% - 26px)" }}
             preserveAspectRatio="none"
             viewBox={`0 0 ${W} ${H}`}
           >
@@ -5614,7 +5627,7 @@ function NcdLinkedChartPane({
               />
             )}
           </svg>
-          <div className="absolute inset-x-0 bottom-0 h-5">
+          <div className="absolute inset-x-0 bottom-0 h-7">
             <svg
               className="absolute inset-x-0 top-0 w-full"
               height="4"
@@ -5636,8 +5649,16 @@ function NcdLinkedChartPane({
             {xLabels.map(({ d, i }) => (
               <span
                 key={i}
-                className="absolute top-[5px] -translate-x-1/2 text-[9px] leading-none text-slate-400"
-                style={{ left: `${(i / (count - 1)) * 100}%` }}
+                className="absolute top-[6px] text-[12px] font-medium leading-none text-slate-300"
+                style={{
+                  left: `${(i / (count - 1)) * 100}%`,
+                  transform:
+                    i === 0
+                      ? "translateX(0)"
+                      : i === count - 1
+                        ? "translateX(-100%)"
+                        : "translateX(-50%)",
+                }}
               >
                 {d}
               </span>
@@ -7059,7 +7080,7 @@ function SentimentPopoverPanel({
         </div>
         {tab === "trend" && (
           <span className="text-[10px] text-slate-500">
-            2026-04-07 → 2026-05-07
+            2026-04-10 → 2026-05-10
           </span>
         )}
         <span className="ml-auto cursor-default select-none text-[11px] text-slate-600">
