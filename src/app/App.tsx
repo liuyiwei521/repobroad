@@ -953,7 +953,7 @@ const trendAxisLabels = [
 const trendPriceTicks = [2.107, 2.028, 1.948, 1.868] as const;
 const trendVolumeTicks = ["2k", "1k", "900", "450", "0"] as const;
 
-const intradaySeries = randomWalk(1.979, 40, 0.012, 13);
+const intradaySeries = randomWalk(1.979, 40, 0.055, 13);
 const intradayVolumeSeries = randomWalk(200, 40, 90, 14).map((v) =>
   Math.round(v),
 );
@@ -985,7 +985,7 @@ const historicalCloseDatasets: Record<
 > = {
   "5d": (() => {
     const labels = ["4/22", "4/23", "4/24", "4/25", "4/28"];
-    const close = randomWalk(1.28, 5, 0.05, 1);
+    const close = randomWalk(1.28, 5, 0.18, 1);
     const volume = randomWalk(1620, 5, 180, 2).map((v) => Math.round(v));
     return { labels, close, volume };
   })(),
@@ -1020,7 +1020,7 @@ const historicalCloseDatasets: Record<
       "4/25",
       "4/28",
     ];
-    const close = randomWalk(1.236, 28, 0.003, 3);
+    const close = randomWalk(1.236, 28, 0.025, 3);
     const volume = randomWalk(1710, 28, 140, 4).map((v) => Math.round(v));
     return { labels, close, volume };
   })(),
@@ -1754,35 +1754,35 @@ function App() {
 function TopBar({ currentTime }: { currentTime: Date }) {
   return (
     <header className="border-b border-[#1b2a42] bg-[#0d1726] px-4 py-2 shadow-[inset_0_-1px_0_rgba(74,101,140,0.18)]">
-      <div className="flex items-center justify-between gap-6">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="text-[20px] font-semibold tracking-[0.04em] text-slate-50">
-            资金实时行情看板
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400">
-            <FilterLabel>期限</FilterLabel>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {topBoardFilters.periods.map((item, index) => (
-                <ToolbarChip key={item} active={index === 0}>
-                  {item}
-                </ToolbarChip>
-              ))}
-            </div>
-            <FilterDivider />
-            <FilterLabel>金额</FilterLabel>
-            <RangeFilterField value={topBoardFilters.amountMin} />
-            <span className="text-slate-500">~</span>
-            <RangeFilterField value={topBoardFilters.amountMax} />
-            <span className="text-slate-500">亿</span>
-            <FilterDivider />
-            <FilterLabel>利率</FilterLabel>
-            <RangeFilterField value={topBoardFilters.rateMin} />
-            <span className="text-slate-500">~</span>
-            <RangeFilterField value={topBoardFilters.rateMax} />
-            <span className="text-slate-500">%</span>
-          </div>
+      <div
+        className="grid items-center gap-4"
+        style={{ gridTemplateColumns: "auto 1fr auto" }}
+      >
+        <div className="text-[20px] font-semibold tracking-[0.04em] text-slate-50">
+          资金实时行情看板
         </div>
-
+        <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-slate-400">
+          <FilterLabel>期限</FilterLabel>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {topBoardFilters.periods.map((item, index) => (
+              <ToolbarChip key={item} active={index === 0}>
+                {item}
+              </ToolbarChip>
+            ))}
+          </div>
+          <FilterDivider />
+          <FilterLabel>金额</FilterLabel>
+          <RangeFilterField value={topBoardFilters.amountMin} />
+          <span className="text-slate-500">~</span>
+          <RangeFilterField value={topBoardFilters.amountMax} />
+          <span className="text-slate-500">亿</span>
+          <FilterDivider />
+          <FilterLabel>利率</FilterLabel>
+          <RangeFilterField value={topBoardFilters.rateMin} />
+          <span className="text-slate-500">~</span>
+          <RangeFilterField value={topBoardFilters.rateMax} />
+          <span className="text-slate-500">%</span>
+        </div>
         <div className="flex items-center gap-3">
           <InfoChip label="DR007" value="2.15%" tone="alert" />
           <SentimentChipWithPopover />
@@ -2074,7 +2074,6 @@ function ModalInput({
 function LeftNcdCard() {
   const [market, setMarket] = useState<"primary" | "secondary">("primary");
   const [mode, setMode] = useState<"trend" | "table">("trend");
-  const [period, setPeriod] = useState<NcdPeriod>("1M");
   const [expanded, setExpanded] = useState(false);
 
   const header = (onClose?: () => void) => (
@@ -2098,23 +2097,6 @@ function LeftNcdCard() {
           二级
         </button>
       </div>
-      {market === "primary" && (
-        <>
-          <div className="mx-0.5 h-3 w-px bg-[#2a3f5f]" />
-          <div className="flex items-center gap-1">
-            {ncdPrimaryPeriods.map((p) => (
-              <button
-                key={p}
-                className={auxTabClass(period === p)}
-                onClick={() => setPeriod(p)}
-                type="button"
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
       <div className="ml-auto flex items-center gap-1">
         <button
           className={auxTabClass(mode === "trend")}
@@ -2172,9 +2154,9 @@ function LeftNcdCard() {
   const body =
     market === "primary" ? (
       mode === "trend" ? (
-        <NcdPrimaryTrendPanel period={period} />
+        <NcdPrimaryTrendPanel />
       ) : (
-        <NcdPrimaryTable period={period} />
+        <NcdPrimaryTable />
       )
     ) : mode === "trend" ? (
       <NcdTrendPanel compact />
@@ -2937,15 +2919,11 @@ function IntradayPanel({
     overlayProduct === "none"
       ? null
       : buildOverlaySeries(intradaySeries, overlayProduct);
-  const volumeMax = Math.max(...intradayVolumeSeries);
   const barValues = overlaySeries
     ? intradaySeries.map((value, index) =>
         Number(((value - overlaySeries[index]) * 100).toFixed(1)),
       )
-    : intradayVolumeSeries;
-  const barMax = overlaySeries
-    ? Math.max(...(barValues as number[]).map(Math.abs), 0.1)
-    : volumeMax;
+    : null;
   const min = Math.min(...intradaySeries, ...(overlaySeries ?? [])) - 0.01;
   const max = Math.max(...intradaySeries, ...(overlaySeries ?? [])) + 0.01;
   const mainPath = buildLinePath(intradaySeries, 680, 178, min, max);
@@ -2963,7 +2941,7 @@ function IntradayPanel({
         <div className="flex items-center gap-3">
           <div className="text-sm font-semibold text-slate-100">当日分时</div>
           <div className="rounded border border-[#264167] bg-[#13223a] px-1.5 py-0.5 text-[10px] font-medium text-blue-300">
-            DR001
+            R001
           </div>
           <OverlayProductSelect
             value={overlayProduct}
@@ -2976,7 +2954,7 @@ function IntradayPanel({
             : "盘中加权利率 / 成交量"}
         </div>
       </div>
-      <div className="grid min-h-0 grid-rows-[68fr_22fr_auto] px-3 pb-2 pt-2">
+      <div className="grid min-h-0 grid-rows-[1fr_auto] px-3 pb-2 pt-2">
         <div className="grid min-h-0 grid-cols-[3rem_1fr]">
           <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
             {buildAxisLabels(min, max, 4).map((tick) => (
@@ -3066,7 +3044,7 @@ function IntradayPanel({
                     className="h-1.5 w-1.5 rounded-full"
                     style={{ backgroundColor: chartPalette.blue }}
                   />
-                  <span className="text-slate-400">DR001</span>
+                  <span className="text-slate-400">R001</span>
                   <span className="ml-1 font-semibold text-slate-100">
                     {intradaySeries[ti].toFixed(3)}%
                   </span>
@@ -3085,24 +3063,17 @@ function IntradayPanel({
                     </span>
                   </div>
                 )}
-                {overlaySeries ? (
+                {overlaySeries && barValues ? (
                   <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
                     利差{" "}
                     <span
-                      className={`font-semibold ${(barValues as number[])[ti] >= 0 ? "text-red-400" : "text-emerald-400"}`}
+                      className={`font-semibold ${barValues[ti] >= 0 ? "text-red-400" : "text-emerald-400"}`}
                     >
-                      {(barValues as number[])[ti] > 0 ? "+" : ""}
-                      {(barValues as number[])[ti]}bp
+                      {barValues[ti] > 0 ? "+" : ""}
+                      {barValues[ti]}bp
                     </span>
                   </div>
-                ) : (
-                  <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
-                    成交量{" "}
-                    <span className="font-semibold text-slate-100">
-                      {intradayVolumeSeries[ti]}亿
-                    </span>
-                  </div>
-                )}
+                ) : null}
               </ChartTooltip>
             )}
             <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-300">
@@ -3114,89 +3085,6 @@ function IntradayPanel({
                 />
               ) : null}
             </div>
-          </div>
-        </div>
-        <div className="grid min-h-0 grid-cols-[3rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
-          <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
-            {overlaySeries
-              ? (() => {
-                  const _bv = barValues as number[];
-                  const _mn = Math.min(..._bv);
-                  const _mx = Math.max(..._bv);
-                  return Array.from({ length: 5 }, (_, i) => {
-                    const v = _mx - ((_mx - _mn) * i) / 4;
-                    return <div key={String(v)}>{v.toFixed(1)}</div>;
-                  });
-                })()
-              : ["900", "600", "300", "0"].map((tick) => (
-                  <div key={tick}>{tick}</div>
-                ))}
-          </div>
-          <div className="relative min-h-0">
-            {overlaySeries ? (
-              <>
-                <div className="absolute inset-x-0 top-0 flex items-center gap-[4px] bottom-1">
-                  {(barValues as number[]).map((value, index) => {
-                    const barPct = (Math.abs(value) / (barMax as number)) * 35;
-                    const isPos = value >= 0;
-                    return (
-                      <div
-                        key={`intraday-bar-${index}`}
-                        className="flex min-w-0 flex-1 flex-col"
-                        style={{ height: "100%" }}
-                      >
-                        {isPos ? (
-                          <>
-                            <div style={{ height: `${50 - barPct}%` }} />
-                            <div
-                              className="min-h-0 rounded-[2px]"
-                              style={{
-                                height: `${barPct}%`,
-                                backgroundColor: "#ef5a6f",
-                                opacity: 0.92,
-                              }}
-                            />
-                            <div style={{ flex: 1 }} />
-                          </>
-                        ) : (
-                          <>
-                            <div style={{ flex: 1 }} />
-                            <div
-                              className="min-h-0 rounded-[2px]"
-                              style={{
-                                height: `${barPct}%`,
-                                backgroundColor: "#2fc3de",
-                                opacity: 0.92,
-                              }}
-                            />
-                            <div style={{ height: `${50 - barPct}%` }} />
-                          </>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            ) : (
-              <>
-                <span className="absolute top-0.5 left-0.5 text-[9px] text-slate-500 z-10 pointer-events-none">
-                  成交量
-                </span>
-                <div className="absolute inset-x-0 top-0 flex items-end gap-[4px] bottom-1">
-                  {(barValues as number[]).map((value, index) => (
-                    <div
-                      key={`intraday-bar-${index}`}
-                      className="min-w-0 flex-1 rounded-t-[2px]"
-                      style={{
-                        height: `${(value / (barMax as number)) * 100}%`,
-                        backgroundColor:
-                          index % 4 === 0 ? "#3b82f6" : "#275f9f",
-                      }}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
           </div>
         </div>
         <div className="grid grid-cols-[3rem_1fr] pt-2">
@@ -3277,7 +3165,7 @@ function HistoryClosePanel({
           <div className="text-sm font-semibold text-slate-100">收盘价走势</div>
           <div className="text-xs text-slate-400">
             产品：
-            <span className="ml-1 text-slate-200">DR001</span>
+            <span className="ml-1 text-slate-200">R001</span>
           </div>
           <label className="flex items-center gap-1 text-xs text-slate-400">
             <span>对比</span>
@@ -3420,7 +3308,7 @@ function HistoryClosePanel({
                     className="h-1.5 w-1.5 rounded-full"
                     style={{ backgroundColor: chartPalette.blue }}
                   />
-                  <span className="text-slate-400">DR001</span>
+                  <span className="text-slate-400">R001</span>
                   <span className="ml-1 font-semibold text-slate-100">
                     {dataset.close[ti].toFixed(4)}%
                   </span>
@@ -5435,7 +5323,8 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function NcdPrimaryTrendPanel({ period }: { period: NcdPeriod }) {
+function NcdPrimaryTrendPanel() {
+  const [period, setPeriod] = useState<NcdPeriod>("1M");
   const [range, setRange] = useState<NcdTrendRange>("14d");
   const off = NCD_PERIOD_OFFSET[period];
   const count = NCD_TREND_COUNTS[range];
@@ -5482,8 +5371,21 @@ function NcdPrimaryTrendPanel({ period }: { period: NcdPeriod }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
-      {/* header: legend + range tabs */}
+      {/* header: period tabs + legend + range tabs */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
+        <div className="flex items-center gap-1">
+          {ncdPrimaryPeriods.map((p) => (
+            <button
+              key={p}
+              type="button"
+              className={auxTabClass(period === p)}
+              onClick={() => setPeriod(p)}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+        <div className="mx-0.5 h-3 w-px bg-[#2a3f5f]" />
         {series.map((s) => (
           <LegendDot key={s.label} color={s.color} label={s.label} />
         ))}
@@ -5889,7 +5791,8 @@ function NcdExpandedDualView({ period }: { period: NcdPeriod }) {
   );
 }
 
-function NcdPrimaryTable({ period }: { period: NcdPeriod }) {
+function NcdPrimaryTable() {
+  const [period, setPeriod] = useState<NcdPeriod>("1M");
   const off = NCD_PERIOD_OFFSET[period];
   const groups: NcdPrimaryGroup[] = ncdPrimary1MGroups.map((g) => ({
     ...g,
@@ -5901,11 +5804,20 @@ function NcdPrimaryTable({ period }: { period: NcdPeriod }) {
   const maxRows = Math.max(...groups.map((g) => g.rows.length));
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
-      <div className="flex items-baseline gap-2 border-b border-[#1c3050] bg-[#101d32] px-3 py-1.5">
-        <span className="text-[11px] font-semibold text-slate-200">
-          {period}
-        </span>
-        <span className="text-[11px] text-slate-500">(周一 26-06-08)</span>
+      <div className="flex items-center gap-2 border-b border-[#1c3050] bg-[#101d32] px-3 py-1.5">
+        <div className="flex items-center gap-1">
+          {ncdPrimaryPeriods.map((p) => (
+            <button
+              key={p}
+              type="button"
+              className={auxTabClass(period === p)}
+              onClick={() => setPeriod(p)}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+        <span className="ml-2 text-[11px] text-slate-500">(周一 26-06-08)</span>
       </div>
       <div
         className="grid overflow-y-auto"
@@ -6959,7 +6871,7 @@ function buildSixMonthDailyDataset() {
   }
 
   // 用 randomWalk 替代 sin/cos，三步趋势模拟下行→平稳→反弹
-  const closeWalk = randomWalk(1.215, points, 0.006, 7);
+  const closeWalk = randomWalk(1.215, points, 0.03, 7);
   const volumeWalk = randomWalk(2280, points, 200, 8).map((v) => Math.round(v));
 
   return { labels, close: closeWalk, volume: volumeWalk };
