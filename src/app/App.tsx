@@ -1760,27 +1760,29 @@ function TopBar({ currentTime }: { currentTime: Date }) {
         <div className="text-[20px] font-semibold tracking-[0.04em] text-slate-50">
           资金实时行情看板
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-slate-400">
-          <FilterLabel>期限</FilterLabel>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {topBoardFilters.periods.map((item, index) => (
-              <ToolbarChip key={item} active={index === 0}>
-                {item}
-              </ToolbarChip>
-            ))}
+        <div className="relative h-8">
+          <div className="pointer-events-auto absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 whitespace-nowrap text-sm text-slate-400">
+            <FilterLabel>期限</FilterLabel>
+            <div className="flex items-center gap-1.5">
+              {topBoardFilters.periods.map((item, index) => (
+                <ToolbarChip key={item} active={index === 0}>
+                  {item}
+                </ToolbarChip>
+              ))}
+            </div>
+            <FilterDivider />
+            <FilterLabel>金额</FilterLabel>
+            <RangeFilterField value={topBoardFilters.amountMin} />
+            <span className="text-slate-500">~</span>
+            <RangeFilterField value={topBoardFilters.amountMax} />
+            <span className="text-slate-500">亿</span>
+            <FilterDivider />
+            <FilterLabel>利率</FilterLabel>
+            <RangeFilterField value={topBoardFilters.rateMin} />
+            <span className="text-slate-500">~</span>
+            <RangeFilterField value={topBoardFilters.rateMax} />
+            <span className="text-slate-500">%</span>
           </div>
-          <FilterDivider />
-          <FilterLabel>金额</FilterLabel>
-          <RangeFilterField value={topBoardFilters.amountMin} />
-          <span className="text-slate-500">~</span>
-          <RangeFilterField value={topBoardFilters.amountMax} />
-          <span className="text-slate-500">亿</span>
-          <FilterDivider />
-          <FilterLabel>利率</FilterLabel>
-          <RangeFilterField value={topBoardFilters.rateMin} />
-          <span className="text-slate-500">~</span>
-          <RangeFilterField value={topBoardFilters.rateMax} />
-          <span className="text-slate-500">%</span>
         </div>
         <div className="flex items-center justify-end gap-3">
           <InfoChip label="DR007" value="2.15%" tone="alert" />
