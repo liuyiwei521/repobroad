@@ -22,8 +22,10 @@ type CfetsBondMetricKey = Exclude<
 >;
 type CfetsTrendBlock = { dates: string[]; series: number[][] };
 
+type BankTenor = "ON" | "7D";
 type BankRateRow = {
   institution: string;
+  tenor: BankTenor;
   nonBankRate: string;
   refNonBankRate: string;
   deltaNonBankBp: string;
@@ -31,7 +33,18 @@ type BankRateRow = {
   refBankRate: string;
   deltaBp: string;
   updatedAt: string;
+  hasQuote: boolean;
 };
+const BANK_TENOR_LABEL: Record<BankTenor, string> = {
+  ON: "隔夜",
+  "7D": "7天",
+};
+const bigBankWhitelist: readonly string[] = [
+  "工商银行",
+  "建设银行",
+  "农业银行",
+  "中国银行",
+];
 type QuoteRank = "最优" | "次优" | "报价";
 type QuoteDetailRow = {
   id: string;
@@ -105,6 +118,7 @@ const chartPalette = {
 const initialBankRateRows: readonly BankRateRow[] = [
   {
     institution: "工商银行",
+    tenor: "ON",
     nonBankRate: "1.95%",
     refNonBankRate: "1.96%",
     deltaNonBankBp: "-1",
@@ -112,9 +126,23 @@ const initialBankRateRows: readonly BankRateRow[] = [
     refBankRate: "2.02%",
     deltaBp: "-2",
     updatedAt: "10:53:27",
+    hasQuote: true,
+  },
+  {
+    institution: "工商银行",
+    tenor: "7D",
+    nonBankRate: "2.05%",
+    refNonBankRate: "2.04%",
+    deltaNonBankBp: "+1",
+    bankRate: "2.10%",
+    refBankRate: "2.12%",
+    deltaBp: "-2",
+    updatedAt: "10:53:27",
+    hasQuote: true,
   },
   {
     institution: "建设银行",
+    tenor: "ON",
     nonBankRate: "1.94%",
     refNonBankRate: "1.95%",
     deltaNonBankBp: "-1",
@@ -122,9 +150,23 @@ const initialBankRateRows: readonly BankRateRow[] = [
     refBankRate: "2.00%",
     deltaBp: "-1",
     updatedAt: "10:53:27",
+    hasQuote: true,
+  },
+  {
+    institution: "建设银行",
+    tenor: "7D",
+    nonBankRate: "2.04%",
+    refNonBankRate: "2.05%",
+    deltaNonBankBp: "-1",
+    bankRate: "2.09%",
+    refBankRate: "2.10%",
+    deltaBp: "-1",
+    updatedAt: "10:53:27",
+    hasQuote: true,
   },
   {
     institution: "农业银行",
+    tenor: "ON",
     nonBankRate: "1.96%",
     refNonBankRate: "1.96%",
     deltaNonBankBp: "0",
@@ -132,9 +174,23 @@ const initialBankRateRows: readonly BankRateRow[] = [
     refBankRate: "2.00%",
     deltaBp: "+1",
     updatedAt: "10:53:27",
+    hasQuote: true,
+  },
+  {
+    institution: "农业银行",
+    tenor: "7D",
+    nonBankRate: "",
+    refNonBankRate: "",
+    deltaNonBankBp: "",
+    bankRate: "",
+    refBankRate: "",
+    deltaBp: "",
+    updatedAt: "",
+    hasQuote: false,
   },
   {
     institution: "中国银行",
+    tenor: "ON",
     nonBankRate: "1.95%",
     refNonBankRate: "1.94%",
     deltaNonBankBp: "+1",
@@ -142,6 +198,19 @@ const initialBankRateRows: readonly BankRateRow[] = [
     refBankRate: "2.00%",
     deltaBp: "0",
     updatedAt: "10:53:27",
+    hasQuote: true,
+  },
+  {
+    institution: "中国银行",
+    tenor: "7D",
+    nonBankRate: "2.06%",
+    refNonBankRate: "2.05%",
+    deltaNonBankBp: "+1",
+    bankRate: "2.11%",
+    refBankRate: "2.11%",
+    deltaBp: "0",
+    updatedAt: "10:53:27",
+    hasQuote: true,
   },
 ] as const;
 
@@ -152,11 +221,19 @@ const leftSections: readonly (
   {
     layout: "table",
     title: "今天大行价格",
-    columns: ["机构", "非银利率", "涨跌", "银行利率", "涨跌", "更新时间"],
+    columns: [
+      "机构",
+      "期限",
+      "非银利率",
+      "涨跌",
+      "银行利率",
+      "涨跌",
+      "更新时间",
+    ],
     rows: [],
-    greenColumns: [1],
-    redColumns: [3],
-    deltaColumns: [2, 4],
+    greenColumns: [2],
+    redColumns: [4],
+    deltaColumns: [3, 5],
     scrollable: false,
   },
   {
@@ -927,9 +1004,7 @@ const compareProductOptions: Array<{ id: CompareProduct; label: string }> = [
 ];
 
 const rightLowerTabs: Array<{ id: RightLowerTab; label: string }> = [
-  { id: "matrix", label: "市场公开信息" },
   { id: "inst", label: "机构分期限统计" },
-  { id: "bond", label: "机构分债券统计" },
 ];
 
 const trendModeTabs: Array<{ id: TrendMode; label: string }> = [
@@ -1749,7 +1824,7 @@ function App() {
     <div className="h-screen w-screen overflow-hidden bg-[#09111d] text-slate-100">
       <div className="flex h-full flex-col">
         <TopBar currentTime={currentTime} />
-        <main className="grid min-h-0 flex-1 grid-cols-[30fr_35fr_35fr] grid-rows-[minmax(0,1fr)] gap-3 overflow-hidden px-3 pb-3 pt-2">
+        <main className="grid min-h-0 flex-1 grid-cols-[28fr_42fr_30fr] grid-rows-[minmax(0,1fr)] gap-3 overflow-hidden px-3 pb-3 pt-2">
           <LeftSummaryPanel />
           <MainQuoteBoard />
           <RightSidebar />
@@ -1763,21 +1838,12 @@ function App() {
 function TopBar({ currentTime }: { currentTime: Date }) {
   return (
     <header className="border-b border-[#1b2a42] bg-[#0d1726] px-3 py-2 shadow-[inset_0_-1px_0_rgba(74,101,140,0.18)]">
-      <div className="grid grid-cols-[30fr_35fr_35fr] items-center gap-3">
+      <div className="grid grid-cols-[28fr_42fr_30fr] items-center gap-3">
         <div className="text-[20px] font-semibold tracking-[0.04em] text-slate-50">
           资金实时行情看板
         </div>
         <div className="relative h-8">
           <div className="pointer-events-auto absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 whitespace-nowrap text-sm text-slate-400">
-            <FilterLabel>期限</FilterLabel>
-            <div className="flex items-center gap-1.5">
-              {topBoardFilters.periods.map((item, index) => (
-                <ToolbarChip key={item} active={index === 0}>
-                  {item}
-                </ToolbarChip>
-              ))}
-            </div>
-            <FilterDivider />
             <FilterLabel>金额</FilterLabel>
             <RangeFilterField value={topBoardFilters.amountMin} />
             <span className="text-slate-500">~</span>
@@ -1785,6 +1851,7 @@ function TopBar({ currentTime }: { currentTime: Date }) {
             <span className="text-slate-500">亿</span>
             <FilterDivider />
             <FilterLabel>利率</FilterLabel>
+
             <RangeFilterField value={topBoardFilters.rateMin} />
             <span className="text-slate-500">~</span>
             <RangeFilterField value={topBoardFilters.rateMax} />
@@ -1818,14 +1885,20 @@ function LeftSummaryPanel() {
       section.title === "今天大行价格"
         ? {
             ...section,
-            rows: bankRateRows.map((row) => [
-              row.institution,
-              row.nonBankRate,
-              row.deltaNonBankBp,
-              row.bankRate,
-              row.deltaBp,
-              row.updatedAt,
-            ]),
+            rows: bankRateRows
+              .filter(
+                (row) =>
+                  row.hasQuote && bigBankWhitelist.includes(row.institution),
+              )
+              .map((row) => [
+                row.institution,
+                BANK_TENOR_LABEL[row.tenor],
+                row.nonBankRate,
+                row.deltaNonBankBp,
+                row.bankRate,
+                row.deltaBp,
+                row.updatedAt,
+              ]),
           }
         : section,
     );
@@ -1847,7 +1920,10 @@ function LeftSummaryPanel() {
     setDraftBankRateRows((current) =>
       current.map((row, rowIndex) => {
         if (rowIndex !== index) return row;
-        const updated = { ...row, [field]: value };
+        const updated: BankRateRow =
+          field === "hasQuote"
+            ? { ...row, hasQuote: value === "true" }
+            : { ...row, [field]: value };
         if (field === "bankRate") {
           const cur = parseFloat(value.replace("%", ""));
           const ref = parseFloat(row.refBankRate.replace("%", ""));
@@ -1877,7 +1953,10 @@ function LeftSummaryPanel() {
     const now = new Date();
     const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
     setBankRateRows(
-      draftBankRateRows.map((row) => ({ ...row, updatedAt: time })),
+      draftBankRateRows.map((row) => ({
+        ...row,
+        updatedAt: row.hasQuote ? time : "",
+      })),
     );
     setIsBankEditorOpen(false);
   }
@@ -1988,7 +2067,10 @@ function BankRateEditorModal({
                 今天大行价格手工输入
               </div>
               <div className="mt-1 text-xs text-slate-500">
-                按机构维护非银利率和银行利率，涨跌及更新时间自动计算。
+                按机构 × 期限（隔夜 /
+                7天）维护非银利率和银行利率。当日大行价格来自每天 10:00~11:00
+                在群或私聊给出的固定价格；如某机构当天无 7
+                天报价，请将「有报价」关闭，该期限将完全隐藏。
               </div>
             </div>
             <button
@@ -2002,20 +2084,25 @@ function BankRateEditorModal({
         </div>
         <div className="px-5 py-4">
           <div className="overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
-            <div className="grid grid-cols-[1.4fr_1fr_1fr] border-b border-[#22324d] bg-[#111d30] px-4 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+            <div className="grid grid-cols-[1.4fr_0.7fr_1fr_1fr_0.7fr] border-b border-[#22324d] bg-[#111d30] px-4 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400">
               <span>机构</span>
+              <span className="text-center">期限</span>
               <span className="text-right">非银利率</span>
               <span className="text-right">银行利率</span>
+              <span className="text-center">有报价</span>
             </div>
             {rows.map((row, index) => (
               <div
-                key={`${row.institution}-${index}`}
-                className={`grid grid-cols-[1.4fr_1fr_1fr] items-center gap-3 border-b border-[#162439] px-4 py-3 ${
+                key={`${row.institution}-${row.tenor}-${index}`}
+                className={`grid grid-cols-[1.4fr_0.7fr_1fr_1fr_0.7fr] items-center gap-3 border-b border-[#162439] px-4 py-3 ${
                   index % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
                 }`}
               >
                 <div className="text-sm font-semibold text-slate-100">
                   {row.institution}
+                </div>
+                <div className="text-center text-xs text-slate-300">
+                  {BANK_TENOR_LABEL[row.tenor]}
                 </div>
                 <ModalInput
                   align="right"
@@ -2027,6 +2114,19 @@ function BankRateEditorModal({
                   value={row.bankRate}
                   onChange={(value) => onChange(index, "bankRate", value)}
                 />
+                <div className="flex items-center justify-center">
+                  <input
+                    type="checkbox"
+                    checked={row.hasQuote}
+                    onChange={(e) =>
+                      onChange(
+                        index,
+                        "hasQuote",
+                        e.target.checked ? "true" : "false",
+                      )
+                    }
+                  />
+                </div>
               </div>
             ))}
           </div>
@@ -2456,8 +2556,12 @@ function ExchangeMarketTable({
 const QUOTE_BOARD_RATIO_KEY = "quoteBoardLevel2TopRatio";
 const DEFAULT_LEVEL2_TOP_RATIO = 70;
 
+const QUOTE_TENOR_OPTIONS = ["R001", "R007", "R014", "R021", "R028"] as const;
+type QuoteTenorFilter = (typeof QUOTE_TENOR_OPTIONS)[number] | "all";
+
 function MainQuoteBoard() {
   const [displayLevel, setDisplayLevel] = useState<1 | 2>(1);
+  const [tenorFilter, setTenorFilter] = useState<QuoteTenorFilter>("all");
   const [activeSectionId, setActiveSectionId] = useState<
     RepoQuoteSection["id"]
   >(repoQuoteSections[0].id);
@@ -2538,6 +2642,26 @@ function MainQuoteBoard() {
               </button>
             </div>
           </div>
+          <div className="mt-2 flex items-center gap-2 text-xs text-slate-400">
+            <span className="text-slate-500">期限</span>
+            <button
+              className={auxTabClass(tenorFilter === "all")}
+              onClick={() => setTenorFilter("all")}
+              type="button"
+            >
+              全部
+            </button>
+            {QUOTE_TENOR_OPTIONS.map((t) => (
+              <button
+                key={t}
+                className={auxTabClass(tenorFilter === t)}
+                onClick={() => setTenorFilter(t)}
+                type="button"
+              >
+                {t}
+              </button>
+            ))}
+          </div>
         </div>
         <div ref={bodyRef} className="flex min-h-0 flex-1 flex-col">
           {repoQuoteSections.map((section, index) => {
@@ -2557,6 +2681,7 @@ function MainQuoteBoard() {
                   isActive={section.id === activeSectionId}
                   onActivate={() => setActiveSectionId(section.id)}
                   dragRatio={dragRatio}
+                  tenorFilter={tenorFilter}
                 />
                 {displayLevel === 2 && !isLast ? (
                   <div
@@ -2608,6 +2733,7 @@ function RepoQuoteSectionBoard({
   isActive,
   onActivate,
   dragRatio,
+  tenorFilter,
 }: {
   section: RepoQuoteSection;
   displayLevel: 1 | 2;
@@ -2615,7 +2741,10 @@ function RepoQuoteSectionBoard({
   isActive: boolean;
   onActivate: () => void;
   dragRatio: number | null;
+  tenorFilter: QuoteTenorFilter;
 }) {
+  const matchTenor = (rowTenor: string) =>
+    tenorFilter === "all" || rowTenor === tenorFilter;
   const useDrag = displayLevel === 2 && dragRatio != null;
   const containerStyle = useDrag
     ? { flex: `${dragRatio} 1 0%`, minHeight: 0 }
@@ -2664,18 +2793,19 @@ function RepoQuoteSectionBoard({
               : "flex-1 overflow-y-auto"
         }`}
       >
-        <div className="grid grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr_0.6fr] border-y border-[#1c3150] bg-[#111d30] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+        <div className="grid grid-cols-[1.5fr_0.6fr_0.75fr_0.8fr_0.95fr_0.9fr_0.7fr_0.55fr] border-y border-[#1c3150] bg-[#111d30] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
           <span>分组 / 机构</span>
           <span className="text-right">期限</span>
           <span className="text-right">金额(总量)</span>
           <span className="text-right">利率(均价)</span>
           <span className="text-right">账户要求</span>
           <span className="text-right">质押要求</span>
+          <span className="text-right">获取时间</span>
           <span className="text-right">操作</span>
         </div>
         {section.groups.map((group) => (
           <div key={group.id} className="border-b-2 border-[#1f3759]">
-            <div className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr_0.6fr] items-center border-l-[3px] border-sky-500/70 bg-gradient-to-r from-[#15294a] via-[#11223c] to-[#0d1a30] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
+            <div className="grid w-full grid-cols-[1.5fr_0.6fr_0.75fr_0.8fr_0.95fr_0.9fr_0.7fr_0.55fr] items-center border-l-[3px] border-sky-500/70 bg-gradient-to-r from-[#15294a] via-[#11223c] to-[#0d1a30] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
               <div className="flex items-center gap-3">
                 <span className="inline-flex items-center gap-1 rounded-md border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-sky-200">
                   汇总
@@ -2693,92 +2823,107 @@ function RepoQuoteSectionBoard({
               </span>
               <span aria-hidden="true" />
               <span aria-hidden="true" />
+              <span aria-hidden="true" />
               <span />
             </div>
             {displayLevel === 1 ? (
               <div className="divide-y divide-[#152437] bg-[#080f1c]">
-                {selectLevel1Rows(group).map((row) => (
-                  <div
-                    key={row.id}
-                    className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr_0.6fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200"
-                  >
-                    <div className="flex items-center gap-2">
-                      <RankBadge rank={row.rank} />
-                      <span className="text-slate-100">{row.institution}</span>
-                    </div>
-                    <span className="text-right">{row.tenor}</span>
-                    <span className="text-right">
-                      {showRowAmount(row.id) ? row.amount : "--"}
-                    </span>
-                    <span className="text-right font-semibold text-amber-300">
-                      {row.rate}
-                    </span>
-                    <span
-                      className="truncate pl-3 text-right text-xs text-slate-300"
-                      title={normalizeAccountRequirement(row.accountType)}
+                {selectLevel1Rows(group)
+                  .filter((row) => matchTenor(row.tenor))
+                  .map((row) => (
+                    <div
+                      key={row.id}
+                      className="grid w-full grid-cols-[1.5fr_0.6fr_0.75fr_0.8fr_0.95fr_0.9fr_0.7fr_0.55fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200"
                     >
-                      {normalizeAccountRequirement(row.accountType)}
-                    </span>
-                    <span
-                      className="truncate pl-3 text-right text-xs text-slate-300"
-                      title={`${row.collateral} / ${row.reason}`}
-                    >
-                      {row.collateral}
-                    </span>
-                    <span className="flex items-center justify-end">
-                      <button
-                        className="rounded-lg border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
-                        type="button"
+                      <div className="flex items-center gap-2">
+                        <RankBadge rank={row.rank} />
+                        <span className="text-slate-100">
+                          {row.institution}
+                        </span>
+                      </div>
+                      <span className="text-right">{row.tenor}</span>
+                      <span className="text-right">
+                        {showRowAmount(row.id) ? row.amount : "--"}
+                      </span>
+                      <span className="text-right font-semibold text-amber-300">
+                        {row.rate}
+                      </span>
+                      <span
+                        className="truncate pl-3 text-right text-xs text-slate-300"
+                        title={normalizeAccountRequirement(row.accountType)}
                       >
-                        发送
-                      </button>
-                    </span>
-                  </div>
-                ))}
+                        {normalizeAccountRequirement(row.accountType)}
+                      </span>
+                      <span
+                        className="truncate pl-3 text-right text-xs text-slate-300"
+                        title={`${row.collateral} / ${row.reason}`}
+                      >
+                        {row.collateral}
+                      </span>
+                      <span className="text-right text-xs tabular-nums text-slate-400">
+                        {row.updatedAt}
+                      </span>
+                      <span className="flex items-center justify-end">
+                        <button
+                          className="rounded-lg border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
+                          type="button"
+                        >
+                          发送
+                        </button>
+                      </span>
+                    </div>
+                  ))}
               </div>
             ) : null}
             {displayLevel === 2 ? (
               <div className="divide-y divide-[#152437] bg-[#080f1c]">
-                {sortRowsByRank(group.rows).map((row) => (
-                  <div
-                    key={row.id}
-                    className="grid w-full grid-cols-[1.65fr_0.72fr_0.84fr_0.9fr_1.05fr_1fr_0.6fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200 transition hover:bg-[#11253d]"
-                  >
-                    <div className="flex items-center gap-2">
-                      {row.rank === "最优" || row.rank === "次优" ? (
-                        <RankBadge rank={row.rank} />
-                      ) : null}
-                      <span className="text-slate-100">{row.institution}</span>
-                    </div>
-                    <span className="text-right">{row.tenor}</span>
-                    <span className="text-right">
-                      {showRowAmount(row.id) ? row.amount : "--"}
-                    </span>
-                    <span className="text-right font-semibold text-amber-300">
-                      {row.rate}
-                    </span>
-                    <span
-                      className="truncate pl-3 text-right text-xs text-slate-300"
-                      title={normalizeAccountRequirement(row.accountType)}
+                {sortRowsByRank(group.rows)
+                  .filter((row) => matchTenor(row.tenor))
+                  .map((row) => (
+                    <div
+                      key={row.id}
+                      className="grid w-full grid-cols-[1.5fr_0.6fr_0.75fr_0.8fr_0.95fr_0.9fr_0.7fr_0.55fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200 transition hover:bg-[#11253d]"
                     >
-                      {normalizeAccountRequirement(row.accountType)}
-                    </span>
-                    <span
-                      className="truncate pl-3 text-right text-xs text-slate-300"
-                      title={`${row.collateral} / ${row.reason}`}
-                    >
-                      {row.collateral}
-                    </span>
-                    <span className="flex items-center justify-end">
-                      <button
-                        className="rounded-lg border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
-                        type="button"
+                      <div className="flex items-center gap-2">
+                        {row.rank === "最优" || row.rank === "次优" ? (
+                          <RankBadge rank={row.rank} />
+                        ) : null}
+                        <span className="text-slate-100">
+                          {row.institution}
+                        </span>
+                      </div>
+                      <span className="text-right">{row.tenor}</span>
+                      <span className="text-right">
+                        {showRowAmount(row.id) ? row.amount : "--"}
+                      </span>
+                      <span className="text-right font-semibold text-amber-300">
+                        {row.rate}
+                      </span>
+                      <span
+                        className="truncate pl-3 text-right text-xs text-slate-300"
+                        title={normalizeAccountRequirement(row.accountType)}
                       >
-                        发送
-                      </button>
-                    </span>
-                  </div>
-                ))}
+                        {normalizeAccountRequirement(row.accountType)}
+                      </span>
+                      <span
+                        className="truncate pl-3 text-right text-xs text-slate-300"
+                        title={`${row.collateral} / ${row.reason}`}
+                      >
+                        {row.collateral}
+                      </span>
+                      <span className="text-right text-xs tabular-nums text-slate-400">
+                        {row.updatedAt}
+                      </span>
+                      <span className="flex items-center justify-end">
+                        <button
+                          className="rounded-lg border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
+                          type="button"
+                        >
+                          发送
+                        </button>
+                      </span>
+                    </div>
+                  ))}
               </div>
             ) : null}
           </div>
@@ -2870,7 +3015,7 @@ function RankBadge({ rank }: { rank: QuoteRank }) {
 function RightSidebar() {
   const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
   const [historyRange, setHistoryRange] = useState<HistoryRange>("5d");
-  const [rightLowerTab, setRightLowerTab] = useState<RightLowerTab>("matrix");
+  const [rightLowerTab, setRightLowerTab] = useState<RightLowerTab>("inst");
   const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
 
   return (
@@ -2881,19 +3026,19 @@ function RightSidebar() {
       }}
     >
       <div className="min-h-0 overflow-hidden">
-        <IntradayPanel
-          overlayProduct={overlayProduct}
-          onOverlayChange={setOverlayProduct}
-        />
-      </div>
-
-      <div className="min-h-0 overflow-hidden">
         <HistoryClosePanel
           activeRange={historyRange}
           overlayProduct={overlayProduct}
           compareProduct={compareProduct}
           onRangeChange={setHistoryRange}
           onCompareChange={setCompareProduct}
+        />
+      </div>
+
+      <div className="min-h-0 overflow-hidden">
+        <IntradayPanel
+          overlayProduct={overlayProduct}
+          onOverlayChange={setOverlayProduct}
         />
       </div>
 
@@ -2971,7 +3116,9 @@ function IntradayPanel({
     <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
       <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101d32] px-3 py-2">
         <div className="flex items-center gap-3">
-          <div className="text-sm font-semibold text-slate-100">今天分时</div>
+          <div className="text-sm font-semibold text-slate-100">
+            匿名成交走势图
+          </div>
           <div className="rounded border border-[#264167] bg-[#13223a] px-1.5 py-0.5 text-[10px] font-medium text-blue-300">
             R001
           </div>
@@ -2982,8 +3129,8 @@ function IntradayPanel({
         </div>
         <div className="text-xs text-slate-400">
           {overlayProduct !== "none"
-            ? "盘中加权利率 / 利差(bp)"
-            : "盘中加权利率 / 成交量"}
+            ? "匿名成交利率 / 利差(bp)"
+            : "匿名成交利率 / 成交量"}
         </div>
       </div>
       <div className="grid min-h-0 grid-rows-[1fr_auto] px-3 pb-2 pt-2">
@@ -3194,7 +3341,9 @@ function HistoryClosePanel({
     <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
       <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101d32] px-3 py-2">
         <div className="flex items-center gap-3">
-          <div className="text-sm font-semibold text-slate-100">收盘价走势</div>
+          <div className="text-sm font-semibold text-slate-100">
+            加权价格走势
+          </div>
           <div className="text-xs text-slate-400">
             产品：
             <span className="ml-1 text-slate-200">R001</span>
@@ -3310,7 +3459,7 @@ function HistoryClosePanel({
               ) : null}
             </svg>
             <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-300">
-              <LegendDot color={chartPalette.blue} label="收盘价" />
+              <LegendDot color={chartPalette.blue} label="加权价格" />
               {overlayProduct !== "none" ? (
                 <LegendDot
                   color={chartPalette.amber}
@@ -3889,14 +4038,42 @@ const cfetsInstData: Record<CfetsInstKey, CfetsTermRow[]> = {
 };
 
 // ── 机构 × 债券类型数据（金额单位：百万）──
-type CfetsInstPeriod = "R001" | "R007" | "R014" | "R021" | "R1M";
+type CfetsInstPeriod =
+  | "R001"
+  | "R007"
+  | "R014"
+  | "R021"
+  | "R1M"
+  | "R2M"
+  | "R3M"
+  | "R4M"
+  | "R6M"
+  | "R9M"
+  | "R1Y";
 const cfetsInstPeriodLabels: CfetsInstPeriod[] = [
   "R001",
   "R007",
   "R014",
   "R021",
   "R1M",
+  "R2M",
+  "R3M",
+  "R4M",
+  "R6M",
+  "R9M",
+  "R1Y",
 ];
+const cfetsInstInstitutionTypes = [
+  "大型银行",
+  "中小型银行",
+  "证券公司",
+  "保险公司",
+  "基金公司及产品",
+  "货币市场基金",
+  "理财子",
+  "其他",
+] as const;
+type CfetsInstInstitutionType = (typeof cfetsInstInstitutionTypes)[number];
 type CfetsBondKey = "利率债" | "信用债" | "同业存单";
 type CfetsBondRow = {
   inst: string;
@@ -4265,6 +4442,96 @@ const cfetsInstAnchorsBase: Record<CfetsInstPeriod, CfetsInstAnchorBase> = {
     buyAmt: [5, 7, 1, 1, 0.5, 0, 2],
     sellAmt: [4, 1, 0.1, 0.1, 0, 0, 0.2],
     netInflow: [-1, 0.2, 0.5, 0.5, 0.1, 0.05, 0.5],
+  },
+  R2M: {
+    buyRate: [1.345, 1.371, 1.432, 1.432, 1.425, 1.536, 1.419],
+    sellRate: [
+      1.384,
+      1.383,
+      1.596,
+      1.596,
+      null as unknown as number,
+      null as unknown as number,
+      1.431,
+    ],
+    buyAmt: [3.5, 5, 0.7, 0.7, 0.3, 0, 1.4],
+    sellAmt: [2.8, 0.7, 0.07, 0.07, 0, 0, 0.14],
+    netInflow: [-0.7, 0.14, 0.35, 0.35, 0.07, 0.03, 0.35],
+  },
+  R3M: {
+    buyRate: [1.375, 1.401, 1.462, 1.462, 1.455, 1.566, 1.449],
+    sellRate: [
+      1.414,
+      1.413,
+      1.626,
+      1.626,
+      null as unknown as number,
+      null as unknown as number,
+      1.461,
+    ],
+    buyAmt: [2.5, 3.5, 0.5, 0.5, 0.2, 0, 1],
+    sellAmt: [2, 0.5, 0.05, 0.05, 0, 0, 0.1],
+    netInflow: [-0.5, 0.1, 0.25, 0.25, 0.05, 0.02, 0.25],
+  },
+  R4M: {
+    buyRate: [1.405, 1.431, 1.492, 1.492, 1.485, 1.596, 1.479],
+    sellRate: [
+      1.444,
+      1.443,
+      1.656,
+      1.656,
+      null as unknown as number,
+      null as unknown as number,
+      1.491,
+    ],
+    buyAmt: [1.8, 2.5, 0.35, 0.35, 0.15, 0, 0.7],
+    sellAmt: [1.4, 0.35, 0.03, 0.03, 0, 0, 0.07],
+    netInflow: [-0.35, 0.07, 0.18, 0.18, 0.04, 0.01, 0.18],
+  },
+  R6M: {
+    buyRate: [1.455, 1.481, 1.542, 1.542, 1.535, 1.646, 1.529],
+    sellRate: [
+      1.494,
+      1.493,
+      1.706,
+      1.706,
+      null as unknown as number,
+      null as unknown as number,
+      1.541,
+    ],
+    buyAmt: [1.2, 1.8, 0.25, 0.25, 0.1, 0, 0.5],
+    sellAmt: [1, 0.25, 0.02, 0.02, 0, 0, 0.05],
+    netInflow: [-0.25, 0.05, 0.12, 0.12, 0.025, 0.01, 0.12],
+  },
+  R9M: {
+    buyRate: [1.505, 1.531, 1.592, 1.592, 1.585, 1.696, 1.579],
+    sellRate: [
+      1.544,
+      1.543,
+      1.756,
+      1.756,
+      null as unknown as number,
+      null as unknown as number,
+      1.591,
+    ],
+    buyAmt: [0.8, 1.2, 0.18, 0.18, 0.07, 0, 0.35],
+    sellAmt: [0.7, 0.18, 0.015, 0.015, 0, 0, 0.03],
+    netInflow: [-0.18, 0.03, 0.09, 0.09, 0.02, 0.005, 0.09],
+  },
+  R1Y: {
+    buyRate: [1.555, 1.581, 1.642, 1.642, 1.635, 1.746, 1.629],
+    sellRate: [
+      1.594,
+      1.593,
+      1.806,
+      1.806,
+      null as unknown as number,
+      null as unknown as number,
+      1.641,
+    ],
+    buyAmt: [0.5, 0.8, 0.12, 0.12, 0.05, 0, 0.22],
+    sellAmt: [0.4, 0.12, 0.01, 0.01, 0, 0, 0.02],
+    netInflow: [-0.12, 0.02, 0.06, 0.06, 0.015, 0.003, 0.06],
   },
 };
 
@@ -5068,42 +5335,41 @@ function CfetsInstPanel() {
   const [period, setPeriod] = useState<CfetsInstPeriod>("R001");
   const [range, setRange] = useState<FundStructureRange>("14d");
   const [metricKey, setMetricKey] = useState<CfetsMetricKey>("buyRate");
+  const [instTypes, setInstTypes] = useState<CfetsInstInstitutionType[]>([
+    ...cfetsInstInstitutionTypes,
+  ]);
   const metricDef = cfetsMetricDefs.find((d) => d.key === metricKey)!;
   const block =
     metricKey !== "netInflow"
       ? cfetsInstTrend[period][metricKey][range]
       : null!;
 
+  function toggleInstType(type: CfetsInstInstitutionType) {
+    setInstTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
+    );
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
-      {/* 控件行 */}
+      {/* 控件行 1：期限 + 指标 + 区间 */}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1">
-            {cfetsInstPeriodLabels.map((pt) => (
-              <button
-                key={pt}
-                type="button"
-                className={`rounded-md px-2 py-1 text-[11px] transition-colors ${
-                  period === pt
-                    ? "bg-[#1f3d6b] font-semibold text-slate-100"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-                onClick={() => setPeriod(pt)}
-              >
-                {pt}
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-3 text-[11px] text-slate-400 ml-2">
-            {fundStructureLegendItems.map((item) => (
-              <LegendDot
-                key={item.label}
-                color={item.color}
-                label={item.label}
-              />
-            ))}
-          </div>
+        <div className="flex flex-wrap items-center gap-1">
+          <span className="mr-1 text-[11px] text-slate-500">期限</span>
+          {cfetsInstPeriodLabels.map((pt) => (
+            <button
+              key={pt}
+              type="button"
+              className={`rounded-md px-2 py-1 text-[11px] transition-colors ${
+                period === pt
+                  ? "bg-[#1f3d6b] font-semibold text-slate-100"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+              onClick={() => setPeriod(pt)}
+            >
+              {pt}
+            </button>
+          ))}
         </div>
         <div className="flex items-center gap-2">
           <select
@@ -5131,6 +5397,33 @@ function CfetsInstPanel() {
           </div>
         </div>
       </div>
+      {/* 控件行 2：机构类型 多选 */}
+      <div className="flex flex-wrap items-center gap-1">
+        <span className="mr-1 text-[11px] text-slate-500">机构类型</span>
+        {cfetsInstInstitutionTypes.map((t) => {
+          const active = instTypes.includes(t);
+          return (
+            <button
+              key={t}
+              type="button"
+              className={`rounded-md px-2 py-1 text-[11px] transition-colors ${
+                active
+                  ? "bg-[#1f3d6b] font-semibold text-slate-100"
+                  : "border border-[#253754] text-slate-400 hover:text-slate-200"
+              }`}
+              onClick={() => toggleInstType(t)}
+            >
+              {t}
+            </button>
+          );
+        })}
+      </div>
+      {/* 图例 */}
+      <div className="flex flex-wrap gap-3 text-[11px] text-slate-400">
+        {fundStructureLegendItems.map((item) => (
+          <LegendDot key={item.label} color={item.color} label={item.label} />
+        ))}
+      </div>
       {/* 图表 */}
       {metricKey === "netInflow" ? (
         <div className="min-h-0 flex-1">
@@ -5144,7 +5437,12 @@ function CfetsInstPanel() {
         />
       )}
       {/* 说明 */}
-      <div className="text-[10px] text-slate-500">{metricDef.desc}</div>
+      <div className="text-[10px] text-slate-500">
+        {metricDef.desc}
+        {instTypes.length < cfetsInstInstitutionTypes.length
+          ? ` · 机构类型筛选：${instTypes.join("、") || "无"}`
+          : ""}
+      </div>
     </div>
   );
 }

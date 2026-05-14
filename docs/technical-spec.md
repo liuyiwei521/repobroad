@@ -1,8 +1,22 @@
 # 资金实时行情看板 — 技术实现规格 (codex 分支)
 
-> 版本: v2.0 (codex) | 日期: 2026-05-10 | 受众: 开发团队
+> 版本: v2.1 (codex) | 日期: 2026-05-14 | 受众: 开发团队
 >
 > 本文档描述 codex 分支的三栏布局版本的技术实现细节。业务交互见 `business-prd.md`。
+
+---
+
+## 0. 2026-05-14 修订摘要（实现侧）
+
+| 模块 | 变更 | 关键代码位置（`src/app/App.tsx`） |
+| --- | --- | --- |
+| 顶部 TopBar | 删除「期限」筛选 chip 组；三栏 grid 由 `30fr_35fr_35fr` 调整为 `28fr_42fr_30fr` | `TopBar` / `App` 根 grid |
+| 左栏大行价格 | 新增 `BankTenor = "ON" \| "7D"`、`BankRateRow.tenor` / `hasQuote`；`initialBankRateRows` 拆分为机构 × 期限两条；按 `bigBankWhitelist` + `hasQuote` 双重过滤；编辑弹窗新增「期限 / 有报价」字段 | `BankRateRow` / `initialBankRateRows` / `LeftSummaryPanel` / `BankRateEditorModal` |
+| 中部报价明细 | 模块头部新增 `tenorFilter` 状态与 chip 组（`QUOTE_TENOR_OPTIONS`）；行 grid 由 7 列扩展为 8 列，加入 `获取时间`（`row.updatedAt`）；`selectLevel1Rows`、`sortRowsByRank` 后接 `.filter(matchTenor)` | `MainQuoteBoard` / `RepoQuoteSectionBoard` |
+| 右栏图表 | 重排 `RightSidebar` 子组件顺序：`HistoryClosePanel` 移到第一行、`IntradayPanel` 第二行；标题、副标题、Legend 文案改为「加权价格走势」/「匿名成交走势图」/「加权价格」/「匿名成交利率…」 | `RightSidebar` / `IntradayPanel` / `HistoryClosePanel` |
+| 底部统计 | `rightLowerTabs` 仅保留 `inst`；默认 `rightLowerTab="inst"`；`CfetsInstPeriod` 扩展到 11 档，补 `cfetsInstAnchorsBase` 中 R2M~R1Y 的 mock 数据；新增 `cfetsInstInstitutionTypes` 与 `CfetsInstPanel` 中「机构类型」多选 chip（state: `instTypes`）；新增「期限」chip 行 label，原图例移到独立行 | `rightLowerTabs` / `RightSidebar` / `CfetsInstPeriod` / `cfetsInstAnchorsBase` / `CfetsInstPanel` |
+
+未实现 / 占位项：报价下载、「已出完」识别、报价失效时间规则、报价状态字段（`active`/`filled`/`expired`/`replaced` 仅在文档层面预留）。
 
 ---
 
