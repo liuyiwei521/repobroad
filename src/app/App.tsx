@@ -155,14 +155,14 @@ const initialBankRateRows: readonly BankRateRow[] = [
   {
     institution: "建设银行",
     tenor: "7D",
-    nonBankRate: "2.04%",
-    refNonBankRate: "2.05%",
-    deltaNonBankBp: "-1",
-    bankRate: "2.09%",
-    refBankRate: "2.10%",
-    deltaBp: "-1",
-    updatedAt: "10:53:27",
-    hasQuote: true,
+    nonBankRate: "",
+    refNonBankRate: "",
+    deltaNonBankBp: "",
+    bankRate: "",
+    refBankRate: "",
+    deltaBp: "",
+    updatedAt: "",
+    hasQuote: false,
   },
   {
     institution: "农业银行",
@@ -254,7 +254,6 @@ const leftSections: readonly (
       ["R007", "(4)", "28亿", "2.00%", "1.25%", "442亿", "(12)", "发送"],
       ["R014", "(4)", "442亿", "2.00%", "1.95%", "442亿", "(12)", "发送"],
       ["R021", "(4)", "442亿", "2.00%", "1.95%", "442亿", "(12)", "发送"],
-      ["R028", "(4)", "442亿", "2.00%", "1.95%", "442亿", "(12)", "发送"],
     ],
     greenColumns: [4],
     redColumns: [3],
@@ -2559,12 +2558,57 @@ const DEFAULT_LEVEL2_TOP_RATIO = 70;
 const QUOTE_TENOR_OPTIONS = ["R001", "R007", "R014", "R021", "R028"] as const;
 type QuoteTenorFilter = (typeof QUOTE_TENOR_OPTIONS)[number] | "all";
 
+type QuoteOverride = Partial<
+  Pick<
+    QuoteDetailRow,
+    | "amount"
+    | "rate"
+    | "accountType"
+    | "collateral"
+    | "reason"
+    | "minimum"
+    | "updatedAt"
+  >
+>;
+
 function MainQuoteBoard() {
   const [displayLevel, setDisplayLevel] = useState<1 | 2>(1);
   const [tenorFilter, setTenorFilter] = useState<QuoteTenorFilter>("all");
   const [activeSectionId, setActiveSectionId] = useState<
     RepoQuoteSection["id"]
   >(repoQuoteSections[0].id);
+  const [overrides, setOverrides] = useState<Record<string, QuoteOverride>>({});
+  const [editingRow, setEditingRow] = useState<QuoteDetailRow | null>(null);
+  const [editingDraft, setEditingDraft] = useState<QuoteOverride>({});
+
+  function applyOverride(row: QuoteDetailRow): QuoteDetailRow {
+    const ov = overrides[row.id];
+    return ov ? { ...row, ...ov } : row;
+  }
+
+  function openEditor(row: QuoteDetailRow) {
+    const merged = applyOverride(row);
+    setEditingRow(row);
+    setEditingDraft({
+      amount: merged.amount,
+      rate: merged.rate,
+      accountType: merged.accountType,
+      collateral: merged.collateral,
+      reason: merged.reason,
+      minimum: merged.minimum,
+    });
+  }
+
+  function saveEditor() {
+    if (!editingRow) return;
+    const now = new Date();
+    const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+    setOverrides((prev) => ({
+      ...prev,
+      [editingRow.id]: { ...editingDraft, updatedAt: time },
+    }));
+    setEditingRow(null);
+  }
   const [topRatio, setTopRatio] = useState<number>(() => {
     if (typeof window === "undefined") return DEFAULT_LEVEL2_TOP_RATIO;
     const saved = window.localStorage.getItem(QUOTE_BOARD_RATIO_KEY);
@@ -2616,7 +2660,7 @@ function MainQuoteBoard() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-base font-semibold text-slate-50">
-                报价明细
+                非银报价
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -2682,6 +2726,8 @@ function MainQuoteBoard() {
                   onActivate={() => setActiveSectionId(section.id)}
                   dragRatio={dragRatio}
                   tenorFilter={tenorFilter}
+                  applyOverride={applyOverride}
+                  onEdit={openEditor}
                 />
                 {displayLevel === 2 && !isLast ? (
                   <div
@@ -2698,7 +2744,103 @@ function MainQuoteBoard() {
           })}
         </div>
       </section>
+      <QuoteEditorModal
+        row={editingRow}
+        draft={editingDraft}
+        onChange={(field, value) =>
+          setEditingDraft((prev) => ({ ...prev, [field]: value }))
+        }
+        onClose={() => setEditingRow(null)}
+        onSave={saveEditor}
+      />
     </section>
+  );
+}
+
+function QuoteEditorModal({
+  row,
+  draft,
+  onChange,
+  onClose,
+  onSave,
+}: {
+  row: QuoteDetailRow | null;
+  draft: QuoteOverride;
+  onChange: (field: keyof QuoteOverride, value: string) => void;
+  onClose: () => void;
+  onSave: () => void;
+}) {
+  if (!row) return null;
+  const fields: {
+    key: keyof QuoteOverride;
+    label: string;
+    placeholder?: string;
+  }[] = [
+    { key: "rate", label: "利率", placeholder: "如 1.40%" },
+    { key: "amount", label: "金额", placeholder: "如 5亿" },
+    { key: "minimum", label: "起投门槛", placeholder: "如 5亿起" },
+    { key: "accountType", label: "账户类型", placeholder: "如 自营户" },
+    { key: "collateral", label: "质押品", placeholder: "如 利率/地方/存单" },
+    { key: "reason", label: "备注", placeholder: "补充说明" },
+  ];
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc] px-4">
+      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]">
+        <div className="border-b border-[#1c3150] bg-[#101d32] px-5 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-base font-semibold text-slate-50">
+                修正报价
+              </div>
+              <div className="mt-1 text-xs text-slate-500">
+                {row.institution} · {row.tenor} ·{" "}
+                <span className="text-slate-400">{row.rank}</span> ·
+                修正后将刷新「获取时间」。留空表示沿用原值。
+              </div>
+            </div>
+            <button
+              className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+              onClick={onClose}
+              type="button"
+            >
+              关闭
+            </button>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3 px-5 py-4">
+          {fields.map((f) => (
+            <label
+              key={f.key}
+              className="flex flex-col gap-1 text-[11px] text-slate-400"
+            >
+              <span>{f.label}</span>
+              <input
+                className="rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
+                value={(draft[f.key] as string) ?? ""}
+                placeholder={f.placeholder}
+                onChange={(e) => onChange(f.key, e.target.value)}
+              />
+            </label>
+          ))}
+        </div>
+        <div className="flex items-center justify-end gap-2 border-t border-[#1c3150] bg-[#0d1726] px-5 py-4">
+          <button
+            className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+            onClick={onClose}
+            type="button"
+          >
+            取消
+          </button>
+          <button
+            className="rounded-lg border border-emerald-500/40 bg-emerald-500/20 px-4 py-1.5 text-xs font-semibold text-emerald-200"
+            onClick={onSave}
+            type="button"
+          >
+            保存
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -2734,6 +2876,8 @@ function RepoQuoteSectionBoard({
   onActivate,
   dragRatio,
   tenorFilter,
+  applyOverride,
+  onEdit,
 }: {
   section: RepoQuoteSection;
   displayLevel: 1 | 2;
@@ -2742,6 +2886,8 @@ function RepoQuoteSectionBoard({
   onActivate: () => void;
   dragRatio: number | null;
   tenorFilter: QuoteTenorFilter;
+  applyOverride: (row: QuoteDetailRow) => QuoteDetailRow;
+  onEdit: (row: QuoteDetailRow) => void;
 }) {
   const matchTenor = (rowTenor: string) =>
     tenorFilter === "all" || rowTenor === tenorFilter;
@@ -2793,7 +2939,7 @@ function RepoQuoteSectionBoard({
               : "flex-1 overflow-y-auto"
         }`}
       >
-        <div className="grid grid-cols-[1.5fr_0.6fr_0.75fr_0.8fr_0.95fr_0.9fr_0.7fr_0.55fr] border-y border-[#1c3150] bg-[#111d30] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+        <div className="grid grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] border-y border-[#1c3150] bg-[#111d30] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
           <span>分组 / 机构</span>
           <span className="text-right">期限</span>
           <span className="text-right">金额(总量)</span>
@@ -2805,7 +2951,7 @@ function RepoQuoteSectionBoard({
         </div>
         {section.groups.map((group) => (
           <div key={group.id} className="border-b-2 border-[#1f3759]">
-            <div className="grid w-full grid-cols-[1.5fr_0.6fr_0.75fr_0.8fr_0.95fr_0.9fr_0.7fr_0.55fr] items-center border-l-[3px] border-sky-500/70 bg-gradient-to-r from-[#15294a] via-[#11223c] to-[#0d1a30] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
+            <div className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-sky-500/70 bg-gradient-to-r from-[#15294a] via-[#11223c] to-[#0d1a30] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
               <div className="flex items-center gap-3">
                 <span className="inline-flex items-center gap-1 rounded-md border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-sky-200">
                   汇总
@@ -2830,100 +2976,126 @@ function RepoQuoteSectionBoard({
               <div className="divide-y divide-[#152437] bg-[#080f1c]">
                 {selectLevel1Rows(group)
                   .filter((row) => matchTenor(row.tenor))
-                  .map((row) => (
-                    <div
-                      key={row.id}
-                      className="grid w-full grid-cols-[1.5fr_0.6fr_0.75fr_0.8fr_0.95fr_0.9fr_0.7fr_0.55fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200"
-                    >
-                      <div className="flex items-center gap-2">
-                        <RankBadge rank={row.rank} />
-                        <span className="text-slate-100">
-                          {row.institution}
+                  .map((rawRow) => {
+                    const row = applyOverride(rawRow);
+                    return (
+                      <div
+                        key={row.id}
+                        className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200"
+                      >
+                        <div className="flex items-center gap-2">
+                          <RankBadge rank={row.rank} />
+                          <span className="text-slate-100">
+                            {row.institution}
+                          </span>
+                        </div>
+                        <span className="text-right">{row.tenor}</span>
+                        <span className="text-right">
+                          {showRowAmount(row.id) ? row.amount : "--"}
+                        </span>
+                        <span className="text-right font-semibold text-amber-300">
+                          {row.rate}
+                        </span>
+                        <span
+                          className="truncate pl-3 text-right text-xs text-slate-300"
+                          title={normalizeAccountRequirement(row.accountType)}
+                        >
+                          {normalizeAccountRequirement(row.accountType)}
+                        </span>
+                        <span
+                          className="truncate pl-3 text-right text-xs text-slate-300"
+                          title={`${row.collateral} / ${row.reason}`}
+                        >
+                          {row.collateral}
+                        </span>
+                        <span className="text-right text-xs tabular-nums text-slate-400">
+                          {row.updatedAt}
+                        </span>
+                        <span className="flex items-center justify-end gap-1">
+                          <button
+                            className="whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEdit(row);
+                            }}
+                            type="button"
+                          >
+                            修正
+                          </button>
+                          <button
+                            className="whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
+                            type="button"
+                          >
+                            发送
+                          </button>
                         </span>
                       </div>
-                      <span className="text-right">{row.tenor}</span>
-                      <span className="text-right">
-                        {showRowAmount(row.id) ? row.amount : "--"}
-                      </span>
-                      <span className="text-right font-semibold text-amber-300">
-                        {row.rate}
-                      </span>
-                      <span
-                        className="truncate pl-3 text-right text-xs text-slate-300"
-                        title={normalizeAccountRequirement(row.accountType)}
-                      >
-                        {normalizeAccountRequirement(row.accountType)}
-                      </span>
-                      <span
-                        className="truncate pl-3 text-right text-xs text-slate-300"
-                        title={`${row.collateral} / ${row.reason}`}
-                      >
-                        {row.collateral}
-                      </span>
-                      <span className="text-right text-xs tabular-nums text-slate-400">
-                        {row.updatedAt}
-                      </span>
-                      <span className="flex items-center justify-end">
-                        <button
-                          className="rounded-lg border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
-                          type="button"
-                        >
-                          发送
-                        </button>
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
               </div>
             ) : null}
             {displayLevel === 2 ? (
               <div className="divide-y divide-[#152437] bg-[#080f1c]">
                 {sortRowsByRank(group.rows)
                   .filter((row) => matchTenor(row.tenor))
-                  .map((row) => (
-                    <div
-                      key={row.id}
-                      className="grid w-full grid-cols-[1.5fr_0.6fr_0.75fr_0.8fr_0.95fr_0.9fr_0.7fr_0.55fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200 transition hover:bg-[#11253d]"
-                    >
-                      <div className="flex items-center gap-2">
-                        {row.rank === "最优" || row.rank === "次优" ? (
-                          <RankBadge rank={row.rank} />
-                        ) : null}
-                        <span className="text-slate-100">
-                          {row.institution}
+                  .map((rawRow) => {
+                    const row = applyOverride(rawRow);
+                    return (
+                      <div
+                        key={row.id}
+                        className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200 transition hover:bg-[#11253d]"
+                      >
+                        <div className="flex items-center gap-2">
+                          {row.rank === "最优" || row.rank === "次优" ? (
+                            <RankBadge rank={row.rank} />
+                          ) : null}
+                          <span className="text-slate-100">
+                            {row.institution}
+                          </span>
+                        </div>
+                        <span className="text-right">{row.tenor}</span>
+                        <span className="text-right">
+                          {showRowAmount(row.id) ? row.amount : "--"}
+                        </span>
+                        <span className="text-right font-semibold text-amber-300">
+                          {row.rate}
+                        </span>
+                        <span
+                          className="truncate pl-3 text-right text-xs text-slate-300"
+                          title={normalizeAccountRequirement(row.accountType)}
+                        >
+                          {normalizeAccountRequirement(row.accountType)}
+                        </span>
+                        <span
+                          className="truncate pl-3 text-right text-xs text-slate-300"
+                          title={`${row.collateral} / ${row.reason}`}
+                        >
+                          {row.collateral}
+                        </span>
+                        <span className="text-right text-xs tabular-nums text-slate-400">
+                          {row.updatedAt}
+                        </span>
+                        <span className="flex items-center justify-end gap-1">
+                          <button
+                            className="whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEdit(row);
+                            }}
+                            type="button"
+                          >
+                            修正
+                          </button>
+                          <button
+                            className="whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
+                            type="button"
+                          >
+                            发送
+                          </button>
                         </span>
                       </div>
-                      <span className="text-right">{row.tenor}</span>
-                      <span className="text-right">
-                        {showRowAmount(row.id) ? row.amount : "--"}
-                      </span>
-                      <span className="text-right font-semibold text-amber-300">
-                        {row.rate}
-                      </span>
-                      <span
-                        className="truncate pl-3 text-right text-xs text-slate-300"
-                        title={normalizeAccountRequirement(row.accountType)}
-                      >
-                        {normalizeAccountRequirement(row.accountType)}
-                      </span>
-                      <span
-                        className="truncate pl-3 text-right text-xs text-slate-300"
-                        title={`${row.collateral} / ${row.reason}`}
-                      >
-                        {row.collateral}
-                      </span>
-                      <span className="text-right text-xs tabular-nums text-slate-400">
-                        {row.updatedAt}
-                      </span>
-                      <span className="flex items-center justify-end">
-                        <button
-                          className="rounded-lg border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
-                          type="button"
-                        >
-                          发送
-                        </button>
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
               </div>
             ) : null}
           </div>
@@ -5383,18 +5555,6 @@ function CfetsInstPanel() {
               </option>
             ))}
           </select>
-          <div className="flex gap-1">
-            {fundStructureRangeTabs.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                className={auxTabClass(t.id === range)}
-                onClick={() => setRange(t.id)}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
         </div>
       </div>
       {/* 控件行 2：机构类型 多选 */}
