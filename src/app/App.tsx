@@ -39,12 +39,13 @@ const BANK_TENOR_LABEL: Record<BankTenor, string> = {
   ON: "隔夜",
   "7D": "7天",
 };
-const bigBankWhitelist: readonly string[] = [
+const defaultBigBankWhitelist: readonly string[] = [
   "工商银行",
   "建设银行",
   "农业银行",
   "中国银行",
 ];
+const BANK_TENORS: readonly BankTenor[] = ["ON", "7D"];
 type QuoteRank = "最优" | "次优" | "报价";
 type QuoteDetailRow = {
   id: string;
@@ -1823,7 +1824,7 @@ function App() {
     <div className="h-screen w-screen overflow-hidden bg-[#09111d] text-slate-100">
       <div className="flex h-full flex-col">
         <TopBar currentTime={currentTime} />
-        <main className="grid min-h-0 flex-1 grid-cols-[28fr_42fr_30fr] grid-rows-[minmax(0,1fr)] gap-3 overflow-hidden px-3 pb-3 pt-2">
+        <main className="grid min-h-0 flex-1 grid-cols-[23fr_47fr_30fr] grid-rows-[minmax(0,1fr)] gap-3 overflow-hidden px-3 pb-3 pt-2">
           <LeftSummaryPanel />
           <MainQuoteBoard />
           <RightSidebar />
@@ -1837,7 +1838,7 @@ function App() {
 function TopBar({ currentTime }: { currentTime: Date }) {
   return (
     <header className="border-b border-[#1b2a42] bg-[#0d1726] px-3 py-2 shadow-[inset_0_-1px_0_rgba(74,101,140,0.18)]">
-      <div className="grid grid-cols-[28fr_42fr_30fr] items-center gap-3">
+      <div className="grid grid-cols-[23fr_47fr_30fr] items-center gap-3">
         <div className="text-[20px] font-semibold tracking-[0.04em] text-slate-50">
           资金实时行情看板
         </div>
@@ -1867,7 +1868,31 @@ function TopBar({ currentTime }: { currentTime: Date }) {
   );
 }
 
+function makeEmptyBankRow(institution: string, tenor: BankTenor): BankRateRow {
+  return {
+    institution,
+    tenor,
+    nonBankRate: "",
+    refNonBankRate: "",
+    deltaNonBankBp: "",
+    bankRate: "",
+    refBankRate: "",
+    deltaBp: "",
+    updatedAt: "",
+    hasQuote: false,
+  };
+}
+
+function deriveHasQuote(row: BankRateRow): boolean {
+  return (
+    (row.nonBankRate ?? "").trim() !== "" || (row.bankRate ?? "").trim() !== ""
+  );
+}
+
 function LeftSummaryPanel() {
+  const [whitelist, setWhitelist] = useState<string[]>([
+    ...defaultBigBankWhitelist,
+  ]);
   const [bankRateRows, setBankRateRows] = useState<BankRateRow[]>([
     ...initialBankRateRows,
   ]);
@@ -1886,8 +1911,7 @@ function LeftSummaryPanel() {
             ...section,
             rows: bankRateRows
               .filter(
-                (row) =>
-                  row.hasQuote && bigBankWhitelist.includes(row.institution),
+                (row) => row.hasQuote && whitelist.includes(row.institution),
               )
               .map((row) => [
                 row.institution,
@@ -1906,8 +1930,25 @@ function LeftSummaryPanel() {
       section.layout === "exchange-split",
   );
 
+  function buildDraft(): BankRateRow[] {
+    const byKey = new Map<string, BankRateRow>();
+    for (const row of bankRateRows) {
+      byKey.set(`${row.institution}__${row.tenor}`, row);
+    }
+    const result: BankRateRow[] = [];
+    for (const institution of whitelist) {
+      for (const tenor of BANK_TENORS) {
+        const existing = byKey.get(`${institution}__${tenor}`);
+        result.push(
+          existing ? { ...existing } : makeEmptyBankRow(institution, tenor),
+        );
+      }
+    }
+    return result;
+  }
+
   function openBankEditor() {
-    setDraftBankRateRows(bankRateRows.map((row) => ({ ...row })));
+    setDraftBankRateRows(buildDraft());
     setIsBankEditorOpen(true);
   }
 
@@ -1919,10 +1960,7 @@ function LeftSummaryPanel() {
     setDraftBankRateRows((current) =>
       current.map((row, rowIndex) => {
         if (rowIndex !== index) return row;
-        const updated: BankRateRow =
-          field === "hasQuote"
-            ? { ...row, hasQuote: value === "true" }
-            : { ...row, [field]: value };
+        const updated: BankRateRow = { ...row, [field]: value };
         if (field === "bankRate") {
           const cur = parseFloat(value.replace("%", ""));
           const ref = parseFloat(row.refBankRate.replace("%", ""));
@@ -1944,7 +1982,25 @@ function LeftSummaryPanel() {
     );
   }
 
+  function addInstitution(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    if (!whitelist.includes(trimmed)) {
+      setWhitelist((prev) => [...prev, trimmed]);
+    }
+    setDraftBankRateRows((current) => {
+      const exists = current.some((r) => r.institution === trimmed);
+      if (exists) return current;
+      return [
+        ...current,
+        makeEmptyBankRow(trimmed, "ON"),
+        makeEmptyBankRow(trimmed, "7D"),
+      ];
+    });
+  }
+
   function resetDraftRows() {
+    setWhitelist([...defaultBigBankWhitelist]);
     setDraftBankRateRows(initialBankRateRows.map((row) => ({ ...row })));
   }
 
@@ -1952,10 +2008,14 @@ function LeftSummaryPanel() {
     const now = new Date();
     const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
     setBankRateRows(
-      draftBankRateRows.map((row) => ({
-        ...row,
-        updatedAt: row.hasQuote ? time : "",
-      })),
+      draftBankRateRows.map((row) => {
+        const hasQuote = deriveHasQuote(row);
+        return {
+          ...row,
+          hasQuote,
+          updatedAt: hasQuote ? time : "",
+        };
+      }),
     );
     setIsBankEditorOpen(false);
   }
@@ -2029,6 +2089,7 @@ function LeftSummaryPanel() {
         open={isBankEditorOpen}
         rows={draftBankRateRows}
         onChange={updateDraftRow}
+        onAddInstitution={addInstitution}
         onClose={() => setIsBankEditorOpen(false)}
         onReset={resetDraftRows}
         onSave={saveBankRateRows}
@@ -2041,6 +2102,7 @@ function BankRateEditorModal({
   open,
   rows,
   onChange,
+  onAddInstitution,
   onClose,
   onReset,
   onSave,
@@ -2048,12 +2110,20 @@ function BankRateEditorModal({
   open: boolean;
   rows: readonly BankRateRow[];
   onChange: (index: number, field: keyof BankRateRow, value: string) => void;
+  onAddInstitution: (name: string) => void;
   onClose: () => void;
   onReset: () => void;
   onSave: () => void;
 }) {
+  const [newInstName, setNewInstName] = useState("");
   if (!open) {
     return null;
+  }
+
+  function commitAddInstitution() {
+    if (!newInstName.trim()) return;
+    onAddInstitution(newInstName);
+    setNewInstName("");
   }
 
   return (
@@ -2068,8 +2138,7 @@ function BankRateEditorModal({
               <div className="mt-1 text-xs text-slate-500">
                 按机构 × 期限（隔夜 /
                 7天）维护非银利率和银行利率。当日大行价格来自每天 10:00~11:00
-                在群或私聊给出的固定价格；如某机构当天无 7
-                天报价，请将「有报价」关闭，该期限将完全隐藏。
+                在群或私聊给出的固定价格；非银利率与银行利率全部留空则视为「当日无报价」，列表中不展示该期限。
               </div>
             </div>
             <button
@@ -2083,17 +2152,16 @@ function BankRateEditorModal({
         </div>
         <div className="px-5 py-4">
           <div className="overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
-            <div className="grid grid-cols-[1.4fr_0.7fr_1fr_1fr_0.7fr] border-b border-[#22324d] bg-[#111d30] px-4 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+            <div className="grid grid-cols-[1.4fr_0.7fr_1fr_1fr] border-b border-[#22324d] bg-[#111d30] px-4 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400">
               <span>机构</span>
               <span className="text-center">期限</span>
               <span className="text-right">非银利率</span>
               <span className="text-right">银行利率</span>
-              <span className="text-center">有报价</span>
             </div>
             {rows.map((row, index) => (
               <div
                 key={`${row.institution}-${row.tenor}-${index}`}
-                className={`grid grid-cols-[1.4fr_0.7fr_1fr_1fr_0.7fr] items-center gap-3 border-b border-[#162439] px-4 py-3 ${
+                className={`grid grid-cols-[1.4fr_0.7fr_1fr_1fr] items-center gap-3 border-b border-[#162439] px-4 py-3 ${
                   index % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
                 }`}
               >
@@ -2113,21 +2181,33 @@ function BankRateEditorModal({
                   value={row.bankRate}
                   onChange={(value) => onChange(index, "bankRate", value)}
                 />
-                <div className="flex items-center justify-center">
-                  <input
-                    type="checkbox"
-                    checked={row.hasQuote}
-                    onChange={(e) =>
-                      onChange(
-                        index,
-                        "hasQuote",
-                        e.target.checked ? "true" : "false",
-                      )
-                    }
-                  />
-                </div>
               </div>
             ))}
+          </div>
+          <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
+            <span className="text-slate-500">新增机构</span>
+            <input
+              className="w-44 rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
+              placeholder="如 交通银行"
+              value={newInstName}
+              onChange={(e) => setNewInstName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  commitAddInstitution();
+                }
+              }}
+            />
+            <button
+              className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-200"
+              onClick={commitAddInstitution}
+              type="button"
+            >
+              + 添加机构
+            </button>
+            <span className="ml-2 text-[11px] text-slate-500">
+              添加后会同时生成隔夜与 7 天两行供编辑
+            </span>
           </div>
         </div>
         <div className="flex items-center justify-end gap-2 border-t border-[#1c3150] bg-[#0d1726] px-5 py-4">
@@ -2657,54 +2737,53 @@ function MainQuoteBoard() {
     <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pr-1">
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#2a4a78] bg-[#0c1730]">
         <div className="border-b border-[#1b2a42] bg-[#101b2c] px-4 py-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="text-base font-semibold text-slate-50">
+          <div className="flex flex-nowrap items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="shrink-0 whitespace-nowrap text-base font-semibold text-slate-50">
                 非银报价
               </div>
+              <div className="flex flex-nowrap items-center gap-0.5 text-xs text-slate-400">
+                <button
+                  className={miniChipClass(tenorFilter === "all")}
+                  onClick={() => setTenorFilter("all")}
+                  type="button"
+                >
+                  全部
+                </button>
+                {QUOTE_TENOR_OPTIONS.map((t) => (
+                  <button
+                    key={t}
+                    className={miniChipClass(tenorFilter === t)}
+                    onClick={() => setTenorFilter(t)}
+                    type="button"
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-1.5">
               <button
-                className={auxTabClass(displayLevel === 1)}
+                className={miniChipClass(displayLevel === 1)}
                 onClick={() => setDisplayLevel(1)}
                 type="button"
               >
                 1级
               </button>
               <button
-                className={auxTabClass(displayLevel === 2)}
+                className={miniChipClass(displayLevel === 2)}
                 onClick={() => setDisplayLevel(2)}
                 type="button"
               >
                 2级
               </button>
               <button
-                className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
+                className="whitespace-nowrap rounded-md border border-emerald-500/30 bg-emerald-500/15 px-2 py-1 text-[11px] font-medium text-emerald-300"
                 type="button"
               >
                 下载
               </button>
             </div>
-          </div>
-          <div className="mt-2 flex items-center gap-2 text-xs text-slate-400">
-            <span className="text-slate-500">期限</span>
-            <button
-              className={auxTabClass(tenorFilter === "all")}
-              onClick={() => setTenorFilter("all")}
-              type="button"
-            >
-              全部
-            </button>
-            {QUOTE_TENOR_OPTIONS.map((t) => (
-              <button
-                key={t}
-                className={auxTabClass(tenorFilter === t)}
-                onClick={() => setTenorFilter(t)}
-                type="button"
-              >
-                {t}
-              </button>
-            ))}
           </div>
         </div>
         <div ref={bodyRef} className="flex min-h-0 flex-1 flex-col">
@@ -7820,6 +7899,12 @@ function auxTabClass(active: boolean) {
   return active
     ? "rounded-lg border border-[#3c76f0] bg-[#2551b8] px-3 py-1.5 text-xs text-white"
     : "rounded-lg border border-[#253754] bg-[#101a2b] px-3 py-1.5 text-xs text-slate-400 hover:border-[#33507d] hover:text-slate-200";
+}
+
+function miniChipClass(active: boolean) {
+  return active
+    ? "whitespace-nowrap rounded-md border border-[#3c76f0] bg-[#2551b8] px-1.5 py-0.5 text-[11px] font-medium text-white"
+    : "whitespace-nowrap rounded-md border border-[#253754] bg-[#101a2b] px-1.5 py-0.5 text-[11px] text-slate-400 hover:border-[#33507d] hover:text-slate-200";
 }
 
 function cellClassName(
