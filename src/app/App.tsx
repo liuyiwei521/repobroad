@@ -1926,8 +1926,64 @@ function FloatingBall() {
   );
 }
 
+const DEFAULT_COLUMN_RATIOS: [number, number, number] = [23, 47, 30];
+const COLUMN_RATIOS_KEY = "boardColumnRatios.v1";
+const COLUMN_MIN: [number, number, number] = [16, 28, 20];
+
+function clampColumns(
+  next: [number, number, number],
+): [number, number, number] {
+  let [l, m, r] = next;
+  // 让总和先归一为 100
+  const sum = l + m + r;
+  if (sum <= 0) return DEFAULT_COLUMN_RATIOS;
+  l = (l / sum) * 100;
+  m = (m / sum) * 100;
+  r = (r / sum) * 100;
+  // 应用最小值约束：缺多少从最大的那一栏借
+  const mins = COLUMN_MIN;
+  const arr = [l, m, r];
+  for (let i = 0; i < 3; i++) {
+    if (arr[i] < mins[i]) {
+      const need = mins[i] - arr[i];
+      arr[i] = mins[i];
+      const others = [0, 1, 2]
+        .filter((j) => j !== i)
+        .sort((a, b) => arr[b] - arr[a]);
+      let remaining = need;
+      for (const j of others) {
+        const avail = arr[j] - mins[j];
+        const take = Math.min(avail, remaining);
+        arr[j] -= take;
+        remaining -= take;
+        if (remaining <= 0) break;
+      }
+    }
+  }
+  return [arr[0], arr[1], arr[2]];
+}
+
 function App() {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [columns, setColumns] = useState<[number, number, number]>(() => {
+    if (typeof window === "undefined") return DEFAULT_COLUMN_RATIOS;
+    try {
+      const raw = window.localStorage.getItem(COLUMN_RATIOS_KEY);
+      if (!raw) return DEFAULT_COLUMN_RATIOS;
+      const parsed = JSON.parse(raw);
+      if (
+        Array.isArray(parsed) &&
+        parsed.length === 3 &&
+        parsed.every((v) => typeof v === "number" && Number.isFinite(v))
+      ) {
+        return clampColumns([parsed[0], parsed[1], parsed[2]]);
+      }
+    } catch {
+      /* ignore */
+    }
+    return DEFAULT_COLUMN_RATIOS;
+  });
+  const mainRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -1937,13 +1993,84 @@ function App() {
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(COLUMN_RATIOS_KEY, JSON.stringify(columns));
+    } catch {
+      /* ignore */
+    }
+  }, [columns]);
+
+  function startDragSplitter(
+    event: React.MouseEvent<HTMLDivElement>,
+    boundary: 0 | 1,
+  ) {
+    event.preventDefault();
+    const container = mainRef.current;
+    if (!container) return;
+    const startX = event.clientX;
+    const startCols: [number, number, number] = [...columns] as [
+      number,
+      number,
+      number,
+    ];
+    const totalWidth = container.getBoundingClientRect().width;
+    if (totalWidth <= 0) return;
+
+    function onMove(ev: MouseEvent) {
+      const deltaPct = ((ev.clientX - startX) / totalWidth) * 100;
+      const next: [number, number, number] = [...startCols] as [
+        number,
+        number,
+        number,
+      ];
+      if (boundary === 0) {
+        next[0] = startCols[0] + deltaPct;
+        next[1] = startCols[1] - deltaPct;
+      } else {
+        next[1] = startCols[1] + deltaPct;
+        next[2] = startCols[2] - deltaPct;
+      }
+      setColumns(clampColumns(next));
+    }
+
+    function onUp() {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    }
+
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "col-resize";
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }
+
+  function resetColumns() {
+    setColumns(DEFAULT_COLUMN_RATIOS);
+  }
+
+  const gridTemplate = `${columns[0]}% 10px ${columns[1]}% 10px ${columns[2]}%`;
+  const topGridTemplate = `${columns[0]}fr ${columns[1]}fr ${columns[2]}fr`;
+
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#09111d] text-slate-100">
       <div className="flex h-full flex-col">
-        <TopBar currentTime={currentTime} />
-        <main className="grid min-h-0 flex-1 grid-cols-[23fr_47fr_30fr] grid-rows-[minmax(0,1fr)] gap-3 overflow-hidden px-3 pb-3 pt-2">
+        <TopBar
+          currentTime={currentTime}
+          gridTemplateColumns={topGridTemplate}
+          onResetColumns={resetColumns}
+        />
+        <main
+          ref={mainRef}
+          className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] overflow-hidden px-3 pb-3 pt-2"
+          style={{ gridTemplateColumns: gridTemplate, columnGap: 0 }}
+        >
           <LeftSummaryPanel />
+          <ColumnSplitter onMouseDown={(e) => startDragSplitter(e, 0)} />
           <MainQuoteBoard />
+          <ColumnSplitter onMouseDown={(e) => startDragSplitter(e, 1)} />
           <RightSidebar />
         </main>
       </div>
@@ -1952,12 +2079,48 @@ function App() {
   );
 }
 
-function TopBar({ currentTime }: { currentTime: Date }) {
+function ColumnSplitter({
+  onMouseDown,
+}: {
+  onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => void;
+}) {
+  return (
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      onMouseDown={onMouseDown}
+      className="group relative h-full cursor-col-resize bg-transparent transition-colors hover:bg-sky-500/30"
+      style={{ width: "100%", minWidth: 6 }}
+    >
+      <span className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-[2px] -translate-x-1/2 -translate-y-1/2 rounded bg-[#2a3f5e] group-hover:bg-sky-300" />
+    </div>
+  );
+}
+
+function TopBar({
+  currentTime,
+  gridTemplateColumns,
+  onResetColumns,
+}: {
+  currentTime: Date;
+  gridTemplateColumns: string;
+  onResetColumns: () => void;
+}) {
   return (
     <header className="border-b border-[#1b2a42] bg-[#0d1726] px-3 py-2 shadow-[inset_0_-1px_0_rgba(74,101,140,0.18)]">
-      <div className="grid grid-cols-[23fr_47fr_30fr] items-center gap-3">
-        <div className="text-[20px] font-semibold tracking-[0.04em] text-slate-50">
-          资金实时行情看板
+      <div className="grid items-center gap-3" style={{ gridTemplateColumns }}>
+        <div className="flex items-center gap-2">
+          <div className="text-[20px] font-semibold tracking-[0.04em] text-slate-50">
+            资金实时行情看板
+          </div>
+          <button
+            className="rounded-md border border-[#253754] bg-[#101a2b] px-1.5 py-0.5 text-[10px] text-slate-400 hover:border-[#33507d] hover:text-slate-200"
+            onClick={onResetColumns}
+            type="button"
+            title="恢复默认三栏宽度"
+          >
+            ⤺ 布局
+          </button>
         </div>
         <div className="relative h-8">
           <div className="pointer-events-auto absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 whitespace-nowrap text-sm text-slate-400">
