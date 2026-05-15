@@ -4609,54 +4609,72 @@ const cfetsMetricDefs: {
   label: string;
   desc: string;
   chartType: "line" | "stackedBar" | "divergeBar";
+  unit: string;
+  axisLabel: string;
 }[] = [
   {
     key: "buyRate",
     label: "正回购利率",
     desc: "",
     chartType: "line",
+    unit: "%",
+    axisLabel: "利率(%)",
   },
   {
     key: "sellRate",
     label: "逆回购利率",
     desc: "以债券质押融出资金的加权利率，利率越高说明融出资金收益越高",
     chartType: "line",
+    unit: "%",
+    axisLabel: "利率(%)",
   },
   {
     key: "buyAmt",
     label: "正回购金额",
-    desc: "各机构今天质押式融入资金规模（亿元），反映融资需求强度",
+    desc: "各机构今天质押式融入资金规模，反映融资需求强度",
     chartType: "stackedBar",
+    unit: "亿",
+    axisLabel: "金额(亿元)",
   },
   {
     key: "sellAmt",
     label: "逆回购金额",
-    desc: "各机构今天质押式融出资金规模（亿元），反映市场流动性供给",
+    desc: "各机构今天质押式融出资金规模，反映市场流动性供给",
     chartType: "stackedBar",
+    unit: "亿",
+    axisLabel: "金额(亿元)",
   },
   {
     key: "netInflow",
     label: "机构资金结构",
-    desc: "各机构质押式回购融入融出结构，堆叠柱展示每日各机构分布（亿元）",
+    desc: "各机构质押式回购融入融出结构，堆叠柱展示每日各机构分布",
     chartType: "divergeBar",
+    unit: "亿",
+    axisLabel: "金额(亿元)",
   },
   {
     key: "netInflowAmt",
-    label: "净融入金额(百万)",
-    desc: "各机构当日净融入资金（正回购金额 − 逆回购金额，单位百万元）",
+    label: "净融入金额",
+    desc: "各机构当日净融入资金（正回购金额 − 逆回购金额）",
     chartType: "stackedBar",
+    unit: "百万",
+    axisLabel: "金额(百万元)",
   },
   {
     key: "buyBalance",
-    label: "正回购余额(百万)",
-    desc: "各机构未到期正回购融入存量余额（单位百万元）",
+    label: "正回购余额",
+    desc: "各机构未到期正回购融入存量余额",
     chartType: "stackedBar",
+    unit: "百万",
+    axisLabel: "金额(百万元)",
   },
   {
     key: "sellBalance",
-    label: "逆回购余额(百万)",
-    desc: "各机构未到期逆回购融出存量余额（单位百万元）",
+    label: "逆回购余额",
+    desc: "各机构未到期逆回购融出存量余额",
     chartType: "stackedBar",
+    unit: "百万",
+    axisLabel: "金额(百万元)",
   },
 ];
 
@@ -5303,16 +5321,19 @@ const instColors = fundStructureLegendItems.map(
 function MultiSeriesChart({
   block,
   chartType,
-  unitLabel = "",
+  unit = "",
+  axisLabel,
   hiddenSeries,
 }: {
   block: CfetsTrendBlock;
   chartType: "line" | "stackedBar" | "divergeBar";
-  unitLabel?: string;
+  unit?: string;
+  axisLabel?: string;
   hiddenSeries?: ReadonlySet<number>;
 }) {
   const { dates, series } = block;
   const isHidden = (si: number) => hiddenSeries?.has(si) ?? false;
+  const axisCaption = axisLabel ?? (unit ? `单位：${unit}` : "");
   const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
     useChartTooltip(dates.length);
   const VW = 480;
@@ -5353,6 +5374,11 @@ function MultiSeriesChart({
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
           >
+            {axisCaption && (
+              <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[9px] text-slate-500">
+                {axisCaption}
+              </div>
+            )}
             <svg
               viewBox={`0 0 ${VW} ${VH}`}
               preserveAspectRatio="none"
@@ -5450,7 +5476,7 @@ function MultiSeriesChart({
                   </span>
                   <span className="ml-auto pl-3 font-semibold text-slate-200">
                     {vals[tooltipState.index].toFixed(4)}
-                    {unitLabel}
+                    {unit}
                   </span>
                 </div>
               ) : null,
@@ -5486,6 +5512,11 @@ function MultiSeriesChart({
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
           >
+            {axisCaption && (
+              <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[9px] text-slate-500">
+                {axisCaption}
+              </div>
+            )}
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
@@ -5568,7 +5599,8 @@ function MultiSeriesChart({
                     {fundStructureLegendItems[si].label}
                   </span>
                   <span className="ml-auto pl-3 font-semibold text-slate-200">
-                    {vals[tooltipState.index].toFixed(0)}亿
+                    {vals[tooltipState.index].toFixed(0)}
+                    {unit}
                   </span>
                 </div>
               ) : null,
@@ -5606,6 +5638,11 @@ function MultiSeriesChart({
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
+          {axisCaption && (
+            <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[9px] text-slate-500">
+              {axisCaption}
+            </div>
+          )}
           <div className="absolute inset-x-0 top-1/2 border-t border-[#3a5a80]" />
           <div className="absolute inset-x-1 bottom-1 top-1 flex items-center gap-[2px]">
             {netVals.map((val, di) => {
@@ -5688,7 +5725,8 @@ function MultiSeriesChart({
               className={`font-semibold ${netVals[tooltipState.index] >= 0 ? "text-red-400" : "text-emerald-400"}`}
             >
               {netVals[tooltipState.index] >= 0 ? "+" : ""}
-              {netVals[tooltipState.index].toFixed(0)}亿
+              {netVals[tooltipState.index].toFixed(0)}
+              {unit}
             </span>
           </div>
         </ChartTooltip>
@@ -5794,13 +5832,19 @@ function CfetsInstPanel() {
       {/* 图表 */}
       {metricKey === "netInflow" ? (
         <div className="min-h-0 flex-1">
-          <FundStructureBars range={range} hiddenSeries={hiddenSeries} />
+          <FundStructureBars
+            range={range}
+            hiddenSeries={hiddenSeries}
+            unit={metricDef.unit}
+            axisLabel={metricDef.axisLabel}
+          />
         </div>
       ) : (
         <MultiSeriesChart
           block={block}
           chartType={metricDef.chartType}
-          unitLabel={metricDef.chartType === "line" ? "%" : ""}
+          unit={metricDef.unit}
+          axisLabel={metricDef.axisLabel}
           hiddenSeries={hiddenSeries}
         />
       )}
@@ -5882,7 +5926,8 @@ function CfetsBondPanel() {
       <MultiSeriesChart
         block={block}
         chartType={metricDef.chartType}
-        unitLabel={metricDef.chartType === "line" ? "%" : ""}
+        unit={metricDef.unit}
+        axisLabel={metricDef.axisLabel}
       />
       {/* 说明 */}
       <div className="text-[10px] text-slate-500">{metricDef.desc}</div>
@@ -6684,13 +6729,18 @@ function NcdPrimaryExpandedTable() {
 function FundStructureBars({
   range,
   hiddenSeries,
+  unit = "亿",
+  axisLabel,
 }: {
   range: FundStructureRange;
   hiddenSeries?: ReadonlySet<number>;
+  unit?: string;
+  axisLabel?: string;
 }) {
   const yTicks = [5000, 4000, 3000, 2000, 1000, 0] as const;
   const { bars, labels } = fundStructureRangeData[range];
   const isHidden = (i: number) => hiddenSeries?.has(i) ?? false;
+  const axisCaption = axisLabel ?? (unit ? `单位：${unit}` : "");
   const [hoveredBar, setHoveredBar] = useState<{
     index: number;
     clientX: number;
@@ -6705,6 +6755,11 @@ function FundStructureBars({
         ))}
       </div>
       <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]">
+        {axisCaption && (
+          <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[9px] text-slate-500">
+            {axisCaption}
+          </div>
+        )}
         {yTicks.map((tick, index) => (
           <div
             key={`fund-grid-${tick}`}
@@ -6773,7 +6828,7 @@ function FundStructureBars({
                 {bars[hoveredBar.index]
                   .reduce((s, v, i) => s + (isHidden(i) ? 0 : v), 0)
                   .toLocaleString()}
-                亿
+                {unit}
               </span>
             </div>
             {fundStructureLegendItems.map((item, i) =>
@@ -6785,7 +6840,8 @@ function FundStructureBars({
                   />
                   <span className="text-slate-400">{item.label}</span>
                   <span className="ml-1 font-semibold text-slate-100">
-                    {bars[hoveredBar.index][i].toLocaleString()}亿
+                    {bars[hoveredBar.index][i].toLocaleString()}
+                    {unit}
                   </span>
                 </div>
               ),
