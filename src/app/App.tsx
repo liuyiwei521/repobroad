@@ -5810,21 +5810,12 @@ function CfetsInstPanel() {
               type="button"
               aria-pressed={!hidden}
               onClick={() => toggleSeries(i)}
-              className={`flex items-center gap-1.5 rounded transition-opacity hover:opacity-100 ${
-                hidden ? "opacity-50" : "opacity-100"
+              className={`rounded px-1 font-semibold transition-opacity hover:opacity-100 ${
+                hidden ? "opacity-50 line-through" : "opacity-100"
               }`}
+              style={{ color: hidden ? "#475569" : item.color }}
             >
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: hidden ? "#3a4a60" : item.color }}
-              />
-              <span
-                className={
-                  hidden ? "text-slate-600 line-through" : "text-slate-400"
-                }
-              >
-                {item.label}
-              </span>
+              {item.label}
             </button>
           );
         })}
