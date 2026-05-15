@@ -2415,11 +2415,6 @@ function BankRateEditorModal({
               <div className="text-base font-semibold text-slate-50">
                 今天大行价格手工输入
               </div>
-              <div className="mt-1 text-xs text-slate-500">
-                按机构 × 期限（隔夜 /
-                7天）维护非银利率和银行利率。当日大行价格来自每天 10:00~11:00
-                在群或私聊给出的固定价格；非银利率与银行利率全部留空则视为「当日无报价」，列表中不展示该期限。
-              </div>
             </div>
             <button
               className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
@@ -2485,9 +2480,6 @@ function BankRateEditorModal({
             >
               + 添加机构
             </button>
-            <span className="ml-2 text-[11px] text-slate-500">
-              添加后会同时生成隔夜与 7 天两行供编辑
-            </span>
           </div>
         </div>
         <div className="flex items-center justify-end gap-2 border-t border-[#1c3150] bg-[#0d1726] px-5 py-4">
@@ -3159,10 +3151,6 @@ function QuoteEditorModal({
             <div>
               <div className="text-base font-semibold text-slate-50">
                 修正报价
-              </div>
-              <div className="mt-1 text-xs text-slate-500">
-                分组 / 机构 / 期限 / 评级
-                等均可编辑；保存后将刷新「获取时间」。留空表示沿用原值。
               </div>
             </div>
             <button
@@ -6024,16 +6012,6 @@ function CfetsInstPanel() {
           hiddenSeries={hiddenSeries}
         />
       )}
-      {/* 说明 */}
-      <div className="text-[10px] text-slate-500">
-        {metricDef.desc}
-        {hiddenSeries.size > 0
-          ? ` · 已隐藏：${fundStructureLegendItems
-              .filter((_, i) => hiddenSeries.has(i))
-              .map((it) => it.label)
-              .join("、")}`
-          : ""}
-      </div>
     </div>
   );
 }
