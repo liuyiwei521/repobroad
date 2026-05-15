@@ -1042,6 +1042,16 @@ const intradayVolumeSeries = randomWalk(200, 40, 90, 14).map((v) =>
   Math.round(v),
 );
 
+// 各品种独立的盘中序列：自有锚点 + 自有日内波动，避免与主线视觉重合
+const intradayOverlaySeriesByProduct: Record<
+  Exclude<OverlayProduct, "none">,
+  number[]
+> = {
+  dr007: randomWalk(2.012, 40, 0.04, 71),
+  gc007: randomWalk(1.852, 40, 0.062, 72),
+  r007: randomWalk(2.058, 40, 0.052, 73),
+};
+
 const intradayTimeLabels = [
   "09:30",
   "10:00",
@@ -1109,6 +1119,113 @@ const historicalCloseDatasets: Record<
     return { labels, close, volume };
   })(),
   "6m": buildSixMonthDailyDataset(),
+};
+
+// 历史对比品种独立序列：与主线 (dr001) 长度对齐，但用各自的锚点 / 波动 / 种子
+const historicalProductAnchors: Record<
+  Exclude<OverlayProduct | SpreadProduct, "none" | "dr001">,
+  {
+    anchor5d: number;
+    anchor1m: number;
+    anchor6m: number;
+    vol5d: number;
+    vol1m: number;
+    vol6m: number;
+    seed: number;
+  }
+> = {
+  dr007: {
+    anchor5d: 1.36,
+    anchor1m: 1.31,
+    anchor6m: 1.5,
+    vol5d: 0.15,
+    vol1m: 0.028,
+    vol6m: 0.012,
+    seed: 81,
+  },
+  gc007: {
+    anchor5d: 1.21,
+    anchor1m: 1.18,
+    anchor6m: 1.42,
+    vol5d: 0.2,
+    vol1m: 0.035,
+    vol6m: 0.018,
+    seed: 82,
+  },
+  r007: {
+    anchor5d: 1.42,
+    anchor1m: 1.36,
+    anchor6m: 1.58,
+    vol5d: 0.16,
+    vol1m: 0.03,
+    vol6m: 0.014,
+    seed: 83,
+  },
+};
+const historicalProductSeries: Record<
+  HistoryRange,
+  Record<Exclude<OverlayProduct | SpreadProduct, "none" | "dr001">, number[]>
+> = {
+  "5d": {
+    dr007: randomWalk(
+      historicalProductAnchors.dr007.anchor5d,
+      historicalCloseDatasets["5d"].close.length,
+      historicalProductAnchors.dr007.vol5d,
+      historicalProductAnchors.dr007.seed,
+    ),
+    gc007: randomWalk(
+      historicalProductAnchors.gc007.anchor5d,
+      historicalCloseDatasets["5d"].close.length,
+      historicalProductAnchors.gc007.vol5d,
+      historicalProductAnchors.gc007.seed,
+    ),
+    r007: randomWalk(
+      historicalProductAnchors.r007.anchor5d,
+      historicalCloseDatasets["5d"].close.length,
+      historicalProductAnchors.r007.vol5d,
+      historicalProductAnchors.r007.seed,
+    ),
+  },
+  "1m": {
+    dr007: randomWalk(
+      historicalProductAnchors.dr007.anchor1m,
+      historicalCloseDatasets["1m"].close.length,
+      historicalProductAnchors.dr007.vol1m,
+      historicalProductAnchors.dr007.seed + 1,
+    ),
+    gc007: randomWalk(
+      historicalProductAnchors.gc007.anchor1m,
+      historicalCloseDatasets["1m"].close.length,
+      historicalProductAnchors.gc007.vol1m,
+      historicalProductAnchors.gc007.seed + 1,
+    ),
+    r007: randomWalk(
+      historicalProductAnchors.r007.anchor1m,
+      historicalCloseDatasets["1m"].close.length,
+      historicalProductAnchors.r007.vol1m,
+      historicalProductAnchors.r007.seed + 1,
+    ),
+  },
+  "6m": {
+    dr007: randomWalk(
+      historicalProductAnchors.dr007.anchor6m,
+      historicalCloseDatasets["6m"].close.length,
+      historicalProductAnchors.dr007.vol6m,
+      historicalProductAnchors.dr007.seed + 2,
+    ),
+    gc007: randomWalk(
+      historicalProductAnchors.gc007.anchor6m,
+      historicalCloseDatasets["6m"].close.length,
+      historicalProductAnchors.gc007.vol6m,
+      historicalProductAnchors.gc007.seed + 2,
+    ),
+    r007: randomWalk(
+      historicalProductAnchors.r007.anchor6m,
+      historicalCloseDatasets["6m"].close.length,
+      historicalProductAnchors.r007.vol6m,
+      historicalProductAnchors.r007.seed + 2,
+    ),
+  },
 };
 
 const cfetsSummaryCards = [
@@ -7396,11 +7513,17 @@ function buildOverlaySeries(
   values: readonly number[],
   product: OverlayProduct,
 ) {
-  const delta =
-    product === "dr007" ? 0.012 : product === "gc007" ? -0.008 : 0.004;
-  return values.map(
-    (value, index) => value + delta + Math.sin(index / 3.2) * 0.0025,
-  );
+  if (product === "none") return values.slice();
+  const series = intradayOverlaySeriesByProduct[product];
+  // 长度对齐主线；若品种序列长度不同则按比例采样
+  if (series.length === values.length) return series.slice();
+  return values.map((_, i) => {
+    const idx = Math.min(
+      series.length - 1,
+      Math.round((i * (series.length - 1)) / Math.max(values.length - 1, 1)),
+    );
+    return series[idx];
+  });
 }
 
 function buildHistoricalSeries(
@@ -7414,29 +7537,9 @@ function buildHistoricalSeries(
     return [...baseSeries];
   }
 
-  const config = getProductSeriesConfig(normalized);
-  return baseSeries.map((value, index) => {
-    const wave =
-      Math.sin(index / config.waveDivisor) * config.waveAmplitude +
-      Math.cos(index / (config.waveDivisor + 3.4)) *
-        (config.waveAmplitude * 0.55);
-    return Number((value + config.offset + wave).toFixed(4));
-  });
-}
-
-function getProductSeriesConfig(
-  product: Exclude<OverlayProduct | SpreadProduct, "none" | "dr001">,
-) {
-  switch (product) {
-    case "dr007":
-      return { offset: 0.00115, waveAmplitude: 0.00015, waveDivisor: 5.8 };
-    case "gc007":
-      return { offset: 0.00172, waveAmplitude: 0.00018, waveDivisor: 6.5 };
-    case "r007":
-      return { offset: 0.00138, waveAmplitude: 0.00014, waveDivisor: 5.1 };
-    default:
-      return { offset: 0, waveAmplitude: 0, waveDivisor: 6 };
-  }
+  // 用独立的 randomWalk 序列，让对比/叠加品种与主线形态不平行
+  const series = historicalProductSeries[range][normalized];
+  return series.slice(0, baseSeries.length);
 }
 
 function buildCompactVolumeTicks(max: number) {
@@ -7449,9 +7552,18 @@ function buildCompactVolumeTicks(max: number) {
 }
 
 function buildSpreadAxisLabels(values: number[]) {
-  const maxAbs = Math.max(...values.map(Math.abs), 0.1);
+  const rawMax = Math.max(...values.map(Math.abs), 0);
+  const maxAbs = rawMax < 0.005 ? 0 : Math.max(rawMax * 1.2, 0.05);
+  if (maxAbs === 0) {
+    return ["0", "0", "0", "0", "0"];
+  }
   const step = maxAbs / 2;
-  return [maxAbs, step, 0, -step, -maxAbs].map((v) => v.toFixed(1));
+  const digits = maxAbs >= 1 ? 1 : maxAbs >= 0.1 ? 2 : 3;
+  const fmt = (v: number) => {
+    const fixed = Number(v.toFixed(digits));
+    return (Object.is(fixed, -0) ? 0 : fixed).toFixed(digits);
+  };
+  return [maxAbs, step, 0, -step, -maxAbs].map(fmt);
 }
 
 function buildAxisTickLabels(labels: readonly string[], maxVisible: number) {
