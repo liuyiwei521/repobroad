@@ -4314,17 +4314,6 @@ const cfetsInstPeriodLabels: CfetsInstPeriod[] = [
   "R9M",
   "R1Y",
 ];
-const cfetsInstInstitutionTypes = [
-  "大型银行",
-  "中小型银行",
-  "证券公司",
-  "保险公司",
-  "基金公司及产品",
-  "货币市场基金",
-  "理财子",
-  "其他",
-] as const;
-type CfetsInstInstitutionType = (typeof cfetsInstInstitutionTypes)[number];
 type CfetsBondKey = "利率债" | "信用债" | "同业存单";
 type CfetsBondRow = {
   inst: string;
@@ -5198,12 +5187,15 @@ function MultiSeriesChart({
   block,
   chartType,
   unitLabel = "",
+  hiddenSeries,
 }: {
   block: CfetsTrendBlock;
   chartType: "line" | "stackedBar" | "divergeBar";
   unitLabel?: string;
+  hiddenSeries?: ReadonlySet<number>;
 }) {
   const { dates, series } = block;
+  const isHidden = (si: number) => hiddenSeries?.has(si) ?? false;
   const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
     useChartTooltip(dates.length);
   const VW = 480;
@@ -5214,9 +5206,12 @@ function MultiSeriesChart({
   );
 
   if (chartType === "line") {
-    const flat = series.flat().filter((v) => v > 0);
-    const rawMin = Math.min(...flat);
-    const rawMax = Math.max(...flat);
+    const visibleFlat = series
+      .filter((_, si) => !isHidden(si))
+      .flat()
+      .filter((v) => v > 0);
+    const rawMin = visibleFlat.length ? Math.min(...visibleFlat) : 0;
+    const rawMax = visibleFlat.length ? Math.max(...visibleFlat) : 1;
     const pad = (rawMax - rawMin) * 0.12 || 0.02;
     const min = Math.max(0, rawMin - pad);
     const max = rawMax + pad;
@@ -5258,7 +5253,7 @@ function MultiSeriesChart({
                 />
               ))}
               {series.map((vals, si) =>
-                Math.min(...vals) > 0 ? (
+                !isHidden(si) && Math.min(...vals) > 0 ? (
                   <path
                     key={si}
                     d={buildLinePath(vals, VW, VH, min, max)}
@@ -5285,7 +5280,7 @@ function MultiSeriesChart({
             </svg>
             {tooltipState &&
               series.map((vals, si) =>
-                Math.min(...vals) > 0 ? (
+                !isHidden(si) && Math.min(...vals) > 0 ? (
                   <div
                     key={si}
                     className="pointer-events-none absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#0a1322]"
@@ -5324,7 +5319,7 @@ function MultiSeriesChart({
               {dates[tooltipState.index]}
             </div>
             {series.map((vals, si) =>
-              vals[0] > 0 ? (
+              !isHidden(si) && vals[0] > 0 ? (
                 <div
                   key={si}
                   className="flex items-center gap-2 py-0.5 text-[11px]"
@@ -5351,7 +5346,10 @@ function MultiSeriesChart({
 
   if (chartType === "stackedBar") {
     const dailyTotals = dates.map((_, di) =>
-      series.reduce((s, vals) => s + (vals[di] ?? 0), 0),
+      series.reduce(
+        (s, vals, si) => s + (isHidden(si) ? 0 : (vals[di] ?? 0)),
+        0,
+      ),
     );
     const maxTotal = Math.max(...dailyTotals, 1);
     const yTicks = Array.from({ length: 3 }, (_, i) =>
@@ -5388,6 +5386,7 @@ function MultiSeriesChart({
                     style={{ height: `${(total / maxTotal) * 100}%` }}
                   >
                     {series.map((vals, si) => {
+                      if (isHidden(si)) return null;
                       const pct = total > 0 ? (vals[di] / total) * 100 : 0;
                       return pct > 0 ? (
                         <div
@@ -5439,7 +5438,7 @@ function MultiSeriesChart({
               {dates[tooltipState.index]}
             </div>
             {series.map((vals, si) =>
-              vals[tooltipState.index] > 0 ? (
+              !isHidden(si) && vals[tooltipState.index] > 0 ? (
                 <div
                   key={si}
                   className="flex items-center gap-2 py-0.5 text-[11px]"
@@ -5584,102 +5583,118 @@ function MultiSeriesChart({
 // ─── 机构面板 ───────────────────────────────────────────────
 function CfetsInstPanel() {
   const [period, setPeriod] = useState<CfetsInstPeriod>("R001");
-  const [range, setRange] = useState<FundStructureRange>("14d");
+  const [range, _setRange] = useState<FundStructureRange>("14d");
   const [metricKey, setMetricKey] = useState<CfetsMetricKey>("buyRate");
-  const [instTypes, setInstTypes] = useState<CfetsInstInstitutionType[]>([
-    ...cfetsInstInstitutionTypes,
-  ]);
+  const [hiddenSeries, setHiddenSeries] = useState<ReadonlySet<number>>(
+    () => new Set<number>(),
+  );
   const metricDef = cfetsMetricDefs.find((d) => d.key === metricKey)!;
   const block =
     metricKey !== "netInflow"
       ? cfetsInstTrend[period][metricKey][range]
       : null!;
 
-  function toggleInstType(type: CfetsInstInstitutionType) {
-    setInstTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
-    );
+  function toggleSeries(idx: number) {
+    setHiddenSeries((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
   }
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
-      {/* 控件行 1：期限 + 指标 + 区间 */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-1">
-          <span className="mr-1 text-[11px] text-slate-500">期限</span>
-          {cfetsInstPeriodLabels.map((pt) => (
-            <button
-              key={pt}
-              type="button"
-              className={`rounded-md px-2 py-1 text-[11px] transition-colors ${
-                period === pt
-                  ? "bg-[#1f3d6b] font-semibold text-slate-100"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-              onClick={() => setPeriod(pt)}
-            >
-              {pt}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2">
-          <select
-            className="rounded border border-[#253754] bg-[#0e1827] px-2 py-1 text-[11px] text-slate-200 focus:outline-none"
-            value={metricKey}
-            onChange={(e) => setMetricKey(e.target.value as CfetsMetricKey)}
-          >
-            {cfetsMetricDefs.map((d) => (
-              <option key={d.key} value={d.key}>
-                {d.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-      {/* 控件行 2：机构类型 多选 */}
+      {/* 控件行 1：期限 */}
       <div className="flex flex-wrap items-center gap-1">
-        <span className="mr-1 text-[11px] text-slate-500">机构类型</span>
-        {cfetsInstInstitutionTypes.map((t) => {
-          const active = instTypes.includes(t);
+        <span className="mr-1 text-[11px] text-slate-500">期限</span>
+        {cfetsInstPeriodLabels.map((pt) => (
+          <button
+            key={pt}
+            type="button"
+            className={`rounded-md px-2 py-1 text-[11px] transition-colors ${
+              period === pt
+                ? "bg-[#1f3d6b] font-semibold text-slate-100"
+                : "text-slate-400 hover:text-slate-200"
+            }`}
+            onClick={() => setPeriod(pt)}
+          >
+            {pt}
+          </button>
+        ))}
+      </div>
+      {/* 控件行 2：指标 单选按钮组 */}
+      <div className="flex flex-wrap items-center gap-1">
+        <span className="mr-1 text-[11px] text-slate-500">指标</span>
+        {cfetsMetricDefs.map((d) => {
+          const active = metricKey === d.key;
           return (
             <button
-              key={t}
+              key={d.key}
               type="button"
+              aria-pressed={active}
               className={`rounded-md px-2 py-1 text-[11px] transition-colors ${
                 active
                   ? "bg-[#1f3d6b] font-semibold text-slate-100"
-                  : "border border-[#253754] text-slate-400 hover:text-slate-200"
+                  : "text-slate-400 hover:text-slate-200"
               }`}
-              onClick={() => toggleInstType(t)}
+              onClick={() => setMetricKey(d.key)}
             >
-              {t}
+              {d.label}
             </button>
           );
         })}
       </div>
-      {/* 图例 */}
-      <div className="flex flex-wrap gap-3 text-[11px] text-slate-400">
-        {fundStructureLegendItems.map((item) => (
-          <LegendDot key={item.label} color={item.color} label={item.label} />
-        ))}
+      {/* 图例（点击切换显隐） */}
+      <div className="flex flex-wrap gap-3 text-[11px]">
+        {fundStructureLegendItems.map((item, i) => {
+          const hidden = hiddenSeries.has(i);
+          return (
+            <button
+              key={item.label}
+              type="button"
+              aria-pressed={!hidden}
+              onClick={() => toggleSeries(i)}
+              className={`flex items-center gap-1.5 rounded transition-opacity hover:opacity-100 ${
+                hidden ? "opacity-50" : "opacity-100"
+              }`}
+            >
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: hidden ? "#3a4a60" : item.color }}
+              />
+              <span
+                className={
+                  hidden ? "text-slate-600 line-through" : "text-slate-400"
+                }
+              >
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
       </div>
       {/* 图表 */}
       {metricKey === "netInflow" ? (
         <div className="min-h-0 flex-1">
-          <FundStructureBars range={range} />
+          <FundStructureBars range={range} hiddenSeries={hiddenSeries} />
         </div>
       ) : (
         <MultiSeriesChart
           block={block}
           chartType={metricDef.chartType}
           unitLabel={metricDef.chartType === "line" ? "%" : ""}
+          hiddenSeries={hiddenSeries}
         />
       )}
       {/* 说明 */}
       <div className="text-[10px] text-slate-500">
         {metricDef.desc}
-        {instTypes.length < cfetsInstInstitutionTypes.length
-          ? ` · 机构类型筛选：${instTypes.join("、") || "无"}`
+        {hiddenSeries.size > 0
+          ? ` · 已隐藏：${fundStructureLegendItems
+              .filter((_, i) => hiddenSeries.has(i))
+              .map((it) => it.label)
+              .join("、")}`
           : ""}
       </div>
     </div>
@@ -6549,9 +6564,16 @@ function NcdPrimaryExpandedTable() {
   );
 }
 
-function FundStructureBars({ range }: { range: FundStructureRange }) {
+function FundStructureBars({
+  range,
+  hiddenSeries,
+}: {
+  range: FundStructureRange;
+  hiddenSeries?: ReadonlySet<number>;
+}) {
   const yTicks = [5000, 4000, 3000, 2000, 1000, 0] as const;
   const { bars, labels } = fundStructureRangeData[range];
+  const isHidden = (i: number) => hiddenSeries?.has(i) ?? false;
   const [hoveredBar, setHoveredBar] = useState<{
     index: number;
     clientX: number;
@@ -6601,19 +6623,21 @@ function FundStructureBars({ range }: { range: FundStructureRange }) {
                       : 0.45,
                 }}
               >
-                {values.map((value, partIndex) => (
-                  <div
-                    key={`fund-bar-${range}-${index}-${partIndex}`}
-                    className={
-                      partIndex === values.length - 1 ? "rounded-t-[3px]" : ""
-                    }
-                    style={{
-                      height: `${(value / 5000) * 100}%`,
-                      backgroundColor:
-                        fundStructureLegendItems[partIndex].color,
-                    }}
-                  />
-                ))}
+                {values.map((value, partIndex) =>
+                  isHidden(partIndex) ? null : (
+                    <div
+                      key={`fund-bar-${range}-${index}-${partIndex}`}
+                      className={
+                        partIndex === values.length - 1 ? "rounded-t-[3px]" : ""
+                      }
+                      style={{
+                        height: `${(value / 5000) * 100}%`,
+                        backgroundColor:
+                          fundStructureLegendItems[partIndex].color,
+                      }}
+                    />
+                  ),
+                )}
               </div>
             </div>
           ))}
@@ -6630,23 +6654,25 @@ function FundStructureBars({ range }: { range: FundStructureRange }) {
               合计{" "}
               <span className="font-semibold text-slate-100">
                 {bars[hoveredBar.index]
-                  .reduce((s, v) => s + v, 0)
+                  .reduce((s, v, i) => s + (isHidden(i) ? 0 : v), 0)
                   .toLocaleString()}
                 亿
               </span>
             </div>
-            {fundStructureLegendItems.map((item, i) => (
-              <div key={item.label} className="flex items-center gap-2">
-                <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="text-slate-400">{item.label}</span>
-                <span className="ml-1 font-semibold text-slate-100">
-                  {bars[hoveredBar.index][i].toLocaleString()}亿
-                </span>
-              </div>
-            ))}
+            {fundStructureLegendItems.map((item, i) =>
+              isHidden(i) ? null : (
+                <div key={item.label} className="flex items-center gap-2">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-slate-400">{item.label}</span>
+                  <span className="ml-1 font-semibold text-slate-100">
+                    {bars[hoveredBar.index][i].toLocaleString()}亿
+                  </span>
+                </div>
+              ),
+            )}
           </ChartTooltip>
         )}
       </div>
