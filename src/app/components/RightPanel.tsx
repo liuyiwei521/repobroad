@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { tk } from "../../styles/tokens.gen";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp } from 'lucide-react';
 
@@ -148,11 +149,11 @@ export function RightPanel() {
   }, []);
 
   const periodColors = {
-    '1': '#10b981',
-    '7': '#3b82f6',
-    '14': '#8b5cf6',
-    '21': '#f59e0b',
-    '28+': '#ef4444',
+    '1': tk["down"],
+    '7': tk["accent-strong"],
+    '14': tk["violet"],
+    '21': tk["warn"],
+    '28+': tk["up"],
   };
 
   return (
@@ -209,17 +210,17 @@ function TrendChart({ title, data, periodColors }: TrendChartProps) {
       <div className="p-2" style={{ height: '180px' }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <CartesianGrid strokeDasharray="3 3" stroke={tk["text-primary"]} />
             <XAxis
               dataKey="time"
-              tick={{ fontSize: 9, fill: '#6b7280' }}
-              stroke="#9ca3af"
+              tick={{ fontSize: 9, fill: tk["text-muted"] }}
+              stroke={tk["text-secondary"]}
               interval="preserveEnd"
               tickCount={4}
             />
             <YAxis
-              tick={{ fontSize: 9, fill: '#6b7280' }}
-              stroke="#9ca3af"
+              tick={{ fontSize: 9, fill: tk["text-muted"] }}
+              stroke={tk["text-secondary"]}
               domain={['auto', 'auto']}
               tickFormatter={(value) => `${value.toFixed(1)}%`}
               width={35}
