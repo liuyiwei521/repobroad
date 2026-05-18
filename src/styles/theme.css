@@ -119,30 +119,9 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* ── 全局深色滚动条 ─────────────────────────────────────────── */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-::-webkit-scrollbar-track {
-  background: #0a1628;
-}
-::-webkit-scrollbar-thumb {
-  background: #2a4466;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #3a5a88;
-}
-::-webkit-scrollbar-corner {
-  background: #0a1628;
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    scrollbar-width: thin;
-    scrollbar-color: #2a4466 #0a1628;
   }
 
   body {

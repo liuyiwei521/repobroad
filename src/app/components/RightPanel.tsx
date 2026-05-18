@@ -198,28 +198,28 @@ function TrendChart({ title, data, periodColors }: TrendChartProps) {
   const periods = ['1', '7', '14', '21', '28+'];
 
   return (
-    <div className="bg-[#0f1e31] rounded-lg border border-[#1e3352] shadow-sm">
+    <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
       {/* 标题 */}
-      <div className="bg-[#0a1628] px-2 py-1.5 border-b border-[#1e3352] flex items-center gap-1.5">
+      <div className="bg-gray-50 px-2 py-1.5 border-b border-gray-200 flex items-center gap-1.5">
         <TrendingUp size={12} className="text-blue-600" />
-        <h3 className="font-semibold text-[#e4ecf5] text-xs">{title}</h3>
+        <h3 className="font-semibold text-gray-900 text-xs">{title}</h3>
       </div>
 
       {/* 图表区域 */}
       <div className="p-2" style={{ height: '180px' }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e3352" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis
               dataKey="time"
-              tick={{ fontSize: 9, fill: "#9ca3af" }}
-              stroke="#6a7f98"
+              tick={{ fontSize: 9, fill: '#6b7280' }}
+              stroke="#9ca3af"
               interval="preserveEnd"
               tickCount={4}
             />
             <YAxis
-              tick={{ fontSize: 9, fill: "#9ca3af" }}
-              stroke="#6a7f98"
+              tick={{ fontSize: 9, fill: '#6b7280' }}
+              stroke="#9ca3af"
               domain={['auto', 'auto']}
               tickFormatter={(value) => `${value.toFixed(1)}%`}
               width={35}
@@ -227,8 +227,8 @@ function TrendChart({ title, data, periodColors }: TrendChartProps) {
             <Tooltip
               contentStyle={{
                 fontSize: 10,
-                backgroundColor: 'rgba(15, 30, 49, 0.95)',
-                border: '1px solid #1e3352',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                border: '1px solid #e5e7eb',
                 borderRadius: 4,
                 padding: 6,
               }}
@@ -260,7 +260,7 @@ function TrendChart({ title, data, periodColors }: TrendChartProps) {
                 className="w-3 h-0.5"
                 style={{ backgroundColor: periodColors[period] }}
               />
-              <span className="text-[#b0c1d6]" style={{ fontSize: '10px' }}>
+              <span className="text-gray-700" style={{ fontSize: '10px' }}>
                 {period}
               </span>
               {latestValue && (

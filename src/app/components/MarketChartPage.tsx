@@ -246,7 +246,7 @@ export function MarketChartPage({ onClose }: Props) {
           >
             {showLegend ? '隐藏图例' : '显示图例'}
           </button>
-          <button onClick={onClose} className="p-1 rounded hover:bg-[#1a2c44] text-gray-400 hover:text-white">
+          <button onClick={onClose} className="p-1 rounded hover:bg-gray-800 text-gray-400 hover:text-white">
             <X size={16} />
           </button>
         </div>
