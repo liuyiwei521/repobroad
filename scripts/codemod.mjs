@@ -44,6 +44,18 @@ function resolveBare(hex) {
   return null;
 }
 
+// 归一化 hex -> { base6:'#rrggbb', alphaPct:number|null }
+function normHex(h) {
+  let x = h.replace("#", "").toLowerCase();
+  if (x.length === 3) x = [...x].map((c) => c + c).join("");
+  else if (x.length === 4) x = [...x].map((c) => c + c).join("");
+  let alpha = null;
+  if (x.length === 8) { alpha = Math.round((parseInt(x.slice(6), 16) / 255) * 100); x = x.slice(0, 6); }
+  if (x.length !== 6) return null;
+  return { base6: "#" + x, alphaPct: alpha };
+}
+const HEX = "(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})";
+
 const stats = { util: 0, font: 0, radius: 0, bare: 0 };
 const unmatched = new Set();
 const compound = []; // rgba/gradient/shadow arbitrary -> manual
@@ -53,14 +65,20 @@ for (const rel of files) {
   let src = fs.readFileSync(fp, "utf8");
   let usedTk = false;
 
-  // 1. utility color arbitrary value: prefix-[#rrggbb] (optionally with /opacity)
+  // 1. utility color arbitrary value: prefix-[#rgb|#rgba|#rrggbb|#rrggbbaa] (optional /opacity)
   src = src.replace(
-    /\b(bg|text|border|ring|from|via|to|fill|stroke|outline|divide|decoration|caret|accent)-\[(#[0-9a-fA-F]{6})\](\/\d{1,3})?/g,
+    new RegExp(
+      `\\b(bg|text|border|ring|from|via|to|fill|stroke|outline|divide|decoration|caret|accent)-\\[#(${HEX})\\](\\/\\d{1,3})?`,
+      "g"
+    ),
     (m, prefix, hex, op) => {
-      const tok = resolveUtil(prefix, hex.toLowerCase());
-      if (!tok) { unmatched.add(`${prefix}-${hex}`); return m; }
+      const n = normHex(hex);
+      if (!n) { unmatched.add(`${prefix}-#${hex}`); return m; }
+      const tok = resolveUtil(prefix, n.base6);
+      if (!tok) { unmatched.add(`${prefix}-${n.base6}`); return m; }
       stats.util++;
-      return `${prefix}-${tok}${op || ""}`;
+      const alpha = op || (n.alphaPct != null && n.alphaPct < 100 ? `/${n.alphaPct}` : "");
+      return `${prefix}-${tok}${alpha}`;
     }
   );
 
@@ -80,19 +98,26 @@ for (const rel of files) {
     return `rounded-${tok}`;
   });
 
-  // 4a. JSX attribute form: name="#rrggbb" -> name={tk["token"]}
-  src = src.replace(/([A-Za-z][\w-]*)=(['"])(#[0-9a-fA-F]{6})\2/g, (m, attr, q, hex) => {
-    const r = resolveBare(hex.toLowerCase());
-    if (!r) { unmatched.add(`bare ${hex}`); return m; }
+  const bareTok = (hex) => {
+    const n = normHex(hex);
+    if (!n) return null;
+    if (n.alphaPct != null && n.alphaPct < 100) return "ALPHA"; // tk 仅不透明 6 位，半透明裸值保留字面
+    const r = resolveBare(n.base6);
+    return r ? r.split(":")[1] : null;
+  };
+  // 4a. JSX attribute form: name="#hex" -> name={tk["token"]}
+  src = src.replace(new RegExp(`([A-Za-z][\\w-]*)=(['"])#(${HEX})\\2`, "g"), (m, attr, q, hex) => {
+    const t = bareTok(hex);
+    if (!t || t === "ALPHA") { if (!t) unmatched.add(`bare #${hex}`); return m; }
     stats.bare++; usedTk = true;
-    return `${attr}={tk[${JSON.stringify(r.split(":")[1])}]}`;
+    return `${attr}={tk[${JSON.stringify(t)}]}`;
   });
-  // 4b. JS expression string literal: "#rrggbb" / '#rrggbb' -> tk["token"]
-  src = src.replace(/(['"])(#[0-9a-fA-F]{6})\1/g, (m, q, hex) => {
-    const r = resolveBare(hex.toLowerCase());
-    if (!r) { unmatched.add(`bare ${hex}`); return m; }
+  // 4b. JS expression string literal: "#hex" / '#hex' -> tk["token"]
+  src = src.replace(new RegExp(`(['"])#(${HEX})\\1`, "g"), (m, q, hex) => {
+    const t = bareTok(hex);
+    if (!t || t === "ALPHA") { if (!t) unmatched.add(`bare #${hex}`); return m; }
     stats.bare++; usedTk = true;
-    return `tk[${JSON.stringify(r.split(":")[1])}]`;
+    return `tk[${JSON.stringify(t)}]`;
   });
 
   // ensure `import { tk } from "<rel>/styles/tokens.gen"` present

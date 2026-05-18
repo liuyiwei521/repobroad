@@ -14,6 +14,7 @@ export const tk = {
   "surface-accent-hover": "#4a7ab5",
   "surface-warn": "#c69b3a",
   "surface-warn-soft": "#4b3a10",
+  "surface-chart": "#111111",
   "line-faint": "#162439",
   "line": "#1c2f49",
   "line-soft": "#253754",
@@ -21,6 +22,8 @@ export const tk = {
   "line-focus": "#33507d",
   "line-accent": "#3c76f0",
   "line-warn": "#ff8a26",
+  "line-chart": "#222222",
+  "line-chart-strong": "#333333",
   "accent": "#5ea3ff",
   "accent-strong": "#3b82f6",
   "accent-muted": "#7286d3",
@@ -36,6 +39,7 @@ export const tk = {
   "text-muted": "#6b7280",
   "text-faint": "#374151",
   "neutral": "#1f1f1f",
+  "on-accent": "#000000",
 } as const;
 
 export type TokenName = keyof typeof tk;

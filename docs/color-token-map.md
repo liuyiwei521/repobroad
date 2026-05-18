@@ -4,7 +4,7 @@
 
 本表是「换肤指南」：改 **value 列** 即整体换主题。codemod 已按本表把任意值/裸 hex 替换为语义类名或 `tk[...]`。
 
-- 原始唯一色值：**127** 个 → 收敛为 **34** 个颜色 token（用户确认的「适度收敛 ~40」策略）
+- 原始唯一色值：**135** 个 → 收敛为 **38** 个颜色 token（用户确认的「适度收敛 ~40」策略）
 - 合并原则：仅合并「同属性族 + 感知相近」的色；不同语义的同色按 `属性+色值` 分别归类。
 
 ## 背景层 surface (bg / 渐变停 from·via·to)
@@ -23,6 +23,7 @@
 | `--color-surface-accent-hover` | `bg-surface-accent-hover` | `#4a7ab5` | 强调按钮 hover | — |
 | `--color-surface-warn` | `bg-surface-warn` | `#c69b3a` | 警示徽章背景 | — |
 | `--color-surface-warn-soft` | `bg-surface-warn-soft` | `#4b3a10` | 警示淡背景 | — |
+| `--color-surface-chart` | `bg-surface-chart` | `#111111` | 图表容器背景(中性) | `#111` |
 
 ## 线条层 line (border / ring / outline)
 
@@ -35,6 +36,8 @@
 | `--color-line-focus` | `border-line-focus` | `#33507d` | 焦点环/拖拽高亮 | `#2a4a78` `#3a5a80` |
 | `--color-line-accent` | `border-line-accent` | `#3c76f0` | 强调蓝边框 | `#3b76f3` `#3d74f1` |
 | `--color-line-warn` | `border-line-warn` | `#ff8a26` | 警示橙边框 | `#94712a` |
+| `--color-line-chart` | `border-line-chart` | `#222222` | 图表容器弱边框(中性) | `#222` |
+| `--color-line-chart-strong` | `border-line-chart-strong` | `#333333` | 图表容器边框(中性) | `#333` |
 
 ## 文字·语义·图表色 ink (text / fill / stroke / chartPalette / 内联)
 
@@ -55,6 +58,7 @@
 | `--color-text-muted` | `text-text-muted` | `#6b7280` | 弱文字 | `#888888` `#666666` `#475569` `#4b5563` |
 | `--color-text-faint` | `text-text-faint` | `#374151` | 极弱文字/占位 | — |
 | `--color-neutral` | `text-neutral` | `#1f1f1f` | 中性灰(图表/滚动条) | `#1a1a1a` `#2a2a2a` `#161616` `#1e1e1e` `#0d0d0d` |
+| `--color-on-accent` | `text-on-accent` | `#000000` | 强调底上的反白(黑)文字 | `#000` |
 
 ## 字号 (text-)
 

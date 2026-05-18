@@ -15,6 +15,7 @@
   --color-surface-accent-hover: #4a7ab5; /* 强调按钮 hover */
   --color-surface-warn: #c69b3a; /* 警示徽章背景 */
   --color-surface-warn-soft: #4b3a10; /* 警示淡背景 */
+  --color-surface-chart: #111111; /* 图表容器背景(中性) */
 
   /* 线条层 line */
   --color-line-faint: #162439; /* 最弱分隔线 */
@@ -24,6 +25,8 @@
   --color-line-focus: #33507d; /* 焦点环/拖拽高亮 */
   --color-line-accent: #3c76f0; /* 强调蓝边框 */
   --color-line-warn: #ff8a26; /* 警示橙边框 */
+  --color-line-chart: #222222; /* 图表容器弱边框(中性) */
+  --color-line-chart-strong: #333333; /* 图表容器边框(中性) */
 
   /* 文字·语义·图表 ink */
   --color-accent: #5ea3ff; /* 主强调文字/图标 */
@@ -41,6 +44,7 @@
   --color-text-muted: #6b7280; /* 弱文字 */
   --color-text-faint: #374151; /* 极弱文字/占位 */
   --color-neutral: #1f1f1f; /* 中性灰(图表/滚动条) */
+  --color-on-accent: #000000; /* 强调底上的反白(黑)文字 */
 
   /* 字号 fontSize */
   --text-tag: 9px; /* 极小标签 9px */

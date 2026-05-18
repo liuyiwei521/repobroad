@@ -2408,7 +2408,7 @@ function BankRateEditorModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc] px-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface-deep/80 px-4">
       <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-line-strong bg-surface-panel shadow-[0_24px_80px_rgba(2,7,18,0.58)]">
         <div className="border-b border-line-soft bg-surface-raised px-5 py-4">
           <div className="flex items-center justify-between gap-3">
@@ -2646,7 +2646,7 @@ function LeftNcdCard() {
       </section>
       {expanded && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc]"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-surface-deep/80"
           onClick={() => setExpanded(false)}
         >
           <div
@@ -3145,7 +3145,7 @@ function QuoteEditorModal({
   ];
   const rankOptions: QuoteRank[] = ["最优", "次优", "报价"];
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc] px-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface-deep/80 px-4">
       <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-line-strong bg-surface-panel shadow-[0_24px_80px_rgba(2,7,18,0.58)]">
         <div className="border-b border-line-soft bg-surface-raised px-5 py-4">
           <div className="flex items-center justify-between gap-3">

@@ -221,7 +221,7 @@ export function MarketChartPage({ onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ background: tk["neutral"], color: tk["text-primary"] }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: '#222', background: '#111' }}>
+      <div className="flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: tk["line-chart"], background: tk["surface-chart"] }}>
         <div className="flex items-center gap-4">
           <h2 className="text-sm font-bold text-white">行情走势图</h2>
           {/* Time range */}
@@ -231,8 +231,8 @@ export function MarketChartPage({ onClose }: Props) {
                 className="px-2.5 py-0.5 text-xs rounded transition-colors"
                 style={{
                   background: timeRange.label === r.label ? tk["accent-strong"] : tk["neutral"],
-                  color: timeRange.label === r.label ? '#fff' : tk["text-secondary"],
-                  border: '1px solid ' + (timeRange.label === r.label ? tk["accent-strong"] : '#333'),
+                  color: timeRange.label === r.label ? tk["text-primary"] : tk["text-secondary"],
+                  border: '1px solid ' + (timeRange.label === r.label ? tk["accent-strong"] : tk["line-chart-strong"]),
                 }}>
                 {r.label}
               </button>
@@ -254,7 +254,7 @@ export function MarketChartPage({ onClose }: Props) {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2 border-b" style={{ borderColor: '#222', background: '#111' }}>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2 border-b" style={{ borderColor: tk["line-chart"], background: tk["surface-chart"] }}>
         {/* Institution */}
         <div className="flex items-center gap-1.5">
           <span className="text-xs" style={{ color: tk["text-muted"] }}>机构类型：</span>
@@ -271,7 +271,7 @@ export function MarketChartPage({ onClose }: Props) {
               style={{
                 background: selectedInsts.has(inst.id) ? inst.baseColor : 'transparent',
                 borderColor: selectedInsts.has(inst.id) ? inst.baseColor : tk["text-faint"],
-                color: selectedInsts.has(inst.id) ? '#000' : tk["text-muted"],
+                color: selectedInsts.has(inst.id) ? tk["on-accent"] : tk["text-muted"],
                 fontWeight: selectedInsts.has(inst.id) ? 600 : 400,
               }}>
               {inst.label}
@@ -294,7 +294,7 @@ export function MarketChartPage({ onClose }: Props) {
               style={{
                 background: selectedPeriods.has(p) ? tk["accent-strong"] : 'transparent',
                 borderColor: selectedPeriods.has(p) ? tk["accent-strong"] : tk["text-faint"],
-                color: selectedPeriods.has(p) ? '#fff' : tk["text-muted"],
+                color: selectedPeriods.has(p) ? tk["text-primary"] : tk["text-muted"],
               }}>
               {PERIOD_LABELS[p]}
             </button>
