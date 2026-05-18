@@ -1,0 +1,59 @@
+/* 自动生成（scripts/gen-tokens-css.mjs），勿手改。改 token 请改 scripts/tokens.json 后重跑。 */
+/* 这是「换肤」唯一入口：改下面 value 即整体换主题。 */
+
+@theme {
+  /* 背景层 surface */
+  --color-surface-deep: #02060d; /* 最深 scrim/遮罩底色 */
+  --color-surface-app: #0a1322; /* 页面/外层最深背景 */
+  --color-surface-panel: #0d1726; /* 主面板背景（最常用） */
+  --color-surface-elevated: #101b2c; /* 略抬升表面 */
+  --color-surface-raised: #101d32; /* 卡片/弹层表面 */
+  --color-surface-input: #18263b; /* 输入框/可交互区背景 */
+  --color-surface-selected: #1e3358; /* 选中/hover 行背景 */
+  --color-surface-accent-soft: #1f3d6b; /* 强调区淡背景 */
+  --color-surface-accent: #2551b8; /* 强调按钮背景 */
+  --color-surface-accent-hover: #4a7ab5; /* 强调按钮 hover */
+  --color-surface-warn: #c69b3a; /* 警示徽章背景 */
+  --color-surface-warn-soft: #4b3a10; /* 警示淡背景 */
+  --color-surface-chart: #111111; /* 图表容器背景(中性) */
+
+  /* 线条层 line */
+  --color-line-faint: #162439; /* 最弱分隔线 */
+  --color-line: #1c2f49; /* 常规边框 */
+  --color-line-soft: #253754; /* 次级边框/网格线 */
+  --color-line-strong: #29476e; /* 强调边框/激活态 */
+  --color-line-focus: #33507d; /* 焦点环/拖拽高亮 */
+  --color-line-accent: #3c76f0; /* 强调蓝边框 */
+  --color-line-warn: #ff8a26; /* 警示橙边框 */
+  --color-line-chart: #222222; /* 图表容器弱边框(中性) */
+  --color-line-chart-strong: #333333; /* 图表容器边框(中性) */
+
+  /* 文字·语义·图表 ink */
+  --color-accent: #5ea3ff; /* 主强调文字/图标 */
+  --color-accent-strong: #3b82f6; /* 强调蓝（深） */
+  --color-accent-muted: #7286d3; /* 弱化强调蓝 */
+  --color-info: #2fc3de; /* 信息青色 */
+  --color-up: #f87171; /* 上涨红 */
+  --color-up-pink: #f472b6; /* 粉(特殊涨) */
+  --color-down: #34d399; /* 下跌绿 */
+  --color-warn: #fbbf24; /* 警示黄 */
+  --color-warn-strong: #d97706; /* 警示橙(深) */
+  --color-violet: #a78bfa; /* 紫(图表/标记) */
+  --color-text-primary: #e5e7eb; /* 主文字 */
+  --color-text-secondary: #9ca3af; /* 次文字 */
+  --color-text-muted: #6b7280; /* 弱文字 */
+  --color-text-faint: #374151; /* 极弱文字/占位 */
+  --color-neutral: #1f1f1f; /* 中性灰(图表/滚动条) */
+  --color-on-accent: #000000; /* 强调底上的反白(黑)文字 */
+
+  /* 字号 fontSize */
+  --text-tag: 9px; /* 极小标签 9px */
+  --text-mini: 10px; /* 迷你说明 10px */
+  --text-note: 11px; /* 表格/密集文字 11px */
+  --text-body: 12px; /* 常规小字 12px */
+  --text-head: 20px; /* 标题 20px */
+
+  /* 圆角 radius */
+  --radius-xs: 2px; /* 细微圆角 */
+
+}

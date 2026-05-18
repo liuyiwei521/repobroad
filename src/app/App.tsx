@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from "react";
+import { tk } from "../styles/tokens.gen";
 
 type TrendMode = "intraday" | "history" | "comparison";
 type SentimentTab = "realtime" | "trend";
@@ -108,12 +109,12 @@ type ExchangeMarketSplitSection = {
 const TODAY_STR = "2026-05-10";
 
 const chartPalette = {
-  emerald: "#34d399",
-  blue: "#60a5fa",
-  violet: "#a78bfa",
-  amber: "#fbbf24",
-  pink: "#f472b6",
-  red: "#f87171",
+  emerald: tk["down"],
+  blue: tk["accent"],
+  violet: tk["violet"],
+  amber: tk["warn"],
+  pink: tk["up-pink"],
+  red: tk["up"],
 } as const;
 
 const initialBankRateRows: readonly BankRateRow[] = [
@@ -1019,7 +1020,7 @@ const trendVolumeSeries = randomWalk(1040, 60, 220, 12).map((v) =>
 );
 
 const trendVolumeColors = trendVolumeSeries.map((_, index) =>
-  index % 3 === 0 || index % 5 === 0 ? "#ff8a26" : "#22c1dc",
+  index % 3 === 0 || index % 5 === 0 ? tk["line-warn"] : tk["info"],
 );
 
 const trendAxisLabels = [
@@ -1721,13 +1722,13 @@ const fundStructureBars = [
   [690, 560, 240, 190, 520, 390, 560],
 ] as const;
 const fundStructureLegendItems = [
-  { color: "#7286d3", label: "大行" },
-  { color: "#a9d57f", label: "股份行" },
-  { color: "#f4cf68", label: "理财" },
-  { color: "#f6a960", label: "理财子" },
-  { color: "#ea7878", label: "券商" },
-  { color: "#8bc6de", label: "基金" },
-  { color: "#63b383", label: "保险" },
+  { color: tk["accent-muted"], label: "大行" },
+  { color: tk["down"], label: "股份行" },
+  { color: tk["warn"], label: "理财" },
+  { color: tk["warn-strong"], label: "理财子" },
+  { color: tk["up"], label: "券商" },
+  { color: tk["info"], label: "基金" },
+  { color: tk["down"], label: "保险" },
 ] as const;
 
 type FundStructureRange = "14d" | "1m" | "6m";
@@ -2055,7 +2056,7 @@ function App() {
   const topGridTemplate = `${columns[0]}fr ${columns[1]}fr ${columns[2]}fr`;
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#09111d] text-slate-100">
+    <div className="h-screen w-screen overflow-hidden bg-surface-app text-slate-100">
       <div className="flex h-full flex-col">
         <TopBar
           currentTime={currentTime}
@@ -2092,7 +2093,7 @@ function ColumnSplitter({
       className="group relative h-full cursor-col-resize bg-transparent transition-colors hover:bg-sky-500/30"
       style={{ width: "100%", minWidth: 6 }}
     >
-      <span className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-[2px] -translate-x-1/2 -translate-y-1/2 rounded bg-[#2a3f5e] group-hover:bg-sky-300" />
+      <span className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-[2px] -translate-x-1/2 -translate-y-1/2 rounded bg-surface-accent-soft group-hover:bg-sky-300" />
     </div>
   );
 }
@@ -2107,14 +2108,14 @@ function TopBar({
   onResetColumns: () => void;
 }) {
   return (
-    <header className="border-b border-[#1b2a42] bg-[#0d1726] px-3 py-2 shadow-[inset_0_-1px_0_rgba(74,101,140,0.18)]">
+    <header className="border-b border-line-faint bg-surface-panel px-3 py-2 shadow-[inset_0_-1px_0_rgba(74,101,140,0.18)]">
       <div className="grid items-center gap-3" style={{ gridTemplateColumns }}>
         <div className="flex items-center gap-2">
-          <div className="text-[20px] font-semibold tracking-[0.04em] text-slate-50">
+          <div className="text-head font-semibold tracking-[0.04em] text-slate-50">
             资金实时行情看板
           </div>
           <button
-            className="rounded-md border border-[#253754] bg-[#101a2b] px-1.5 py-0.5 text-[10px] text-slate-400 hover:border-[#33507d] hover:text-slate-200"
+            className="rounded-md border border-line-soft bg-surface-elevated px-1.5 py-0.5 text-mini text-slate-400 hover:border-line-focus hover:text-slate-200"
             onClick={onResetColumns}
             type="button"
             title="恢复默认三栏宽度"
@@ -2317,7 +2318,7 @@ function LeftSummaryPanel() {
                 section.title === "今天大行价格" ? (
                   <div className="flex items-center gap-2">
                     <button
-                      className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1 text-xs font-medium text-slate-300"
+                      className="rounded-lg border border-line-focus bg-surface-raised px-3 py-1 text-xs font-medium text-slate-300"
                       onClick={openBankEditor}
                       type="button"
                     >
@@ -2407,9 +2408,9 @@ function BankRateEditorModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc] px-4">
-      <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]">
-        <div className="border-b border-[#1c3150] bg-[#101d32] px-5 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface-deep/80 px-4">
+      <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-line-strong bg-surface-panel shadow-[0_24px_80px_rgba(2,7,18,0.58)]">
+        <div className="border-b border-line-soft bg-surface-raised px-5 py-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-base font-semibold text-slate-50">
@@ -2417,7 +2418,7 @@ function BankRateEditorModal({
               </div>
             </div>
             <button
-              className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+              className="rounded-lg border border-line-focus bg-surface-raised px-3 py-1.5 text-xs font-medium text-slate-300"
               onClick={onClose}
               type="button"
             >
@@ -2426,8 +2427,8 @@ function BankRateEditorModal({
           </div>
         </div>
         <div className="px-5 py-4">
-          <div className="overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
-            <div className="grid grid-cols-[1.4fr_0.7fr_1fr_1fr] border-b border-[#22324d] bg-[#111d30] px-4 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+          <div className="overflow-hidden rounded-xl border border-line-faint bg-surface-app">
+            <div className="grid grid-cols-[1.4fr_0.7fr_1fr_1fr] border-b border-line-soft bg-surface-elevated px-4 py-2 text-note font-medium tracking-[0.02em] text-slate-400">
               <span>机构</span>
               <span className="text-center">期限</span>
               <span className="text-right">非银利率</span>
@@ -2436,8 +2437,8 @@ function BankRateEditorModal({
             {rows.map((row, index) => (
               <div
                 key={`${row.institution}-${row.tenor}-${index}`}
-                className={`grid grid-cols-[1.4fr_0.7fr_1fr_1fr] items-center gap-3 border-b border-[#162439] px-4 py-3 ${
-                  index % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
+                className={`grid grid-cols-[1.4fr_0.7fr_1fr_1fr] items-center gap-3 border-b border-line-faint px-4 py-3 ${
+                  index % 2 === 0 ? "bg-transparent" : "bg-surface-panel/55"
                 }`}
               >
                 <div className="text-sm font-semibold text-slate-100">
@@ -2462,7 +2463,7 @@ function BankRateEditorModal({
           <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
             <span className="text-slate-500">新增机构</span>
             <input
-              className="w-44 rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
+              className="w-44 rounded-md border border-line-soft bg-surface-app px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-line-accent"
               placeholder="如 交通银行"
               value={newInstName}
               onChange={(e) => setNewInstName(e.target.value)}
@@ -2482,16 +2483,16 @@ function BankRateEditorModal({
             </button>
           </div>
         </div>
-        <div className="flex items-center justify-end gap-2 border-t border-[#1c3150] bg-[#0d1726] px-5 py-4">
+        <div className="flex items-center justify-end gap-2 border-t border-line-soft bg-surface-panel px-5 py-4">
           <button
-            className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+            className="rounded-lg border border-line-focus bg-surface-raised px-3 py-1.5 text-xs font-medium text-slate-300"
             onClick={onReset}
             type="button"
           >
             重置
           </button>
           <button
-            className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+            className="rounded-lg border border-line-focus bg-surface-raised px-3 py-1.5 text-xs font-medium text-slate-300"
             onClick={onClose}
             type="button"
           >
@@ -2521,7 +2522,7 @@ function ModalInput({
 }) {
   return (
     <input
-      className={`w-full rounded-lg border border-[#284164] bg-[#0f1b2f] px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-blue-400 ${
+      className={`w-full rounded-lg border border-line-strong bg-surface-elevated px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-blue-400 ${
         align === "right" ? "text-right" : "text-left"
       }`}
       value={value}
@@ -2575,7 +2576,7 @@ function LeftNcdCard() {
           <button
             onClick={onClose}
             type="button"
-            className="ml-1 rounded p-0.5 text-slate-400 hover:bg-[#1e3358] hover:text-slate-100"
+            className="ml-1 rounded p-0.5 text-slate-400 hover:bg-surface-selected hover:text-slate-100"
             title="收起"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -2592,7 +2593,7 @@ function LeftNcdCard() {
           <button
             onClick={() => setExpanded(true)}
             type="button"
-            className="ml-1 rounded p-0.5 text-slate-400 hover:bg-[#1e3358] hover:text-slate-100"
+            className="ml-1 rounded p-0.5 text-slate-400 hover:bg-surface-selected hover:text-slate-100"
             title="展开"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -2637,25 +2638,25 @@ function LeftNcdCard() {
 
   return (
     <>
-      <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
-        <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-2.5">
+      <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-line bg-surface-panel shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
+        <div className="border-b border-line-faint bg-surface-elevated px-4 py-2.5">
           {header()}
         </div>
         <div className="min-h-0 flex-1 overflow-hidden p-2">{body}</div>
       </section>
       {expanded && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc]"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-surface-deep/80"
           onClick={() => setExpanded(false)}
         >
           <div
-            className="relative flex h-[85vh] w-[90vw] max-w-[1400px] flex-col overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]"
+            className="relative flex h-[85vh] w-[90vw] max-w-[1400px] flex-col overflow-hidden rounded-2xl border border-line-strong bg-surface-panel shadow-[0_24px_80px_rgba(2,7,18,0.58)]"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setExpanded(false)}
               type="button"
-              className="absolute right-3 top-3 z-10 rounded p-1 text-slate-400 hover:bg-[#1e3358] hover:text-slate-100"
+              className="absolute right-3 top-3 z-10 rounded p-1 text-slate-400 hover:bg-surface-selected hover:text-slate-100"
               title="收起"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -2698,8 +2699,8 @@ function ExchangeRepoCard({
       : markets.filter((market) => market.id === activeView);
 
   return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
-      <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
+    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-line bg-surface-panel shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
+      <div className="border-b border-line-faint bg-surface-elevated px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div className="text-sm font-semibold tracking-[0.02em] text-slate-50">
             {title}
@@ -2772,10 +2773,10 @@ function ExchangeCoreCompactBlock({
     (_, i) => rows[i] ?? null,
   );
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-line-faint bg-surface-app">
       <table className="w-full table-fixed shrink-0">
         <thead>
-          <tr className="border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
+          <tr className="border-b border-line-soft bg-surface-elevated text-note font-medium tracking-[0.02em] text-slate-400">
             <th className="w-[18%] px-2 py-1.5 text-left font-medium">期限</th>
             <th className="w-[30%] px-2 py-1.5 text-left font-medium">品种</th>
             <th className="w-[28%] px-2 py-1.5 text-right font-medium">最新</th>
@@ -2792,7 +2793,7 @@ function ExchangeCoreCompactBlock({
               <tr
                 key={row ? `${row[1]}-${rowIndex}` : `empty-${rowIndex}`}
                 className={`text-xs ${
-                  rowIndex > 0 ? "border-t border-[#162439]" : ""
+                  rowIndex > 0 ? "border-t border-line-faint" : ""
                 }`}
               >
                 {row ? (
@@ -2834,10 +2835,10 @@ function ExchangeMarketTable({
   const displayRows = rows ?? market.rows;
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-line-faint bg-surface-app">
       <table className="w-full table-fixed shrink-0">
         <thead>
-          <tr className="border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
+          <tr className="border-b border-line-soft bg-surface-elevated text-note font-medium tracking-[0.02em] text-slate-400">
             {market.columns.map((column, index) => (
               <th
                 key={`${market.title}-${column}`}
@@ -2863,8 +2864,8 @@ function ExchangeMarketTable({
             {displayRows.map((row, rowIndex) => (
               <tr
                 key={`${market.title}-${row[0]}-${rowIndex}`}
-                className={`border-b border-[#162439] text-xs ${
-                  rowIndex % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
+                className={`border-b border-line-faint text-xs ${
+                  rowIndex % 2 === 0 ? "bg-transparent" : "bg-surface-panel/55"
                 }`}
               >
                 {row.map((cell, cellIndex) => (
@@ -3013,8 +3014,8 @@ function MainQuoteBoard() {
 
   return (
     <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pr-1">
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#2a4a78] bg-[#0c1730]">
-        <div className="border-b border-[#1b2a42] bg-[#101b2c] px-4 py-3">
+      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-line-focus bg-surface-app">
+        <div className="border-b border-line-faint bg-surface-elevated px-4 py-3">
           <div className="flex flex-nowrap items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
               <div className="shrink-0 whitespace-nowrap text-base font-semibold text-slate-50">
@@ -3056,7 +3057,7 @@ function MainQuoteBoard() {
                 2级
               </button>
               <button
-                className="whitespace-nowrap rounded-md border border-emerald-500/30 bg-emerald-500/15 px-2 py-1 text-[11px] font-medium text-emerald-300"
+                className="whitespace-nowrap rounded-md border border-emerald-500/30 bg-emerald-500/15 px-2 py-1 text-note font-medium text-emerald-300"
                 type="button"
               >
                 下载
@@ -3091,7 +3092,7 @@ function MainQuoteBoard() {
                     role="separator"
                     aria-orientation="horizontal"
                     onMouseDown={startDrag}
-                    className="group relative h-1.5 shrink-0 cursor-row-resize bg-[#18263b] transition-colors hover:bg-sky-500/60"
+                    className="group relative h-1.5 shrink-0 cursor-row-resize bg-surface-input transition-colors hover:bg-sky-500/60"
                   >
                     <span className="pointer-events-none absolute left-1/2 top-1/2 h-[2px] w-10 -translate-x-1/2 -translate-y-1/2 rounded bg-slate-500/60 group-hover:bg-sky-200" />
                   </div>
@@ -3144,9 +3145,9 @@ function QuoteEditorModal({
   ];
   const rankOptions: QuoteRank[] = ["最优", "次优", "报价"];
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc] px-4">
-      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]">
-        <div className="border-b border-[#1c3150] bg-[#101d32] px-5 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface-deep/80 px-4">
+      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-line-strong bg-surface-panel shadow-[0_24px_80px_rgba(2,7,18,0.58)]">
+        <div className="border-b border-line-soft bg-surface-raised px-5 py-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-base font-semibold text-slate-50">
@@ -3154,7 +3155,7 @@ function QuoteEditorModal({
               </div>
             </div>
             <button
-              className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+              className="rounded-lg border border-line-focus bg-surface-raised px-3 py-1.5 text-xs font-medium text-slate-300"
               onClick={onClose}
               type="button"
             >
@@ -3166,21 +3167,21 @@ function QuoteEditorModal({
           {textFields.map((f) => (
             <label
               key={f.key}
-              className="flex flex-col gap-1 text-[11px] text-slate-400"
+              className="flex flex-col gap-1 text-note text-slate-400"
             >
               <span>{f.label}</span>
               <input
-                className="rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
+                className="rounded-md border border-line-soft bg-surface-app px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-line-accent"
                 value={(draft[f.key] as string) ?? ""}
                 placeholder={f.placeholder}
                 onChange={(e) => onChange(f.key, e.target.value)}
               />
             </label>
           ))}
-          <label className="flex flex-col gap-1 text-[11px] text-slate-400">
+          <label className="flex flex-col gap-1 text-note text-slate-400">
             <span>评级</span>
             <select
-              className="rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
+              className="rounded-md border border-line-soft bg-surface-app px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-line-accent"
               value={(draft.rank as string) ?? row.rank}
               onChange={(e) => onChange("rank", e.target.value)}
             >
@@ -3192,9 +3193,9 @@ function QuoteEditorModal({
             </select>
           </label>
         </div>
-        <div className="flex items-center justify-end gap-2 border-t border-[#1c3150] bg-[#0d1726] px-5 py-4">
+        <div className="flex items-center justify-end gap-2 border-t border-line-soft bg-surface-panel px-5 py-4">
           <button
-            className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+            className="rounded-lg border border-line-focus bg-surface-raised px-3 py-1.5 text-xs font-medium text-slate-300"
             onClick={onClose}
             type="button"
           >
@@ -3276,26 +3277,26 @@ function RepoQuoteSectionBoard({
             : isActive
               ? "flex-none"
               : "min-h-0 flex-1"
-      } ${withTopBorder ? "border-t border-[#18314f]" : ""}`}
+      } ${withTopBorder ? "border-t border-line" : ""}`}
       style={containerStyle}
       onFocus={onActivate}
       onClick={onActivate}
       tabIndex={0}
     >
       <div
-        className={`flex cursor-pointer items-center justify-between px-4 py-1.5 ${isActive ? "border-l-[3px] border-sky-300 bg-gradient-to-r from-sky-500/40 via-sky-600/25 to-transparent shadow-[inset_0_-1px_0_rgba(125,211,252,0.35)]" : "bg-[#0f1a2d]"}`}
+        className={`flex cursor-pointer items-center justify-between px-4 py-1.5 ${isActive ? "border-l-[3px] border-sky-300 bg-gradient-to-r from-sky-500/40 via-sky-600/25 to-transparent shadow-[inset_0_-1px_0_rgba(125,211,252,0.35)]" : "bg-surface-panel"}`}
       >
         <div className="flex items-center gap-2">
           <div className="text-sm font-semibold text-slate-100">
             {section.title}
           </div>
           {isActive ? (
-            <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-medium text-sky-300">
+            <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-mini font-medium text-sky-300">
               焦点
             </span>
           ) : null}
         </div>
-        <div className="rounded-full border border-[#29456c] bg-[#12203a] px-2 py-0.5 text-[11px] text-slate-400">
+        <div className="rounded-full border border-line-strong bg-surface-raised px-2 py-0.5 text-note text-slate-400">
           层级 1 / 2
         </div>
       </div>
@@ -3308,7 +3309,7 @@ function RepoQuoteSectionBoard({
               : "flex-1 overflow-y-auto"
         }`}
       >
-        <div className="grid grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] border-y border-[#1c3150] bg-[#111d30] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+        <div className="grid grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] border-y border-line-soft bg-surface-elevated px-4 py-1.5 text-note font-medium tracking-[0.02em] text-slate-400">
           <span>分组 / 机构</span>
           <span className="text-right">期限</span>
           <span className="text-right">金额(总量)</span>
@@ -3319,10 +3320,10 @@ function RepoQuoteSectionBoard({
           <span className="text-right">操作</span>
         </div>
         {section.groups.map((group) => (
-          <div key={group.id} className="border-b-2 border-[#1f3759]">
-            <div className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-sky-500/70 bg-gradient-to-r from-[#15294a] via-[#11223c] to-[#0d1a30] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
+          <div key={group.id} className="border-b-2 border-line-soft">
+            <div className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-sky-500/70 bg-gradient-to-r from-surface-input via-surface-raised to-surface-panel px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
               <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-1 rounded-md border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-sky-200">
+                <span className="inline-flex items-center gap-1 rounded-md border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-mini font-semibold tracking-[0.08em] text-sky-200">
                   汇总
                 </span>
                 <div className="text-xs font-semibold text-slate-50">
@@ -3342,7 +3343,7 @@ function RepoQuoteSectionBoard({
               <span />
             </div>
             {displayLevel === 1 ? (
-              <div className="divide-y divide-[#152437] bg-[#080f1c]">
+              <div className="divide-y divide-line-faint bg-surface-deep">
                 {selectLevel1Rows(group)
                   .filter((row) => matchTenor(row.tenor))
                   .map((rawRow) => {
@@ -3382,7 +3383,7 @@ function RepoQuoteSectionBoard({
                         </span>
                         <span className="flex items-center justify-end gap-1">
                           <button
-                            className="whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200"
+                            className="whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-mini font-medium text-amber-200"
                             onClick={(e) => {
                               e.stopPropagation();
                               onEdit(row, group.name);
@@ -3392,7 +3393,7 @@ function RepoQuoteSectionBoard({
                             修正
                           </button>
                           <button
-                            className="whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
+                            className="whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-mini font-medium text-blue-300"
                             type="button"
                           >
                             发送
@@ -3404,7 +3405,7 @@ function RepoQuoteSectionBoard({
               </div>
             ) : null}
             {displayLevel === 2 ? (
-              <div className="divide-y divide-[#152437] bg-[#080f1c]">
+              <div className="divide-y divide-line-faint bg-surface-deep">
                 {sortRowsByRank(group.rows)
                   .filter((row) => matchTenor(row.tenor))
                   .map((rawRow) => {
@@ -3412,7 +3413,7 @@ function RepoQuoteSectionBoard({
                     return (
                       <div
                         key={row.id}
-                        className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200 transition hover:bg-[#11253d]"
+                        className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200 transition hover:bg-surface-input"
                       >
                         <div className="flex items-center gap-2">
                           {row.rank === "最优" || row.rank === "次优" ? (
@@ -3446,7 +3447,7 @@ function RepoQuoteSectionBoard({
                         </span>
                         <span className="flex items-center justify-end gap-1">
                           <button
-                            className="whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200"
+                            className="whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-mini font-medium text-amber-200"
                             onClick={(e) => {
                               e.stopPropagation();
                               onEdit(row, group.name);
@@ -3456,7 +3457,7 @@ function RepoQuoteSectionBoard({
                             修正
                           </button>
                           <button
-                            className="whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
+                            className="whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-mini font-medium text-blue-300"
                             type="button"
                           >
                             发送
@@ -3546,7 +3547,7 @@ function RankBadge({ rank }: { rank: QuoteRank }) {
         : "border-slate-500/40 bg-slate-500/15 text-slate-300";
   return (
     <span
-      className={`inline-flex shrink-0 items-center rounded border px-1.5 py-0.5 text-[10px] font-medium ${styles}`}
+      className={`inline-flex shrink-0 items-center rounded border px-1.5 py-0.5 text-mini font-medium ${styles}`}
     >
       {rank}
     </span>
@@ -3604,8 +3605,8 @@ function RightLowerPanel({
   onTabChange: (tab: RightLowerTab) => void;
 }) {
   return (
-    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
-      <div className="flex items-center gap-2 border-b border-[#203551] bg-[#101d32] px-3 py-2">
+    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-line-strong bg-surface-app">
+      <div className="flex items-center gap-2 border-b border-line-soft bg-surface-raised px-3 py-2">
         {rightLowerTabs.map((tab) => (
           <button
             key={tab.id}
@@ -3654,13 +3655,13 @@ function IntradayPanel({
   const ti = tooltipState?.index ?? null;
 
   return (
-    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
-      <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101d32] px-3 py-2">
+    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-line-strong bg-surface-app">
+      <div className="flex items-center justify-between gap-3 border-b border-line-soft bg-surface-raised px-3 py-2">
         <div className="flex items-center gap-3">
           <div className="text-sm font-semibold text-slate-100">
             匿名成交走势图
           </div>
-          <div className="rounded border border-[#264167] bg-[#13223a] px-1.5 py-0.5 text-[10px] font-medium text-blue-300">
+          <div className="rounded border border-line-strong bg-surface-raised px-1.5 py-0.5 text-mini font-medium text-blue-300">
             R001
           </div>
           <OverlayProductSelect
@@ -3676,7 +3677,7 @@ function IntradayPanel({
       </div>
       <div className="grid min-h-0 grid-rows-[1fr_auto] px-3 pb-2 pt-2">
         <div className="grid min-h-0 grid-cols-[3rem_1fr]">
-          <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+          <div className="flex flex-col justify-between pr-2 text-right text-mini text-slate-400">
             {buildAxisLabels(min, max, 4).map((tick) => (
               <div key={tick}>{tick}</div>
             ))}
@@ -3690,11 +3691,11 @@ function IntradayPanel({
             {[0, 1, 2, 3].map((index) => (
               <div
                 key={`intraday-grid-${index}`}
-                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                className="absolute inset-x-0 border-t border-dashed border-line-strong"
                 style={{ top: `${(index / 3) * 100}%` }}
               />
             ))}
-            <div className="absolute inset-x-0 top-[58%] border-t border-dashed border-[#ff8a26]" />
+            <div className="absolute inset-x-0 top-[58%] border-t border-dashed border-line-warn" />
             <div className="absolute inset-x-0 bottom-0 top-0">
               <svg
                 className="h-full w-full"
@@ -3709,10 +3710,10 @@ function IntradayPanel({
                     x2="0"
                     y2="1"
                   >
-                    <stop offset="0%" stopColor="#5ea3ff" stopOpacity="0.24" />
+                    <stop offset="0%" stopColor={tk["accent"]} stopOpacity="0.24" />
                     <stop
                       offset="100%"
-                      stopColor="#5ea3ff"
+                      stopColor={tk["accent"]}
                       stopOpacity="0.04"
                     />
                   </linearGradient>
@@ -3743,7 +3744,7 @@ function IntradayPanel({
                     x2={(ti / (intradaySeries.length - 1)) * 680}
                     y1={0}
                     y2={178}
-                    stroke="#5ea3ff"
+                    stroke={tk["accent"]}
                     strokeWidth="1"
                     strokeDasharray="4 3"
                     strokeOpacity="0.6"
@@ -3784,7 +3785,7 @@ function IntradayPanel({
                   </div>
                 )}
                 {overlaySeries && barValues ? (
-                  <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
+                  <div className="mt-1 border-t border-line-soft pt-1 text-slate-400">
                     利差{" "}
                     <span
                       className={`font-semibold ${barValues[ti] >= 0 ? "text-red-400" : "text-emerald-400"}`}
@@ -3796,7 +3797,7 @@ function IntradayPanel({
                 ) : null}
               </ChartTooltip>
             )}
-            <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-300">
+            <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-mini text-slate-300">
               <LegendDot color={chartPalette.blue} label="加权平均(%)" />
               {overlayProduct !== "none" ? (
                 <LegendDot
@@ -3809,7 +3810,7 @@ function IntradayPanel({
         </div>
         <div className="grid grid-cols-[3rem_1fr] pt-2">
           <div />
-          <div className="grid grid-cols-8 text-[10px] text-slate-400">
+          <div className="grid grid-cols-8 text-mini text-slate-400">
             {intradayTimeLabels.map((label) => (
               <div key={label} className="text-center">
                 {label}
@@ -3879,8 +3880,8 @@ function HistoryClosePanel({
   const ti = tooltipState?.index ?? null;
 
   return (
-    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
-      <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101d32] px-3 py-2">
+    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-line-strong bg-surface-app">
+      <div className="flex items-center justify-between gap-3 border-b border-line-soft bg-surface-raised px-3 py-2">
         <div className="flex items-center gap-3">
           <div className="text-sm font-semibold text-slate-100">
             加权价格走势
@@ -3892,7 +3893,7 @@ function HistoryClosePanel({
           <label className="flex items-center gap-1 text-xs text-slate-400">
             <span>对比</span>
             <select
-              className="rounded-md border border-[#2a4164] bg-[#0f1b2f] px-1.5 py-0.5 text-xs text-slate-200 outline-none"
+              className="rounded-md border border-line-strong bg-surface-elevated px-1.5 py-0.5 text-xs text-slate-200 outline-none"
               value={compareProduct}
               onChange={(e) =>
                 onCompareChange(e.target.value as CompareProduct)
@@ -3926,7 +3927,7 @@ function HistoryClosePanel({
         }}
       >
         <div className="grid min-h-0 grid-cols-[3.25rem_1fr]">
-          <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+          <div className="flex flex-col justify-between pr-2 text-right text-mini text-slate-400">
             {buildAxisLabels(min, max, 4).map((label) => (
               <div key={label}>{label}</div>
             ))}
@@ -3940,7 +3941,7 @@ function HistoryClosePanel({
             {[0, 1, 2, 3].map((index) => (
               <div
                 key={`k-grid-${index}`}
-                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                className="absolute inset-x-0 border-t border-dashed border-line-strong"
                 style={{ top: `${(index / 3) * 100}%` }}
               />
             ))}
@@ -3951,8 +3952,8 @@ function HistoryClosePanel({
             >
               <defs>
                 <linearGradient id="history-fill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#5ea3ff" stopOpacity="0.24" />
-                  <stop offset="100%" stopColor="#5ea3ff" stopOpacity="0.04" />
+                  <stop offset="0%" stopColor={tk["accent"]} stopOpacity="0.24" />
+                  <stop offset="100%" stopColor={tk["accent"]} stopOpacity="0.04" />
                 </linearGradient>
               </defs>
               <path d={areaPath} fill="url(#history-fill)" />
@@ -3992,14 +3993,14 @@ function HistoryClosePanel({
                   x2={(ti / (dataset.close.length - 1)) * 720}
                   y1={0}
                   y2={186}
-                  stroke="#5ea3ff"
+                  stroke={tk["accent"]}
                   strokeWidth="1"
                   strokeDasharray="4 3"
                   strokeOpacity="0.6"
                 />
               ) : null}
             </svg>
-            <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-300">
+            <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-mini text-slate-300">
               <LegendDot color={chartPalette.blue} label="加权价格" />
               {overlayProduct !== "none" ? (
                 <LegendDot
@@ -4066,7 +4067,7 @@ function HistoryClosePanel({
                   </div>
                 )}
                 {spreadValues && (
-                  <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
+                  <div className="mt-1 border-t border-line-soft pt-1 text-slate-400">
                     利差{" "}
                     <span
                       className={`font-semibold ${spreadValues[ti] >= 0 ? "text-red-400" : "text-emerald-400"}`}
@@ -4076,7 +4077,7 @@ function HistoryClosePanel({
                     </span>
                   </div>
                 )}
-                <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
+                <div className="mt-1 border-t border-line-soft pt-1 text-slate-400">
                   成交量{" "}
                   <span className="font-semibold text-slate-100">
                     {dataset.volume[ti]}亿
@@ -4087,8 +4088,8 @@ function HistoryClosePanel({
           </div>
         </div>
         {compareProduct !== "none" && spreadValues ? (
-          <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
-            <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+          <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-line-soft pt-2 pb-1">
+            <div className="flex flex-col justify-between pr-2 text-right text-mini text-slate-400">
               {(() => {
                 const dMax = Math.max(...spreadValues, 0);
                 const dMin = Math.min(...spreadValues, 0);
@@ -4128,10 +4129,10 @@ function HistoryClosePanel({
                       >
                         <div style={{ height: `${spaceTop}%` }} />
                         <div
-                          className="min-h-0 rounded-[2px]"
+                          className="min-h-0 rounded-xs"
                           style={{
                             height: `${barH}%`,
-                            backgroundColor: isPos ? "#ef5a6f" : "#2fc3de",
+                            backgroundColor: isPos ? tk["up"] : tk["info"],
                             opacity: 0.92,
                           }}
                         />
@@ -4144,14 +4145,14 @@ function HistoryClosePanel({
             </div>
           </div>
         ) : (
-          <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
-            <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+          <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-line-soft pt-2 pb-1">
+            <div className="flex flex-col justify-between pr-2 text-right text-mini text-slate-400">
               {buildCompactVolumeTicks(volumeMax).map((tick) => (
                 <div key={tick}>{tick}</div>
               ))}
             </div>
             <div className="relative min-h-0">
-              <span className="absolute top-0.5 left-0.5 text-[9px] text-slate-500 z-10 pointer-events-none">
+              <span className="absolute top-0.5 left-0.5 text-tag text-slate-500 z-10 pointer-events-none">
                 成交量
               </span>
               <div className="absolute inset-0 flex items-end gap-[4px]">
@@ -4161,7 +4162,7 @@ function HistoryClosePanel({
                     className="min-w-0 flex-1 rounded-t-[2px]"
                     style={{
                       height: `${(value / volumeMax) * 100}%`,
-                      backgroundColor: index % 3 === 0 ? "#2fc3de" : "#2f6fd0",
+                      backgroundColor: index % 3 === 0 ? tk["info"] : tk["accent-strong"],
                     }}
                   />
                 ))}
@@ -4172,7 +4173,7 @@ function HistoryClosePanel({
         <div className="grid grid-cols-[3.25rem_1fr] pt-2">
           <div />
           <div
-            className="grid text-[10px] text-slate-400"
+            className="grid text-mini text-slate-400"
             style={{
               gridTemplateColumns: `repeat(${dataset.labels.length}, minmax(0, 1fr))`,
             }}
@@ -5254,9 +5255,9 @@ const cfetsBondTrend: Record<
 function CfetsDailyPanel() {
   return (
     <div className="h-full min-h-0 overflow-hidden">
-      <div className="overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
+      <div className="overflow-hidden rounded-lg border border-line bg-surface-panel">
         <table className="min-w-full text-xs">
-          <thead className="bg-[#101d32] text-slate-400">
+          <thead className="bg-surface-raised text-slate-400">
             <tr>
               {["日期", "公开市场操作", "净投放"].map((column) => (
                 <th key={column} className="px-3 py-2 text-left font-medium">
@@ -5274,7 +5275,7 @@ function CfetsDailyPanel() {
             ].map((row) => (
               <tr
                 key={row[0]}
-                className="border-t border-[#162439] text-slate-300"
+                className="border-t border-line-faint text-slate-300"
               >
                 {row.map((cell, index) => (
                   <td key={`${row[0]}-${index}`} className="px-3 py-2">
@@ -5323,13 +5324,13 @@ function CfetsMatrixPanel({
           <table className="w-full border-collapse text-xs">
             <thead>
               <tr>
-                <th className="px-2 py-1.5 text-left text-[10px] font-medium text-slate-500">
+                <th className="px-2 py-1.5 text-left text-mini font-medium text-slate-500">
                   逆\正
                 </th>
                 {cfetsMatrixColLabels.map((col) => (
                   <th
                     key={col}
-                    className="px-2 py-1.5 text-center text-[10px] font-medium text-slate-400"
+                    className="px-2 py-1.5 text-center text-mini font-medium text-slate-400"
                   >
                     {col}
                   </th>
@@ -5339,7 +5340,7 @@ function CfetsMatrixPanel({
             <tbody>
               {cfetsMatrixRowLabels.map((row, ri) => (
                 <tr key={row}>
-                  <td className="py-1.5 pr-3 text-[11px] font-medium text-slate-300">
+                  <td className="py-1.5 pr-3 text-note font-medium text-slate-300">
                     {row}
                   </td>
                   {cfetsMatrixColLabels.map((col, ci) => {
@@ -5347,13 +5348,13 @@ function CfetsMatrixPanel({
                     return (
                       <td key={col} className="px-1 py-1">
                         {rate === null ? (
-                          <div className="flex h-8 w-full items-center justify-center rounded text-[10px] text-slate-600 bg-[#0a1322]">
+                          <div className="flex h-8 w-full items-center justify-center rounded text-mini text-slate-600 bg-surface-app">
                             —
                           </div>
                         ) : (
                           <button
                             type="button"
-                            className="flex h-8 w-full cursor-pointer items-center justify-center rounded text-[11px] font-semibold text-white transition-opacity hover:opacity-80"
+                            className="flex h-8 w-full cursor-pointer items-center justify-center rounded text-note font-semibold text-white transition-opacity hover:opacity-80"
                             style={{ backgroundColor: rateColor(rate) }}
                             onClick={() =>
                               setModal({ rowLabel: row, colLabel: col, rate })
@@ -5370,7 +5371,7 @@ function CfetsMatrixPanel({
             </tbody>
           </table>
         </div>
-        <div className="flex items-center gap-2 text-[10px] text-slate-500">
+        <div className="flex items-center gap-2 text-mini text-slate-500">
           <span>低利率</span>
           <div
             className="h-2 w-24 rounded"
@@ -5388,7 +5389,7 @@ function CfetsMatrixPanel({
           onClick={() => setModal(null)}
         >
           <div
-            className="w-80 rounded-xl border border-[#1d3250] bg-[#0a1322] p-4 shadow-2xl"
+            className="w-80 rounded-xl border border-line-soft bg-surface-app p-4 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-start justify-between">
@@ -5396,7 +5397,7 @@ function CfetsMatrixPanel({
                 <div className="text-xs font-semibold text-slate-200">
                   {modal.rowLabel} → {modal.colLabel}
                 </div>
-                <div className="mt-0.5 text-[10px] text-slate-500">
+                <div className="mt-0.5 text-mini text-slate-500">
                   逆回购方 → 正回购方，加权利率
                 </div>
               </div>
@@ -5408,15 +5409,15 @@ function CfetsMatrixPanel({
                 ✕
               </button>
             </div>
-            <div className="mb-3 rounded-lg bg-[#0e1827] px-3 py-2 text-center">
+            <div className="mb-3 rounded-lg bg-surface-panel px-3 py-2 text-center">
               <span className="text-xl font-semibold text-amber-300">
                 {modal.rate.toFixed(4)}%
               </span>
             </div>
-            <div className="text-[10px] text-slate-500">
+            <div className="text-mini text-slate-500">
               正回购方（{modal.colLabel}）期限明细：
             </div>
-            <table className="mt-1.5 w-full text-[11px]">
+            <table className="mt-1.5 w-full text-note">
               <thead>
                 <tr className="text-slate-500">
                   <th className="py-1 text-left font-normal">期限</th>
@@ -5430,7 +5431,7 @@ function CfetsMatrixPanel({
                   .map((r) => (
                     <tr
                       key={r.term}
-                      className="border-t border-[#162439] text-slate-300"
+                      className="border-t border-line-faint text-slate-300"
                     >
                       <td className="py-1">{r.term}</td>
                       <td className="py-1 text-right">{fmtRate(r.buyRate)}</td>
@@ -5445,9 +5446,9 @@ function CfetsMatrixPanel({
 
       {includeDaily && (
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
+          <div className="overflow-hidden rounded-lg border border-line bg-surface-panel">
             <table className="min-w-full text-xs">
-              <thead className="bg-[#101d32] text-slate-400">
+              <thead className="bg-surface-raised text-slate-400">
                 <tr>
                   {["日期", "公开市场操作", "净投放"].map((column) => (
                     <th
@@ -5468,7 +5469,7 @@ function CfetsMatrixPanel({
                 ].map((row) => (
                   <tr
                     key={row[0]}
-                    className="border-t border-[#162439] text-slate-300"
+                    className="border-t border-line-faint text-slate-300"
                   >
                     {row.map((cell, index) => (
                       <td key={`${row[0]}-${index}`} className="px-3 py-2">
@@ -5536,19 +5537,19 @@ function MultiSeriesChart({
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-1">
         <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr]">
-          <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+          <div className="flex flex-col justify-between py-1 pr-1 text-right text-mini text-slate-500">
             {yTicks.map((t) => (
               <div key={t}>{t}</div>
             ))}
           </div>
           <div
             ref={containerRef}
-            className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[#2a4164]"
+            className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-line-strong"
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
           >
             {axisCaption && (
-              <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[9px] text-slate-500">
+              <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-tag text-slate-500">
                 {axisCaption}
               </div>
             )}
@@ -5564,7 +5565,7 @@ function MultiSeriesChart({
                   x2={VW}
                   y1={(gi / 3) * VH}
                   y2={(gi / 3) * VH}
-                  stroke="#1d3250"
+                  stroke={tk["line-soft"]}
                   strokeWidth="0.5"
                 />
               ))}
@@ -5588,7 +5589,7 @@ function MultiSeriesChart({
                   x2={crossX}
                   y1="0"
                   y2={VH}
-                  stroke="#4a7ab5"
+                  stroke={tk["surface-accent-hover"]}
                   strokeWidth="0.7"
                   strokeDasharray="3 2"
                 />
@@ -5599,7 +5600,7 @@ function MultiSeriesChart({
                 !isHidden(si) && Math.min(...vals) > 0 ? (
                   <div
                     key={si}
-                    className="pointer-events-none absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#0a1322]"
+                    className="pointer-events-none absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-surface-app"
                     style={{
                       left: `${(tooltipState.index / (dates.length - 1)) * 100}%`,
                       top: `${((max - vals[tooltipState.index]) / (max - min)) * 100}%`,
@@ -5616,7 +5617,7 @@ function MultiSeriesChart({
             {xLabels.map((label) => (
               <span
                 key={label}
-                className="absolute -translate-x-1/2 text-[9px] text-slate-600"
+                className="absolute -translate-x-1/2 text-tag text-slate-600"
                 style={{
                   left: `${(dates.indexOf(label) / (dates.length - 1)) * 100}%`,
                 }}
@@ -5631,14 +5632,14 @@ function MultiSeriesChart({
             clientX={tooltipState.clientX}
             clientY={tooltipState.clientY}
           >
-            <div className="mb-1 text-[11px] font-semibold text-slate-300">
+            <div className="mb-1 text-note font-semibold text-slate-300">
               {dates[tooltipState.index]}
             </div>
             {series.map((vals, si) =>
               !isHidden(si) && vals[0] > 0 ? (
                 <div
                   key={si}
-                  className="flex items-center gap-2 py-0.5 text-[11px]"
+                  className="flex items-center gap-2 py-0.5 text-note"
                 >
                   <span
                     className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
@@ -5674,26 +5675,26 @@ function MultiSeriesChart({
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-1">
         <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr]">
-          <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+          <div className="flex flex-col justify-between py-1 pr-1 text-right text-mini text-slate-500">
             {[...yTicks, 0].map((t) => (
               <div key={t}>{t}</div>
             ))}
           </div>
           <div
             ref={containerRef}
-            className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[#2a4164]"
+            className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-line-strong"
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
           >
             {axisCaption && (
-              <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[9px] text-slate-500">
+              <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-tag text-slate-500">
                 {axisCaption}
               </div>
             )}
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                className="absolute inset-x-0 border-t border-dashed border-line-strong"
                 style={{ top: `${(i / 3) * 100}%` }}
               />
             ))}
@@ -5726,7 +5727,7 @@ function MultiSeriesChart({
             </div>
             {tooltipState && (
               <div
-                className="pointer-events-none absolute inset-y-0 w-px bg-[#4a7ab5]/60"
+                className="pointer-events-none absolute inset-y-0 w-px bg-surface-accent-hover/60"
                 style={{
                   left: `${(tooltipState.index / (dates.length - 1)) * 100}%`,
                 }}
@@ -5740,7 +5741,7 @@ function MultiSeriesChart({
             {xLabels.map((label) => (
               <span
                 key={label}
-                className="absolute -translate-x-1/2 text-[9px] text-slate-600"
+                className="absolute -translate-x-1/2 text-tag text-slate-600"
                 style={{
                   left: `${(dates.indexOf(label) / (dates.length - 1)) * 100}%`,
                 }}
@@ -5755,14 +5756,14 @@ function MultiSeriesChart({
             clientX={tooltipState.clientX}
             clientY={tooltipState.clientY}
           >
-            <div className="mb-1 text-[11px] font-semibold text-slate-300">
+            <div className="mb-1 text-note font-semibold text-slate-300">
               {dates[tooltipState.index]}
             </div>
             {series.map((vals, si) =>
               !isHidden(si) && vals[tooltipState.index] > 0 ? (
                 <div
                   key={si}
-                  className="flex items-center gap-2 py-0.5 text-[11px]"
+                  className="flex items-center gap-2 py-0.5 text-note"
                 >
                   <span
                     className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
@@ -5794,7 +5795,7 @@ function MultiSeriesChart({
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-1">
       <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr]">
-        <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+        <div className="flex flex-col justify-between py-1 pr-1 text-right text-mini text-slate-500">
           {[
             absMax,
             Math.round(absMax / 2),
@@ -5807,16 +5808,16 @@ function MultiSeriesChart({
         </div>
         <div
           ref={containerRef}
-          className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[#2a4164]"
+          className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-line-strong"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
           {axisCaption && (
-            <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[9px] text-slate-500">
+            <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-tag text-slate-500">
               {axisCaption}
             </div>
           )}
-          <div className="absolute inset-x-0 top-1/2 border-t border-[#3a5a80]" />
+          <div className="absolute inset-x-0 top-1/2 border-t border-line-focus" />
           <div className="absolute inset-x-1 bottom-1 top-1 flex items-center gap-[2px]">
             {netVals.map((val, di) => {
               const isPos = val >= 0;
@@ -5834,7 +5835,7 @@ function MultiSeriesChart({
                         className="rounded-t-[2px]"
                         style={{
                           height: `${pct}%`,
-                          backgroundColor: "#ef5a6f",
+                          backgroundColor: tk["up"],
                           opacity: 0.85,
                         }}
                       />
@@ -5847,7 +5848,7 @@ function MultiSeriesChart({
                         className="rounded-b-[2px]"
                         style={{
                           height: `${pct}%`,
-                          backgroundColor: "#2fc3de",
+                          backgroundColor: tk["info"],
                           opacity: 0.85,
                         }}
                       />
@@ -5860,7 +5861,7 @@ function MultiSeriesChart({
           </div>
           {tooltipState && (
             <div
-              className="pointer-events-none absolute inset-y-0 w-px bg-[#4a7ab5]/60"
+              className="pointer-events-none absolute inset-y-0 w-px bg-surface-accent-hover/60"
               style={{
                 left: `${(tooltipState.index / (dates.length - 1)) * 100}%`,
               }}
@@ -5874,7 +5875,7 @@ function MultiSeriesChart({
           {xLabels.map((label) => (
             <span
               key={label}
-              className="absolute -translate-x-1/2 text-[9px] text-slate-600"
+              className="absolute -translate-x-1/2 text-tag text-slate-600"
               style={{
                 left: `${(dates.indexOf(label) / (dates.length - 1)) * 100}%`,
               }}
@@ -5889,10 +5890,10 @@ function MultiSeriesChart({
           clientX={tooltipState.clientX}
           clientY={tooltipState.clientY}
         >
-          <div className="mb-1 text-[11px] font-semibold text-slate-300">
+          <div className="mb-1 text-note font-semibold text-slate-300">
             {dates[tooltipState.index]}
           </div>
-          <div className="text-[11px] text-slate-400">
+          <div className="text-note text-slate-400">
             净融入{" "}
             <span
               className={`font-semibold ${netVals[tooltipState.index] >= 0 ? "text-red-400" : "text-emerald-400"}`}
@@ -5935,14 +5936,14 @@ function CfetsInstPanel() {
     <div className="flex h-full min-h-0 flex-col gap-2">
       {/* 控件行 1：期限 */}
       <div className="flex flex-wrap items-center gap-1">
-        <span className="mr-1 text-[11px] text-slate-500">期限</span>
+        <span className="mr-1 text-note text-slate-500">期限</span>
         {cfetsInstPeriodLabels.map((pt) => (
           <button
             key={pt}
             type="button"
-            className={`rounded-md px-2 py-1 text-[11px] transition-colors ${
+            className={`rounded-md px-2 py-1 text-note transition-colors ${
               period === pt
-                ? "bg-[#1f3d6b] font-semibold text-slate-100"
+                ? "bg-surface-accent-soft font-semibold text-slate-100"
                 : "text-slate-400 hover:text-slate-200"
             }`}
             onClick={() => setPeriod(pt)}
@@ -5953,7 +5954,7 @@ function CfetsInstPanel() {
       </div>
       {/* 控件行 2：指标 单选按钮组 */}
       <div className="flex flex-wrap items-center gap-1">
-        <span className="mr-1 text-[11px] text-slate-500">指标</span>
+        <span className="mr-1 text-note text-slate-500">指标</span>
         {cfetsMetricDefs.map((d) => {
           const active = metricKey === d.key;
           return (
@@ -5961,9 +5962,9 @@ function CfetsInstPanel() {
               key={d.key}
               type="button"
               aria-pressed={active}
-              className={`rounded-md px-2 py-1 text-[11px] transition-colors ${
+              className={`rounded-md px-2 py-1 text-note transition-colors ${
                 active
-                  ? "bg-[#1f3d6b] font-semibold text-slate-100"
+                  ? "bg-surface-accent-soft font-semibold text-slate-100"
                   : "text-slate-400 hover:text-slate-200"
               }`}
               onClick={() => setMetricKey(d.key)}
@@ -5974,7 +5975,7 @@ function CfetsInstPanel() {
         })}
       </div>
       {/* 图例（点击切换显隐） */}
-      <div className="flex flex-wrap gap-3 text-[11px]">
+      <div className="flex flex-wrap gap-3 text-note">
         {fundStructureLegendItems.map((item, i) => {
           const hidden = hiddenSeries.has(i);
           return (
@@ -5986,7 +5987,7 @@ function CfetsInstPanel() {
               className={`rounded px-1 font-semibold transition-opacity hover:opacity-100 ${
                 hidden ? "opacity-50 line-through" : "opacity-100"
               }`}
-              style={{ color: hidden ? "#475569" : item.color }}
+              style={{ color: hidden ? tk["text-muted"] : item.color }}
             >
               {item.label}
             </button>
@@ -6033,9 +6034,9 @@ function CfetsBondPanel() {
             <button
               key={bt}
               type="button"
-              className={`rounded-md px-2.5 py-1 text-[11px] transition-colors ${
+              className={`rounded-md px-2.5 py-1 text-note transition-colors ${
                 bondType === bt
-                  ? "bg-[#1f3d6b] font-semibold text-slate-100"
+                  ? "bg-surface-accent-soft font-semibold text-slate-100"
                   : "text-slate-400 hover:text-slate-200"
               }`}
               onClick={() => setBondType(bt)}
@@ -6046,7 +6047,7 @@ function CfetsBondPanel() {
         </div>
         <div className="flex items-center gap-2">
           <select
-            className="rounded border border-[#253754] bg-[#0e1827] px-2 py-1 text-[11px] text-slate-200 focus:outline-none"
+            className="rounded border border-line-soft bg-surface-panel px-2 py-1 text-note text-slate-200 focus:outline-none"
             value={metricKey}
             onChange={(e) => setMetricKey(e.target.value as CfetsBondMetricKey)}
           >
@@ -6071,7 +6072,7 @@ function CfetsBondPanel() {
         </div>
       </div>
       {/* 图例 */}
-      <div className="flex flex-wrap gap-3 text-[11px] text-slate-400">
+      <div className="flex flex-wrap gap-3 text-note text-slate-400">
         {fundStructureLegendItems.map((item) => (
           <LegendDot key={item.label} color={item.color} label={item.label} />
         ))}
@@ -6084,7 +6085,7 @@ function CfetsBondPanel() {
         axisLabel={metricDef.axisLabel}
       />
       {/* 说明 */}
-      <div className="text-[10px] text-slate-500">{metricDef.desc}</div>
+      <div className="text-mini text-slate-500">{metricDef.desc}</div>
     </div>
   );
 }
@@ -6115,8 +6116,8 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
   );
 
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
-      <div className="flex items-center justify-between text-[11px] text-slate-400">
+    <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-line bg-surface-panel p-2">
+      <div className="flex items-center justify-between text-note text-slate-400">
         <div className="flex flex-wrap items-center gap-3">
           <LegendDot color={chartPalette.blue} label="1M" />
           <LegendDot color={chartPalette.emerald} label="3M" />
@@ -6125,21 +6126,21 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
         <span>近14天</span>
       </div>
       <div className="grid min-h-0 grid-cols-[2.8rem_1fr] gap-1">
-        <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+        <div className="flex flex-col justify-between py-1 pr-1 text-right text-mini text-slate-500">
           {yTicks.map((t) => (
             <div key={t}>{t}%</div>
           ))}
         </div>
         <div
           ref={containerRef}
-          className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]"
+          className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-line-strong"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
           {[0, 1, 2, 3].map((index) => (
             <div
               key={`ncd-grid-${index}`}
-              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              className="absolute inset-x-0 border-t border-dashed border-line-strong"
               style={{ top: `${(index / 3) * 100}%` }}
             />
           ))}
@@ -6150,8 +6151,8 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
           >
             <defs>
               <linearGradient id="ncd-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#5ea3ff" stopOpacity="0.24" />
-                <stop offset="100%" stopColor="#5ea3ff" stopOpacity="0.04" />
+                <stop offset="0%" stopColor={tk["accent"]} stopOpacity="0.24" />
+                <stop offset="100%" stopColor={tk["accent"]} stopOpacity="0.04" />
               </linearGradient>
             </defs>
             <path d={area} fill="url(#ncd-fill)" />
@@ -6185,7 +6186,7 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
                 x2={(ti / (ncdTrendSeries.length - 1)) * width}
                 y1={0}
                 y2={height}
-                stroke="#5ea3ff"
+                stroke={tk["accent"]}
                 strokeWidth="1"
                 strokeDasharray="4 3"
                 strokeOpacity="0.6"
@@ -6235,7 +6236,7 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
         </div>
       </div>
       <div
-        className={`grid ${compact ? "grid-cols-7" : "grid-cols-14"} text-center text-[9px] text-slate-400`}
+        className={`grid ${compact ? "grid-cols-7" : "grid-cols-14"} text-center text-tag text-slate-400`}
       >
         {labels.map((label) => (
           <div key={label}>{label}</div>
@@ -6284,16 +6285,16 @@ function NcdPrimaryTrendPanel() {
     .filter(({ i }) => i % labelStep === 0 || i === count - 1);
 
   const series = [
-    { data: gov, color: "#a78bfa", label: "国有/股份制", dash: "" },
+    { data: gov, color: tk["violet"], label: "国有/股份制", dash: "" },
     { data: aaa, color: chartPalette.blue, label: "AAA", dash: "" },
     { data: aaPlus, color: chartPalette.emerald, label: "AA+", dash: "5 3" },
     { data: aa, color: chartPalette.amber, label: "AA", dash: "2 2" },
   ];
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+    <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden rounded-lg border border-line bg-surface-panel p-2">
       {/* header: legend + range tabs */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-note text-slate-400">
         {series.map((s) => (
           <LegendDot key={s.label} color={s.color} label={s.label} />
         ))}
@@ -6313,7 +6314,7 @@ function NcdPrimaryTrendPanel() {
       {/* chart */}
       <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr] gap-x-1">
         {/* y-axis: top portion only (bottom 20px reserved for x-axis) */}
-        <div className="flex flex-col justify-between pb-5 pr-1 text-right text-[10px] text-slate-500">
+        <div className="flex flex-col justify-between pb-5 pr-1 text-right text-mini text-slate-500">
           {yTicks.map((t) => (
             <div key={t}>{t}%</div>
           ))}
@@ -6321,14 +6322,14 @@ function NcdPrimaryTrendPanel() {
         {/* chart area — x-axis ticks + labels are absolutely inside */}
         <div
           ref={containerRef}
-          className="relative min-h-0 cursor-crosshair overflow-hidden rounded-md border border-dashed border-[#2f456b]"
+          className="relative min-h-0 cursor-crosshair overflow-hidden rounded-md border border-dashed border-line-strong"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
-              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              className="absolute inset-x-0 border-t border-dashed border-line-strong"
               style={{ top: `${(i / 3) * 100}%` }}
             />
           ))}
@@ -6357,7 +6358,7 @@ function NcdPrimaryTrendPanel() {
                 x2={(ti / (count - 1)) * W}
                 y1={0}
                 y2={H}
-                stroke="#7090b0"
+                stroke={tk["accent-muted"]}
                 strokeWidth="1"
                 strokeDasharray="4 3"
               />
@@ -6379,7 +6380,7 @@ function NcdPrimaryTrendPanel() {
                   x2={(i / (count - 1)) * W}
                   y1={0}
                   y2={4}
-                  stroke="#2a4060"
+                  stroke={tk["line-strong"]}
                   strokeWidth="1.5"
                 />
               ))}
@@ -6388,7 +6389,7 @@ function NcdPrimaryTrendPanel() {
             {xLabels.map(({ d, i }) => (
               <span
                 key={i}
-                className="absolute top-[5px] -translate-x-1/2 text-[9px] leading-none text-slate-400"
+                className="absolute top-[5px] -translate-x-1/2 text-tag leading-none text-slate-400"
                 style={{ left: `${(i / (count - 1)) * 100}%` }}
               >
                 {d}
@@ -6400,7 +6401,7 @@ function NcdPrimaryTrendPanel() {
               clientX={tooltipState.clientX}
               clientY={tooltipState.clientY}
             >
-              <div className="mb-1 text-[11px] font-medium text-slate-400">
+              <div className="mb-1 text-note font-medium text-slate-400">
                 {dates[ti]}
               </div>
               {series.map((s) => (
@@ -6481,28 +6482,28 @@ function NcdLinkedChartPane({
     .filter(({ i }) => i % labelStep === 0 || i === count - 1);
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-1 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
-      <div className="flex flex-wrap items-center gap-x-3 text-[11px] text-slate-400">
+    <div className="flex h-full min-h-0 flex-col gap-1 overflow-hidden rounded-lg border border-line bg-surface-panel p-2">
+      <div className="flex flex-wrap items-center gap-x-3 text-note text-slate-400">
         {series.map((s) => (
           <LegendDot key={s.label} color={s.color} label={s.label} />
         ))}
       </div>
       <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr] gap-x-1">
-        <div className="flex flex-col justify-between pb-7 pr-1 text-right text-[10px] text-slate-500">
+        <div className="flex flex-col justify-between pb-7 pr-1 text-right text-mini text-slate-500">
           {yTicks.map((t) => (
             <div key={t}>{t}%</div>
           ))}
         </div>
         <div
           ref={containerRef}
-          className="relative min-h-0 cursor-crosshair overflow-hidden rounded-md border border-dashed border-[#2f456b]"
+          className="relative min-h-0 cursor-crosshair overflow-hidden rounded-md border border-dashed border-line-strong"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
-              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              className="absolute inset-x-0 border-t border-dashed border-line-strong"
               style={{ top: `${(i / 3) * 100}%` }}
             />
           ))}
@@ -6530,7 +6531,7 @@ function NcdLinkedChartPane({
                 x2={(crosshairIdx / (count - 1)) * W}
                 y1={0}
                 y2={H}
-                stroke="#7090b0"
+                stroke={tk["accent-muted"]}
                 strokeWidth="1"
                 strokeDasharray="4 3"
               />
@@ -6550,7 +6551,7 @@ function NcdLinkedChartPane({
                   x2={(i / (count - 1)) * W}
                   y1={0}
                   y2={4}
-                  stroke="#2a4060"
+                  stroke={tk["line-strong"]}
                   strokeWidth="1.5"
                 />
               ))}
@@ -6558,7 +6559,7 @@ function NcdLinkedChartPane({
             {xLabels.map(({ d, i }) => (
               <span
                 key={i}
-                className="absolute top-[6px] text-[12px] font-medium leading-none text-slate-300"
+                className="absolute top-[6px] text-body font-medium leading-none text-slate-300"
                 style={{
                   left: `${(i / (count - 1)) * 100}%`,
                   transform:
@@ -6578,7 +6579,7 @@ function NcdLinkedChartPane({
               clientX={tooltipState.clientX}
               clientY={tooltipState.clientY}
             >
-              <div className="mb-1 text-[11px] font-medium text-slate-400">
+              <div className="mb-1 text-note font-medium text-slate-400">
                 {dates[ti]}
               </div>
               {series.map((s) => (
@@ -6611,7 +6612,7 @@ function NcdExpandedDualView({ period }: { period: NcdPeriod }) {
   const primarySeries = [
     {
       data: shiftSeries(ncdPrimaryGovBase6m.slice(-count), off),
-      color: "#a78bfa",
+      color: tk["violet"],
       label: "国有/股份制",
       dash: "",
     },
@@ -6638,7 +6639,7 @@ function NcdExpandedDualView({ period }: { period: NcdPeriod }) {
   const secondarySeries = [
     {
       data: ncdSecondaryGov6m.slice(-count),
-      color: "#a78bfa",
+      color: tk["violet"],
       label: "国有/股份制",
       dash: "",
     },
@@ -6677,7 +6678,7 @@ function NcdExpandedDualView({ period }: { period: NcdPeriod }) {
         ))}
       </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="mb-1 text-[11px] font-medium text-slate-400">一级</div>
+        <div className="mb-1 text-note font-medium text-slate-400">一级</div>
         <div className="min-h-0 flex-1 overflow-hidden">
           <NcdLinkedChartPane
             series={primarySeries}
@@ -6689,9 +6690,9 @@ function NcdExpandedDualView({ period }: { period: NcdPeriod }) {
           />
         </div>
       </div>
-      <div className="h-px bg-[#1e2f48]" />
+      <div className="h-px bg-surface-input" />
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="mb-1 text-[11px] font-medium text-slate-400">二级</div>
+        <div className="mb-1 text-note font-medium text-slate-400">二级</div>
         <div className="min-h-0 flex-1 overflow-hidden">
           <NcdLinkedChartPane
             series={secondarySeries}
@@ -6719,8 +6720,8 @@ function NcdPrimaryTable() {
   }));
   const maxRows = Math.max(...groups.map((g) => g.rows.length));
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
-      <div className="flex items-center gap-2 border-b border-[#1c3050] bg-[#101d32] px-3 py-1.5">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-line bg-surface-panel">
+      <div className="flex items-center gap-2 border-b border-line-soft bg-surface-raised px-3 py-1.5">
         <div className="flex items-center gap-1">
           {ncdPrimaryPeriods.map((p) => (
             <button
@@ -6733,7 +6734,7 @@ function NcdPrimaryTable() {
             </button>
           ))}
         </div>
-        <span className="ml-2 text-[11px] text-slate-500">(周一 26-06-08)</span>
+        <span className="ml-2 text-note text-slate-500">(周一 26-06-08)</span>
       </div>
       <div
         className="grid overflow-y-auto"
@@ -6745,7 +6746,7 @@ function NcdPrimaryTable() {
         {groups.map((group) => (
           <div
             key={group.label}
-            className="border-b border-r border-[#1c3050] bg-[#0f1d30] px-2 py-1 text-center text-[11px] font-medium text-slate-400 last:border-r-0"
+            className="border-b border-r border-line-soft bg-surface-elevated px-2 py-1 text-center text-note font-medium text-slate-400 last:border-r-0"
           >
             {group.label}
           </div>
@@ -6756,7 +6757,7 @@ function NcdPrimaryTable() {
             return (
               <div
                 key={`${group.label}-${rowIdx}`}
-                className="flex items-center justify-between border-b border-r border-[#172436] px-2 py-[5px] last:border-r-0"
+                className="flex items-center justify-between border-b border-r border-line-faint px-2 py-[5px] last:border-r-0"
                 style={{
                   borderBottomColor:
                     rowIdx === maxRows - 1 ? "transparent" : undefined,
@@ -6767,7 +6768,7 @@ function NcdPrimaryTable() {
                     <span className="truncate text-xs text-slate-300">
                       {row.name}
                       {row.marker && (
-                        <span className="ml-0.5 text-[9px] text-slate-500">
+                        <span className="ml-0.5 text-tag text-slate-500">
                           ▲
                         </span>
                       )}
@@ -6777,7 +6778,7 @@ function NcdPrimaryTable() {
                         {row.rate}
                       </span>
                       {row.change && (
-                        <span className="text-[11px] text-emerald-400">
+                        <span className="text-note text-emerald-400">
                           {row.change}
                         </span>
                       )}
@@ -6798,22 +6799,22 @@ function NcdPrimaryExpandedTable() {
     <div className="h-full overflow-auto">
       <table className="w-full border-collapse text-xs">
         <thead className="sticky top-0 z-10">
-          <tr className="bg-[#101d32]">
-            <th className="w-20 border-b border-r border-[#1c3050] px-2 py-2 text-left text-[11px] text-slate-500" />
+          <tr className="bg-surface-raised">
+            <th className="w-20 border-b border-r border-line-soft px-2 py-2 text-left text-note text-slate-500" />
             {ncdPrimaryPeriods.map((p) => {
               const h = ncdColHeaders[p];
               return (
                 <th
                   key={p}
-                  className="border-b border-r border-[#1c3050] px-2 py-2 text-center last:border-r-0"
+                  className="border-b border-r border-line-soft px-2 py-2 text-center last:border-r-0"
                 >
                   <div className="flex items-baseline justify-center gap-1">
                     <span className="font-semibold text-slate-200">{p}</span>
-                    <span className="text-[10px] text-slate-500">
+                    <span className="text-mini text-slate-500">
                       ({h.dow} {h.date})
                     </span>
                     {h.count && (
-                      <span className="rounded bg-blue-500/20 px-1 text-[10px] text-blue-300">
+                      <span className="rounded bg-blue-500/20 px-1 text-mini text-blue-300">
                         {h.count}
                       </span>
                     )}
@@ -6826,7 +6827,7 @@ function NcdPrimaryExpandedTable() {
         <tbody>
           {ncdAllPeriodsData.map((group) => (
             <tr key={group.label} className="align-top">
-              <td className="border-b border-r border-[#1c3050] bg-[#0f1d30] px-2 py-2 text-[11px] font-medium text-slate-400">
+              <td className="border-b border-r border-line-soft bg-surface-elevated px-2 py-2 text-note font-medium text-slate-400">
                 {group.label}
               </td>
               {ncdPrimaryPeriods.map((p) => {
@@ -6834,7 +6835,7 @@ function NcdPrimaryExpandedTable() {
                 return (
                   <td
                     key={p}
-                    className="border-b border-r border-[#172436] px-2 py-1.5 last:border-r-0"
+                    className="border-b border-r border-line-faint px-2 py-1.5 last:border-r-0"
                   >
                     {cells.length > 0 ? (
                       <div className="flex flex-col gap-[3px]">
@@ -6843,20 +6844,20 @@ function NcdPrimaryExpandedTable() {
                             key={cell.name}
                             className="flex items-center justify-between gap-1"
                           >
-                            <span className="truncate text-[11px] text-slate-300">
+                            <span className="truncate text-note text-slate-300">
                               {cell.name}
                             </span>
                             <div className="flex shrink-0 items-center gap-1">
-                              <span className="font-mono text-[11px] text-amber-400">
+                              <span className="font-mono text-note text-amber-400">
                                 {cell.rate}
                               </span>
                               {cell.change && (
-                                <span className="text-[10px] text-emerald-400">
+                                <span className="text-mini text-emerald-400">
                                   +{cell.change}
                                 </span>
                               )}
                               {cell.limitNonBank && (
-                                <span className="rounded bg-slate-700/60 px-0.5 text-[9px] text-slate-400">
+                                <span className="rounded bg-slate-700/60 px-0.5 text-tag text-slate-400">
                                   限非
                                 </span>
                               )}
@@ -6865,7 +6866,7 @@ function NcdPrimaryExpandedTable() {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center text-[10px] text-slate-600">
+                      <div className="text-center text-mini text-slate-600">
                         —
                       </div>
                     )}
@@ -6903,21 +6904,21 @@ function FundStructureBars({
 
   return (
     <div className="grid h-full min-h-0 grid-cols-[3rem_1fr] gap-2">
-      <div className="flex flex-col justify-between pb-2 pt-1 text-right text-[10px] text-slate-400">
+      <div className="flex flex-col justify-between pb-2 pt-1 text-right text-mini text-slate-400">
         {yTicks.map((tick) => (
           <div key={tick}>{tick.toLocaleString()}</div>
         ))}
       </div>
-      <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]">
+      <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-line-strong">
         {axisCaption && (
-          <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[9px] text-slate-500">
+          <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-tag text-slate-500">
             {axisCaption}
           </div>
         )}
         {yTicks.map((tick, index) => (
           <div
             key={`fund-grid-${tick}`}
-            className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+            className="absolute inset-x-0 border-t border-dashed border-line-strong"
             style={{ top: `${(index / (yTicks.length - 1)) * 100}%` }}
           />
         ))}
@@ -7020,8 +7021,8 @@ function FundStructurePanel() {
   } | null>(null);
 
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
-      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+    <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-line bg-surface-panel p-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-note text-slate-400">
         <div className="flex flex-wrap items-center gap-3">
           {fundStructureLegendItems.map((item) => (
             <LegendDot key={item.label} color={item.color} label={item.label} />
@@ -7044,16 +7045,16 @@ function FundStructurePanel() {
         </div>
       </div>
       <div className="grid h-full min-h-0 grid-cols-[3rem_1fr] gap-2">
-        <div className="flex flex-col justify-between pb-2 pt-1 text-right text-[10px] text-slate-400">
+        <div className="flex flex-col justify-between pb-2 pt-1 text-right text-mini text-slate-400">
           {yTicks.map((tick) => (
             <div key={tick}>{tick.toLocaleString()}</div>
           ))}
         </div>
-        <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]">
+        <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-line-strong">
           {yTicks.map((tick, index) => (
             <div
               key={`fund-grid-${tick}`}
-              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              className="absolute inset-x-0 border-t border-dashed border-line-strong"
               style={{ top: `${(index / (yTicks.length - 1)) * 100}%` }}
             />
           ))}
@@ -7142,7 +7143,7 @@ function FundStructurePanel() {
       <div className="grid shrink-0 grid-cols-[3rem_1fr]">
         <div />
         <div
-          className="grid pt-0.5 text-[9px] text-slate-400"
+          className="grid pt-0.5 text-tag text-slate-400"
           style={{
             gridTemplateColumns: `repeat(${labels.length}, minmax(0, 1fr))`,
           }}
@@ -7174,7 +7175,7 @@ function OverlayProductSelect({
     <label className="flex items-center gap-2 text-xs text-slate-400">
       <span>叠加品种</span>
       <select
-        className="rounded-md border border-[#2a4164] bg-[#0f1b2f] px-2 py-1 text-xs text-slate-200 outline-none"
+        className="rounded-md border border-line-strong bg-surface-elevated px-2 py-1 text-xs text-slate-200 outline-none"
         value={value}
         onChange={(event) => onChange(event.target.value as OverlayProduct)}
       >
@@ -7215,11 +7216,11 @@ function QuoteSection({
     <section
       className={`flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border ${
         emphasized
-          ? "border-[#3b76f3] bg-[#0c1730]"
-          : "border-[#1f2f48] bg-[#0c1524]"
+          ? "border-line-accent bg-surface-app"
+          : "border-line bg-surface-app"
       }`}
     >
-      <div className="border-b border-[#1b2a42] bg-[#101b2c] px-4 py-3">
+      <div className="border-b border-line-faint bg-surface-elevated px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3 whitespace-nowrap">
             <div className="text-base font-semibold text-slate-50">{title}</div>
@@ -7283,14 +7284,14 @@ function StructuredTable({
 }) {
   return (
     <div
-      className={`${adaptiveHeight ? "" : "h-full min-h-0"} bg-[#0a1322] ${
+      className={`${adaptiveHeight ? "" : "h-full min-h-0"} bg-surface-app ${
         scrollY
           ? "overflow-y-auto overflow-x-hidden"
           : fitToWidth || adaptiveHeight
             ? "overflow-hidden"
             : "overflow-auto"
       } ${
-        flush ? "rounded-none border-0" : "rounded-xl border border-[#1c2b42]"
+        flush ? "rounded-none border-0" : "rounded-xl border border-line-faint"
       }`}
     >
       <table
@@ -7303,12 +7304,12 @@ function StructuredTable({
             ))}
           </colgroup>
         ) : null}
-        <thead className="sticky top-0 z-10 bg-[#111d30]">
+        <thead className="sticky top-0 z-10 bg-surface-elevated">
           <tr>
             {columns.map((column, index) => (
               <th
                 key={`${column}-${index}`}
-                className={`border-b border-[#22324d] px-3 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400 ${
+                className={`border-b border-line-soft px-3 py-2 text-note font-medium tracking-[0.02em] text-slate-400 ${
                   index === 0 ? "text-left" : "text-right"
                 } ${compact ? "px-2 py-1.5" : "px-3 py-2.5"} ${
                   fitToWidth
@@ -7328,13 +7329,13 @@ function StructuredTable({
             <tr
               key={`${row[0]}-${rowIndex}`}
               className={
-                rowIndex % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
+                rowIndex % 2 === 0 ? "bg-transparent" : "bg-surface-panel/55"
               }
             >
               {row.map((cell, cellIndex) => (
                 <td
                   key={`${row[0]}-${cellIndex}`}
-                  className={`border-b border-[#162439] ${compact ? "px-2.5 py-2" : "px-3 py-2.5"} ${
+                  className={`border-b border-line-faint ${compact ? "px-2.5 py-2" : "px-3 py-2.5"} ${
                     cellIndex === 0 ? "text-left" : "text-right"
                   } ${fitToWidth && buttonColumn !== cellIndex ? "overflow-hidden text-ellipsis whitespace-nowrap" : ""}`}
                 >
@@ -7342,7 +7343,7 @@ function StructuredTable({
                     <button
                       className={`rounded-lg border border-blue-500/30 bg-blue-500/20 font-medium text-blue-300 ${
                         compact
-                          ? "px-1.5 py-0.5 text-[10px]"
+                          ? "px-1.5 py-0.5 text-mini"
                           : "px-3 py-1 text-xs"
                       }`}
                       type="button"
@@ -7379,8 +7380,8 @@ function TrendOverviewCard() {
   const areaPath = buildAreaPath(trendRateSeries, 860, 320, 1.82, 2.12);
 
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
-      <div className="flex items-center justify-between border-b border-[#203551] bg-[#101d32] px-4 py-3">
+    <div className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-line-strong bg-surface-app">
+      <div className="flex items-center justify-between border-b border-line-soft bg-surface-raised px-4 py-3">
         <div className="flex gap-2">
           {trendModeTabs.map((tab) => (
             <button
@@ -7398,7 +7399,7 @@ function TrendOverviewCard() {
             nonbankBest · 14
           </div>
           <button
-            className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+            className="rounded-lg border border-line-focus bg-surface-raised px-3 py-1.5 text-xs font-medium text-slate-300"
             type="button"
           >
             导出
@@ -7407,7 +7408,7 @@ function TrendOverviewCard() {
       </div>
       <div className="grid min-h-0 grid-rows-[68fr_26fr_auto] gap-0 px-4 pb-4 pt-3">
         <div className="grid min-h-0 grid-cols-[4rem_1fr]">
-          <div className="flex flex-col justify-between pr-3 pb-2 pt-6 text-right text-[10px] text-slate-400">
+          <div className="flex flex-col justify-between pr-3 pb-2 pt-6 text-right text-mini text-slate-400">
             {trendPriceTicks.map((tick) => (
               <div key={tick}>{tick.toFixed(3)}</div>
             ))}
@@ -7416,14 +7417,14 @@ function TrendOverviewCard() {
             {trendPriceTicks.map((_, index) => (
               <div
                 key={`price-grid-${index}`}
-                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                className="absolute inset-x-0 border-t border-dashed border-line-strong"
                 style={{
                   top: `${(index / (trendPriceTicks.length - 1)) * 100}%`,
                 }}
               />
             ))}
             <div
-              className="absolute inset-x-0 border-t-2 border-dashed border-[#ff8a26]"
+              className="absolute inset-x-0 border-t-2 border-dashed border-line-warn"
               style={{ top: "58%" }}
             />
             <div className="absolute right-3 top-2 flex items-center gap-2 text-xs text-blue-300">
@@ -7446,15 +7447,15 @@ function TrendOverviewCard() {
               />
               <defs>
                 <linearGradient id="trend-fill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#5ea3ff" stopOpacity="0.28" />
-                  <stop offset="100%" stopColor="#5ea3ff" stopOpacity="0.04" />
+                  <stop offset="0%" stopColor={tk["accent"]} stopOpacity="0.28" />
+                  <stop offset="100%" stopColor={tk["accent"]} stopOpacity="0.04" />
                 </linearGradient>
               </defs>
             </svg>
           </div>
         </div>
-        <div className="grid min-h-0 grid-cols-[4rem_1fr] border-t border-[#1d3250] pt-2">
-          <div className="flex flex-col justify-between pr-3 pb-1 text-right text-[10px] text-slate-400">
+        <div className="grid min-h-0 grid-cols-[4rem_1fr] border-t border-line-soft pt-2">
+          <div className="flex flex-col justify-between pr-3 pb-1 text-right text-mini text-slate-400">
             {trendVolumeTicks.map((tick) => (
               <div key={tick}>{tick}</div>
             ))}
@@ -7463,7 +7464,7 @@ function TrendOverviewCard() {
             {[0, 1, 2, 3].map((index) => (
               <div
                 key={`vol-grid-${index}`}
-                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                className="absolute inset-x-0 border-t border-dashed border-line-strong"
                 style={{ top: `${(index / 4) * 100}%` }}
               />
             ))}
@@ -7483,7 +7484,7 @@ function TrendOverviewCard() {
         </div>
         <div className="grid grid-cols-[4rem_1fr] pt-2">
           <div />
-          <div className="grid grid-cols-10 text-[10px] text-slate-400">
+          <div className="grid grid-cols-10 text-mini text-slate-400">
             {trendAxisLabels.map((label) => (
               <div key={label} className="text-center">
                 {label}
@@ -7504,17 +7505,17 @@ function MiniChartCard({
   bars?: boolean;
 }) {
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
-      <div className="flex items-center justify-between gap-3 border-b border-[#1a2c45] bg-[#0e1827] px-3 py-1.5">
+    <div className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-line-faint bg-surface-app">
+      <div className="flex items-center justify-between gap-3 border-b border-line bg-surface-panel px-3 py-1.5">
         <div className="text-xs font-medium text-slate-200">{title}</div>
-        <div className="flex flex-wrap gap-2 text-[11px] text-slate-500">
+        <div className="flex flex-wrap gap-2 text-note text-slate-500">
           <LegendDot color={chartPalette.emerald} label="1" />
           <LegendDot color={chartPalette.blue} label="7" />
           <LegendDot color={chartPalette.violet} label="14" />
         </div>
       </div>
       <div className="min-h-0 p-1.5">
-        <div className="relative h-full min-h-0 overflow-hidden rounded-lg border border-dashed border-[#2f456b] bg-[#0d1726]">
+        <div className="relative h-full min-h-0 overflow-hidden rounded-lg border border-dashed border-line-strong bg-surface-panel">
           <div className="absolute inset-0 bg-[linear-gradient(rgba(58,81,115,0.16)_1px,transparent_1px),linear-gradient(90deg,rgba(58,81,115,0.16)_1px,transparent_1px)] bg-[size:100%_25%,20%_100%]" />
           {bars ? (
             <div className="absolute inset-x-2.5 bottom-2.5 top-2.5 flex items-end gap-1.5">
@@ -7659,7 +7660,7 @@ function ChartTooltip({
 }) {
   return (
     <div
-      className="pointer-events-none fixed z-[200] rounded-lg border border-[#2a4a6e] bg-[#0e1d31]/95 px-3 py-2 text-xs text-slate-200 shadow-xl backdrop-blur-sm"
+      className="pointer-events-none fixed z-[200] rounded-lg border border-line-strong bg-surface-panel/95 px-3 py-2 text-xs text-slate-200 shadow-xl backdrop-blur-sm"
       style={{ left: clientX + 14, top: clientY - 10 }}
     >
       {children}
@@ -7681,8 +7682,8 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 
 function trendModeButtonClass(active: boolean) {
   return active
-    ? "rounded-lg border border-[#3d74f1] bg-[#2a5fda] px-3 py-1.5 text-sm font-semibold text-white"
-    : "rounded-lg border border-[#2a4164] bg-[#0f1b2f] px-3 py-1.5 text-sm font-semibold text-slate-200";
+    ? "rounded-lg border border-line-accent bg-surface-accent px-3 py-1.5 text-sm font-semibold text-white"
+    : "rounded-lg border border-line-strong bg-surface-elevated px-3 py-1.5 text-sm font-semibold text-slate-200";
 }
 
 function buildLinePath(
@@ -7852,8 +7853,8 @@ function PanelCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
-      <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
+    <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-line bg-surface-panel shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
+      <div className="border-b border-line-faint bg-surface-elevated px-4 py-3">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-sm font-semibold tracking-[0.02em] text-slate-50">
@@ -7929,10 +7930,10 @@ function useHoverPopover(enterDelay = 80, leaveDelay = 120) {
 }
 
 const sentimentSeriesConfig = [
-  { key: "total" as const, label: "全市场", color: "#e2e8f0" },
-  { key: "bigBank" as const, label: "大行", color: "#4ade80" },
-  { key: "smallBank" as const, label: "中小行", color: "#60a5fa" },
-  { key: "nonBank" as const, label: "非银机构", color: "#fb923c" },
+  { key: "total" as const, label: "全市场", color: tk["text-primary"] },
+  { key: "bigBank" as const, label: "大行", color: tk["down"] },
+  { key: "smallBank" as const, label: "中小行", color: tk["accent"] },
+  { key: "nonBank" as const, label: "非银机构", color: tk["warn-strong"] },
 ] as const;
 
 function SentimentPopoverPanel({
@@ -7981,20 +7982,20 @@ function SentimentPopoverPanel({
 
   return (
     <div
-      className="fixed z-[300] overflow-hidden rounded-xl border border-[#1d3250] bg-[#0a1322] shadow-2xl"
+      className="fixed z-[300] overflow-hidden rounded-xl border border-line-soft bg-surface-app shadow-2xl"
       style={{ left, top, width: panelWidth }}
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
     >
-      <div className="flex items-center gap-2 border-b border-[#1a2c45] bg-[#0e1827] px-3 py-2">
+      <div className="flex items-center gap-2 border-b border-line bg-surface-panel px-3 py-2">
         <span className="text-xs font-semibold text-slate-200">资金情绪</span>
-        <div className="flex gap-0.5 rounded-md bg-[#0a1322] p-0.5">
+        <div className="flex gap-0.5 rounded-md bg-surface-app p-0.5">
           {(["realtime", "trend"] as const).map((t) => (
             <button
               key={t}
-              className={`rounded px-2.5 py-0.5 text-[11px] transition-colors ${
+              className={`rounded px-2.5 py-0.5 text-note transition-colors ${
                 tab === t
-                  ? "bg-[#c69b3a] font-semibold text-white"
+                  ? "bg-surface-warn font-semibold text-white"
                   : "text-slate-400 hover:text-slate-200"
               }`}
               type="button"
@@ -8005,23 +8006,23 @@ function SentimentPopoverPanel({
           ))}
         </div>
         {tab === "trend" && (
-          <span className="text-[10px] text-slate-500">
+          <span className="text-mini text-slate-500">
             2026-04-10 → 2026-05-10
           </span>
         )}
-        <span className="ml-auto cursor-default select-none text-[11px] text-slate-600">
+        <span className="ml-auto cursor-default select-none text-note text-slate-600">
           ?
         </span>
       </div>
 
-      <div className="flex gap-4 px-3 pb-1 pt-2 text-[11px] text-slate-400">
+      <div className="flex gap-4 px-3 pb-1 pt-2 text-note text-slate-400">
         {sentimentSeriesConfig.map(({ key, label, color }) => (
           <LegendDot key={key} color={color} label={label} />
         ))}
       </div>
 
       <div className="grid grid-cols-[36px_1fr] px-1 pb-1">
-        <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+        <div className="flex flex-col justify-between py-1 pr-1 text-right text-mini text-slate-500">
           {yTicks.map((tick) => (
             <div key={tick}>{tick}</div>
           ))}
@@ -8045,7 +8046,7 @@ function SentimentPopoverPanel({
                 x2={VW}
                 y1={(gi / (yTicks.length - 1)) * VH}
                 y2={(gi / (yTicks.length - 1)) * VH}
-                stroke="#1d3250"
+                stroke={tk["line-soft"]}
                 strokeWidth="0.5"
               />
             ))}
@@ -8073,7 +8074,7 @@ function SentimentPopoverPanel({
                 x2={crosshairX}
                 y1="0"
                 y2={VH}
-                stroke="#4a7ab5"
+                stroke={tk["surface-accent-hover"]}
                 strokeWidth="0.8"
                 strokeDasharray="3 2"
               />
@@ -8087,7 +8088,7 @@ function SentimentPopoverPanel({
               return (
                 <div
                   key={key}
-                  className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#0a1322]"
+                  className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-surface-app"
                   style={{
                     left: `${cx}%`,
                     top: `${cy}%`,
@@ -8105,7 +8106,7 @@ function SentimentPopoverPanel({
           {xTickIndices.map((idx) => (
             <span
               key={idx}
-              className="absolute -translate-x-1/2 text-[9px] text-slate-600"
+              className="absolute -translate-x-1/2 text-tag text-slate-600"
               style={{ left: `${(idx / (data.length - 1)) * 100}%` }}
             >
               {data[idx].label}
@@ -8181,7 +8182,7 @@ function InfoChip({
       ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
       : tone === "alert"
         ? "border-amber-500/20 bg-amber-500/10 text-amber-300"
-        : "border-[#253754] bg-[#101a2b] text-slate-300";
+        : "border-line-soft bg-surface-elevated text-slate-300";
 
   return (
     <div className={`rounded-full border px-3 py-1.5 text-xs ${toneStyles}`}>
@@ -8203,8 +8204,8 @@ function ToolbarChip({
     <button
       className={`rounded-lg border px-3 py-1.5 text-xs transition-colors ${
         active
-          ? "border-[#3c76f0] bg-[#2551b8] text-white"
-          : "border-[#253754] bg-[#101a2b] text-slate-400 hover:border-[#33507d] hover:text-slate-200"
+          ? "border-line-accent bg-surface-accent text-white"
+          : "border-line-soft bg-surface-elevated text-slate-400 hover:border-line-focus hover:text-slate-200"
       }`}
       type="button"
     >
@@ -8218,12 +8219,12 @@ function FilterLabel({ children }: { children: React.ReactNode }) {
 }
 
 function FilterDivider() {
-  return <div className="mx-2 h-6 w-px bg-[#243552]" />;
+  return <div className="mx-2 h-6 w-px bg-surface-selected" />;
 }
 
 function RangeFilterField({ value }: { value: string }) {
   return (
-    <div className="flex h-8 min-w-[96px] items-center rounded-lg border border-[#2a4164] bg-[#101a2b] px-3 text-sm text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+    <div className="flex h-8 min-w-[96px] items-center rounded-lg border border-line-strong bg-surface-elevated px-3 text-sm text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
       {value}
     </div>
   );
@@ -8231,7 +8232,7 @@ function RangeFilterField({ value }: { value: string }) {
 
 function StatusBadge({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-full border border-[#94712a] bg-[#4b3a10] px-4 py-1.5 text-sm font-semibold text-amber-300">
+    <div className="rounded-full border border-line-warn bg-surface-warn-soft px-4 py-1.5 text-sm font-semibold text-amber-300">
       {children}
     </div>
   );
@@ -8245,14 +8246,14 @@ function toneClass(tone: "neutral" | "balanced" | "watch") {
 
 function auxTabClass(active: boolean) {
   return active
-    ? "rounded-lg border border-[#3c76f0] bg-[#2551b8] px-3 py-1.5 text-xs text-white"
-    : "rounded-lg border border-[#253754] bg-[#101a2b] px-3 py-1.5 text-xs text-slate-400 hover:border-[#33507d] hover:text-slate-200";
+    ? "rounded-lg border border-line-accent bg-surface-accent px-3 py-1.5 text-xs text-white"
+    : "rounded-lg border border-line-soft bg-surface-elevated px-3 py-1.5 text-xs text-slate-400 hover:border-line-focus hover:text-slate-200";
 }
 
 function miniChipClass(active: boolean) {
   return active
-    ? "whitespace-nowrap rounded-md border border-[#3c76f0] bg-[#2551b8] px-1.5 py-0.5 text-[11px] font-medium text-white"
-    : "whitespace-nowrap rounded-md border border-[#253754] bg-[#101a2b] px-1.5 py-0.5 text-[11px] text-slate-400 hover:border-[#33507d] hover:text-slate-200";
+    ? "whitespace-nowrap rounded-md border border-line-accent bg-surface-accent px-1.5 py-0.5 text-note font-medium text-white"
+    : "whitespace-nowrap rounded-md border border-line-soft bg-surface-elevated px-1.5 py-0.5 text-note text-slate-400 hover:border-line-focus hover:text-slate-200";
 }
 
 function cellClassName(
