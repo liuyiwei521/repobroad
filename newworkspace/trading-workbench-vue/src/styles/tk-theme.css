@@ -1,0 +1,99 @@
+:root {
+  --tk-color-brand-primary: #0060db;
+  --tk-color-brand-primary-pressed: #0055c7;
+  --tk-color-brand-primary-hover: #1b7eff;
+  --tk-color-brand-primary-deep: #025cab;
+  --tk-color-brand-cyan: #00d2dc;
+
+  --tk-color-success: #00e056;
+  --tk-color-warning: #ffa028;
+  --tk-color-warning-strong: #fdd908;
+  --tk-color-danger: #ff3446;
+  --tk-color-danger-deep: #880f1e;
+  --tk-color-neutral: #737578;
+
+  --tk-color-text-primary: #333333;
+  --tk-color-text-heading: #111111;
+  --tk-color-text-secondary: #666666;
+  --tk-color-text-tertiary: #919294;
+  --tk-color-text-inverse: #ffffff;
+  --tk-color-text-inverse-secondary: rgba(255, 255, 255, 0.87);
+  --tk-color-text-disabled: rgba(0, 0, 0, 0.3);
+
+  --tk-color-surface-page: #ffffff;
+  --tk-color-surface-subtle: #f8f9fa;
+  --tk-color-surface-panel: #f2f3f5;
+  --tk-color-surface-selected: #e9f1fe;
+  --tk-color-surface-selected-strong: #cdeaff;
+  --tk-color-surface-dark: #393d45;
+  --tk-color-surface-dark-deep: #262626;
+
+  --tk-color-border-default: #e3e5e8;
+  --tk-color-border-strong: #dbdce1;
+  --tk-color-border-divider: #dddee4;
+  --tk-color-border-dark: #cad1da;
+
+  --tk-color-chart-blue: #1872f6;
+  --tk-color-chart-purple: #763df2;
+  --tk-color-chart-violet: #a138f5;
+  --tk-color-chart-indigo: #6764f5;
+  --tk-color-chart-gold: #e9b842;
+  --tk-color-chart-teal: #02adb0;
+
+  --tk-color-overlay-mask: rgba(0, 0, 0, 0.6);
+  --tk-color-overlay-mask-light: rgba(0, 0, 0, 0.3);
+  --tk-color-overlay-shadow: rgba(19, 20, 26, 0.05);
+
+  --tk-font-family-base: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --tk-font-family-number: "Helvetica Neue", Arial, sans-serif;
+  --tk-font-size-xs: 12px;
+  --tk-font-size-sm: 13px;
+  --tk-font-size-md: 14px;
+  --tk-font-size-lg: 16px;
+  --tk-line-height-tight: 12px;
+  --tk-line-height-compact: 14px;
+  --tk-line-height-normal: 16px;
+  --tk-line-height-relaxed: 20px;
+  --tk-line-height-loose: 28px;
+  --tk-font-weight-regular: 400;
+  --tk-font-weight-medium: 500;
+
+  --tk-radius-none: 0;
+  --tk-radius-xs: 1px;
+  --tk-radius-sm: 2px;
+  --tk-radius-md: 4px;
+  --tk-radius-pill: 999px;
+
+  --tk-space-xxs: 2px;
+  --tk-space-xs: 4px;
+  --tk-space-sm: 8px;
+  --tk-space-md: 12px;
+  --tk-space-lg: 16px;
+  --tk-space-xl: 20px;
+  --tk-space-xxl: 24px;
+
+  --tk-shadow-popup: 0 13px 24px 2px rgba(19, 20, 26, 0.05);
+  --tk-shadow-screen: 0 2px 10px rgba(0, 0, 0, 0.2);
+
+  --tk-modal-width: 642px;
+  --tk-modal-header-height: 30px;
+  --tk-tab-height: 22px;
+  --tk-switch-width: 29px;
+  --tk-switch-height: 14px;
+  --tk-section-accent-width: 2px;
+  --tk-section-accent-height: 12px;
+}
+
+body {
+  font-family: var(--tk-font-family-base);
+  color: var(--tk-color-text-primary);
+}
+
+.tk-theme-dark {
+  --tk-color-text-primary: rgba(255, 255, 255, 0.87);
+  --tk-color-text-heading: #ffffff;
+  --tk-color-text-secondary: #b1b1b1;
+  --tk-color-surface-page: #393d45;
+  --tk-color-surface-panel: #262626;
+  --tk-color-border-default: #cad1da;
+}

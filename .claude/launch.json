@@ -6,6 +6,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--port", "5714"],
       "port": 5714
+    },
+    {
+      "name": "vue-workbench",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "newworkspace/trading-workbench-vue", "--port", "5715"],
+      "port": 5715
     }
   ]
 }
