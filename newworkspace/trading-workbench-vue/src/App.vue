@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, type ComponentPublicInstance } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import AllocationMatrix from './components/AllocationMatrix.vue';
 import ChatPopup from './components/ChatPopup.vue';
 import MarketPanel from './components/MarketPanel.vue';
@@ -25,6 +25,9 @@ const accounts = ref<AccountRow[]>(accountSeed.map((item) => ({ ...item })));
 const quotes = ref<MarketQuote[]>(quoteSeed.map((item) => ({ ...item, rates: { ...item.rates }, tenorAmounts: { ...item.tenorAmounts } })));
 const reverseQuotes = computed(() => quotes.value.filter((q) => q.direction === 'reverse'));
 const pendingAllocations = ref<PendingAllocation[]>(pendingSeed.map((item) => ({ ...item })));
+const initialTrialRate = 1.66;
+const trialRate = ref(initialTrialRate);
+const baseBreakevenRates = new Map(accountSeed.map((account) => [account.id, account.breakevenRate]));
 
 const selectedAccountId = ref(accounts.value[0]?.id ?? '');
 const selectedQuoteId = ref('');
@@ -84,6 +87,25 @@ const selectAccount = (id: string) => {
   lastAction.value = account
     ? `已选中 ${account.name}，右栏展示匹配 ${account.tenor} 且不低于保本的报价。`
     : '已切换账户。';
+};
+
+const moveSelectedAccount = (direction: 1 | -1) => {
+  if (accounts.value.length === 0) return;
+  const currentIndex = Math.max(accounts.value.findIndex((account) => account.id === selectedAccountId.value), 0);
+  const nextIndex = Math.min(Math.max(currentIndex + direction, 0), accounts.value.length - 1);
+  const nextAccount = accounts.value[nextIndex];
+  if (nextAccount && nextAccount.id !== selectedAccountId.value) selectAccount(nextAccount.id);
+};
+
+const applyTrialRate = (rate: number) => {
+  trialRate.value = rate;
+  const delta = rate - initialTrialRate;
+  for (const account of accounts.value) {
+    const baseRate = baseBreakevenRates.get(account.id) ?? account.breakevenRate;
+    account.breakevenRate = Number((baseRate + delta).toFixed(2));
+    refreshAccountStatus(account);
+  }
+  lastAction.value = `试算利率已应用为 ${rate.toFixed(2)}%，账户保本利率已重算。`;
 };
 
 const openQuote = (quote: MarketQuote, tenor: Tenor) => {
@@ -177,12 +199,31 @@ const closeTopLayer = () => {
   }
 };
 
+const isEditingTarget = (target: EventTarget | null) => {
+  const element = target as HTMLElement | null;
+  if (!element) return false;
+  if (element.isContentEditable) return true;
+  return ['INPUT', 'SELECT', 'TEXTAREA'].includes(element.tagName);
+};
+
 const onKeydown = (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
     closeTopLayer();
   } else if ((event.ctrlKey || event.metaKey) && event.key === 's' && matrixOpen.value) {
     event.preventDefault();
     matrixRef.value?.save();
+  } else if (
+    !matrixOpen.value &&
+    !activeChat.value &&
+    !event.altKey &&
+    !event.ctrlKey &&
+    !event.metaKey &&
+    !event.shiftKey &&
+    !isEditingTarget(event.target) &&
+    (event.key === 'ArrowDown' || event.key === 'ArrowUp')
+  ) {
+    event.preventDefault();
+    moveSelectedAccount(event.key === 'ArrowDown' ? 1 : -1);
   }
 };
 
@@ -200,7 +241,9 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
           :accounts="accounts"
           :pending-allocations="pendingAllocations"
           :selected-account-id="selectedAccountId"
+          :trial-rate="trialRate"
           @select-account="selectAccount"
+          @apply-trial-rate="applyTrialRate"
           @open-pending="openPending"
           @open-matrix="openMatrix"
         />

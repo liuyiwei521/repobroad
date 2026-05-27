@@ -1,32 +1,71 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import type { AccountRow, PendingAllocation } from '../data/mockData';
 
 const props = defineProps<{
   accounts: AccountRow[];
   pendingAllocations: PendingAllocation[];
   selectedAccountId: string;
+  trialRate: number;
 }>();
 
 const emit = defineEmits<{
   selectAccount: [id: string];
+  applyTrialRate: [rate: number];
   openPending: [item: PendingAllocation];
   openMatrix: [];
 }>();
 
 const remaining = (row: AccountRow) => Math.max(row.targetAmount - row.allocatedAmount, 0);
 const progress = (row: AccountRow) => Math.min(Math.round((row.allocatedAmount / row.targetAmount) * 100), 100);
+const rateInput = ref<HTMLInputElement | null>(null);
+const draftRate = ref(props.trialRate.toFixed(2));
+const isEditingRate = ref(false);
+const parsedDraftRate = computed(() => Number(draftRate.value));
+const isDraftRateValid = computed(() => draftRate.value.trim() !== '' && Number.isFinite(parsedDraftRate.value) && parsedDraftRate.value >= 0);
 
-const onRowKeydown = (event: KeyboardEvent, index: number) => {
-  if (event.key === 'ArrowDown') {
-    event.preventDefault();
-    const next = props.accounts[index + 1];
-    if (next) emit('selectAccount', next.id);
-  } else if (event.key === 'ArrowUp') {
-    event.preventDefault();
-    const prev = props.accounts[index - 1];
-    if (prev) emit('selectAccount', prev.id);
-  } else if (event.key === 'Enter') {
+watch(
+  () => props.trialRate,
+  (rate) => {
+    if (!isEditingRate.value) draftRate.value = rate.toFixed(2);
+  }
+);
+
+const beginRateEdit = (event: FocusEvent) => {
+  isEditingRate.value = true;
+  draftRate.value = props.trialRate.toFixed(2);
+  (event.target as HTMLInputElement).select();
+};
+
+const commitRate = () => {
+  if (!isDraftRateValid.value) {
+    cancelRateEdit();
+    return;
+  }
+
+  const nextRate = Number(parsedDraftRate.value.toFixed(2));
+  draftRate.value = nextRate.toFixed(2);
+  isEditingRate.value = false;
+  emit('applyTrialRate', nextRate);
+};
+
+const commitRateFromKeyboard = () => {
+  commitRate();
+  rateInput.value?.blur();
+};
+
+const cancelRateEdit = () => {
+  draftRate.value = props.trialRate.toFixed(2);
+  isEditingRate.value = false;
+  rateInput.value?.blur();
+};
+
+const onRateBlur = () => {
+  if (isEditingRate.value) commitRate();
+};
+
+const onRowKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Enter') {
     event.preventDefault();
     emit('openMatrix');
   }
@@ -46,9 +85,29 @@ const onRowKeydown = (event: KeyboardEvent, index: number) => {
     <div class="rate-box">
       <label>
         <span>试算利率</span>
-        <input value="1.66" aria-label="试算利率" />
+        <input
+          ref="rateInput"
+          v-model="draftRate"
+          type="number"
+          min="0"
+          step="0.01"
+          inputmode="decimal"
+          aria-label="试算利率"
+          @focus="beginRateEdit"
+          @blur="onRateBlur"
+          @keydown.enter.prevent="commitRateFromKeyboard"
+          @keydown.esc.prevent.stop="cancelRateEdit"
+        />
       </label>
-      <button class="button button--primary" type="button">应用</button>
+      <button
+        class="button button--primary"
+        type="button"
+        :disabled="!isDraftRateValid"
+        @mousedown.prevent
+        @click="commitRate"
+      >
+        应用
+      </button>
     </div>
 
     <div class="ledger">
@@ -60,7 +119,7 @@ const onRowKeydown = (event: KeyboardEvent, index: number) => {
         <span>保本</span>
       </div>
       <button
-        v-for="(row, index) in accounts"
+        v-for="row in accounts"
         :key="row.id"
         type="button"
         class="ledger__row ledger__row--button"
@@ -70,7 +129,7 @@ const onRowKeydown = (event: KeyboardEvent, index: number) => {
         ]"
         @click="emit('selectAccount', row.id)"
         @dblclick.stop="emit('openMatrix')"
-        @keydown="onRowKeydown($event, index)"
+        @keydown="onRowKeydown"
       >
         <span>
           <b>{{ row.name }}</b>
