@@ -13,6 +13,9 @@ const emit = defineEmits<{
 }>();
 
 const popoverEl = ref<HTMLElement | null>(null);
+const drawerEl = ref<HTMLElement | null>(null);
+const railEl = ref<HTMLElement | null>(null);
+const drawerOpen = ref(false);
 
 const statusLabel = (status: ResearchCard['status']) => {
   switch (status) {
@@ -33,12 +36,29 @@ const statusDetail = (card: ResearchCard) => {
 };
 
 const onDocumentMousedown = (event: MouseEvent) => {
-  if (!props.activeCard) return;
   const target = event.target as Node | null;
   if (popoverEl.value && target && popoverEl.value.contains(target)) return;
   // Allow re-clicking on a card to toggle / switch — let the card handler run
   if ((event.target as HTMLElement | null)?.closest('.research-card')) return;
-  emit('closeCard');
+  if (drawerEl.value && target && drawerEl.value.contains(target)) return;
+  if (railEl.value && target && railEl.value.contains(target)) return;
+  if (props.activeCard) emit('closeCard');
+  if (drawerOpen.value) drawerOpen.value = false;
+};
+
+const onDocumentKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && drawerOpen.value && !props.activeCard) {
+    drawerOpen.value = false;
+  }
+};
+
+const openSummaryDrawer = () => {
+  drawerOpen.value = true;
+};
+
+const openCard = (card: ResearchCard) => {
+  drawerOpen.value = false;
+  emit('openCard', card);
 };
 
 watch(
@@ -50,8 +70,14 @@ watch(
   }
 );
 
-onMounted(() => document.addEventListener('mousedown', onDocumentMousedown));
-onUnmounted(() => document.removeEventListener('mousedown', onDocumentMousedown));
+onMounted(() => {
+  document.addEventListener('mousedown', onDocumentMousedown);
+  document.addEventListener('keydown', onDocumentKeydown);
+});
+onUnmounted(() => {
+  document.removeEventListener('mousedown', onDocumentMousedown);
+  document.removeEventListener('keydown', onDocumentKeydown);
+});
 </script>
 
 <template>
@@ -64,6 +90,32 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentMousedown)
       <span class="panel__meta">10:55 更新</span>
     </div>
 
+    <div ref="railEl" class="research-rail" aria-label="中栏极窄摘要入口">
+      <button
+        type="button"
+        class="research-rail__toggle"
+        :class="{ 'is-open': drawerOpen }"
+        :aria-expanded="drawerOpen"
+        aria-controls="research-summary-drawer"
+        @click="drawerOpen ? drawerOpen = false : openSummaryDrawer()"
+      >
+        <strong>摘要</strong>
+        <span>{{ cards.length }}</span>
+      </button>
+      <button
+        v-for="card in cards"
+        :key="card.id"
+        type="button"
+        class="research-rail__item"
+        :class="[`is-${card.status}`, { 'is-active': activeCard?.id === card.id }]"
+        :title="`${card.title}：${card.value}`"
+        @click="openSummaryDrawer"
+      >
+        <span>{{ card.title.slice(0, 1) }}</span>
+        <i v-if="card.status !== 'normal'"></i>
+      </button>
+    </div>
+
     <div class="research-grid">
       <button
         v-for="card in cards"
@@ -71,7 +123,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentMousedown)
         type="button"
         class="research-card"
         :class="[`is-${card.status}`]"
-        @click="emit('openCard', card)"
+        @click="openCard(card)"
       >
         <span v-if="card.status !== 'normal'" class="card-status" :class="`is-${card.status}`">
           {{ statusLabel(card.status) }}
@@ -82,6 +134,42 @@ onUnmounted(() => document.removeEventListener('mousedown', onDocumentMousedown)
         <small>{{ card.delta }} · {{ card.updatedAt }}</small>
       </button>
     </div>
+
+    <aside
+      id="research-summary-drawer"
+      ref="drawerEl"
+      class="research-drawer"
+      :class="{ 'is-open': drawerOpen }"
+      aria-label="中栏摘要滑出层"
+      :aria-hidden="!drawerOpen"
+    >
+      <div class="research-drawer__head">
+        <div>
+          <p class="eyebrow">中栏 · 摘要</p>
+          <h3>关键数据</h3>
+        </div>
+        <button class="close-button" type="button" @click="drawerOpen = false" aria-label="收起摘要">×</button>
+      </div>
+
+      <div class="research-drawer__list">
+        <button
+          v-for="card in cards"
+          :key="card.id"
+          type="button"
+          class="research-card research-card--drawer"
+          :class="[`is-${card.status}`]"
+          @click="openCard(card)"
+        >
+          <span v-if="card.status !== 'normal'" class="card-status" :class="`is-${card.status}`">
+            {{ statusLabel(card.status) }}
+          </span>
+          <span class="research-card__group">{{ card.group }}</span>
+          <strong>{{ card.title }}</strong>
+          <b>{{ card.value }}</b>
+          <small>{{ card.delta }} · {{ card.updatedAt }}</small>
+        </button>
+      </div>
+    </aside>
 
     <aside v-if="activeCard" ref="popoverEl" class="medium-popover" tabindex="-1">
       <div class="medium-popover__head">
