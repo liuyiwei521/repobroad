@@ -3,6 +3,7 @@ export type Tenor = 'R001' | 'R007' | 'R014' | 'R021' | 'R028';
 export type QuoteStatus = 'best' | 'second' | 'normal';
 export type ChatStatus = 'unreplied' | 'replied';
 export type Direction = 'reverse' | 'repo'; // 逆回购 / 正回购
+export type QuoteLevel = 'level1' | 'level2';
 
 export interface AccountRow {
   id: string;
@@ -29,15 +30,35 @@ export interface PendingAllocation {
 export interface MarketQuote {
   id: string;
   group: string;
+  institution: string;
   counterparty: string;
   status: QuoteStatus;
+  level: QuoteLevel;
   allowedAccounts: string[];
+  tenor: Tenor;
+  rate: number;
+  accountRequirement: string;
   limit: string;
+  collateralRequirement: string;
+  collateral: string;
+  updatedAt: string;
   amount: number;
   rates: Partial<Record<Tenor, number>>;
   tenorAmounts: Partial<Record<Tenor, number>>; // per-tenor available amounts for display
   direction: Direction;
   sent?: boolean;
+}
+
+export interface MarketGroupSummary {
+  id: string;
+  direction: Direction;
+  level: QuoteLevel;
+  group: string;
+  totalAmount: number;
+  avgRate: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 export interface ChatThread {
@@ -135,82 +156,438 @@ export const accounts: AccountRow[] = [
   }
 ];
 
-// ── 逆回购行情（我方融出，对手提供质押） ──────────────────────
+type MarketQuoteSeed = Omit<MarketQuote, 'counterparty' | 'limit' | 'collateral' | 'rates' | 'tenorAmounts'>;
+
+const createMarketQuote = (quote: MarketQuoteSeed): MarketQuote => ({
+  ...quote,
+  counterparty: quote.institution,
+  limit: quote.accountRequirement,
+  collateral: quote.collateralRequirement,
+  rates: { [quote.tenor]: quote.rate },
+  tenorAmounts: { [quote.tenor]: quote.amount }
+});
+
+// ── 逆回购 / 正回购逐行行情（我方融出/融入，供右栏表格直接消费） ─────────────
 export const marketQuotes: MarketQuote[] = [
-  {
+  createMarketQuote({
+    id: 'quote-citic-bank-r001',
+    direction: 'reverse',
+    group: '利率地方',
+    institution: '中信银行',
+    status: 'best',
+    level: 'level1',
+    tenor: 'R001',
+    amount: 0,
+    rate: 1.35,
+    accountRequirement: '自营',
+    collateralRequirement: '利率',
+    updatedAt: '10:53:27',
+    allowedAccounts: ['acc-zy-001', 'acc-zy-014']
+  }),
+  createMarketQuote({
     id: 'quote-shrcb',
-    group: '利率地方',
-    counterparty: '上海农商',
-    status: 'best',
     direction: 'reverse',
-    allowedAccounts: ['acc-zy-001', 'acc-zy-014', 'acc-lc-014'],
-    limit: '自营/理财',
-    amount: 15,
-    rates: { R001: 1.55, R007: 1.59, R014: 1.68, R021: 1.71 },
-    tenorAmounts: { R001: 3, R007: 5, R014: 4, R021: 3 }
-  },
-  {
+    group: '利率地方',
+    institution: '上海农商行',
+    status: 'second',
+    level: 'level1',
+    tenor: 'R001',
+    amount: 0,
+    rate: 1.41,
+    accountRequirement: '非专户',
+    collateralRequirement: '利率',
+    updatedAt: '10:53:27',
+    allowedAccounts: ['acc-zy-001', 'acc-lc-007', 'acc-lc-014']
+  }),
+  createMarketQuote({
+    id: 'quote-beijing-r007',
+    direction: 'reverse',
+    group: '利率地方',
+    institution: '北京银行',
+    status: 'best',
+    level: 'level1',
+    tenor: 'R007',
+    amount: 5,
+    rate: 1.40,
+    accountRequirement: '非专户',
+    collateralRequirement: '利率地方存单商金',
+    updatedAt: '10:53:27',
+    allowedAccounts: ['acc-lc-007', 'acc-lc-014']
+  }),
+  createMarketQuote({
     id: 'quote-hzbank',
+    direction: 'reverse',
     group: '利率地方',
-    counterparty: '杭州银行',
+    institution: '浦发银行',
     status: 'second',
+    level: 'level1',
+    tenor: 'R007',
+    amount: 4,
+    rate: 1.43,
+    accountRequirement: '自营',
+    collateralRequirement: '地方债',
+    updatedAt: '10:53:14',
+    allowedAccounts: ['acc-zy-001', 'acc-lc-007', 'acc-lc-014']
+  }),
+  createMarketQuote({
+    id: 'quote-bob-ncd-r001',
     direction: 'reverse',
-    allowedAccounts: ['acc-zy-001', 'acc-lc-007', 'acc-lc-014'],
-    limit: '不限户',
-    amount: 12,
-    rates: { R001: 1.51, R007: 1.57, R014: 1.62, R028: 1.75 },
-    tenorAmounts: { R001: 2, R007: 4, R014: 3, R028: 3 }
-  },
-  {
-    id: 'quote-nbcb',
     group: '存单商金',
-    counterparty: '宁波通商',
-    status: 'normal',
-    direction: 'reverse',
-    allowedAccounts: ['acc-gm-028', 'acc-lc-014'],
-    limit: '公募/理财',
-    amount: 8,
-    rates: { R007: 1.56, R014: 1.64, R028: 1.78 },
-    tenorAmounts: { R007: 2, R014: 3, R028: 3 }
-  },
-  {
-    id: 'quote-sdccb',
-    group: '信用',
-    counterparty: '山东城商',
-    status: 'normal',
-    direction: 'reverse',
-    allowedAccounts: ['acc-zy-014', 'acc-gm-028'],
-    limit: '白名单',
-    amount: 6,
-    rates: { R014: 1.7, R021: 1.73, R028: 1.8 },
-    tenorAmounts: { R014: 2, R021: 2, R028: 2 }
-  },
-  // ── 正回购行情（我方融入，提供质押） ──────────────────────────
-  {
-    id: 'quote-icbc-repo',
-    group: '利率地方',
-    counterparty: '工商银行',
+    institution: '北京银行',
     status: 'best',
-    direction: 'repo',
-    allowedAccounts: ['acc-zy-001', 'acc-zy-014'],
-    limit: '自营',
-    amount: 10,
-    rates: { R001: 2.05, R007: 2.15, R014: 2.20 },
-    tenorAmounts: { R001: 3, R007: 5, R014: 2 }
-  },
-  {
-    id: 'quote-ccb-repo',
+    level: 'level1',
+    tenor: 'R001',
+    amount: 0,
+    rate: 1.40,
+    accountRequirement: '非专户',
+    collateralRequirement: '利率地方存单商金',
+    updatedAt: '10:53:27',
+    allowedAccounts: ['acc-zy-001', 'acc-lc-014']
+  }),
+  createMarketQuote({
+    id: 'quote-taikang-r001',
+    direction: 'reverse',
     group: '存单商金',
-    counterparty: '建设银行',
+    institution: '泰康资产',
     status: 'second',
-    direction: 'repo',
-    allowedAccounts: ['acc-zy-014', 'acc-lc-014'],
-    limit: '自营/理财',
+    level: 'level1',
+    tenor: 'R001',
+    amount: 0,
+    rate: 1.42,
+    accountRequirement: '可专户',
+    collateralRequirement: '国股存单',
+    updatedAt: '10:53:04',
+    allowedAccounts: ['acc-lc-007', 'acc-lc-014']
+  }),
+  createMarketQuote({
+    id: 'quote-abcwm-r007',
+    direction: 'reverse',
+    group: '存单商金',
+    institution: '农银理财',
+    status: 'best',
+    level: 'level1',
+    tenor: 'R007',
+    amount: 2,
+    rate: 1.42,
+    accountRequirement: '可专户',
+    collateralRequirement: '大行存单',
+    updatedAt: '10:53:27',
+    allowedAccounts: ['acc-lc-007', 'acc-lc-014']
+  }),
+  createMarketQuote({
+    id: 'quote-sunshine-r007',
+    direction: 'reverse',
+    group: '存单商金',
+    institution: '阳光资产',
+    status: 'second',
+    level: 'level1',
+    tenor: 'R007',
+    amount: 5,
+    rate: 1.40,
+    accountRequirement: '可专户',
+    collateralRequirement: '利率地方存单商金',
+    updatedAt: '10:53:27',
+    allowedAccounts: ['acc-lc-007', 'acc-lc-014', 'acc-gm-028']
+  }),
+  createMarketQuote({
+    id: 'quote-nbcb',
+    direction: 'reverse',
+    group: '存单商金',
+    institution: '宁波通商',
+    status: 'normal',
+    level: 'level1',
+    tenor: 'R028',
     amount: 8,
-    rates: { R007: 2.12, R014: 2.18, R028: 2.25 },
-    tenorAmounts: { R007: 3, R014: 3, R028: 2 }
-  }
+    rate: 1.78,
+    accountRequirement: '公募/理财',
+    collateralRequirement: '国股存单',
+    updatedAt: '10:53:27',
+    allowedAccounts: ['acc-gm-028', 'acc-lc-014']
+  }),
+  createMarketQuote({
+    id: 'quote-citic',
+    direction: 'reverse',
+    group: '信用',
+    institution: '中信建投证券',
+    status: 'best',
+    level: 'level1',
+    tenor: 'R001',
+    amount: 2.45,
+    rate: 1.43,
+    accountRequirement: '自营',
+    collateralRequirement: '年金户',
+    updatedAt: '10:53:27',
+    allowedAccounts: ['acc-zy-001', 'acc-lc-014']
+  }),
+  createMarketQuote({
+    id: 'quote-pingan-am-r001',
+    direction: 'reverse',
+    group: '信用',
+    institution: '平安资产',
+    status: 'second',
+    level: 'level1',
+    tenor: 'R001',
+    amount: 0,
+    rate: 1.43,
+    accountRequirement: '可专户',
+    collateralRequirement: '单笔 1e 起',
+    updatedAt: '10:53:27',
+    allowedAccounts: ['acc-lc-007', 'acc-lc-014']
+  }),
+  createMarketQuote({
+    id: 'quote-penghua-r007',
+    direction: 'reverse',
+    group: '信用',
+    institution: '鹏华基金',
+    status: 'best',
+    level: 'level1',
+    tenor: 'R007',
+    amount: 4,
+    rate: 1.45,
+    accountRequirement: '公募',
+    collateralRequirement: '信用',
+    updatedAt: '10:53:27',
+    allowedAccounts: ['acc-lc-007', 'acc-gm-028']
+  }),
+  createMarketQuote({
+    id: 'quote-citic-sec-r007',
+    direction: 'reverse',
+    group: '信用',
+    institution: '中信证券',
+    status: 'second',
+    level: 'level1',
+    tenor: 'R007',
+    amount: 5,
+    rate: 1.46,
+    accountRequirement: '自营',
+    collateralRequirement: '信用',
+    updatedAt: '10:53:19',
+    allowedAccounts: ['acc-zy-001', 'acc-lc-007']
+  }),
+  createMarketQuote({
+    id: 'quote-huaan-r014',
+    direction: 'reverse',
+    group: '信用',
+    institution: '华安基金',
+    status: 'best',
+    level: 'level1',
+    tenor: 'R014',
+    amount: 3,
+    rate: 1.45,
+    accountRequirement: '公募',
+    collateralRequirement: '信用',
+    updatedAt: '10:53:27',
+    allowedAccounts: ['acc-lc-014', 'acc-gm-028']
+  }),
+  createMarketQuote({
+    id: 'quote-df-r014',
+    direction: 'reverse',
+    group: '信用',
+    institution: '东方红资产',
+    status: 'second',
+    level: 'level1',
+    tenor: 'R014',
+    amount: 0,
+    rate: 1.47,
+    accountRequirement: '专户出老户',
+    collateralRequirement: '年金户',
+    updatedAt: '10:53:09',
+    allowedAccounts: ['acc-lc-014']
+  }),
+  createMarketQuote({
+    id: 'quote-pingan-am',
+    direction: 'reverse',
+    group: '信用',
+    institution: '平安资产',
+    status: 'second',
+    level: 'level2',
+    tenor: 'R007',
+    amount: 5,
+    rate: 1.44,
+    accountRequirement: '可专户',
+    collateralRequirement: '信用',
+    updatedAt: '10:52:57',
+    allowedAccounts: ['acc-lc-007', 'acc-lc-014', 'acc-gm-028']
+  }),
+  createMarketQuote({
+    id: 'quote-cmb-fund-r014',
+    direction: 'reverse',
+    group: '存单商金',
+    institution: '招商基金',
+    status: 'best',
+    level: 'level2',
+    tenor: 'R014',
+    amount: 6,
+    rate: 1.49,
+    accountRequirement: '专户',
+    collateralRequirement: '商金存单',
+    updatedAt: '10:52:41',
+    allowedAccounts: ['acc-lc-014', 'acc-gm-028']
+  }),
+  createMarketQuote({
+    id: 'quote-boc-repo',
+    direction: 'repo',
+    group: '利率地方',
+    institution: '中国银行',
+    status: 'best',
+    level: 'level1',
+    tenor: 'R001',
+    amount: 8,
+    rate: 1.51,
+    accountRequirement: '自营',
+    collateralRequirement: '利率',
+    updatedAt: '10:53:27',
+    allowedAccounts: ['acc-zy-001', 'acc-zy-014']
+  }),
+  createMarketQuote({
+    id: 'quote-abc-repo',
+    direction: 'repo',
+    group: '利率地方',
+    institution: '农业银行',
+    status: 'second',
+    level: 'level1',
+    tenor: 'R001',
+    amount: 6,
+    rate: 1.52,
+    accountRequirement: '自营',
+    collateralRequirement: '利率',
+    updatedAt: '10:53:18',
+    allowedAccounts: ['acc-zy-001', 'acc-zy-014']
+  }),
+  createMarketQuote({
+    id: 'quote-ccb-repo-rate',
+    direction: 'repo',
+    group: '利率地方',
+    institution: '建设银行',
+    status: 'best',
+    level: 'level1',
+    tenor: 'R007',
+    amount: 0,
+    rate: 1.53,
+    accountRequirement: '自营',
+    collateralRequirement: '利率地方',
+    updatedAt: '10:53:27',
+    allowedAccounts: ['acc-zy-001', 'acc-zy-014']
+  }),
+  createMarketQuote({
+    id: 'quote-icbc-repo',
+    direction: 'repo',
+    group: '利率地方',
+    institution: '工商银行',
+    status: 'second',
+    level: 'level1',
+    tenor: 'R007',
+    amount: 5,
+    rate: 1.54,
+    accountRequirement: '自营',
+    collateralRequirement: '利率',
+    updatedAt: '10:53:09',
+    allowedAccounts: ['acc-zy-001', 'acc-zy-014']
+  }),
+  createMarketQuote({
+    id: 'quote-cbcwm-repo',
+    direction: 'repo',
+    group: '存单商金',
+    institution: '建信理财',
+    status: 'best',
+    level: 'level1',
+    tenor: 'R001',
+    amount: 4,
+    rate: 1.57,
+    accountRequirement: '可专户',
+    collateralRequirement: '国股存单',
+    updatedAt: '10:53:14',
+    allowedAccounts: ['acc-lc-007', 'acc-lc-014']
+  }),
+  createMarketQuote({
+    id: 'quote-icbcwm-repo',
+    direction: 'repo',
+    group: '存单商金',
+    institution: '工银理财',
+    status: 'second',
+    level: 'level1',
+    tenor: 'R001',
+    amount: 3,
+    rate: 1.56,
+    accountRequirement: '可专户',
+    collateralRequirement: '商金存单',
+    updatedAt: '10:53:27',
+    allowedAccounts: ['acc-lc-007', 'acc-lc-014']
+  }),
+  createMarketQuote({
+    id: 'quote-cmbwm-repo',
+    direction: 'repo',
+    group: '存单商金',
+    institution: '招银理财',
+    status: 'best',
+    level: 'level1',
+    tenor: 'R007',
+    amount: 0,
+    rate: 1.58,
+    accountRequirement: '可专户',
+    collateralRequirement: '国股存单',
+    updatedAt: '10:53:27',
+    allowedAccounts: ['acc-lc-007', 'acc-lc-014']
+  }),
+  createMarketQuote({
+    id: 'quote-cmb-repo',
+    direction: 'repo',
+    group: '存单商金',
+    institution: '招商理财',
+    status: 'best',
+    level: 'level2',
+    tenor: 'R001',
+    amount: 7,
+    rate: 1.57,
+    accountRequirement: '可专户',
+    collateralRequirement: '商金存单',
+    updatedAt: '10:53:27',
+    allowedAccounts: ['acc-lc-007', 'acc-lc-014']
+  }),
+  createMarketQuote({
+    id: 'quote-boc-repo-l2',
+    direction: 'repo',
+    group: '利率地方',
+    institution: '中国银行',
+    status: 'best',
+    level: 'level2',
+    tenor: 'R007',
+    amount: 6,
+    rate: 1.53,
+    accountRequirement: '自营',
+    collateralRequirement: '利率',
+    updatedAt: '10:52:59',
+    allowedAccounts: ['acc-zy-001', 'acc-zy-014']
+  })
 ];
+
+const groupSummaryKey = (quote: MarketQuote) => `${quote.direction}-${quote.level}-${quote.group}`;
+
+export const marketGroupSummaries: MarketGroupSummary[] = Array.from(
+  marketQuotes.reduce((groups, quote) => {
+    const key = groupSummaryKey(quote);
+    const current = groups.get(key) ?? [];
+    current.push(quote);
+    groups.set(key, current);
+    return groups;
+  }, new Map<string, MarketQuote[]>())
+).map(([id, rows]) => {
+  const [direction, level, group] = id.split('-') as [Direction, QuoteLevel, string];
+  const totalAmount = Number(rows.reduce((sum, quote) => sum + quote.amount, 0).toFixed(2));
+  const avgRate = Number((rows.reduce((sum, quote) => sum + quote.rate, 0) / Math.max(rows.length, 1)).toFixed(2));
+  const pageSize = rows.length >= 6 ? 6 : 4;
+  return {
+    id,
+    direction,
+    level,
+    group,
+    totalAmount,
+    avgRate,
+    page: 1,
+    pageSize,
+    totalPages: Math.max(1, Math.ceil(rows.length / pageSize))
+  };
+});
 
 export const chats: ChatThread[] = [
   {

@@ -9,6 +9,7 @@ import TopBar from './components/TopBar.vue';
 import {
   accounts as accountSeed,
   chats,
+  marketGroupSummaries,
   marketQuotes as quoteSeed,
   pendingAllocations as pendingSeed,
   researchCards,
@@ -55,6 +56,19 @@ const noticeCount = computed(() => {
 
 const firstRateTenor = (quote: MarketQuote): Tenor => {
   return tenors.find((tenor) => quote.rates[tenor]) ?? 'R001';
+};
+
+const quoteForTenor = (quote: MarketQuote, tenor: Tenor): MarketQuote => {
+  const rate = quote.rates[tenor] ?? quote.rate;
+  const amount = quote.tenorAmounts[tenor] ?? quote.amount;
+  return {
+    ...quote,
+    tenor,
+    rate,
+    amount,
+    rates: { ...quote.rates, [tenor]: rate },
+    tenorAmounts: { ...quote.tenorAmounts, [tenor]: amount }
+  };
 };
 
 const openMatrix = () => {
@@ -111,14 +125,14 @@ const applyTrialRate = (rate: number) => {
 const openQuote = (quote: MarketQuote, tenor: Tenor) => {
   selectedQuoteId.value = quote.id;
   const chat = chats.find((item) => item.relatedQuoteId === quote.id) ?? chats[0];
-  activeChat.value = { chat, quote, tenor };
+  activeChat.value = { chat, quote: quoteForTenor(quote, tenor), tenor };
   lastAction.value = `已打开 ${quote.counterparty} ${tenor} 报价聊天，报价摘要已带入弹窗。`;
 };
 
 const sendQuote = (quote: MarketQuote, tenor: Tenor) => {
   const target = quotes.value.find((item) => item.id === quote.id);
   if (target) target.sent = true;
-  openQuote(target ?? quote, tenor);
+  openQuote(quote, tenor);
   lastAction.value = `已向 ${quote.counterparty} 发送 ${tenor} 快捷询价，单元格显示已发送状态。`;
   window.setTimeout(() => {
     const current = quotes.value.find((item) => item.id === quote.id);
@@ -257,6 +271,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 
         <MarketPanel
           :quotes="quotes"
+          :group-summaries="marketGroupSummaries"
           :chats="chats"
           :tenors="tenors"
           :selected-account="selectedAccount"
@@ -280,6 +295,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 
         <MarketPanel
           :quotes="quotes"
+          :group-summaries="marketGroupSummaries"
           :chats="chats"
           :tenors="tenors"
           :selected-account="selectedAccount"
