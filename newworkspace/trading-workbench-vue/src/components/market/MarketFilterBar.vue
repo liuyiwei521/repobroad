@@ -7,6 +7,8 @@ defineProps<{
   maxAmount: string;
   minRate: string;
   maxRate: string;
+  accountKeyword: string;
+  collateralKeyword: string;
   onlySame: boolean;
 }>();
 
@@ -16,6 +18,8 @@ const emit = defineEmits<{
   'update:maxAmount': [value: string];
   'update:minRate': [value: string];
   'update:maxRate': [value: string];
+  'update:accountKeyword': [value: string];
+  'update:collateralKeyword': [value: string];
   'update:onlySame': [value: boolean];
   exportQuotes: [];
 }>();
@@ -72,6 +76,28 @@ const checkedValue = (event: Event) => (event.target as HTMLInputElement).checke
         @input="emit('update:maxRate', inputValue($event))"
       />
       <small>%</small>
+    </label>
+
+    <label class="market-keyword-field">
+      <span>账户要求</span>
+      <input
+        :value="accountKeyword"
+        type="search"
+        placeholder="关键词"
+        aria-label="账户要求关键词"
+        @input="emit('update:accountKeyword', inputValue($event))"
+      />
+    </label>
+
+    <label class="market-keyword-field">
+      <span>质押要求</span>
+      <input
+        :value="collateralKeyword"
+        type="search"
+        placeholder="关键词"
+        aria-label="质押要求关键词"
+        @input="emit('update:collateralKeyword', inputValue($event))"
+      />
     </label>
 
     <label class="market-match-toggle">

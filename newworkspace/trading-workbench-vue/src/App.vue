@@ -58,6 +58,55 @@ const activeChat = ref<{
 
 const matrixRef = ref<{ save: () => void; collapse: () => void } | null>(null);
 
+// Manually adjustable left / middle / right ratio. The left (matrix) and middle
+// (research) columns are pixel-sized and draggable; the right market panel takes
+// the remaining space (1fr) so it stays the main wide area by default.
+const leftWidth = ref(520);
+const midWidth = ref(430);
+const LEFT_MIN = 360;
+const LEFT_MAX = 1180;
+const MID_MIN = 220;
+const MID_MAX = 900;
+const clampWidth = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+const workspaceStyle = computed(() =>
+  matrixExpanded.value
+    ? undefined
+    : { gridTemplateColumns: `${leftWidth.value}px 8px ${midWidth.value}px 8px minmax(0, 1fr)`, gap: '0' }
+);
+
+let dragSide: 'left' | 'mid' | null = null;
+let dragStartX = 0;
+let dragStartLeft = 0;
+let dragStartMid = 0;
+
+const onGutterMove = (event: PointerEvent) => {
+  if (!dragSide) return;
+  const delta = event.clientX - dragStartX;
+  if (dragSide === 'left') {
+    leftWidth.value = clampWidth(dragStartLeft + delta, LEFT_MIN, LEFT_MAX);
+  } else {
+    midWidth.value = clampWidth(dragStartMid + delta, MID_MIN, MID_MAX);
+  }
+};
+
+const onGutterUp = () => {
+  dragSide = null;
+  document.body.classList.remove('is-col-resizing');
+  window.removeEventListener('pointermove', onGutterMove);
+  window.removeEventListener('pointerup', onGutterUp);
+};
+
+const onGutterDown = (side: 'left' | 'mid', event: PointerEvent) => {
+  dragSide = side;
+  dragStartX = event.clientX;
+  dragStartLeft = leftWidth.value;
+  dragStartMid = midWidth.value;
+  document.body.classList.add('is-col-resizing');
+  window.addEventListener('pointermove', onGutterMove);
+  window.addEventListener('pointerup', onGutterUp);
+};
+
 const selectedAccount = computed(() => accounts.value.find((account) => account.id === selectedAccountId.value));
 
 const selectedContext = computed(() => {
@@ -396,7 +445,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
   <main class="workbench">
     <TopBar :selected-context="selectedContext" :notice-count="noticeCount" :last-action="lastAction" />
 
-    <div class="workspace-grid" :class="{ 'is-matrix-mode': matrixExpanded }">
+    <div class="workspace-grid" :class="{ 'is-matrix-mode': matrixExpanded }" :style="workspaceStyle">
       <AllocationMatrix
         ref="matrixRef"
         class="matrix-workspace"
@@ -415,12 +464,32 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
         @select-account="selectAccount"
       />
 
+      <div
+        v-if="!matrixExpanded"
+        class="workspace-gutter"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="拖动调整左侧面板宽度"
+        title="拖动调整左右比例"
+        @pointerdown="onGutterDown('left', $event)"
+      ></div>
+
       <ResearchPanel
         :cards="researchCards"
         :active-card="activeCard"
         @open-card="activeCard = $event"
         @close-card="activeCard = null"
       />
+
+      <div
+        v-if="!matrixExpanded"
+        class="workspace-gutter"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="拖动调整中间面板宽度"
+        title="拖动调整左右比例"
+        @pointerdown="onGutterDown('mid', $event)"
+      ></div>
 
       <MarketPanel
         :quotes="quotes"

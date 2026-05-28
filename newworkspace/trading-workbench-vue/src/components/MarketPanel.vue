@@ -31,10 +31,8 @@ const minAmount = ref('');
 const maxAmount = ref('');
 const minRate = ref('');
 const maxRate = ref('');
-const correctionLine = ref<QuoteLine | null>(null);
-const correctionAmount = ref('');
-const correctionRate = ref('');
-const correctedLineId = ref('');
+const accountKeyword = ref('');
+const collateralKeyword = ref('');
 
 const directionLabels: Record<Direction, string> = {
   reverse: '逆回购报价',
@@ -73,6 +71,8 @@ const quoteLines = computed<QuoteLine[]>(() => {
   const maxAmountValue = parseOptionalNumber(maxAmount.value);
   const minRateValue = parseOptionalNumber(minRate.value);
   const maxRateValue = parseOptionalNumber(maxRate.value);
+  const accountKeywordValue = accountKeyword.value.trim().toLowerCase();
+  const collateralKeywordValue = collateralKeyword.value.trim().toLowerCase();
   const lines: QuoteLine[] = [];
 
   for (const quote of props.quotes) {
@@ -91,6 +91,11 @@ const quoteLines = computed<QuoteLine[]>(() => {
       if (minRateValue !== null && rate < minRateValue) continue;
       if (maxRateValue !== null && rate > maxRateValue) continue;
 
+      const accountRequirement = quote.accountRequirement || quote.limit;
+      const collateralRequirement = quote.collateralRequirement || quote.collateral;
+      if (accountKeywordValue && !String(accountRequirement ?? '').toLowerCase().includes(accountKeywordValue)) continue;
+      if (collateralKeywordValue && !String(collateralRequirement ?? '').toLowerCase().includes(collateralKeywordValue)) continue;
+
       lines.push({
         id: quote.tenor === tenor ? quote.id : `${quote.id}-${tenor}`,
         quote,
@@ -100,12 +105,12 @@ const quoteLines = computed<QuoteLine[]>(() => {
         tenor,
         amount,
         rate,
-        accountRequirement: quote.accountRequirement || quote.limit,
-        collateralRequirement: quote.collateralRequirement || quote.collateral,
+        accountRequirement,
+        collateralRequirement,
         updatedAt: quote.updatedAt,
         status: quote.status,
         isMatched: isMatch(quote, tenor, rate),
-        isSelected: quote.id === props.selectedQuoteId || correctedLineId.value === (quote.tenor === tenor ? quote.id : `${quote.id}-${tenor}`),
+        isSelected: quote.id === props.selectedQuoteId,
         isSent: Boolean(quote.sent)
       });
     }
@@ -188,26 +193,6 @@ const sendLine = (line: QuoteLine) => {
   emit('sendQuote', quoteForLine(line), line.tenor);
 };
 
-const correctLine = (line: QuoteLine) => {
-  correctionLine.value = line;
-  correctionAmount.value = line.amount > 0 ? line.amount.toString() : '';
-  correctionRate.value = line.rate.toFixed(2);
-};
-
-const closeCorrection = () => {
-  correctionLine.value = null;
-};
-
-const applyCorrection = () => {
-  if (!correctionLine.value) return;
-  const lineId = correctionLine.value.id;
-  correctedLineId.value = lineId;
-  window.setTimeout(() => {
-    if (correctedLineId.value === lineId) correctedLineId.value = '';
-  }, 1600);
-  closeCorrection();
-};
-
 const csvCell = (value: string | number) => {
   const text = String(value);
   return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
@@ -248,6 +233,8 @@ const exportQuotes = () => {
         v-model:max-amount="maxAmount"
         v-model:min-rate="minRate"
         v-model:max-rate="maxRate"
+        v-model:account-keyword="accountKeyword"
+        v-model:collateral-keyword="collateralKeyword"
         v-model:only-same="onlySame"
         @export-quotes="exportQuotes"
       />
@@ -260,34 +247,11 @@ const exportQuotes = () => {
           :key="section.direction"
           :section="section"
           @open-line="openLine"
-          @correct-line="correctLine"
           @send-line="sendLine"
         />
 
         <div v-if="directionSections.length === 0" class="empty-state market-empty">
           当前筛选条件下暂无报价
-        </div>
-      </div>
-
-      <div v-if="correctionLine" class="quote-correction-popover" role="dialog" aria-label="修正报价">
-        <div class="quote-correction-popover__head">
-          <strong>修正报价</strong>
-          <button class="close-button" type="button" aria-label="关闭修正弹窗" @click="closeCorrection">×</button>
-        </div>
-        <p>{{ correctionLine.institution }} · {{ correctionLine.tenor }} · {{ correctionLine.group }}</p>
-        <label>
-          <span>金额</span>
-          <input v-model="correctionAmount" type="number" min="0" step="0.1" />
-          <small>亿</small>
-        </label>
-        <label>
-          <span>利率</span>
-          <input v-model="correctionRate" type="number" min="0" step="0.01" />
-          <small>%</small>
-        </label>
-        <div class="quote-correction-popover__actions">
-          <button type="button" @click="closeCorrection">取消</button>
-          <button type="button" @click="applyCorrection">确认</button>
         </div>
       </div>
     </div>

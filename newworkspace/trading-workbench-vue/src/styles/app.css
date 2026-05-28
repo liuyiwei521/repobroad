@@ -217,6 +217,39 @@ input:focus:not(:focus-visible) {
   grid-template-columns: minmax(760px, 64%) minmax(68px, 7%) minmax(320px, 29%);
 }
 
+.workspace-gutter {
+  position: relative;
+  align-self: stretch;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+  background: transparent;
+}
+
+.workspace-gutter::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  background: var(--tk-color-border-default);
+  transition: width 0.12s ease, background 0.12s ease;
+}
+
+.workspace-gutter:hover::before,
+body.is-col-resizing .workspace-gutter::before {
+  width: 4px;
+  background: var(--tk-color-brand-cyan);
+}
+
+body.is-col-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
 .panel {
   min-height: 0;
   position: relative;
@@ -1316,14 +1349,6 @@ input:focus:not(:focus-visible) {
   font-weight: var(--tk-font-weight-medium);
 }
 
-.matrix.is-collapsed .sticky-top-2 {
-  top: 34px;
-}
-
-.matrix.is-collapsed .sticky-top-3 {
-  top: 72px;
-}
-
 .matrix__head {
   min-height: 0;
   display: grid;
@@ -1516,8 +1541,8 @@ input:focus:not(:focus-visible) {
   --w-instruction: 68px;
   --w-total: 68px;
   --w-diff: 68px;
-  --w-progress: 0px;
-  --w-pending: 0px;
+  --w-progress: 74px;
+  --w-pending: 64px;
 }
 
 .matrix.is-expanded {
@@ -1602,11 +1627,11 @@ input:focus:not(:focus-visible) {
   top: 114px;
 }
 
-.matrix.is-collapsed .sticky-top-2 {
+.matrix:not(.has-deals) .sticky-top-2 {
   top: 34px;
 }
 
-.matrix.is-collapsed .sticky-top-3 {
+.matrix:not(.has-deals) .sticky-top-3 {
   top: 72px;
 }
 
@@ -1691,15 +1716,6 @@ input:focus:not(:focus-visible) {
 
 .matrix-table-v2 .check-cell {
   text-align: center;
-}
-
-.matrix.is-collapsed .frozen-progress,
-.matrix.is-collapsed .frozen-pending,
-.matrix.is-collapsed .matrix-group-head,
-.matrix.is-collapsed .matrix-batch-head,
-.matrix.is-collapsed .matrix-edit-cell,
-.matrix.is-collapsed .matrix-summary-cell {
-  display: none;
 }
 
 .matrix-empty {
@@ -2237,6 +2253,35 @@ input:focus:not(:focus-visible) {
 .market-range-field small {
   color: var(--market-muted);
   font-style: normal;
+}
+
+.market-keyword-field {
+  height: 38px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.market-keyword-field span {
+  color: var(--tk-color-text-secondary);
+}
+
+.market-keyword-field input {
+  height: 36px;
+  width: 120px;
+  min-width: 0;
+  color: var(--market-text);
+  background: var(--tk-color-surface-page);
+  border: 1px solid var(--tk-color-border-default);
+  border-radius: var(--tk-radius-sm);
+  padding: 0 14px;
+  outline: none;
+}
+
+.market-keyword-field input::placeholder {
+  color: var(--tk-color-text-secondary);
 }
 
 .market-match-toggle {

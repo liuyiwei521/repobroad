@@ -7,7 +7,6 @@ defineProps<{
 
 const emit = defineEmits<{
   openLine: [line: QuoteLine];
-  correctLine: [line: QuoteLine];
   sendLine: [line: QuoteLine];
 }>();
 
@@ -40,7 +39,6 @@ const statusLabel = (status: QuoteLine['status']) => {
     <span>{{ line.collateralRequirement }}</span>
     <span class="number">{{ line.updatedAt }}</span>
     <span class="quote-actions">
-      <button class="quote-actions__fix" type="button" @click="emit('correctLine', line)">修正</button>
       <button class="quote-actions__send" type="button" @click="emit('sendLine', line)">发送</button>
     </span>
   </div>

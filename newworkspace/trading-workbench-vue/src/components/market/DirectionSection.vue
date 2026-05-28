@@ -8,7 +8,6 @@ defineProps<{
 
 const emit = defineEmits<{
   openLine: [line: QuoteLine];
-  correctLine: [line: QuoteLine];
   sendLine: [line: QuoteLine];
 }>();
 </script>
@@ -40,7 +39,6 @@ const emit = defineEmits<{
         :key="group.key"
         :group="group"
         @open-line="emit('openLine', $event)"
-        @correct-line="emit('correctLine', $event)"
         @send-line="emit('sendLine', $event)"
       />
     </div>
