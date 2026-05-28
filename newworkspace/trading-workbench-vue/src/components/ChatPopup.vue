@@ -34,7 +34,8 @@ const hasUnsaved = ref(false);
 const draftAmounts = ref<Record<string, number>>({});
 const selectedIds = ref<Set<string>>(new Set());
 const composerText = ref('');
-const localMessages = ref([...props.chat.messages]);
+const visibleMessages = () => props.chat.messages.filter((message) => message.from !== 'ai');
+const localMessages = ref(visibleMessages());
 const clampPosition = (x: number, y: number) => {
   if (typeof window === 'undefined') return { x, y };
   const maxX = Math.max(window.innerWidth - POPUP_WIDTH - EDGE_GAP, EDGE_GAP);
@@ -124,7 +125,7 @@ const toggleAccount = (id: string) => {
 watch(
   () => props.chat.id,
   () => {
-    localMessages.value = [...props.chat.messages];
+    localMessages.value = visibleMessages();
     composerText.value = '';
   }
 );

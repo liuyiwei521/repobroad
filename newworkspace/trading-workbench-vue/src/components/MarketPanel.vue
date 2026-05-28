@@ -6,6 +6,8 @@ import MarketFilterBar from './market/MarketFilterBar.vue';
 import MarketTitleBar from './market/MarketTitleBar.vue';
 import type { DirectionSectionView, QuoteLine } from './market/types';
 
+type PopupAnchor = { x: number; y: number };
+
 const props = defineProps<{
   quotes: MarketQuote[];
   groupSummaries: MarketGroupSummary[];
@@ -18,7 +20,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   openQuote: [quote: MarketQuote, tenor: Tenor];
   sendQuote: [quote: MarketQuote, tenor: Tenor];
-  openChat: [chat: ChatThread];
+  openChat: [chat: ChatThread, anchor?: PopupAnchor];
 }>();
 
 const activeLevel = ref<QuoteLevel>('level1');
@@ -178,6 +180,10 @@ const openLine = (line: QuoteLine) => {
   emit('openQuote', quoteForLine(line), line.tenor);
 };
 
+const openChatItem = (chat: ChatThread, event: MouseEvent) => {
+  emit('openChat', chat, { x: event.clientX, y: event.clientY });
+};
+
 const sendLine = (line: QuoteLine) => {
   emit('sendQuote', quoteForLine(line), line.tenor);
 };
@@ -301,8 +307,8 @@ const exportQuotes = () => {
         type="button"
         class="chat-item"
         :class="{ 'is-unreplied': chat.status === 'unreplied' }"
-        @click="emit('openChat', chat)"
-        @dblclick="emit('openChat', chat)"
+        @click="openChatItem(chat, $event)"
+        @dblclick="openChatItem(chat, $event)"
       >
         <div class="chat-line1">
           <span class="chat-line1__context">
