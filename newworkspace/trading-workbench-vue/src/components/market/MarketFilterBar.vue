@@ -30,6 +30,7 @@ const checkedValue = (event: Event) => (event.target as HTMLInputElement).checke
 
 <template>
   <div class="market-filter-bar" aria-label="报价筛选">
+    <div class="market-filter-row">
     <label class="market-range-field">
       <span>金额</span>
       <input
@@ -77,7 +78,9 @@ const checkedValue = (event: Event) => (event.target as HTMLInputElement).checke
       />
       <small>%</small>
     </label>
+    </div>
 
+    <div class="market-filter-row">
     <label class="market-keyword-field">
       <span>账户要求</span>
       <input
@@ -113,6 +116,7 @@ const checkedValue = (event: Event) => (event.target as HTMLInputElement).checke
         2级
       </button>
       <button class="is-download" type="button" @click="emit('exportQuotes')">下载</button>
+    </div>
     </div>
   </div>
 </template>

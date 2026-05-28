@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import type { AccountRow, AllocationCell, DealColumn, Institution, MatrixContext, PendingAllocation } from '../data/mockData';
 
 const matrixEl = ref<HTMLElement | null>(null);
@@ -62,6 +62,46 @@ const frozenLeft = computed(() =>
     : collapsedCoreWidth + (showProgressPending.value ? collapsedProgressPendingWidth : 0)
 );
 const tableMinWidth = computed(() => frozenLeft.value + (showDeals.value ? props.dealColumns.length * dealColumnWidth : 0));
+
+// Resizable frozen columns. Each drag overrides the matching --w-* CSS var
+// (which drives both the column width and the cumulative sticky-left offsets),
+// so unresized columns keep their collapsed/expanded defaults.
+type FrozenKey = 'select' | 'id' | 'name' | 'term' | 'instruction' | 'total' | 'diff' | 'progress' | 'pending';
+const frozenColumnMins: Record<FrozenKey, number> = {
+  select: 32, id: 56, name: 80, term: 48, instruction: 56, total: 56, diff: 56, progress: 60, pending: 56
+};
+const frozenWidthOverrides = reactive<Partial<Record<FrozenKey, number>>>({});
+
+const frozenColumnVars = computed(() => {
+  const out: Record<string, string> = {};
+  for (const key of Object.keys(frozenWidthOverrides) as FrozenKey[]) {
+    const value = frozenWidthOverrides[key];
+    if (value != null) out[`--w-${key}`] = `${value}px`;
+  }
+  return out;
+});
+
+const startColumnResize = (key: FrozenKey, event: PointerEvent) => {
+  event.preventDefault();
+  event.stopPropagation();
+  const cell = (event.target as HTMLElement).closest('th') as HTMLElement | null;
+  const startX = event.clientX;
+  const startWidth = frozenWidthOverrides[key] ?? cell?.offsetWidth ?? frozenColumnMins[key];
+  const min = frozenColumnMins[key];
+
+  const onMove = (move: PointerEvent) => {
+    frozenWidthOverrides[key] = Math.max(min, Math.round(startWidth + (move.clientX - startX)));
+  };
+  const onUp = () => {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    document.body.classList.remove('is-col-resizing');
+  };
+
+  document.body.classList.add('is-col-resizing');
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+};
 
 const keyFor = (accountId: string, dealColumnId: string) => `${accountId}__${dealColumnId}`;
 const roundAmount = (value: number) => Number(value.toFixed(2));
@@ -306,6 +346,7 @@ defineExpose({ save, collapse });
     ref="matrixEl"
     class="matrix"
     :class="{ 'is-expanded': expanded, 'is-collapsed': !expanded, 'has-deals': showDeals }"
+    :style="frozenColumnVars"
     aria-label="分配矩阵工作区"
   >
     <header class="matrix__head">
@@ -340,15 +381,15 @@ defineExpose({ save, collapse });
       <table class="matrix-table-v2" :style="{ minWidth: `${tableMinWidth}px` }">
         <thead>
           <tr>
-            <th class="frozen frozen-select sticky-top-0" :rowspan="showDeals ? 2 : 1">选择</th>
-            <th class="frozen frozen-id sticky-top-0" :rowspan="showDeals ? 2 : 1">账户ID</th>
-            <th class="frozen frozen-name sticky-top-0" :rowspan="showDeals ? 2 : 1">账户简称</th>
-            <th class="frozen frozen-term sticky-top-0" :rowspan="showDeals ? 2 : 1">期限</th>
-            <th class="frozen frozen-instruction sticky-top-0" :rowspan="showDeals ? 2 : 1">指令</th>
-            <th class="frozen frozen-total sticky-top-0" :rowspan="showDeals ? 2 : 1">总额</th>
-            <th class="frozen frozen-diff sticky-top-0" :rowspan="showDeals ? 2 : 1">差额</th>
-            <th v-if="showProgressPending" class="frozen frozen-progress sticky-top-0" :rowspan="showDeals ? 2 : 1">完成度</th>
-            <th v-if="showProgressPending" class="frozen frozen-pending sticky-top-0" :rowspan="showDeals ? 2 : 1">待分</th>
+            <th class="frozen frozen-select sticky-top-0" :rowspan="showDeals ? 2 : 1">选择<i class="matrix-col-resizer" @pointerdown="startColumnResize('select', $event)" /></th>
+            <th class="frozen frozen-id sticky-top-0" :rowspan="showDeals ? 2 : 1">账户ID<i class="matrix-col-resizer" @pointerdown="startColumnResize('id', $event)" /></th>
+            <th class="frozen frozen-name sticky-top-0" :rowspan="showDeals ? 2 : 1">账户简称<i class="matrix-col-resizer" @pointerdown="startColumnResize('name', $event)" /></th>
+            <th class="frozen frozen-term sticky-top-0" :rowspan="showDeals ? 2 : 1">期限<i class="matrix-col-resizer" @pointerdown="startColumnResize('term', $event)" /></th>
+            <th class="frozen frozen-instruction sticky-top-0" :rowspan="showDeals ? 2 : 1">指令<i class="matrix-col-resizer" @pointerdown="startColumnResize('instruction', $event)" /></th>
+            <th class="frozen frozen-total sticky-top-0" :rowspan="showDeals ? 2 : 1">总额<i class="matrix-col-resizer" @pointerdown="startColumnResize('total', $event)" /></th>
+            <th class="frozen frozen-diff sticky-top-0" :rowspan="showDeals ? 2 : 1">差额<i class="matrix-col-resizer" @pointerdown="startColumnResize('diff', $event)" /></th>
+            <th v-if="showProgressPending" class="frozen frozen-progress sticky-top-0" :rowspan="showDeals ? 2 : 1">完成度<i class="matrix-col-resizer" @pointerdown="startColumnResize('progress', $event)" /></th>
+            <th v-if="showProgressPending" class="frozen frozen-pending sticky-top-0" :rowspan="showDeals ? 2 : 1">待分<i class="matrix-col-resizer" @pointerdown="startColumnResize('pending', $event)" /></th>
             <th
               v-if="showDeals"
               v-for="group in institutionGroups"

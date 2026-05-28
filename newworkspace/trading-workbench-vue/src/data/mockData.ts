@@ -208,6 +208,94 @@ export const accounts: AccountRow[] = [
     breakevenRate: 1.72,
     status: 'warning',
     rule: '开 CD 仅限一级'
+  },
+  {
+    id: 'acc-zy-007',
+    name: '自营套利',
+    product: '自营',
+    tenor: 'R007',
+    targetAmount: 15,
+    allocatedAmount: 6,
+    breakevenRate: 1.55,
+    status: 'normal',
+    rule: '日内套利，控制久期'
+  },
+  {
+    id: 'acc-zy-021',
+    name: '自营波段',
+    product: '自营',
+    tenor: 'R021',
+    targetAmount: 8,
+    allocatedAmount: 8,
+    breakevenRate: 1.69,
+    status: 'done',
+    rule: '波段持有，已满仓'
+  },
+  {
+    id: 'acc-lc-001',
+    name: '理财活钱',
+    product: '理财',
+    tenor: 'R001',
+    targetAmount: 22,
+    allocatedAmount: 12.4,
+    breakevenRate: 1.5,
+    status: 'normal',
+    rule: '高流动性，隔夜优先'
+  },
+  {
+    id: 'acc-lc-028',
+    name: '理财长盈',
+    product: '理财',
+    tenor: 'R028',
+    targetAmount: 14,
+    allocatedAmount: 3,
+    breakevenRate: 1.75,
+    status: 'warning',
+    rule: '拉久期，需准入'
+  },
+  {
+    id: 'acc-gm-007',
+    name: '公募货币',
+    product: '公募',
+    tenor: 'R007',
+    targetAmount: 25,
+    allocatedAmount: 18,
+    breakevenRate: 1.46,
+    status: 'normal',
+    rule: '货币基金，限一级'
+  },
+  {
+    id: 'acc-gm-014',
+    name: '公募债基',
+    product: '公募',
+    tenor: 'R014',
+    targetAmount: 16,
+    allocatedAmount: 4.5,
+    breakevenRate: 1.63,
+    status: 'warning',
+    rule: '债基配置，看资金面'
+  },
+  {
+    id: 'acc-zx-001',
+    name: '专户定制',
+    product: '专户',
+    tenor: 'R001',
+    targetAmount: 9,
+    allocatedAmount: 9,
+    breakevenRate: 1.52,
+    status: 'done',
+    rule: '专户限定，已完成'
+  },
+  {
+    id: 'acc-nj-014',
+    name: '年金组合',
+    product: '年金',
+    tenor: 'R014',
+    targetAmount: 11,
+    allocatedAmount: 5.5,
+    breakevenRate: 1.6,
+    status: 'normal',
+    rule: '年金户，稳健为主'
   }
 ];
 
@@ -772,6 +860,25 @@ export const pendingAllocations: PendingAllocation[] = [
     tenor: 'R028',
     time: '10:36',
     source: 'AI 解析'
+  },
+  {
+    id: 'pending-003',
+    counterparty: '杭州银行',
+    amount: 5,
+    rate: 1.57,
+    tenor: 'R007',
+    time: '10:41',
+    source: '聊天成交'
+  },
+  {
+    id: 'pending-004',
+    counterparty: '工商银行',
+    amount: 4.2,
+    rate: 1.54,
+    tenor: 'R007',
+    time: '10:29',
+    source: 'AI 解析',
+    direction: 'repo'
   }
 ];
 

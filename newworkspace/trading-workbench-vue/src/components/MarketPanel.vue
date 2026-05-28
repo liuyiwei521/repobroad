@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, ref } from 'vue';
 import type { AccountRow, ChatThread, Direction, MarketGroupSummary, MarketQuote, QuoteLevel, Tenor } from '../data/mockData';
 import DirectionSection from './market/DirectionSection.vue';
 import MarketFilterBar from './market/MarketFilterBar.vue';
 import MarketTitleBar from './market/MarketTitleBar.vue';
 import type { DirectionSectionView, QuoteLine } from './market/types';
+import { useQuoteColumns } from '../composables/useQuoteColumns';
+
+const { columnTemplate } = useQuoteColumns();
 
 type PopupAnchor = { x: number; y: number };
 
@@ -25,6 +28,7 @@ const emit = defineEmits<{
 
 const activeLevel = ref<QuoteLevel>('level1');
 const activeTenor = ref<Tenor | 'all'>('all');
+const activeDirection = ref<Direction>('reverse');
 const chatTab = ref<'unreplied' | 'replied' | 'all'>('unreplied');
 const onlySame = ref(false);
 const minAmount = ref('');
@@ -40,6 +44,10 @@ const directionLabels: Record<Direction, string> = {
 };
 
 const directionOrder: Direction[] = ['reverse', 'repo'];
+const directionTabs = directionOrder.map((value) => ({
+  value,
+  label: value === 'reverse' ? '逆回购' : '正回购'
+}));
 const groupOrder = ['利率地方', '存单商金', '信用'];
 
 const parseOptionalNumber = (value: string) => {
@@ -120,7 +128,7 @@ const quoteLines = computed<QuoteLine[]>(() => {
 });
 
 const directionSections = computed<DirectionSectionView[]>(() => {
-  return directionOrder
+  return [activeDirection.value]
     .map((direction) => {
       const groups = new Map<string, QuoteLine[]>();
       for (const line of quoteLines.value) {
@@ -193,6 +201,44 @@ const sendLine = (line: QuoteLine) => {
   emit('sendQuote', quoteForLine(line), line.tenor);
 };
 
+// Manually adjustable split between the quote board (top) and the chat index
+// (bottom). The chat index keeps a draggable pixel height; the quote board takes
+// the remaining space.
+const panelRef = ref<HTMLElement | null>(null);
+const chatHeight = ref(220);
+const CHAT_MIN = 120;
+const TOP_MIN = 220;
+
+const panelStyle = computed(() => ({
+  gridTemplateRows: `minmax(0, 1fr) 8px ${chatHeight.value}px`
+}));
+
+let dragStartY = 0;
+let dragStartHeight = 0;
+
+const onChatGutterMove = (event: PointerEvent) => {
+  const delta = dragStartY - event.clientY;
+  const panelHeight = panelRef.value?.clientHeight ?? 0;
+  const max = Math.max(CHAT_MIN, panelHeight - TOP_MIN);
+  chatHeight.value = Math.min(Math.max(dragStartHeight + delta, CHAT_MIN), max);
+};
+
+const onChatGutterUp = () => {
+  document.body.classList.remove('is-row-resizing');
+  window.removeEventListener('pointermove', onChatGutterMove);
+  window.removeEventListener('pointerup', onChatGutterUp);
+};
+
+const onChatGutterDown = (event: PointerEvent) => {
+  dragStartY = event.clientY;
+  dragStartHeight = chatHeight.value;
+  document.body.classList.add('is-row-resizing');
+  window.addEventListener('pointermove', onChatGutterMove);
+  window.addEventListener('pointerup', onChatGutterUp);
+};
+
+onBeforeUnmount(onChatGutterUp);
+
 const csvCell = (value: string | number) => {
   const text = String(value);
   return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
@@ -225,7 +271,7 @@ const exportQuotes = () => {
 </script>
 
 <template>
-  <section class="panel market-panel" aria-label="右栏非银行情与聊天">
+  <section ref="panelRef" class="panel market-panel" aria-label="右栏非银行情与聊天" :style="panelStyle">
     <div class="market-top">
       <MarketFilterBar
         v-model:active-level="activeLevel"
@@ -239,9 +285,14 @@ const exportQuotes = () => {
         @export-quotes="exportQuotes"
       />
 
-      <MarketTitleBar v-model:active-tenor="activeTenor" :tenors="tenors" />
+      <MarketTitleBar
+        v-model:active-tenor="activeTenor"
+        v-model:active-direction="activeDirection"
+        :tenors="tenors"
+        :direction-tabs="directionTabs"
+      />
 
-      <div class="quote-board">
+      <div class="quote-board" :style="{ '--quote-grid': columnTemplate }">
         <DirectionSection
           v-for="section in directionSections"
           :key="section.direction"
@@ -255,6 +306,15 @@ const exportQuotes = () => {
         </div>
       </div>
     </div>
+
+    <div
+      class="panel-gutter"
+      role="separator"
+      aria-orientation="horizontal"
+      aria-label="拖动调整报价与聊天列表比例"
+      title="拖动调整上下比例"
+      @pointerdown="onChatGutterDown"
+    ></div>
 
     <div class="chat-index">
       <div class="chat-index__head">
@@ -270,13 +330,16 @@ const exportQuotes = () => {
         :key="chat.id"
         type="button"
         class="chat-item"
-        :class="{ 'is-unreplied': chat.status === 'unreplied' }"
+        :class="chat.status === 'unreplied' ? 'is-unreplied' : 'is-replied'"
         @click="openChatItem(chat, $event)"
         @dblclick="openChatItem(chat, $event)"
       >
         <div class="chat-line1">
           <span class="chat-line1__context">
             {{ chat.chatTenor }}｜{{ chat.chatGroup }}｜{{ chat.chatLimit }}｜{{ chat.chatAmount.toFixed(1) }}亿｜@{{ chat.chatRate.toFixed(2) }}｜{{ chat.collateral }}
+          </span>
+          <span class="chat-status">
+            {{ chat.status === 'unreplied' ? '未回复' : '已回复' }}
           </span>
           <span v-if="chat.unread" class="chat-badge">{{ chat.unread }}</span>
         </div>

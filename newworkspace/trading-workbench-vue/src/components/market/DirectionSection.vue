@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import QuoteGroupTable from './QuoteGroupTable.vue';
 import type { DirectionSectionView, QuoteLine } from './types';
+import { useQuoteColumns } from '../../composables/useQuoteColumns';
 
 defineProps<{
   section: DirectionSectionView;
@@ -10,6 +11,10 @@ const emit = defineEmits<{
   openLine: [line: QuoteLine];
   sendLine: [line: QuoteLine];
 }>();
+
+const { startResize } = useQuoteColumns();
+
+const headers = ['分组 / 机构', '期限', '金额(总量)', '利率(均价)', '账户要求', '质押要求', '获取时间', '操作'];
 </script>
 
 <template>
@@ -24,14 +29,17 @@ const emit = defineEmits<{
 
     <div class="market-table">
       <div class="quote-table quote-table--head">
-        <span>分组 / 机构</span>
-        <span>期限</span>
-        <span>金额(总量)</span>
-        <span>利率(均价)</span>
-        <span>账户要求</span>
-        <span>质押要求</span>
-        <span>获取时间</span>
-        <span>操作</span>
+        <span v-for="(label, index) in headers" :key="label" class="quote-head-cell">
+          {{ label }}
+          <i
+            v-if="index < headers.length - 1"
+            class="quote-col-resizer"
+            role="separator"
+            aria-orientation="vertical"
+            :aria-label="`调整${label}列宽`"
+            @pointerdown="startResize(index, $event)"
+          />
+        </span>
       </div>
 
       <QuoteGroupTable

@@ -250,6 +250,39 @@ body.is-col-resizing {
   user-select: none;
 }
 
+.panel-gutter {
+  position: relative;
+  justify-self: stretch;
+  height: 8px;
+  cursor: row-resize;
+  touch-action: none;
+  background: transparent;
+}
+
+.panel-gutter::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  border-radius: 2px;
+  background: var(--tk-color-border-default);
+  transition: height 0.12s ease, background 0.12s ease;
+}
+
+.panel-gutter:hover::before,
+body.is-row-resizing .panel-gutter::before {
+  height: 4px;
+  background: var(--tk-color-brand-cyan);
+}
+
+body.is-row-resizing {
+  cursor: row-resize;
+  user-select: none;
+}
+
 .panel {
   min-height: 0;
   position: relative;
@@ -533,7 +566,7 @@ body.is-col-resizing {
 
 .research-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--tk-space-sm);
   padding: var(--tk-space-md);
   overflow: auto;
@@ -1046,7 +1079,34 @@ body.is-col-resizing {
 }
 
 .chat-item.is-unreplied {
-  box-shadow: inset 2px 0 0 var(--tk-color-warning);
+  box-shadow: inset 3px 0 0 var(--tk-color-warning);
+  background: var(--tk-color-warning-surface, rgba(255, 160, 40, 0.1));
+}
+
+.chat-item.is-replied {
+  box-shadow: inset 3px 0 0 var(--tk-color-success);
+}
+
+.chat-status {
+  flex-shrink: 0;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 6px;
+  border-radius: var(--tk-radius-pill);
+  font-size: 10px;
+  font-weight: var(--tk-font-weight-medium);
+  line-height: 1;
+}
+
+.chat-item.is-unreplied .chat-status {
+  color: var(--tk-color-warning);
+  background: var(--tk-color-warning-surface, rgba(255, 160, 40, 0.18));
+}
+
+.chat-item.is-replied .chat-status {
+  color: var(--tk-color-success);
+  background: var(--tk-color-success-surface, rgba(0, 224, 86, 0.16));
 }
 
 .chat-popup {
@@ -1487,17 +1547,21 @@ body.is-col-resizing {
   cursor: pointer;
 }
 
+/* Opaque so frozen cells fully occlude deal cells that scroll behind them. */
 .matrix-table-v2 tbody tr.is-selected td,
 .matrix-table-v2 tbody tr.is-selected th {
-  background: rgba(0, 210, 220, 0.12);
+  background: #e0fafb;
 }
 
 .matrix-table-v2 tbody tr.is-warning .frozen-name {
   box-shadow: inset 2px 0 0 var(--tk-color-danger);
 }
 
-.matrix-table-v2 tbody tr.is-done {
-  opacity: 0.72;
+/* Use a muted color rather than row opacity — opacity makes the sticky
+   frozen cells translucent and lets scrolled deal cells bleed through. */
+.matrix-table-v2 tbody tr.is-done td,
+.matrix-table-v2 tbody tr.is-done th {
+  color: var(--tk-color-text-secondary);
 }
 
 .matrix-table-v2 tfoot th,
@@ -1693,6 +1757,32 @@ body.is-col-resizing {
   background: rgba(255, 52, 70, 0.12);
 }
 
+/* Frozen 差额 cells are sticky; their tint must sit on an opaque base, or
+   horizontally-scrolled deal cells bleed through and look like overlapping text. */
+.matrix-table-v2 .frozen.matrix-diff.is-zero {
+  background: linear-gradient(rgba(0, 224, 86, 0.1), rgba(0, 224, 86, 0.1)), var(--tk-color-surface-page);
+}
+
+.matrix-table-v2 .frozen.matrix-diff.is-positive {
+  background: linear-gradient(rgba(255, 160, 40, 0.16), rgba(255, 160, 40, 0.16)), var(--tk-color-surface-page);
+}
+
+.matrix-table-v2 .frozen.matrix-diff.is-negative {
+  background: linear-gradient(rgba(255, 52, 70, 0.12), rgba(255, 52, 70, 0.12)), var(--tk-color-surface-page);
+}
+
+.matrix-table-v2 tfoot .frozen.matrix-diff.is-zero {
+  background: linear-gradient(rgba(0, 224, 86, 0.1), rgba(0, 224, 86, 0.1)), var(--tk-color-surface-panel);
+}
+
+.matrix-table-v2 tfoot .frozen.matrix-diff.is-positive {
+  background: linear-gradient(rgba(255, 160, 40, 0.16), rgba(255, 160, 40, 0.16)), var(--tk-color-surface-panel);
+}
+
+.matrix-table-v2 tfoot .frozen.matrix-diff.is-negative {
+  background: linear-gradient(rgba(255, 52, 70, 0.12), rgba(255, 52, 70, 0.12)), var(--tk-color-surface-panel);
+}
+
 .matrix-edit-cell {
   background: var(--tk-color-surface-subtle) !important;
 }
@@ -1718,6 +1808,36 @@ body.is-col-resizing {
   display: table-cell;
   text-align: center;
   vertical-align: middle;
+}
+
+.matrix-col-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 2;
+}
+
+.matrix-col-resizer::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  right: 2px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--tk-color-border-default);
+  opacity: 0;
+  transition: opacity 0.12s ease, background 0.12s ease;
+}
+
+.matrix-col-resizer:hover::before,
+body.is-col-resizing .matrix-col-resizer::before {
+  opacity: 1;
+  background: var(--tk-color-brand-cyan);
 }
 
 .matrix-empty {
@@ -2210,15 +2330,20 @@ body.is-col-resizing {
 }
 
 .market-filter-bar {
-  min-height: 68px;
   display: flex;
-  align-items: center;
-  gap: 18px;
-  overflow-x: auto;
+  flex-direction: column;
+  gap: 10px;
   padding: 10px 16px;
   color: var(--market-muted);
   background: var(--tk-color-surface-subtle);
   border-bottom: 1px solid var(--market-border);
+}
+
+.market-filter-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
 }
 
 .market-range-field {
@@ -2372,6 +2497,33 @@ body.is-col-resizing {
   border-color: var(--tk-color-brand-primary);
 }
 
+.direction-tabs {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 2px;
+  padding: 2px;
+  background: var(--tk-color-surface-panel);
+  border-radius: var(--tk-radius-sm);
+}
+
+.direction-tabs button {
+  height: 26px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: calc(var(--tk-radius-sm) - 2px);
+  color: var(--tk-color-text-secondary);
+  background: transparent;
+  font-size: var(--tk-font-size-sm);
+  font-weight: var(--tk-font-weight-medium);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.direction-tabs button.is-active {
+  color: var(--tk-color-text-inverse);
+  background: var(--tk-color-brand-primary);
+}
+
 .quote-board {
   min-height: 0;
   overflow: auto;
@@ -2450,18 +2602,47 @@ body.is-col-resizing {
 
 .quote-table {
   display: grid;
-  grid-template-columns:
-    minmax(148px, 1.15fr)
-    62px
-    86px
-    94px
-    minmax(98px, 0.85fr)
-    minmax(126px, 1fr)
-    82px
-    88px;
+  grid-template-columns: var(
+    --quote-grid,
+    minmax(148px, 1.15fr) 62px 86px 94px minmax(98px, 0.85fr) minmax(126px, 1fr) 82px 88px
+  );
   align-items: center;
   min-height: 38px;
   border-top: 1px solid var(--market-border-soft);
+}
+
+.quote-table--head > .quote-head-cell {
+  position: relative;
+  overflow: visible;
+}
+
+.quote-col-resizer {
+  position: absolute;
+  top: 0;
+  right: -5px;
+  width: 10px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 3;
+}
+
+.quote-col-resizer::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 4px;
+  width: 1px;
+  background: var(--market-border);
+}
+
+.quote-col-resizer:hover::after,
+.quote-col-resizer:active::after {
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--tk-color-brand-primary);
 }
 
 .quote-table > * {
