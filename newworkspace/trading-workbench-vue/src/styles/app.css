@@ -213,7 +213,7 @@ input:focus:not(:focus-visible) {
 }
 
 .workspace-grid.is-matrix-mode {
-  grid-template-columns: minmax(560px, 1fr) minmax(560px, 50%);
+  grid-template-columns: minmax(720px, 1fr) minmax(360px, 0.45fr);
 }
 
 .panel {
@@ -467,7 +467,7 @@ input:focus:not(:focus-visible) {
 .chat-item {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: var(--tk-space-sm);
   align-items: center;
   min-height: 48px;
@@ -477,6 +477,10 @@ input:focus:not(:focus-visible) {
   border-top: 1px solid var(--tk-color-border-divider);
   color: var(--tk-color-text-primary);
   background: transparent;
+}
+
+.pending__action {
+  justify-self: end;
 }
 
 .pending__item:hover,
@@ -1112,6 +1116,8 @@ input:focus:not(:focus-visible) {
 }
 
 .quick-allocation {
+  min-height: 0;
+  overflow: auto;
   padding: var(--tk-space-md);
   border-top: 1px solid var(--tk-color-border-default);
   background: var(--tk-color-surface-subtle);
@@ -1220,7 +1226,7 @@ input:focus:not(:focus-visible) {
   width: 100%;
   height: 100%;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
   color: var(--tk-color-text-primary);
   background: var(--tk-color-surface-page);
   border: 1px solid var(--tk-color-border-default);
@@ -1233,119 +1239,441 @@ input:focus:not(:focus-visible) {
 }
 
 .matrix__head {
-  min-height: 54px;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: start;
+  gap: var(--tk-space-sm);
   padding: var(--tk-space-sm) var(--tk-space-md);
   background: var(--tk-color-surface-panel);
   border-bottom: 1px solid var(--tk-color-border-default);
 }
 
-.matrix-table {
+.matrix-title {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--tk-space-xs);
+}
+
+.matrix-context {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--tk-space-xs);
+}
+
+.matrix-context span {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+  padding: 5px var(--tk-space-sm);
+  background: var(--tk-color-surface-page);
+  border: 1px solid var(--tk-color-border-default);
+  border-radius: var(--tk-radius-sm);
+}
+
+.matrix-context small,
+.matrix-save-time {
+  color: var(--tk-color-text-secondary);
+  font-size: var(--tk-font-size-xs);
+}
+
+.matrix-context b {
+  overflow: hidden;
+  color: var(--tk-color-text-heading);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.matrix__actions {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.matrix-save-hint {
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--tk-space-sm);
+  border-radius: var(--tk-radius-sm);
+  font-size: var(--tk-font-size-xs);
+  white-space: nowrap;
+}
+
+.matrix-save-hint.is-zero {
+  color: var(--tk-color-success);
+  background: rgba(0, 224, 86, 0.12);
+}
+
+.matrix-save-hint.is-positive {
+  color: #8a4b00;
+  background: rgba(255, 160, 40, 0.18);
+}
+
+.matrix-save-hint.is-negative {
+  color: var(--tk-color-danger);
+  background: rgba(255, 52, 70, 0.12);
+}
+
+.matrix-action-break {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 0;
+}
+
+.matrix-table-wrap {
   min-height: 0;
   overflow: auto;
 }
 
-.matrix-row {
-  display: grid;
-  grid-template-columns: 190px repeat(var(--quote-count), minmax(160px, 1fr)) 88px;
-  min-width: calc(278px + var(--quote-count) * 160px);
-  border-bottom: 1px solid var(--tk-color-border-default);
-}
-
-.matrix-row > span {
-  min-height: 54px;
-  display: grid;
-  align-content: center;
-  gap: 2px;
-  padding: var(--tk-space-sm);
-  border-right: 1px solid var(--tk-color-border-default);
-}
-
-/* 三行表头一体 sticky，z-index 高于数据行 */
-.matrix-head-group {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-}
-
-.matrix-row--head {
-  background: var(--tk-color-surface-panel);
-}
-
-/* 总量 / 差额 汇总行（在表头组内） */
-.matrix-row--summary {
-  background: var(--tk-color-surface-panel);
-}
-
-.matrix-row--summary > span {
-  min-height: 36px;
-}
-
-/* 底部账户合计行 */
-.matrix-row--total-row {
-  background: var(--tk-color-surface-panel);
-  border-top: 2px solid var(--tk-color-border-dark);
-}
-
-.matrix-row--total-row .sticky-col {
-  background: var(--tk-color-surface-panel);
-}
-
-/* 汇总行 sticky 列标签 */
-.matrix-label {
-  color: var(--tk-color-text-tertiary);
-  font-size: var(--tk-font-size-xs);
-}
-
-/* 汇总行数值格子 */
-.matrix-summary-cell {
-  display: inline-grid !important;
-  place-items: center;
-  min-height: 36px;
-  font-family: var(--tk-font-family-number);
-  color: var(--tk-color-text-secondary);
-}
-
-/* 账户行 sticky 列中的指令/未出 小字段 */
-.matrix-account-meta {
-  display: flex;
-  gap: var(--tk-space-sm);
-  font-size: var(--tk-font-size-xs);
-  color: var(--tk-color-text-secondary);
-  font-family: var(--tk-font-family-number);
-}
-
-.sticky-col {
-  position: sticky;
-  left: 0;
-  z-index: 4;
-  background: inherit;
-}
-
-/* 只有纯数据行才用 page 背景，汇总/表头行保持原色 */
-.matrix-row:not(.matrix-row--head):not(.matrix-row--summary):not(.matrix-row--total-row) .sticky-col {
+.matrix-table-v2 {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
   background: var(--tk-color-surface-page);
 }
 
-.matrix-cell {
+.matrix-table-v2 th,
+.matrix-table-v2 td {
+  height: 38px;
+  min-width: var(--deal-width, 104px);
+  padding: var(--tk-space-sm);
+  border-right: 1px solid var(--tk-color-border-default);
+  border-bottom: 1px solid var(--tk-color-border-default);
+  color: var(--tk-color-text-primary);
+  background: var(--tk-color-surface-page);
+  text-align: right;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.matrix-table-v2 th {
+  color: var(--tk-color-text-secondary);
+  background: var(--tk-color-surface-panel);
+  font-weight: var(--tk-font-weight-medium);
+}
+
+.matrix-table-v2 thead tr:first-child th {
+  height: 34px;
+}
+
+.matrix-table-v2 thead tr:nth-child(2) th {
+  height: 42px;
+}
+
+.matrix-table-v2 tbody tr:hover td,
+.matrix-table-v2 tbody tr:hover th {
+  background: var(--tk-color-surface-selected);
+}
+
+.matrix-table-v2 tfoot th,
+.matrix-table-v2 tfoot td {
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
+  color: var(--tk-color-text-heading);
+  background: var(--tk-color-surface-panel);
+  border-top: 2px solid var(--tk-color-border-dark);
+  font-weight: var(--tk-font-weight-medium);
+}
+
+.matrix-table-v2 .frozen {
+  position: sticky;
+  z-index: 7;
+  min-width: var(--frozen-width);
+  width: var(--frozen-width);
+  max-width: var(--frozen-width);
+  overflow: hidden;
+  padding-right: 6px;
+  padding-left: 6px;
+  text-align: left;
+  text-overflow: ellipsis;
+  box-shadow: 1px 0 0 var(--tk-color-border-default);
+}
+
+.matrix-table-v2 thead .frozen {
+  z-index: 12;
+}
+
+.matrix-table-v2 tfoot .frozen {
+  z-index: 10;
+}
+
+.frozen-select {
+  --frozen-width: 54px;
+  left: 0;
+  text-align: center !important;
+}
+
+.frozen-id {
+  --frozen-width: 78px;
+  left: 54px;
+}
+
+.frozen-name {
+  --frozen-width: 116px;
+  left: 132px;
+}
+
+.frozen-term {
+  --frozen-width: 64px;
+  left: 248px;
+}
+
+.frozen-instruction {
+  --frozen-width: 64px;
+  left: 312px;
+}
+
+.frozen-total {
+  --frozen-width: 64px;
+  left: 376px;
+}
+
+.frozen-diff {
+  --frozen-width: 64px;
+  left: 440px;
+}
+
+.frozen-progress {
+  --frozen-width: 74px;
+  left: 504px;
+}
+
+.frozen-pending {
+  --frozen-width: 64px;
+  left: 578px;
+}
+
+.sticky-top-0,
+.sticky-top-1,
+.sticky-top-2,
+.sticky-top-3 {
+  position: sticky;
+  z-index: 9;
+}
+
+.sticky-top-0 {
+  top: 0;
+}
+
+.sticky-top-1 {
+  top: 34px;
+}
+
+.sticky-top-2 {
+  top: 76px;
+}
+
+.sticky-top-3 {
+  top: 114px;
+}
+
+.matrix-group-head {
+  text-align: center !important;
+  color: var(--tk-color-text-heading) !important;
+  background: var(--tk-color-surface-selected) !important;
+}
+
+.matrix-batch-head {
+  text-align: center !important;
+}
+
+.matrix-batch-head b {
+  display: block;
+  color: var(--tk-color-text-heading);
+}
+
+.matrix-batch-head small {
+  margin-top: 2px;
+}
+
+.matrix-summary-row th,
+.matrix-summary-row td {
+  height: 38px;
   background: var(--tk-color-surface-subtle);
 }
 
-.matrix-cell input {
-  width: 100%;
+.matrix-summary-row--diff th,
+.matrix-summary-row--diff td {
+  background: #fffaf2;
 }
 
-.matrix-cell.is-disabled {
-  color: var(--tk-color-text-tertiary);
-  background: #f0f1f3;
-}
-
-.matrix-diff {
-  display: inline-grid !important;
-  place-items: center;
-  min-height: 54px;
-  color: var(--tk-color-text-inverse);
+.matrix-table-v2 .matrix-summary-cell {
+  color: var(--tk-color-text-heading);
   font-family: var(--tk-font-family-number);
   font-weight: var(--tk-font-weight-medium);
+}
+
+.matrix-table-v2 .matrix-diff {
+  color: var(--tk-color-text-heading);
+  font-family: var(--tk-font-family-number);
+  font-weight: var(--tk-font-weight-medium);
+  text-align: right;
+}
+
+.matrix-table-v2 .matrix-diff.is-zero {
+  color: var(--tk-color-success);
+  background: rgba(0, 224, 86, 0.1);
+}
+
+.matrix-table-v2 .matrix-diff.is-positive {
+  color: #8a4b00;
+  background: rgba(255, 160, 40, 0.16);
+}
+
+.matrix-table-v2 .matrix-diff.is-negative {
+  color: var(--tk-color-danger);
+  background: rgba(255, 52, 70, 0.12);
+}
+
+.matrix-edit-cell {
+  background: var(--tk-color-surface-subtle) !important;
+}
+
+.matrix-edit-cell input {
+  width: 100%;
+  height: 28px;
+  color: var(--tk-color-text-primary);
+  background: var(--tk-color-surface-page);
+  border: 1px solid var(--tk-color-border-default);
+  border-radius: var(--tk-radius-sm);
+  padding: 0 var(--tk-space-sm);
+  text-align: right;
+  outline: none;
+}
+
+.matrix-edit-cell input:focus {
+  border-color: var(--tk-color-brand-cyan);
+  box-shadow: 0 0 0 2px rgba(0, 210, 220, 0.12);
+}
+
+.matrix-table-v2 .check-cell {
+  text-align: center;
+}
+
+.matrix-empty {
+  margin: var(--tk-space-md);
+}
+
+.matrix-bottom {
+  min-height: 34px;
+  background: var(--tk-color-surface-subtle);
+  border-top: 1px solid var(--tk-color-border-default);
+}
+
+.matrix-bottom__head {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: var(--tk-space-sm);
+  padding: 0 var(--tk-space-md);
+  color: var(--tk-color-text-heading);
+  background: var(--tk-color-surface-panel);
+  border-bottom: 1px solid var(--tk-color-border-divider);
+}
+
+.matrix-bottom__head em,
+.matrix-pending__head em {
+  margin-left: auto;
+  color: var(--tk-color-text-secondary);
+  font-style: normal;
+  font-size: var(--tk-font-size-xs);
+}
+
+.matrix-bottom.is-collapsed .matrix-bottom__head {
+  border-bottom: 0;
+}
+
+.matrix-bottom__body {
+  max-height: 238px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--tk-space-sm);
+  overflow: auto;
+  padding: var(--tk-space-sm) var(--tk-space-md);
+}
+
+.matrix-bottom .matrix-context {
+  grid-template-columns: repeat(6, minmax(96px, 1fr));
+  align-content: start;
+}
+
+.matrix-pending {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: var(--tk-color-surface-page);
+  border: 1px solid var(--tk-color-border-default);
+  border-radius: var(--tk-radius-sm);
+  overflow: hidden;
+}
+
+.matrix-pending__head {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: var(--tk-space-sm);
+  padding: 0 var(--tk-space-sm);
+  color: var(--tk-color-text-heading);
+  background: var(--tk-color-surface-panel);
+  border-bottom: 1px solid var(--tk-color-border-divider);
+}
+
+.matrix-pending-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.matrix-pending-table th,
+.matrix-pending-table td {
+  height: 34px;
+  padding: 0 var(--tk-space-sm);
+  border-bottom: 1px solid var(--tk-color-border-divider);
+  color: var(--tk-color-text-primary);
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.matrix-pending-table th {
+  color: var(--tk-color-text-secondary);
+  background: var(--tk-color-surface-subtle);
+  font-size: var(--tk-font-size-xs);
+  font-weight: var(--tk-font-weight-regular);
+}
+
+.matrix-pending-table th:nth-child(2),
+.matrix-pending-table td:nth-child(2) {
+  width: 58px;
+}
+
+.matrix-pending-table th:nth-child(3),
+.matrix-pending-table td:nth-child(3),
+.matrix-pending-table th:nth-child(4),
+.matrix-pending-table td:nth-child(4),
+.matrix-pending-table th:nth-child(6),
+.matrix-pending-table td:nth-child(6),
+.matrix-pending-table th:nth-child(7),
+.matrix-pending-table td:nth-child(7) {
+  width: 76px;
+}
+
+.matrix-pending-table tbody tr:hover td {
+  background: var(--tk-color-surface-selected);
+}
+
+.matrix-pending-empty {
+  margin: var(--tk-space-sm);
 }
 
 @media (max-width: 1440px) {
@@ -1358,7 +1686,7 @@ input:focus:not(:focus-visible) {
   }
 
   .workspace-grid.is-matrix-mode {
-    grid-template-columns: minmax(560px, 1fr) minmax(620px, 1fr);
+    grid-template-columns: minmax(720px, 1fr) minmax(360px, 0.45fr);
   }
 
   .research-panel {
@@ -1563,7 +1891,7 @@ input:focus:not(:focus-visible) {
   }
 
   .workspace-grid.is-matrix-mode {
-    grid-template-columns: minmax(560px, 1fr) minmax(560px, 1fr);
+    grid-template-columns: minmax(700px, 1fr) minmax(360px, 0.45fr);
   }
 
   .research-drawer {

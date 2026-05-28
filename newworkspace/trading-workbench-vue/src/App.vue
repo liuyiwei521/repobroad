@@ -8,40 +8,56 @@ import TaskLedger from './components/TaskLedger.vue';
 import TopBar from './components/TopBar.vue';
 import {
   accounts as accountSeed,
+  allocationCells as allocationCellSeed,
   chats,
+  dealColumns as dealColumnSeed,
+  institutions as institutionSeed,
   marketGroupSummaries,
   marketQuotes as quoteSeed,
   pendingAllocations as pendingSeed,
   researchCards,
   tenors,
   type AccountRow,
+  type AllocationCell,
   type ChatThread,
+  type DealColumn,
+  type Institution,
   type MarketQuote,
+  type MatrixContext,
+  type MatrixContextInput,
   type PendingAllocation,
   type ResearchCard,
   type Tenor
 } from './data/mockData';
 
+type PopupAnchor = { x: number; y: number };
+
 const accounts = ref<AccountRow[]>(accountSeed.map((item) => ({ ...item })));
 const quotes = ref<MarketQuote[]>(quoteSeed.map((item) => ({ ...item, rates: { ...item.rates }, tenorAmounts: { ...item.tenorAmounts } })));
-const reverseQuotes = computed(() => quotes.value.filter((q) => q.direction === 'reverse'));
 const pendingAllocations = ref<PendingAllocation[]>(pendingSeed.map((item) => ({ ...item })));
+const institutions = ref<Institution[]>(institutionSeed.map((item) => ({ ...item })));
+const dealColumns = ref<DealColumn[]>(dealColumnSeed.map((item) => ({ ...item })));
+const allocationCells = ref<AllocationCell[]>(allocationCellSeed.map((item) => ({ ...item })));
 const initialTrialRate = 1.66;
 const trialRate = ref(initialTrialRate);
 const baseBreakevenRates = new Map(accountSeed.map((account) => [account.id, account.breakevenRate]));
+const baseAllocatedAmounts = new Map(accountSeed.map((account) => [account.id, account.allocatedAmount]));
+const quickAllocationTotals = ref<Record<string, number>>({});
 
 const selectedAccountId = ref(accounts.value[0]?.id ?? '');
 const selectedQuoteId = ref('');
 const activeCard = ref<ResearchCard | null>(null);
 const matrixOpen = ref(false);
+const matrixContext = ref<MatrixContext | null>(null);
 const lastAction = ref('已加载 mock 数据，点击账户行可联动右栏行情。');
 const activeChat = ref<{
   chat: ChatThread;
   quote: MarketQuote;
   tenor: Tenor;
+  anchor?: PopupAnchor;
 } | null>(null);
 
-const matrixRef = ref<{ save: () => void } | null>(null);
+const matrixRef = ref<{ save: () => void; collapse: () => void } | null>(null);
 
 const selectedAccount = computed(() => accounts.value.find((account) => account.id === selectedAccountId.value));
 
@@ -71,15 +87,126 @@ const quoteForTenor = (quote: MarketQuote, tenor: Tenor): MarketQuote => {
   };
 };
 
-const openMatrix = () => {
+const roundAmount = (value: number) => Number(value.toFixed(2));
+
+const ensureInstitution = (name: string) => {
+  const normalizedName = name.trim() || '未命名机构';
+  const existing = institutions.value.find((institution) => institution.name === normalizedName);
+  if (existing) return existing;
+
+  const next: Institution = {
+    id: `inst-live-${Date.now()}-${institutions.value.length + 1}`,
+    name: normalizedName
+  };
+  institutions.value.push(next);
+  return next;
+};
+
+const nextBatchNo = () => `B${String(dealColumns.value.length + 1).padStart(3, '0')}`;
+
+const createDealColumnFromContext = (input: MatrixContextInput): MatrixContext => {
+  const institution = input.institutionId
+    ? institutions.value.find((item) => item.id === input.institutionId) ?? ensureInstitution(input.institution ?? input.counterparty)
+    : ensureInstitution(input.institution ?? input.counterparty);
+
+  const batchNo = input.batchNo ?? nextBatchNo();
+  const dealColumn: DealColumn = {
+    id: `deal-live-${Date.now()}-${dealColumns.value.length + 1}`,
+    institutionId: institution.id,
+    term: input.term,
+    dealAmount: roundAmount(input.dealAmount),
+    rate: input.rate,
+    direction: input.direction,
+    dealTime: input.dealTime,
+    batchNo,
+    source: input.source
+  };
+
+  dealColumns.value.unshift(dealColumn);
+
+  return {
+    ...input,
+    id: `ctx-${Date.now()}`,
+    institution: institution.name,
+    institutionId: institution.id,
+    dealColumnId: dealColumn.id,
+    batchNo,
+    dealAmount: dealColumn.dealAmount
+  };
+};
+
+const recomputeAccountAllocations = () => {
+  const matrixTotals = new Map<string, number>();
+  for (const cell of allocationCells.value) {
+    matrixTotals.set(cell.accountId, roundAmount((matrixTotals.get(cell.accountId) ?? 0) + cell.amount));
+  }
+
+  for (const account of accounts.value) {
+    const baseAmount = baseAllocatedAmounts.get(account.id) ?? 0;
+    const quickAmount = quickAllocationTotals.value[account.id] ?? 0;
+    const matrixAmount = matrixTotals.get(account.id) ?? 0;
+    account.allocatedAmount = Math.min(account.targetAmount, roundAmount(baseAmount + quickAmount + matrixAmount));
+    refreshAccountStatus(account);
+  }
+};
+
+const syncPendingFromMatrixContext = (payload: AllocationCell[]) => {
+  const context = matrixContext.value;
+  if (!context) return;
+
+  const filled = payload
+    .filter((cell) => cell.dealColumnId === context.dealColumnId)
+    .reduce((sum, cell) => sum + cell.amount, 0);
+  const pendingAmount = Math.max(roundAmount(context.dealAmount - filled), 0);
+  const pendingId = context.pendingId ?? (context.source === '待分配' ? context.sourceId : undefined);
+
+  if (pendingId) {
+    const index = pendingAllocations.value.findIndex((item) => item.id === pendingId);
+    if (pendingAmount <= 0) {
+      if (index >= 0) pendingAllocations.value.splice(index, 1);
+    } else if (index >= 0) {
+      pendingAllocations.value[index] = {
+        ...pendingAllocations.value[index],
+        amount: pendingAmount,
+        rate: context.rate,
+        tenor: context.term,
+        direction: context.direction,
+        time: context.dealTime,
+        source: '矩阵未分余额'
+      };
+    }
+    return;
+  }
+
+  if (pendingAmount <= 0) return;
+
+  const nextPending: PendingAllocation = {
+    id: `pending-matrix-${Date.now()}`,
+    counterparty: context.counterparty,
+    amount: pendingAmount,
+    rate: context.rate,
+    tenor: context.term,
+    direction: context.direction,
+    time: '刚刚',
+    source: '矩阵未分余额'
+  };
+  context.pendingId = nextPending.id;
+  pendingAllocations.value.unshift(nextPending);
+};
+
+const openMatrix = (contextInput?: MatrixContextInput) => {
+  matrixContext.value = contextInput ? createDealColumnFromContext(contextInput) : null;
   matrixOpen.value = true;
   activeCard.value = null;
   activeChat.value = null;
-  lastAction.value = '已进入矩阵工作态，左中区域展开分配矩阵，右侧行情保持完整显示。';
+  lastAction.value = matrixContext.value
+    ? `已将 ${matrixContext.value.counterparty} ${matrixContext.value.term} 成交带入矩阵，并新增 ${matrixContext.value.batchNo} 批次列。`
+    : '已进入矩阵工作态，左侧任务面板展开为分配矩阵，右侧行情保持完整显示。';
 };
 
 const closeMatrix = () => {
   matrixOpen.value = false;
+  matrixContext.value = null;
   lastAction.value = '已返回三栏工作台。';
 };
 
@@ -140,33 +267,57 @@ const sendQuote = (quote: MarketQuote, tenor: Tenor) => {
   }, 1600);
 };
 
-const openChat = (chat: ChatThread) => {
+const openChat = (chat: ChatThread, anchor?: PopupAnchor) => {
   const quote = quotes.value.find((item) => item.id === chat.relatedQuoteId) ?? quotes.value[0];
   if (!quote) return;
-  const tenor = selectedAccount.value && quote.rates[selectedAccount.value.tenor]
-    ? selectedAccount.value.tenor
-    : firstRateTenor(quote);
+  const tenor = chat.chatTenor ?? (
+    selectedAccount.value && quote.rates[selectedAccount.value.tenor]
+      ? selectedAccount.value.tenor
+      : firstRateTenor(quote)
+  );
+  const quoteContext = {
+    ...quoteForTenor(quote, tenor),
+    counterparty: chat.counterparty,
+    institution: chat.counterparty,
+    group: chat.chatGroup,
+    amount: chat.chatAmount,
+    rate: chat.chatRate,
+    limit: chat.chatLimit,
+    accountRequirement: chat.chatLimit,
+    collateral: chat.collateral,
+    collateralRequirement: chat.collateral,
+    rates: { ...quote.rates, [tenor]: chat.chatRate },
+    tenorAmounts: { ...quote.tenorAmounts, [tenor]: chat.chatAmount }
+  };
   selectedQuoteId.value = quote.id;
-  activeChat.value = { chat, quote, tenor };
+  activeChat.value = { chat, quote: quoteContext, tenor, anchor };
   lastAction.value = `已打开 ${chat.counterparty} 会话，并定位到最新消息。`;
 };
 
 const openPending = (item: PendingAllocation) => {
-  const quote = quotes.value.find((quoteItem) => quoteItem.counterparty === item.counterparty) ?? quotes.value[0];
-  const chat = chats.find((chatItem) => chatItem.counterparty === item.counterparty) ?? chats[0];
-  if (!quote || !chat) return;
-  selectedQuoteId.value = quote.id;
-  activeChat.value = { chat, quote, tenor: item.tenor };
-  lastAction.value = `已从待分配额度打开 ${item.counterparty} 会话，可继续处理 ${item.amount.toFixed(1)} 亿余额。`;
+  openMatrix({
+    source: '待分配',
+    sourceId: item.id,
+    counterparty: item.counterparty,
+    institution: item.counterparty,
+    term: item.tenor,
+    dealAmount: item.amount,
+    rate: item.rate,
+    direction: item.direction ?? 'reverse',
+    dealTime: item.time,
+    filledAmount: 0,
+    pendingAmount: item.amount,
+    aiDraftStatus: '待生成',
+    draftCells: []
+  });
+  lastAction.value = `已从待分配池带入 ${item.counterparty} ${item.tenor}，生成新的成交批次列。`;
 };
 
 const saveQuickAllocation = (payload: Array<{ accountId: string; amount: number }>) => {
   for (const item of payload) {
-    const account = accounts.value.find((row) => row.id === item.accountId);
-    if (!account) continue;
-    account.allocatedAmount = Math.min(account.targetAmount, Number((account.allocatedAmount + item.amount).toFixed(1)));
-    refreshAccountStatus(account);
+    quickAllocationTotals.value[item.accountId] = roundAmount((quickAllocationTotals.value[item.accountId] ?? 0) + item.amount);
   }
+  recomputeAccountAllocations();
   lastAction.value = `快捷分配已保存，${payload.length} 个账户台账已回写。`;
 };
 
@@ -184,24 +335,21 @@ const pushPending = (amount: number) => {
   lastAction.value = `剩余 ${amount.toFixed(1)} 亿已挂入左栏待分配池。`;
 };
 
-const saveMatrix = (payload: Array<{ accountId: string; quoteId: string; amount: number }>) => {
-  const accountTotals = new Map<string, number>();
-  for (const item of payload) {
-    accountTotals.set(item.accountId, Number(((accountTotals.get(item.accountId) ?? 0) + item.amount).toFixed(1)));
-  }
-  for (const [accountId, amount] of accountTotals) {
-    const account = accounts.value.find((row) => row.id === accountId);
-    if (!account) continue;
-    account.allocatedAmount = Math.min(account.targetAmount, Number((account.allocatedAmount + amount).toFixed(1)));
-    refreshAccountStatus(account);
-  }
-  matrixOpen.value = false;
-  lastAction.value = `矩阵分配已保存，${accountTotals.size} 个账户完成回写。`;
+const saveMatrix = (payload: Array<{ accountId: string; dealColumnId: string; amount: number }>) => {
+  allocationCells.value = payload.map((item) => ({
+    accountId: item.accountId,
+    dealColumnId: item.dealColumnId,
+    amount: roundAmount(item.amount)
+  }));
+  recomputeAccountAllocations();
+  syncPendingFromMatrixContext(allocationCells.value);
+  const accountCount = new Set(payload.map((item) => item.accountId)).size;
+  lastAction.value = `矩阵分配已保存，${accountCount} 个账户台账已回写。`;
 };
 
 const closeTopLayer = () => {
   if (matrixOpen.value) {
-    closeMatrix();
+    matrixRef.value?.collapse();
     return;
   }
   if (activeCard.value) {
@@ -287,10 +435,14 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
           ref="matrixRef"
           class="matrix-workspace"
           :accounts="accounts"
-          :quotes="reverseQuotes"
-          :tenors="tenors"
+          :institutions="institutions"
+          :deal-columns="dealColumns"
+          :cells="allocationCells"
+          :matrix-context="matrixContext"
+          :pending-allocations="pendingAllocations"
           @close="closeMatrix"
           @save="saveMatrix"
+          @open-pending="openPending"
         />
 
         <MarketPanel
@@ -312,6 +464,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
       :chat="activeChat.chat"
       :quote="activeChat.quote"
       :tenor="activeChat.tenor"
+      :anchor="activeChat.anchor"
       :accounts="accounts"
       @close="activeChat = null"
       @save-allocation="saveQuickAllocation"

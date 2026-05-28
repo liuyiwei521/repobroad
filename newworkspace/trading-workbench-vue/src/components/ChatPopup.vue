@@ -1,7 +1,15 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
-import type { AccountRow, ChatThread, MarketQuote, Tenor } from '../data/mockData';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import type { AccountRow, ChatThread, MarketQuote, MatrixContextInput, Tenor } from '../data/mockData';
 import { useFocusTrap } from '../composables/useFocusTrap';
+
+type PopupAnchor = { x: number; y: number };
+
+const POPUP_WIDTH = 642;
+const POPUP_HEIGHT = 640;
+const EDGE_GAP = 16;
+const TOP_GAP = 64;
+const CURSOR_GAP = 12;
 
 const popupEl = ref<HTMLElement | null>(null);
 useFocusTrap(popupEl, { initialFocus: '.composer input' });
@@ -10,6 +18,7 @@ const props = defineProps<{
   chat: ChatThread;
   quote: MarketQuote;
   tenor: Tenor;
+  anchor?: PopupAnchor;
   accounts: AccountRow[];
 }>();
 
@@ -17,7 +26,7 @@ const emit = defineEmits<{
   close: [];
   saveAllocation: [payload: Array<{ accountId: string; amount: number }>];
   pushPending: [amount: number];
-  openMatrix: [];
+  openMatrix: [context: MatrixContextInput];
 }>();
 
 const dealConfirmed = ref(false);
@@ -28,13 +37,27 @@ const composerText = ref('');
 const localMessages = ref([...props.chat.messages]);
 const clampPosition = (x: number, y: number) => {
   if (typeof window === 'undefined') return { x, y };
+  const maxX = Math.max(window.innerWidth - POPUP_WIDTH - EDGE_GAP, EDGE_GAP);
+  const maxY = Math.max(window.innerHeight - POPUP_HEIGHT - EDGE_GAP, TOP_GAP);
   return {
-    x: Math.min(Math.max(x, 16), Math.max(window.innerWidth - 674, 16)),
-    y: Math.min(Math.max(y, 64), Math.max(window.innerHeight - 560, 64))
+    x: Math.min(Math.max(x, EDGE_GAP), maxX),
+    y: Math.min(Math.max(y, TOP_GAP), maxY)
   };
 };
 
-const position = ref(clampPosition(720, 138));
+const defaultPosition = () => {
+  if (typeof window === 'undefined') return clampPosition(720, 92);
+  return clampPosition(window.innerWidth - POPUP_WIDTH - 40, 92);
+};
+
+const positionFromAnchor = (anchor?: PopupAnchor) => {
+  if (!anchor || typeof window === 'undefined') return defaultPosition();
+  const hasRoomRight = window.innerWidth - anchor.x >= POPUP_WIDTH + CURSOR_GAP + EDGE_GAP;
+  const x = hasRoomRight ? anchor.x + CURSOR_GAP : anchor.x - POPUP_WIDTH - CURSOR_GAP;
+  return clampPosition(x, anchor.y + CURSOR_GAP);
+};
+
+const position = ref(positionFromAnchor(props.anchor));
 const dragging = ref(false);
 const dragOffset = ref({ x: 0, y: 0 });
 
@@ -45,7 +68,7 @@ const eligibleAccounts = computed(() => {
   });
 });
 
-const quoteAmount = computed(() => props.quote.amount);
+const quoteAmount = computed(() => props.quote.amount > 0 ? props.quote.amount : props.chat.chatAmount);
 
 const remainingOf = (account: AccountRow) => Math.max(account.targetAmount - account.allocatedAmount, 0);
 const usableLimit = (account: AccountRow) => Number(Math.min(remainingOf(account), quoteAmount.value).toFixed(1));
@@ -58,7 +81,7 @@ const allocatedTotal = computed(() => {
 
 const difference = computed(() => Number((quoteAmount.value - allocatedTotal.value).toFixed(2)));
 
-const quoteRate = computed(() => props.quote.rates[props.tenor] ?? 0);
+const quoteRate = computed(() => props.quote.rates[props.tenor] ?? props.quote.rate ?? props.chat.chatRate ?? 0);
 
 const resetDraft = () => {
   const next: Record<string, number> = {};
@@ -115,9 +138,12 @@ watch(
   { immediate: true }
 );
 
-onMounted(() => {
-  position.value = clampPosition(position.value.x, position.value.y);
-});
+watch(
+  () => [props.chat.id, props.anchor?.x, props.anchor?.y],
+  () => {
+    position.value = positionFromAnchor(props.anchor);
+  }
+);
 
 const sendMessage = () => {
   const text = composerText.value.trim();
@@ -165,6 +191,32 @@ const pushPending = () => {
   }
 };
 
+const openMatrixFromQuick = () => {
+  const draftCells = eligibleAccounts.value
+    .filter((account) => selectedIds.value.has(account.id))
+    .map((account) => ({
+      accountId: account.id,
+      amount: Number(draftAmounts.value[account.id] || 0)
+    }))
+    .filter((item) => item.amount > 0);
+
+  emit('openMatrix', {
+    source: '聊天快捷分配',
+    sourceId: props.chat.id,
+    counterparty: props.quote.counterparty || props.chat.counterparty,
+    institution: props.quote.institution || props.quote.counterparty || props.chat.counterparty,
+    term: props.tenor,
+    dealAmount: quoteAmount.value,
+    rate: quoteRate.value,
+    direction: props.quote.direction,
+    dealTime: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+    filledAmount: allocatedTotal.value,
+    pendingAmount: Math.max(difference.value, 0),
+    aiDraftStatus: draftCells.length ? '快捷草案已带入' : '待生成',
+    draftCells
+  });
+};
+
 const close = () => {
   if (hasUnsaved.value && !window.confirm('快捷分配尚未保存，确认关闭？')) {
     return;
@@ -184,12 +236,7 @@ const startDrag = (event: MouseEvent) => {
 
 const onDrag = (event: MouseEvent) => {
   if (!dragging.value) return;
-  const maxX = Math.max(window.innerWidth - 660, 16);
-  const maxY = Math.max(window.innerHeight - 560, 64);
-  position.value = {
-    x: Math.min(Math.max(event.clientX - dragOffset.value.x, 16), maxX),
-    y: Math.min(Math.max(event.clientY - dragOffset.value.y, 64), maxY)
-  };
+  position.value = clampPosition(event.clientX - dragOffset.value.x, event.clientY - dragOffset.value.y);
 };
 
 const stopDrag = () => {
@@ -197,6 +244,20 @@ const stopDrag = () => {
   window.removeEventListener('mousemove', onDrag);
   window.removeEventListener('mouseup', stopDrag);
 };
+
+const onResize = () => {
+  position.value = clampPosition(position.value.x, position.value.y);
+};
+
+onMounted(() => {
+  position.value = positionFromAnchor(props.anchor);
+  window.addEventListener('resize', onResize);
+});
+
+onUnmounted(() => {
+  stopDrag();
+  window.removeEventListener('resize', onResize);
+});
 </script>
 
 <template>
@@ -309,7 +370,7 @@ const stopDrag = () => {
         <button class="button button--secondary" type="button" :disabled="difference <= 0" @click="pushPending">
           挂入待分配
         </button>
-        <button class="button button--secondary" type="button" @click="emit('openMatrix')">转全屏矩阵</button>
+        <button class="button button--secondary" type="button" @click="openMatrixFromQuick">转全屏矩阵</button>
         <button class="button button--primary" type="button" :disabled="!eligibleAccounts.length" @click="save">保存分配</button>
       </div>
     </section>

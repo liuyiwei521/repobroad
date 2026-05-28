@@ -153,12 +153,10 @@ const onRowKeydown = (event: KeyboardEvent) => {
         <strong>待分配额度</strong>
         <em>{{ pendingAllocations.length }} 笔</em>
       </div>
-      <button
+      <div
         v-for="item in pendingAllocations"
         :key="item.id"
         class="pending__item"
-        type="button"
-        @click="emit('openPending', item)"
       >
         <span>
           <b>{{ item.counterparty }}</b>
@@ -168,7 +166,8 @@ const onRowKeydown = (event: KeyboardEvent) => {
           <b class="number">{{ item.amount.toFixed(1) }} 亿</b>
           <small>{{ item.tenor }} · {{ item.rate.toFixed(2) }}%</small>
         </span>
-      </button>
+        <button class="button button--secondary pending__action" type="button" @click="emit('openPending', item)">分配</button>
+      </div>
     </div>
   </section>
 </template>

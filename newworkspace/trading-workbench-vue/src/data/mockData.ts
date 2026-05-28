@@ -25,6 +25,61 @@ export interface PendingAllocation {
   tenor: Tenor;
   time: string;
   source: string;
+  direction?: Direction;
+}
+
+export interface Institution {
+  id: string;
+  name: string;
+}
+
+export interface DealColumn {
+  id: string;
+  institutionId: string;
+  term: Tenor;
+  dealAmount: number;
+  rate: number;
+  direction: Direction;
+  dealTime: string;
+  batchNo: string;
+  source: string;
+}
+
+export interface AllocationCell {
+  accountId: string;
+  dealColumnId: string;
+  amount: number;
+}
+
+export interface MatrixContextDraftCell {
+  accountId: string;
+  amount: number;
+}
+
+export interface MatrixContextInput {
+  source: string;
+  sourceId?: string;
+  counterparty: string;
+  institution?: string;
+  institutionId?: string;
+  term: Tenor;
+  dealAmount: number;
+  rate: number;
+  direction: Direction;
+  dealTime: string;
+  batchNo?: string;
+  filledAmount?: number;
+  pendingAmount?: number;
+  aiDraftStatus?: string;
+  draftCells?: MatrixContextDraftCell[];
+}
+
+export interface MatrixContext extends MatrixContextInput {
+  id: string;
+  institutionId: string;
+  dealColumnId: string;
+  batchNo: string;
+  pendingId?: string;
 }
 
 export interface MarketQuote {
@@ -560,6 +615,31 @@ export const marketQuotes: MarketQuote[] = [
     allowedAccounts: ['acc-zy-001', 'acc-zy-014']
   })
 ];
+
+const institutionNames = Array.from(new Set(marketQuotes.map((quote) => quote.institution || quote.counterparty)));
+
+export const institutions: Institution[] = institutionNames.map((name, index) => ({
+  id: `inst-${String(index + 1).padStart(2, '0')}`,
+  name
+}));
+
+const institutionIdByName = new Map(institutions.map((institution) => [institution.name, institution.id]));
+
+export const dealColumns: DealColumn[] = marketQuotes
+  .filter((quote) => quote.direction === 'reverse' && quote.amount > 0)
+  .map((quote, index) => ({
+    id: `deal-seed-${String(index + 1).padStart(2, '0')}`,
+    institutionId: institutionIdByName.get(quote.institution || quote.counterparty) ?? institutions[0]?.id ?? 'inst-01',
+    term: quote.tenor,
+    dealAmount: quote.amount,
+    rate: quote.rate,
+    direction: quote.direction,
+    dealTime: quote.updatedAt,
+    batchNo: `B${String(index + 1).padStart(3, '0')}`,
+    source: '行情成交'
+  }));
+
+export const allocationCells: AllocationCell[] = [];
 
 const groupSummaryKey = (quote: MarketQuote) => `${quote.direction}-${quote.level}-${quote.group}`;
 
