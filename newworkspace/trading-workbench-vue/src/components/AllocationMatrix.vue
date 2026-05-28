@@ -14,12 +14,16 @@ const props = defineProps<{
   cells: AllocationCell[];
   matrixContext: MatrixContext | null;
   pendingAllocations: PendingAllocation[];
+  expanded: boolean;
+  selectedAccountId: string;
 }>();
 
 const emit = defineEmits<{
+  expand: [];
   close: [];
   save: [payload: Array<{ accountId: string; dealColumnId: string; amount: number }>];
   openPending: [item: PendingAllocation];
+  selectAccount: [id: string];
 }>();
 
 const drafts = ref<Record<string, number>>({});
@@ -29,8 +33,11 @@ const aiDraftStatus = ref('待生成');
 const lastSavedAt = ref('');
 const bottomOpen = ref(true);
 
-const frozenLeft = 642;
+const collapsedFrozenLeft = 494;
+const expandedFrozenLeft = 710;
+const frozenLeft = computed(() => (props.expanded ? expandedFrozenLeft : collapsedFrozenLeft));
 const dealColumnWidth = 104;
+const tableMinWidth = computed(() => (props.expanded ? frozenLeft.value + props.dealColumns.length * dealColumnWidth : frozenLeft.value));
 
 const keyFor = (accountId: string, dealColumnId: string) => `${accountId}__${dealColumnId}`;
 const roundAmount = (value: number) => Number(value.toFixed(2));
@@ -145,11 +152,20 @@ const saveHintClass = computed(() => {
 
 const diffClass = (val: number) => (val === 0 ? 'is-zero' : val > 0 ? 'is-positive' : 'is-negative');
 
+const rowClass = (account: AccountRow) => ({
+  'is-selected': account.id === props.selectedAccountId,
+  'is-done': account.status === 'done',
+  'is-warning': account.status === 'warning'
+});
+
+const selectAccountRow = (accountId: string) => emit('selectAccount', accountId);
+
 const toggleSelected = (accountId: string) => {
   const next = new Set(selectedIds.value);
   if (next.has(accountId)) next.delete(accountId);
   else next.add(accountId);
   selectedIds.value = next;
+  emit('selectAccount', accountId);
 };
 
 const updateCell = (accountId: string, dealColumnId: string, value: string) => {
@@ -249,6 +265,8 @@ const openPending = (item: PendingAllocation) => {
   emit('openPending', item);
 };
 
+const expand = () => emit('expand');
+
 const toggleBottom = async () => {
   const scrollLeft = matrixTableWrap.value?.scrollLeft ?? 0;
   bottomOpen.value = !bottomOpen.value;
@@ -260,7 +278,12 @@ defineExpose({ save, collapse });
 </script>
 
 <template>
-  <section ref="matrixEl" class="matrix" aria-label="分配矩阵工作区">
+  <section
+    ref="matrixEl"
+    class="matrix"
+    :class="{ 'is-expanded': expanded, 'is-collapsed': !expanded }"
+    aria-label="分配矩阵工作区"
+  >
     <header class="matrix__head">
       <div>
         <p class="eyebrow">左侧任务面板 · 扩展形态</p>
@@ -270,16 +293,17 @@ defineExpose({ save, collapse });
       <div class="matrix__actions">
         <span class="matrix-save-hint" :class="saveHintClass">{{ saveHint }}</span>
         <span v-if="lastSavedAt" class="matrix-save-time">已保存 {{ lastSavedAt }}</span>
-        <button class="button button--secondary" type="button" @click="autoDraft">AI 自动分配</button>
-        <button class="button button--secondary" type="button" @click="clearDraft">清空</button>
-        <button class="button button--secondary" type="button" disabled title="暂未开放">新增需求</button>
-        <button class="button button--secondary" type="button" disabled title="暂未开放">广播</button>
+        <button v-if="expanded" class="button button--secondary" type="button" @click="autoDraft">AI 自动分配</button>
+        <button v-if="expanded" class="button button--secondary" type="button" @click="clearDraft">清空</button>
+        <button v-if="expanded" class="button button--secondary" type="button" disabled title="暂未开放">新增需求</button>
+        <button v-if="expanded" class="button button--secondary" type="button" disabled title="暂未开放">广播</button>
         <span class="matrix-action-break" aria-hidden="true"></span>
         <button class="button button--primary" type="button" @click="save">保存分配</button>
         <button class="button button--secondary" type="button" @click="toggleBottom">
           {{ bottomOpen ? '隐藏底部' : '展开底部' }}
         </button>
-        <button class="button button--secondary" type="button" @click="collapse">收起</button>
+        <button v-if="expanded" class="button button--secondary" type="button" @click="collapse">收起</button>
+        <button v-else class="button button--secondary" type="button" @click="expand">展开矩阵</button>
       </div>
     </header>
 
@@ -289,19 +313,20 @@ defineExpose({ save, collapse });
       class="matrix-table-wrap"
       :style="{ '--deal-count': dealColumns.length, '--frozen-left': `${frozenLeft}px`, '--deal-width': `${dealColumnWidth}px` }"
     >
-      <table class="matrix-table-v2" :style="{ minWidth: `${frozenLeft + dealColumns.length * dealColumnWidth}px` }">
+      <table class="matrix-table-v2" :style="{ minWidth: `${tableMinWidth}px` }">
         <thead>
           <tr>
-            <th class="frozen frozen-select sticky-top-0" rowspan="2">选择</th>
-            <th class="frozen frozen-id sticky-top-0" rowspan="2">账户ID</th>
-            <th class="frozen frozen-name sticky-top-0" rowspan="2">账户简称</th>
-            <th class="frozen frozen-term sticky-top-0" rowspan="2">期限</th>
-            <th class="frozen frozen-instruction sticky-top-0" rowspan="2">指令</th>
-            <th class="frozen frozen-total sticky-top-0" rowspan="2">总额</th>
-            <th class="frozen frozen-diff sticky-top-0" rowspan="2">差额</th>
-            <th class="frozen frozen-progress sticky-top-0" rowspan="2">完成度</th>
-            <th class="frozen frozen-pending sticky-top-0" rowspan="2">待分</th>
+            <th class="frozen frozen-select sticky-top-0" :rowspan="expanded ? 2 : 1">选择</th>
+            <th class="frozen frozen-id sticky-top-0" :rowspan="expanded ? 2 : 1">账户ID</th>
+            <th class="frozen frozen-name sticky-top-0" :rowspan="expanded ? 2 : 1">账户简称</th>
+            <th class="frozen frozen-term sticky-top-0" :rowspan="expanded ? 2 : 1">期限</th>
+            <th class="frozen frozen-instruction sticky-top-0" :rowspan="expanded ? 2 : 1">指令</th>
+            <th class="frozen frozen-total sticky-top-0" :rowspan="expanded ? 2 : 1">总额</th>
+            <th class="frozen frozen-diff sticky-top-0" :rowspan="expanded ? 2 : 1">差额</th>
+            <th v-if="expanded" class="frozen frozen-progress sticky-top-0" rowspan="2">完成度</th>
+            <th v-if="expanded" class="frozen frozen-pending sticky-top-0" rowspan="2">待分</th>
             <th
+              v-if="expanded"
               v-for="group in institutionGroups"
               :key="group.institution.id"
               class="matrix-group-head sticky-top-0"
@@ -311,7 +336,7 @@ defineExpose({ save, collapse });
             </th>
           </tr>
 
-          <tr>
+          <tr v-if="expanded">
             <template v-for="group in institutionGroups" :key="`${group.institution.id}-batches`">
               <th v-for="column in group.columns" :key="column.id" class="matrix-batch-head sticky-top-1">
                 <b>{{ column.term }}</b>
@@ -326,13 +351,15 @@ defineExpose({ save, collapse });
             <th class="frozen frozen-name sticky-top-2">总额行</th>
             <th class="frozen frozen-term sticky-top-2"></th>
             <th class="frozen frozen-instruction sticky-top-2"></th>
-            <th class="frozen frozen-total sticky-top-2">{{ formatAmount(dealAmountTotal) }}</th>
+            <th class="frozen frozen-total sticky-top-2">{{ formatAmount(expanded ? dealAmountTotal : totalAllocated) }}</th>
             <th class="frozen frozen-diff sticky-top-2"></th>
-            <th class="frozen frozen-progress sticky-top-2"></th>
-            <th class="frozen frozen-pending sticky-top-2"></th>
-            <td v-for="column in dealColumns" :key="`${column.id}-amount`" class="matrix-summary-cell sticky-top-2">
-              {{ formatAmount(column.dealAmount) }}
-            </td>
+            <th v-if="expanded" class="frozen frozen-progress sticky-top-2"></th>
+            <th v-if="expanded" class="frozen frozen-pending sticky-top-2"></th>
+            <template v-if="expanded">
+              <td v-for="column in dealColumns" :key="`${column.id}-amount`" class="matrix-summary-cell sticky-top-2">
+                {{ formatAmount(column.dealAmount) }}
+              </td>
+            </template>
           </tr>
 
           <tr class="matrix-summary-row matrix-summary-row--diff">
@@ -342,28 +369,30 @@ defineExpose({ save, collapse });
             <th class="frozen frozen-term sticky-top-3"></th>
             <th class="frozen frozen-instruction sticky-top-3"></th>
             <th class="frozen frozen-total sticky-top-3"></th>
-            <th class="frozen frozen-diff sticky-top-3" :class="diffClass(columnDiffTotal)">{{ formatAmount(columnDiffTotal) }}</th>
-            <th class="frozen frozen-progress sticky-top-3"></th>
-            <th class="frozen frozen-pending sticky-top-3"></th>
-            <td
-              v-for="column in dealColumns"
-              :key="`${column.id}-diff`"
-              class="matrix-diff"
-              :class="diffClass(columnDiff(column))"
-            >
-              {{ formatAmount(columnDiff(column)) }}
-            </td>
+            <th class="frozen frozen-diff sticky-top-3" :class="diffClass(expanded ? columnDiffTotal : totalDiff)">{{ formatAmount(expanded ? columnDiffTotal : totalDiff) }}</th>
+            <th v-if="expanded" class="frozen frozen-progress sticky-top-3"></th>
+            <th v-if="expanded" class="frozen frozen-pending sticky-top-3"></th>
+            <template v-if="expanded">
+              <td
+                v-for="column in dealColumns"
+                :key="`${column.id}-diff`"
+                class="matrix-diff"
+                :class="diffClass(columnDiff(column))"
+              >
+                {{ formatAmount(columnDiff(column)) }}
+              </td>
+            </template>
           </tr>
         </thead>
 
         <tbody>
-          <tr v-for="account in accounts" :key="account.id">
+          <tr v-for="account in accounts" :key="account.id" :class="rowClass(account)" @click="selectAccountRow(account.id)">
             <td class="frozen frozen-select check-cell">
               <input
                 type="checkbox"
                 :checked="selectedIds.has(account.id)"
                 :aria-label="`选择 ${account.name}`"
-                @change="toggleSelected(account.id)"
+                @change.stop="toggleSelected(account.id)"
               />
             </td>
             <td class="frozen frozen-id number">{{ account.id.replace('acc-', '').toUpperCase() }}</td>
@@ -375,17 +404,19 @@ defineExpose({ save, collapse });
             <td class="frozen frozen-instruction number">{{ formatAmount(account.targetAmount) }}</td>
             <td class="frozen frozen-total number">{{ formatAmount(rowTotal(account)) }}</td>
             <td class="frozen frozen-diff matrix-diff" :class="diffClass(rowDiff(account))">{{ formatAmount(rowDiff(account)) }}</td>
-            <td class="frozen frozen-progress number">{{ (rowProgress(account) * 100).toFixed(1) }}%</td>
-            <td class="frozen frozen-pending number">{{ formatAmount(rowPending(account)) }}</td>
-            <td v-for="column in dealColumns" :key="`${account.id}-${column.id}`" class="matrix-edit-cell">
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                :value="drafts[keyFor(account.id, column.id)] ?? ''"
-                @input="updateCell(account.id, column.id, ($event.target as HTMLInputElement).value)"
-              />
-            </td>
+            <td v-if="expanded" class="frozen frozen-progress number">{{ (rowProgress(account) * 100).toFixed(1) }}%</td>
+            <td v-if="expanded" class="frozen frozen-pending number">{{ formatAmount(rowPending(account)) }}</td>
+            <template v-if="expanded">
+              <td v-for="column in dealColumns" :key="`${account.id}-${column.id}`" class="matrix-edit-cell">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  :value="drafts[keyFor(account.id, column.id)] ?? ''"
+                  @input="updateCell(account.id, column.id, ($event.target as HTMLInputElement).value)"
+                />
+              </td>
+            </template>
           </tr>
         </tbody>
 
@@ -398,11 +429,13 @@ defineExpose({ save, collapse });
             <th class="frozen frozen-instruction number">{{ formatAmount(totalInstruction) }}</th>
             <th class="frozen frozen-total number">{{ formatAmount(totalAllocated) }}</th>
             <th class="frozen frozen-diff matrix-diff" :class="diffClass(totalDiff)">{{ formatAmount(totalDiff) }}</th>
-            <th class="frozen frozen-progress number">{{ (totalProgress * 100).toFixed(1) }}%</th>
-            <th class="frozen frozen-pending number">{{ formatAmount(totalPending) }}</th>
-            <td v-for="column in dealColumns" :key="`${column.id}-total`" class="matrix-summary-cell">
-              {{ formatAmount(columnTotal(column.id)) }}
-            </td>
+            <th v-if="expanded" class="frozen frozen-progress number">{{ (totalProgress * 100).toFixed(1) }}%</th>
+            <th v-if="expanded" class="frozen frozen-pending number">{{ formatAmount(totalPending) }}</th>
+            <template v-if="expanded">
+              <td v-for="column in dealColumns" :key="`${column.id}-total`" class="matrix-summary-cell">
+                {{ formatAmount(columnTotal(column.id)) }}
+              </td>
+            </template>
           </tr>
         </tfoot>
       </table>

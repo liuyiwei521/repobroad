@@ -4,7 +4,6 @@ import AllocationMatrix from './components/AllocationMatrix.vue';
 import ChatPopup from './components/ChatPopup.vue';
 import MarketPanel from './components/MarketPanel.vue';
 import ResearchPanel from './components/ResearchPanel.vue';
-import TaskLedger from './components/TaskLedger.vue';
 import TopBar from './components/TopBar.vue';
 import {
   accounts as accountSeed,
@@ -47,7 +46,7 @@ const quickAllocationTotals = ref<Record<string, number>>({});
 const selectedAccountId = ref(accounts.value[0]?.id ?? '');
 const selectedQuoteId = ref('');
 const activeCard = ref<ResearchCard | null>(null);
-const matrixOpen = ref(false);
+const matrixExpanded = ref(false);
 const matrixContext = ref<MatrixContext | null>(null);
 const lastAction = ref('已加载 mock 数据，点击账户行可联动右栏行情。');
 const activeChat = ref<{
@@ -196,18 +195,18 @@ const syncPendingFromMatrixContext = (payload: AllocationCell[]) => {
 
 const openMatrix = (contextInput?: MatrixContextInput) => {
   matrixContext.value = contextInput ? createDealColumnFromContext(contextInput) : null;
-  matrixOpen.value = true;
+  matrixExpanded.value = true;
   activeCard.value = null;
   activeChat.value = null;
   lastAction.value = matrixContext.value
     ? `已将 ${matrixContext.value.counterparty} ${matrixContext.value.term} 成交带入矩阵，并新增 ${matrixContext.value.batchNo} 批次列。`
-    : '已进入矩阵工作态，左侧任务面板展开为分配矩阵，右侧行情保持完整显示。';
+    : '已展开完整分配矩阵，中栏与右栏压缩让位。';
 };
 
 const closeMatrix = () => {
-  matrixOpen.value = false;
+  matrixExpanded.value = false;
   matrixContext.value = null;
-  lastAction.value = '已返回三栏工作台。';
+  lastAction.value = '已收起为矩阵左侧核心列，底部待分配信息保持展示。';
 };
 
 const refreshAccountStatus = (account: AccountRow) => {
@@ -348,7 +347,7 @@ const saveMatrix = (payload: Array<{ accountId: string; dealColumnId: string; am
 };
 
 const closeTopLayer = () => {
-  if (matrixOpen.value) {
+  if (matrixExpanded.value) {
     matrixRef.value?.collapse();
     return;
   }
@@ -371,11 +370,11 @@ const isEditingTarget = (target: EventTarget | null) => {
 const onKeydown = (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
     closeTopLayer();
-  } else if ((event.ctrlKey || event.metaKey) && event.key === 's' && matrixOpen.value) {
+  } else if ((event.ctrlKey || event.metaKey) && event.key === 's') {
     event.preventDefault();
     matrixRef.value?.save();
   } else if (
-    !matrixOpen.value &&
+    !matrixExpanded.value &&
     !activeChat.value &&
     !event.altKey &&
     !event.ctrlKey &&
@@ -397,66 +396,43 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
   <main class="workbench">
     <TopBar :selected-context="selectedContext" :notice-count="noticeCount" :last-action="lastAction" />
 
-    <div class="workspace-grid" :class="{ 'is-matrix-mode': matrixOpen }">
-      <template v-if="!matrixOpen">
-        <TaskLedger
-          :accounts="accounts"
-          :pending-allocations="pendingAllocations"
-          :selected-account-id="selectedAccountId"
-          :trial-rate="trialRate"
-          @select-account="selectAccount"
-          @apply-trial-rate="applyTrialRate"
-          @open-pending="openPending"
-          @open-matrix="openMatrix"
-        />
+    <div class="workspace-grid" :class="{ 'is-matrix-mode': matrixExpanded }">
+      <AllocationMatrix
+        ref="matrixRef"
+        class="matrix-workspace"
+        :accounts="accounts"
+        :institutions="institutions"
+        :deal-columns="dealColumns"
+        :cells="allocationCells"
+        :matrix-context="matrixContext"
+        :pending-allocations="pendingAllocations"
+        :expanded="matrixExpanded"
+        :selected-account-id="selectedAccountId"
+        @expand="openMatrix"
+        @close="closeMatrix"
+        @save="saveMatrix"
+        @open-pending="openPending"
+        @select-account="selectAccount"
+      />
 
-        <ResearchPanel
-          :cards="researchCards"
-          :active-card="activeCard"
-          @open-card="activeCard = $event"
-          @close-card="activeCard = null"
-        />
+      <ResearchPanel
+        :cards="researchCards"
+        :active-card="activeCard"
+        @open-card="activeCard = $event"
+        @close-card="activeCard = null"
+      />
 
-        <MarketPanel
-          :quotes="quotes"
-          :group-summaries="marketGroupSummaries"
-          :chats="chats"
-          :tenors="tenors"
-          :selected-account="selectedAccount"
-          :selected-quote-id="selectedQuoteId"
-          @open-quote="openQuote"
-          @send-quote="sendQuote"
-          @open-chat="openChat"
-        />
-      </template>
-
-      <template v-else>
-        <AllocationMatrix
-          ref="matrixRef"
-          class="matrix-workspace"
-          :accounts="accounts"
-          :institutions="institutions"
-          :deal-columns="dealColumns"
-          :cells="allocationCells"
-          :matrix-context="matrixContext"
-          :pending-allocations="pendingAllocations"
-          @close="closeMatrix"
-          @save="saveMatrix"
-          @open-pending="openPending"
-        />
-
-        <MarketPanel
-          :quotes="quotes"
-          :group-summaries="marketGroupSummaries"
-          :chats="chats"
-          :tenors="tenors"
-          :selected-account="selectedAccount"
-          :selected-quote-id="selectedQuoteId"
-          @open-quote="openQuote"
-          @send-quote="sendQuote"
-          @open-chat="openChat"
-        />
-      </template>
+      <MarketPanel
+        :quotes="quotes"
+        :group-summaries="marketGroupSummaries"
+        :chats="chats"
+        :tenors="tenors"
+        :selected-account="selectedAccount"
+        :selected-quote-id="selectedQuoteId"
+        @open-quote="openQuote"
+        @send-quote="sendQuote"
+        @open-chat="openChat"
+      />
     </div>
 
     <ChatPopup
