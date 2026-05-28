@@ -61,13 +61,27 @@ const matrixRef = ref<{ save: () => void; collapse: () => void } | null>(null);
 // Manually adjustable left / middle / right ratio. The left (matrix) and middle
 // (research) columns are pixel-sized and draggable; the right market panel takes
 // the remaining space (1fr) so it stays the main wide area by default.
+const workspaceRef = ref<HTMLElement | null>(null);
 const leftWidth = ref(520);
 const midWidth = ref(430);
 const LEFT_MIN = 360;
 const LEFT_MAX = 1180;
 const MID_MIN = 220;
 const MID_MAX = 900;
+// The right market panel keeps the remaining space; never let dragging squeeze it
+// below this width (matches the CSS `minmax(460px, 1fr)` design floor).
+const RIGHT_MIN = 460;
+const GUTTER = 8;
 const clampWidth = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+// Usable track width = grid content box minus the two gutters.
+const trackWidth = () => {
+  const el = workspaceRef.value;
+  if (!el) return Infinity;
+  const styles = getComputedStyle(el);
+  const padX = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+  return el.clientWidth - padX - GUTTER * 2;
+};
 
 const workspaceStyle = computed(() =>
   matrixExpanded.value
@@ -83,10 +97,13 @@ let dragStartMid = 0;
 const onGutterMove = (event: PointerEvent) => {
   if (!dragSide) return;
   const delta = event.clientX - dragStartX;
+  const available = trackWidth();
   if (dragSide === 'left') {
-    leftWidth.value = clampWidth(dragStartLeft + delta, LEFT_MIN, LEFT_MAX);
+    const maxLeft = Math.min(LEFT_MAX, available - midWidth.value - RIGHT_MIN);
+    leftWidth.value = clampWidth(dragStartLeft + delta, LEFT_MIN, maxLeft);
   } else {
-    midWidth.value = clampWidth(dragStartMid + delta, MID_MIN, MID_MAX);
+    const maxMid = Math.min(MID_MAX, available - leftWidth.value - RIGHT_MIN);
+    midWidth.value = clampWidth(dragStartMid + delta, MID_MIN, maxMid);
   }
 };
 
@@ -445,7 +462,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
   <main class="workbench">
     <TopBar :selected-context="selectedContext" :notice-count="noticeCount" :last-action="lastAction" />
 
-    <div class="workspace-grid" :class="{ 'is-matrix-mode': matrixExpanded }" :style="workspaceStyle">
+    <div ref="workspaceRef" class="workspace-grid" :class="{ 'is-matrix-mode': matrixExpanded }" :style="workspaceStyle">
       <AllocationMatrix
         ref="matrixRef"
         class="matrix-workspace"

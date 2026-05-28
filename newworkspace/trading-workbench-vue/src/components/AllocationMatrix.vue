@@ -128,6 +128,16 @@ const institutionGroups = computed(() => {
   return Array.from(groups.values());
 });
 
+// First deal column id of each institution group — used to draw the divider
+// between institutions in the 机构 × 期限 grid.
+const groupStartIds = computed(() => {
+  const ids = new Set<string>();
+  for (const group of institutionGroups.value) {
+    if (group.columns[0]) ids.add(group.columns[0].id);
+  }
+  return ids;
+});
+
 const activeDealColumn = computed(() => {
   if (!props.matrixContext) return null;
   return props.dealColumns.find((column) => column.id === props.matrixContext?.dealColumnId) ?? null;
@@ -403,7 +413,12 @@ defineExpose({ save, collapse });
 
           <tr v-if="showDeals">
             <template v-for="group in institutionGroups" :key="`${group.institution.id}-batches`">
-              <th v-for="column in group.columns" :key="column.id" class="matrix-batch-head sticky-top-1">
+              <th
+                v-for="column in group.columns"
+                :key="column.id"
+                class="matrix-batch-head sticky-top-1"
+                :class="{ 'is-group-start': groupStartIds.has(column.id) }"
+              >
                 <b>{{ column.term }}</b>
                 <small>{{ column.batchNo }} · {{ formatRate(column.rate) }}</small>
               </th>
@@ -421,7 +436,12 @@ defineExpose({ save, collapse });
             <th v-if="showProgressPending" class="frozen frozen-progress sticky-top-2"></th>
             <th v-if="showProgressPending" class="frozen frozen-pending sticky-top-2"></th>
             <template v-if="showDeals">
-              <td v-for="column in dealColumns" :key="`${column.id}-amount`" class="matrix-summary-cell sticky-top-2">
+              <td
+                v-for="column in dealColumns"
+                :key="`${column.id}-amount`"
+                class="matrix-summary-cell sticky-top-2"
+                :class="{ 'is-group-start': groupStartIds.has(column.id) }"
+              >
                 {{ formatAmount(column.dealAmount) }}
               </td>
             </template>
@@ -442,7 +462,7 @@ defineExpose({ save, collapse });
                 v-for="column in dealColumns"
                 :key="`${column.id}-diff`"
                 class="matrix-diff"
-                :class="diffClass(columnDiff(column))"
+                :class="[diffClass(columnDiff(column)), { 'is-group-start': groupStartIds.has(column.id) }]"
               >
                 {{ formatAmount(columnDiff(column)) }}
               </td>
@@ -472,7 +492,12 @@ defineExpose({ save, collapse });
             <td v-if="showProgressPending" class="frozen frozen-progress number">{{ (rowProgress(account) * 100).toFixed(1) }}%</td>
             <td v-if="showProgressPending" class="frozen frozen-pending number">{{ formatAmount(rowPending(account)) }}</td>
             <template v-if="showDeals">
-              <td v-for="column in dealColumns" :key="`${account.id}-${column.id}`" class="matrix-edit-cell">
+              <td
+                v-for="column in dealColumns"
+                :key="`${account.id}-${column.id}`"
+                class="matrix-edit-cell"
+                :class="{ 'is-group-start': groupStartIds.has(column.id) }"
+              >
                 <input
                   type="number"
                   min="0"
@@ -497,7 +522,12 @@ defineExpose({ save, collapse });
             <th v-if="showProgressPending" class="frozen frozen-progress number">{{ (totalProgress * 100).toFixed(1) }}%</th>
             <th v-if="showProgressPending" class="frozen frozen-pending number">{{ formatAmount(totalPending) }}</th>
             <template v-if="showDeals">
-              <td v-for="column in dealColumns" :key="`${column.id}-total`" class="matrix-summary-cell">
+              <td
+                v-for="column in dealColumns"
+                :key="`${column.id}-total`"
+                class="matrix-summary-cell"
+                :class="{ 'is-group-start': groupStartIds.has(column.id) }"
+              >
                 {{ formatAmount(columnTotal(column.id)) }}
               </td>
             </template>

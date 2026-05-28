@@ -704,7 +704,83 @@ export const marketQuotes: MarketQuote[] = [
   })
 ];
 
-const institutionNames = Array.from(new Set(marketQuotes.map((quote) => quote.institution || quote.counterparty)));
+// 成交列以「机构 × 期限」网格组织：每个机构下并列多个期限列，columns 按机构
+// 连续排列，矩阵表头才能用机构分组（colspan）+ 期限子列（dashed 分隔）展示。
+interface DealGridGroup {
+  institution: string;
+  cells: Array<{ term: Tenor; amount: number; rate: number }>;
+}
+
+const dealGrid: DealGridGroup[] = [
+  {
+    institution: '北京银行',
+    cells: [
+      { term: 'R001', amount: 6, rate: 1.40 },
+      { term: 'R007', amount: 5, rate: 1.40 }
+    ]
+  },
+  {
+    institution: '浦发银行',
+    cells: [
+      { term: 'R007', amount: 4, rate: 1.43 },
+      { term: 'R014', amount: 3, rate: 1.46 }
+    ]
+  },
+  {
+    institution: '农银理财',
+    cells: [
+      { term: 'R007', amount: 2, rate: 1.42 },
+      { term: 'R014', amount: 4, rate: 1.45 }
+    ]
+  },
+  {
+    institution: '阳光资产',
+    cells: [
+      { term: 'R007', amount: 5, rate: 1.40 },
+      { term: 'R028', amount: 3, rate: 1.79 }
+    ]
+  },
+  {
+    institution: '宁波通商',
+    cells: [
+      { term: 'R028', amount: 8, rate: 1.78 }
+    ]
+  },
+  {
+    institution: '中信证券',
+    cells: [
+      { term: 'R001', amount: 2.45, rate: 1.43 },
+      { term: 'R007', amount: 5, rate: 1.46 }
+    ]
+  },
+  {
+    institution: '山西证券',
+    cells: [
+      { term: 'R001', amount: 3, rate: 1.44 },
+      { term: 'R007', amount: 4, rate: 1.47 }
+    ]
+  },
+  {
+    institution: '鹏华基金',
+    cells: [
+      { term: 'R007', amount: 4, rate: 1.45 },
+      { term: 'R014', amount: 3, rate: 1.46 }
+    ]
+  },
+  {
+    institution: '中信建投证券',
+    cells: [
+      { term: 'R001', amount: 2.45, rate: 1.43 }
+    ]
+  }
+];
+
+const institutionNames = Array.from(
+  new Set([
+    ...marketQuotes.map((quote) => quote.institution || quote.counterparty),
+    ...dealGrid.map((group) => group.institution)
+  ])
+);
 
 export const institutions: Institution[] = institutionNames.map((name, index) => ({
   id: `inst-${String(index + 1).padStart(2, '0')}`,
@@ -713,19 +789,23 @@ export const institutions: Institution[] = institutionNames.map((name, index) =>
 
 const institutionIdByName = new Map(institutions.map((institution) => [institution.name, institution.id]));
 
-export const dealColumns: DealColumn[] = marketQuotes
-  .filter((quote) => quote.direction === 'reverse' && quote.amount > 0)
-  .map((quote, index) => ({
-    id: `deal-seed-${String(index + 1).padStart(2, '0')}`,
-    institutionId: institutionIdByName.get(quote.institution || quote.counterparty) ?? institutions[0]?.id ?? 'inst-01',
-    term: quote.tenor,
-    dealAmount: quote.amount,
-    rate: quote.rate,
-    direction: quote.direction,
-    dealTime: quote.updatedAt,
-    batchNo: `B${String(index + 1).padStart(3, '0')}`,
-    source: '行情成交'
-  }));
+let dealSeq = 0;
+export const dealColumns: DealColumn[] = dealGrid.flatMap((group) =>
+  group.cells.map((cell) => {
+    dealSeq += 1;
+    return {
+      id: `deal-seed-${String(dealSeq).padStart(2, '0')}`,
+      institutionId: institutionIdByName.get(group.institution) ?? institutions[0]?.id ?? 'inst-01',
+      term: cell.term,
+      dealAmount: cell.amount,
+      rate: cell.rate,
+      direction: 'reverse' as Direction,
+      dealTime: '10:53:27',
+      batchNo: `B${String(dealSeq).padStart(3, '0')}`,
+      source: '行情成交'
+    };
+  })
+);
 
 export const allocationCells: AllocationCell[] = [];
 

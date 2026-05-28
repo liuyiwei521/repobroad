@@ -1709,6 +1709,22 @@ body.is-row-resizing {
   text-align: center !important;
 }
 
+/* 成交列「机构 × 期限」网格：期限列之间用虚线分隔，机构分组之间用实线分隔 */
+.matrix-table-v2 .matrix-batch-head,
+.matrix-table-v2 .matrix-summary-cell,
+.matrix-table-v2 .matrix-edit-cell,
+.matrix-table-v2 .matrix-summary-row--diff .matrix-diff {
+  border-right: 1px dashed var(--tk-color-border-default);
+}
+
+.matrix-table-v2 .matrix-group-head,
+.matrix-table-v2 .matrix-batch-head.is-group-start,
+.matrix-table-v2 .matrix-summary-cell.is-group-start,
+.matrix-table-v2 .matrix-edit-cell.is-group-start,
+.matrix-table-v2 .matrix-summary-row--diff .matrix-diff.is-group-start {
+  border-left: 2px solid var(--tk-color-border-dark);
+}
+
 .matrix-batch-head b {
   display: block;
   color: var(--tk-color-text-heading);
