@@ -1503,6 +1503,9 @@ body.is-row-resizing {
 }
 
 .matrix-table-v2 {
+  --matrix-head-group-height: 34px;
+  --matrix-head-batch-height: 42px;
+  --matrix-summary-height: 40px;
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
@@ -1531,11 +1534,13 @@ body.is-row-resizing {
 }
 
 .matrix-table-v2 thead tr:first-child th {
-  height: 34px;
+  height: var(--matrix-head-group-height);
+  min-height: var(--matrix-head-group-height);
 }
 
 .matrix-table-v2 thead tr:nth-child(2) th {
-  height: 42px;
+  height: var(--matrix-head-batch-height);
+  min-height: var(--matrix-head-batch-height);
 }
 
 .matrix-table-v2 tbody tr:hover td,
@@ -1680,23 +1685,23 @@ body.is-row-resizing {
 }
 
 .sticky-top-1 {
-  top: 34px;
+  top: var(--matrix-head-group-height);
 }
 
 .sticky-top-2 {
-  top: 76px;
+  top: calc(var(--matrix-head-group-height) + var(--matrix-head-batch-height));
 }
 
 .sticky-top-3 {
-  top: 114px;
+  top: calc(var(--matrix-head-group-height) + var(--matrix-head-batch-height) + var(--matrix-summary-height));
 }
 
 .matrix:not(.has-deals) .sticky-top-2 {
-  top: 34px;
+  top: var(--matrix-head-group-height);
 }
 
 .matrix:not(.has-deals) .sticky-top-3 {
-  top: 72px;
+  top: calc(var(--matrix-head-group-height) + var(--matrix-summary-height));
 }
 
 .matrix-group-head {
@@ -1736,7 +1741,11 @@ body.is-row-resizing {
 
 .matrix-summary-row th,
 .matrix-summary-row td {
-  height: 38px;
+  height: var(--matrix-summary-height);
+  min-height: var(--matrix-summary-height);
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: var(--matrix-summary-height);
   background: var(--tk-color-surface-subtle);
 }
 
