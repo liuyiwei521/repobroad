@@ -821,6 +821,34 @@ body.is-row-resizing {
   min-height: 48px;
 }
 
+.task-overview-layout-switch {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--tk-color-border-default);
+  background: var(--tk-color-surface-panel);
+  border-radius: var(--tk-radius-sm);
+  overflow: hidden;
+}
+
+.task-overview-layout-switch button {
+  height: 22px;
+  padding: 0 var(--tk-space-sm);
+  color: var(--tk-color-text-secondary);
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--tk-color-border-default);
+  font-size: var(--tk-font-size-xs);
+}
+
+.task-overview-layout-switch button:last-child {
+  border-right: 0;
+}
+
+.task-overview-layout-switch button.is-active {
+  color: var(--tk-color-text-inverse);
+  background: var(--tk-color-brand-primary);
+}
+
 .task-overview-filter.is-active,
 .task-overview-head-button.is-active,
 .task-overview-row-button.is-active,
@@ -833,6 +861,33 @@ body.is-row-resizing {
 
 .task-overview-table {
   min-width: 720px;
+}
+
+.task-overview-table--term {
+  --task-axis-width: 142px;
+  --task-total-width: 176px;
+  --task-term-width: 150px;
+  width: max-content;
+  min-width: max-content;
+  table-layout: auto;
+}
+
+table.task-overview-table--term th:first-child,
+table.task-overview-table--term td:first-child {
+  width: var(--task-axis-width);
+  min-width: var(--task-axis-width);
+}
+
+table.task-overview-table--term th:nth-child(2),
+table.task-overview-table--term td:nth-child(2) {
+  width: var(--task-total-width);
+  min-width: var(--task-total-width);
+}
+
+table.task-overview-table--term th:nth-child(n + 3),
+table.task-overview-table--term td:nth-child(n + 3) {
+  width: var(--task-term-width);
+  min-width: var(--task-term-width);
 }
 
 .task-overview-table th,
@@ -909,6 +964,7 @@ body.is-row-resizing {
 }
 
 .task-overview-head-button--total span,
+.task-overview-head-button--term span,
 .task-overview-row-button--total span {
   color: var(--tk-color-brand-primary-deep);
 }
@@ -921,6 +977,56 @@ body.is-row-resizing {
 .task-overview-table tbody tr:hover td,
 .task-overview-table tbody tr:hover th {
   background: rgba(0, 210, 220, 0.04);
+}
+
+.task-overview-subtotal-row th,
+.task-overview-subtotal-row td {
+  background: #eef3fa;
+  border-bottom-color: var(--tk-color-border-dark);
+}
+
+.task-overview-table--term td:nth-child(2),
+.task-overview-table--term th:nth-child(2) {
+  background: rgba(248, 249, 250, 0.92);
+  border-right-color: var(--tk-color-border-dark);
+}
+
+.task-overview-table--term thead th:first-child,
+.task-overview-table--term tbody th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  box-shadow: 1px 0 0 var(--tk-color-border-divider);
+}
+
+.task-overview-table--term thead th:nth-child(2),
+.task-overview-table--term tbody td:nth-child(2) {
+  position: sticky;
+  left: var(--task-axis-width);
+  z-index: 4;
+  box-shadow: 1px 0 0 var(--tk-color-border-dark);
+}
+
+.task-overview-table--term thead th:first-child,
+.task-overview-table--term thead th:nth-child(2) {
+  z-index: 7;
+}
+
+.task-overview-table--term .task-overview-subtotal-row th,
+.task-overview-table--term .task-overview-subtotal-row td {
+  position: sticky;
+  top: 54px;
+  z-index: 3;
+}
+
+.task-overview-table--term .task-overview-subtotal-row th:first-child {
+  left: 0;
+  z-index: 6;
+}
+
+.task-overview-table--term .task-overview-subtotal-row td:nth-child(2) {
+  left: var(--task-axis-width);
+  z-index: 5;
 }
 
 .task-overview-cell-stack {
@@ -946,12 +1052,13 @@ body.is-row-resizing {
 .task-overview-term-line {
   min-width: 0;
   width: 100%;
-  min-height: 20px;
+  min-height: 30px;
   display: grid;
-  grid-template-columns: 38px minmax(0, 1fr);
+  grid-template-columns: max-content max-content;
+  justify-content: start;
   align-items: center;
-  gap: var(--tk-space-xs);
-  padding: 1px 3px;
+  column-gap: 12px;
+  padding: 2px 3px;
   color: var(--tk-color-text-primary);
   background: transparent;
   border: 0;
@@ -959,17 +1066,25 @@ body.is-row-resizing {
   text-align: left;
 }
 
+.task-overview-term-line--pledge {
+  grid-template-columns: max-content max-content;
+  column-gap: 14px;
+}
+
 .task-overview-term-line:hover {
   background: var(--tk-color-surface-selected);
 }
 
 .task-overview-term-line b {
+  min-width: 0;
   color: var(--tk-color-text-heading);
   font-family: var(--tk-font-family-number);
   font-size: 11px;
   line-height: var(--tk-line-height-compact);
   font-weight: var(--tk-font-weight-medium);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .task-overview-term-line span {
@@ -981,6 +1096,34 @@ body.is-row-resizing {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.task-overview-term-line .task-overview-amount {
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+  color: var(--tk-color-text-primary);
+  font-family: var(--tk-font-family-number);
+  line-height: 1.05;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.task-overview-amount strong {
+  color: var(--tk-color-text-heading);
+  font-size: 11px;
+  line-height: 12px;
+  font-weight: var(--tk-font-weight-medium);
+}
+
+.task-overview-amount small {
+  display: block;
+  margin: 0;
+  color: var(--tk-color-text-secondary);
+  font-size: 10px;
+  line-height: 11px;
+  white-space: nowrap;
 }
 
 .task-overview-term-line--sum {

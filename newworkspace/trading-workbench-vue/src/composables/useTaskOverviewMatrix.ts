@@ -1,6 +1,6 @@
 import type { AccountRow, Tenor } from '../data/mockData';
 
-export type TaskOverviewFilterScope = 'cell' | 'termLine' | 'row' | 'column' | 'total' | 'all';
+export type TaskOverviewFilterScope = 'cell' | 'termLine' | 'row' | 'column' | 'segment' | 'total' | 'all';
 
 export interface TaskOverviewFilter {
   scope: TaskOverviewFilterScope;
@@ -59,6 +59,42 @@ export interface TaskOverviewMatrix {
   grandTotal: TaskOverviewAmount;
 }
 
+export interface TaskOverviewPledgeLine extends TaskOverviewAmount {
+  pledgeRequirement: string;
+  pledgeOption: TaskOverviewEnumOption;
+  term?: Tenor;
+  accountType?: string;
+}
+
+export interface TaskOverviewTermCell {
+  accountType: string;
+  term?: Tenor;
+  lines: TaskOverviewPledgeLine[];
+  total: TaskOverviewAmount;
+}
+
+export interface TaskOverviewAccountRow {
+  id: string;
+  accountType: string;
+  accountOption: TaskOverviewEnumOption;
+  cells: Record<Tenor, TaskOverviewTermCell>;
+  pledgeTotals: TaskOverviewPledgeLine[];
+  total: TaskOverviewAmount;
+}
+
+export interface TaskOverviewTermColumn {
+  term: Tenor;
+  pledgeTotals: TaskOverviewPledgeLine[];
+  total: TaskOverviewAmount;
+}
+
+export interface TaskOverviewTermMatrix {
+  columns: TaskOverviewTermColumn[];
+  rows: TaskOverviewAccountRow[];
+  pledgeTotals: TaskOverviewPledgeLine[];
+  grandTotal: TaskOverviewAmount;
+}
+
 export const accountTypeEnums: TaskOverviewEnumOption[] = [
   { code: 1, name: '专户', label: '专户【1】', aliases: ['专户', '专户定制'] },
   { code: 2, name: '公募户', label: '公募户【2】', aliases: ['公募', '公募户', '基金'] },
@@ -109,6 +145,8 @@ export const pledgeRequirementEnums: TaskOverviewEnumOption[] = [
 ];
 
 export const overviewTerms: Tenor[] = ['R001', 'R007', 'R014', 'R021', 'R028'];
+export const termOverviewTerms: Tenor[] = ['R001', 'R007', 'R014'];
+const termOverviewTermSet = new Set<Tenor>(termOverviewTerms);
 
 const fallbackOption = (name: string, code: number): TaskOverviewEnumOption => ({
   code,
@@ -140,18 +178,19 @@ export const taskOverviewFilterKey = (filter: TaskOverviewFilter | null | undefi
     : '';
 
 const roundAmount = (value: number) => Number(value.toFixed(2));
-
-const emptyAmount = (): TaskOverviewAmount => ({
-  total: 0,
-  allocated: 0,
-  pending: 0
-});
+const emptyAmount = (): TaskOverviewAmount => ({ total: 0, allocated: 0, pending: 0 });
 
 const addAmount = (target: TaskOverviewAmount, total: number, allocated: number) => {
   target.total = roundAmount(target.total + total);
   target.allocated = roundAmount(target.allocated + allocated);
   target.pending = Math.max(roundAmount(target.total - target.allocated), 0);
 };
+
+const sortOptions = (values: TaskOverviewEnumOption[]) =>
+  [...values].sort((a, b) => a.code - b.code || a.name.localeCompare(b.name, 'zh-CN'));
+
+const optionMapByName = (options: TaskOverviewEnumOption[]) =>
+  new Map(options.map((option) => [option.name, option]));
 
 const lineFromAmount = (
   term: Tenor,
@@ -167,13 +206,22 @@ const lineFromAmount = (
   pending: amount.pending
 });
 
-const sortOptions = (values: TaskOverviewEnumOption[]) =>
-  [...values].sort((a, b) => a.code - b.code || a.name.localeCompare(b.name, 'zh-CN'));
+const pledgeLineFromAmount = (
+  pledgeOption: TaskOverviewEnumOption,
+  amount: TaskOverviewAmount,
+  term?: Tenor,
+  accountType?: string
+): TaskOverviewPledgeLine => ({
+  pledgeRequirement: pledgeOption.name,
+  pledgeOption,
+  term,
+  accountType,
+  total: amount.total,
+  allocated: amount.allocated,
+  pending: amount.pending
+});
 
-const optionMapByName = (options: TaskOverviewEnumOption[]) =>
-  new Map(options.map((option) => [option.name, option]));
-
-const toLines = (
+const toTermLines = (
   amountsByTerm: Map<Tenor, TaskOverviewAmount>,
   pledgeRequirement: string,
   accountType?: string
@@ -184,6 +232,57 @@ const toLines = (
       return amount && amount.total > 0 ? lineFromAmount(term, pledgeRequirement, amount, accountType) : null;
     })
     .filter((line): line is TaskOverviewTermLine => Boolean(line));
+
+const toPledgeLines = (
+  amountsByPledge: Map<string, TaskOverviewAmount>,
+  pledgeOptionIndex: Map<string, TaskOverviewEnumOption>,
+  term?: Tenor,
+  accountType?: string
+) =>
+  sortOptions(
+    Array.from(amountsByPledge.keys()).map((name) => pledgeOptionIndex.get(name) ?? fallbackOption(name, 99))
+  )
+    .map((option) => {
+      const amount = amountsByPledge.get(option.name);
+      return amount && amount.total > 0 ? pledgeLineFromAmount(option, amount, term, accountType) : null;
+    })
+    .filter((line): line is TaskOverviewPledgeLine => Boolean(line));
+
+const ensureStringAmount = (map: Map<string, TaskOverviewAmount>, key: string) => {
+  const current = map.get(key) ?? emptyAmount();
+  map.set(key, current);
+  return current;
+};
+
+const ensureTermAmount = (map: Map<Tenor, TaskOverviewAmount>, term: Tenor) => {
+  const current = map.get(term) ?? emptyAmount();
+  map.set(term, current);
+  return current;
+};
+
+const ensureNestedTermAmount = (map: Map<string, Map<Tenor, TaskOverviewAmount>>, key: string, term: Tenor) => {
+  const termMap = map.get(key) ?? new Map<Tenor, TaskOverviewAmount>();
+  const amount = termMap.get(term) ?? emptyAmount();
+  termMap.set(term, amount);
+  map.set(key, termMap);
+  return amount;
+};
+
+const ensureNestedStringAmount = (map: Map<string, Map<string, TaskOverviewAmount>>, key: string, subKey: string) => {
+  const nestedMap = map.get(key) ?? new Map<string, TaskOverviewAmount>();
+  const amount = nestedMap.get(subKey) ?? emptyAmount();
+  nestedMap.set(subKey, amount);
+  map.set(key, nestedMap);
+  return amount;
+};
+
+const ensureTermPledgeAmount = (map: Map<Tenor, Map<string, TaskOverviewAmount>>, term: Tenor, pledgeRequirement: string) => {
+  const pledgeMap = map.get(term) ?? new Map<string, TaskOverviewAmount>();
+  const amount = pledgeMap.get(pledgeRequirement) ?? emptyAmount();
+  pledgeMap.set(pledgeRequirement, amount);
+  map.set(term, pledgeMap);
+  return amount;
+};
 
 export const buildTaskOverviewMatrix = (accounts: AccountRow[]): TaskOverviewMatrix => {
   const accountOptionIndex = optionMapByName(accountTypeEnums);
@@ -204,26 +303,6 @@ export const buildTaskOverviewMatrix = (accounts: AccountRow[]): TaskOverviewMat
   const matrixTermTotals = new Map<Tenor, TaskOverviewAmount>();
   const grandTotal = emptyAmount();
 
-  const ensureAmount = (map: Map<string, TaskOverviewAmount>, key: string) => {
-    const current = map.get(key) ?? emptyAmount();
-    map.set(key, current);
-    return current;
-  };
-
-  const ensureTermAmount = (map: Map<string, Map<Tenor, TaskOverviewAmount>>, key: string, term: Tenor) => {
-    const termMap = map.get(key) ?? new Map<Tenor, TaskOverviewAmount>();
-    const amount = termMap.get(term) ?? emptyAmount();
-    termMap.set(term, amount);
-    map.set(key, termMap);
-    return amount;
-  };
-
-  const ensureMatrixTermAmount = (term: Tenor) => {
-    const amount = matrixTermTotals.get(term) ?? emptyAmount();
-    matrixTermTotals.set(term, amount);
-    return amount;
-  };
-
   for (const account of accounts) {
     const accountType = accountTypeOf(account);
     const pledgeRequirement = pledgeRequirementOf(account);
@@ -232,13 +311,13 @@ export const buildTaskOverviewMatrix = (accounts: AccountRow[]): TaskOverviewMat
     const allocated = Math.min(roundAmount(account.allocatedAmount), total);
     const cellKey = `${pledgeRequirement}__${accountType}`;
 
-    addAmount(ensureAmount(columnTotals, accountType), total, allocated);
-    addAmount(ensureTermAmount(columnTermTotals, accountType, term), total, allocated);
-    addAmount(ensureAmount(rowTotals, pledgeRequirement), total, allocated);
-    addAmount(ensureTermAmount(rowTermTotals, pledgeRequirement, term), total, allocated);
-    addAmount(ensureAmount(cellTotals, cellKey), total, allocated);
-    addAmount(ensureTermAmount(cellTermTotals, cellKey, term), total, allocated);
-    addAmount(ensureMatrixTermAmount(term), total, allocated);
+    addAmount(ensureStringAmount(columnTotals, accountType), total, allocated);
+    addAmount(ensureNestedTermAmount(columnTermTotals, accountType, term), total, allocated);
+    addAmount(ensureStringAmount(rowTotals, pledgeRequirement), total, allocated);
+    addAmount(ensureNestedTermAmount(rowTermTotals, pledgeRequirement, term), total, allocated);
+    addAmount(ensureStringAmount(cellTotals, cellKey), total, allocated);
+    addAmount(ensureNestedTermAmount(cellTermTotals, cellKey, term), total, allocated);
+    addAmount(ensureTermAmount(matrixTermTotals, term), total, allocated);
     addAmount(grandTotal, total, allocated);
   }
 
@@ -246,7 +325,7 @@ export const buildTaskOverviewMatrix = (accounts: AccountRow[]): TaskOverviewMat
     accountType: option.name,
     accountOption: option,
     total: columnTotals.get(option.name) ?? emptyAmount(),
-    termTotals: toLines(columnTermTotals.get(option.name) ?? new Map(), '', option.name)
+    termTotals: toTermLines(columnTermTotals.get(option.name) ?? new Map(), '', option.name)
   }));
 
   const rows = pledgeRequirements.map<TaskOverviewRow>((option) => {
@@ -258,7 +337,7 @@ export const buildTaskOverviewMatrix = (accounts: AccountRow[]): TaskOverviewMat
           {
             pledgeRequirement: option.name,
             accountType: column.accountType,
-            lines: toLines(cellTermTotals.get(key) ?? new Map(), option.name, column.accountType),
+            lines: toTermLines(cellTermTotals.get(key) ?? new Map(), option.name, column.accountType),
             total: cellTotals.get(key) ?? emptyAmount()
           }
         ];
@@ -270,7 +349,7 @@ export const buildTaskOverviewMatrix = (accounts: AccountRow[]): TaskOverviewMat
       pledgeRequirement: option.name,
       pledgeOption: option,
       cells,
-      termTotals: toLines(rowTermTotals.get(option.name) ?? new Map(), option.name),
+      termTotals: toTermLines(rowTermTotals.get(option.name) ?? new Map(), option.name),
       total: rowTotals.get(option.name) ?? emptyAmount()
     };
   });
@@ -278,7 +357,82 @@ export const buildTaskOverviewMatrix = (accounts: AccountRow[]): TaskOverviewMat
   return {
     columns,
     rows,
-    termTotals: toLines(matrixTermTotals, ''),
+    termTotals: toTermLines(matrixTermTotals, ''),
+    grandTotal
+  };
+};
+
+export const buildTaskTermOverviewMatrix = (accounts: AccountRow[]): TaskOverviewTermMatrix => {
+  const accountOptionIndex = optionMapByName(accountTypeEnums);
+  const pledgeOptionIndex = optionMapByName(pledgeRequirementEnums);
+  const termAccounts = accounts.filter((account) => termOverviewTermSet.has(account.tenor));
+  const accountTypes = sortOptions(
+    Array.from(new Set(termAccounts.map(accountTypeOf))).map((name) => accountOptionIndex.get(name) ?? fallbackOption(name, 99))
+  );
+
+  const rowTotals = new Map<string, TaskOverviewAmount>();
+  const rowPledgeTotals = new Map<string, Map<string, TaskOverviewAmount>>();
+  const columnTotals = new Map<Tenor, TaskOverviewAmount>();
+  const columnPledgeTotals = new Map<Tenor, Map<string, TaskOverviewAmount>>();
+  const cellTotals = new Map<string, TaskOverviewAmount>();
+  const cellPledgeTotals = new Map<string, Map<string, TaskOverviewAmount>>();
+  const grandPledgeTotals = new Map<string, TaskOverviewAmount>();
+  const grandTotal = emptyAmount();
+
+  for (const account of termAccounts) {
+    const accountType = accountTypeOf(account);
+    const pledgeRequirement = pledgeRequirementOf(account);
+    const term = account.tenor;
+    const total = roundAmount(account.targetAmount);
+    const allocated = Math.min(roundAmount(account.allocatedAmount), total);
+    const cellKey = `${accountType}__${term}`;
+
+    addAmount(ensureStringAmount(rowTotals, accountType), total, allocated);
+    addAmount(ensureNestedStringAmount(rowPledgeTotals, accountType, pledgeRequirement), total, allocated);
+    addAmount(ensureTermAmount(columnTotals, term), total, allocated);
+    addAmount(ensureTermPledgeAmount(columnPledgeTotals, term, pledgeRequirement), total, allocated);
+    addAmount(ensureStringAmount(cellTotals, cellKey), total, allocated);
+    addAmount(ensureNestedStringAmount(cellPledgeTotals, cellKey, pledgeRequirement), total, allocated);
+    addAmount(ensureStringAmount(grandPledgeTotals, pledgeRequirement), total, allocated);
+    addAmount(grandTotal, total, allocated);
+  }
+
+  const columns = termOverviewTerms.map<TaskOverviewTermColumn>((term) => ({
+    term,
+    pledgeTotals: toPledgeLines(columnPledgeTotals.get(term) ?? new Map(), pledgeOptionIndex, term),
+    total: columnTotals.get(term) ?? emptyAmount()
+  }));
+
+  const rows = accountTypes.map<TaskOverviewAccountRow>((option) => {
+    const cells = Object.fromEntries(
+      termOverviewTerms.map((term) => {
+        const key = `${option.name}__${term}`;
+        return [
+          term,
+          {
+            accountType: option.name,
+            term,
+            lines: toPledgeLines(cellPledgeTotals.get(key) ?? new Map(), pledgeOptionIndex, term, option.name),
+            total: cellTotals.get(key) ?? emptyAmount()
+          }
+        ];
+      })
+    ) as Record<Tenor, TaskOverviewTermCell>;
+
+    return {
+      id: option.name,
+      accountType: option.name,
+      accountOption: option,
+      cells,
+      pledgeTotals: toPledgeLines(rowPledgeTotals.get(option.name) ?? new Map(), pledgeOptionIndex, undefined, option.name),
+      total: rowTotals.get(option.name) ?? emptyAmount()
+    };
+  });
+
+  return {
+    columns,
+    rows,
+    pledgeTotals: toPledgeLines(grandPledgeTotals, pledgeOptionIndex),
     grandTotal
   };
 };
