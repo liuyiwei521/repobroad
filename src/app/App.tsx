@@ -143,6 +143,21 @@ type ModuleEntryConfig = {
   statusText: string;
   icon: LucideIcon;
 };
+type OverviewTone = "neutral" | "good" | "alert" | "muted";
+type ModuleEntryMetric = {
+  summary: string;
+  badge: string;
+  rows: readonly (readonly [string, string])[];
+  chips?: readonly {
+    label: string;
+    value: string;
+    tone?: OverviewTone;
+  }[];
+  detailRows?: readonly (readonly [string, string, string?])[];
+  trendValues?: readonly number[];
+  trendColor?: string;
+  trendLabel?: string;
+};
 
 const TODAY_STR = "2026-05-10";
 
@@ -211,14 +226,6 @@ const moduleEntries: readonly ModuleEntryConfig[] = [
     description: "期限、指标、机构图例、多线图",
     statusText: "R001",
     icon: Network,
-  },
-  {
-    id: "global-filter",
-    group: "全局工具",
-    title: "金额 / 利率筛选",
-    description: "主报价区金额、利率过滤条件",
-    statusText: "已应用",
-    icon: SlidersHorizontal,
   },
   {
     id: "market-sentiment",
@@ -355,27 +362,30 @@ const leftSections: readonly (
     layout: "table",
     title: "XREPO",
     columns: [
-      "期限",
-      "可点击量",
-      "正回购金额",
-      "正回购利率",
-      "逆回购利率",
-      "逆回购金额",
-      "可点击量",
-      "操作",
+      "合约名称",
+      "正回购量(亿)",
+      "正回购利率(%)",
+      "逆回购利率(%)",
+      "逆回购量(亿)",
     ],
     rows: [
-      ["R001", "(4)", "442亿", "2.00%", "1.95%", "442亿", "(12)", "发送"],
-      ["R007", "(4)", "28亿", "2.00%", "1.25%", "442亿", "(12)", "发送"],
-      ["R014", "(4)", "442亿", "2.00%", "1.95%", "442亿", "(12)", "发送"],
-      ["R021", "(4)", "442亿", "2.00%", "1.95%", "442亿", "(12)", "发送"],
+      ["R001", "5 (0)", "1.36", "1.25", "1185 (0)"],
+      ["R001", "-", "-", "1.36", "30 (7)"],
+      ["R001", "-", "-", "1.38", "70 (62)"],
+      ["R001_mini", "0.6 (0)", "1.38", "1.30", "12 (0)"],
+      ["DFR001_mini", "5 (0)", "1.37", "1.38", "47 (34)"],
+      ["CDR001_mini", "20.6 (0)", "1.40", "1.41", "20 (10)"],
+      ["R004", "-", "-", "1.42", "3 (0)"],
+      ["R007", "2 (0)", "1.42", "1.40", "132 (0)"],
+      ["R007_mini", "-", "-", "-", "-"],
+      ["R014", "-", "-", "1.45", "5 (0)"],
+      ["R014_mini", "-", "-", "-", "-"],
     ],
-    greenColumns: [4],
-    redColumns: [3],
-    emphasisColumns: [1, 6],
-    buttonColumn: 7,
+    greenColumns: [3],
+    redColumns: [2],
+    emphasisColumns: [1, 4],
     fitToWidth: true,
-    columnWidths: ["14%", "10%", "14%", "12%", "12%", "14%", "10%", "14%"],
+    columnWidths: ["24%", "19%", "19%", "19%", "19%"],
     scrollable: false,
   },
   {
@@ -2321,11 +2331,6 @@ function AdaptiveEntryRail({
                 <div className="truncate text-sm font-semibold text-slate-50">
                   行情入口
                 </div>
-                {displayMode === "wide-preview" ? (
-                  <div className="mt-0.5 truncate text-[11px] text-slate-500">
-                    图表 / 表格快照
-                  </div>
-                ) : null}
               </div>
               <div className="rounded border border-[#243a5c] bg-[#0b1424] px-1.5 py-0.5 text-[10px] text-slate-500">
                 {Math.round(width)}px
@@ -2338,29 +2343,39 @@ function AdaptiveEntryRail({
             displayMode === "icon" ? "p-1.5" : "p-2"
           }`}
         >
-          {groups.map((group) => (
-            <div
-              key={group}
-              className={displayMode === "icon" ? "space-y-1.5" : "space-y-2"}
-            >
-              {displayMode === "wide-preview" ? (
-                <div className="px-1 pb-1 pt-2 text-[11px] font-semibold text-slate-500">
-                  {group}
-                </div>
-              ) : null}
-              {entries
-                .filter((entry) => entry.group === group)
-                .map((entry) => (
-                  <ModuleEntryItem
-                    key={entry.id}
-                    entry={entry}
-                    active={entry.id === activeId}
-                    displayMode={displayMode}
-                    onOpen={() => onOpen(entry)}
-                  />
-                ))}
+          {displayMode === "summary" ? <RailMarketOverview /> : null}
+          {displayMode === "compact" ? (
+            <div className="flex min-h-full flex-col justify-evenly gap-2">
+              {entries.map((entry) => (
+                <ModuleEntryItem
+                  key={entry.id}
+                  entry={entry}
+                  active={entry.id === activeId}
+                  displayMode={displayMode}
+                  onOpen={() => onOpen(entry)}
+                />
+              ))}
             </div>
-          ))}
+          ) : (
+            groups.map((group) => (
+              <div
+                key={group}
+                className={displayMode === "icon" ? "space-y-1.5" : "space-y-2"}
+              >
+                {entries
+                  .filter((entry) => entry.group === group)
+                  .map((entry) => (
+                    <ModuleEntryItem
+                      key={entry.id}
+                      entry={entry}
+                      active={entry.id === activeId}
+                      displayMode={displayMode}
+                      onOpen={() => onOpen(entry)}
+                    />
+                  ))}
+              </div>
+            ))
+          )}
         </div>
       </div>
     </aside>
@@ -2456,14 +2471,22 @@ function ModuleEntryItem({
             ? "border-[#4c85ff] bg-[#153463] shadow-[0_0_0_1px_rgba(76,133,255,0.28)]"
             : "border-[#1d2e47] bg-[#0b1424] hover:border-[#335780] hover:bg-[#101d32]"
         } ${
-          displayMode === "icon"
-            ? "flex h-11 items-center justify-center px-0"
+          displayMode === "icon" || displayMode === "compact"
+            ? "flex items-center justify-center px-0"
             : "px-2.5 py-2"
+        } ${
+          displayMode === "compact"
+            ? "h-16"
+            : displayMode === "icon"
+              ? "h-11"
+              : ""
         }`}
       >
         <div
           className={`flex min-w-0 items-center ${
-            displayMode === "icon" ? "justify-center" : "gap-2"
+            displayMode === "icon" || displayMode === "compact"
+              ? "justify-center"
+              : "gap-2"
           }`}
         >
           <span
@@ -2471,11 +2494,11 @@ function ModuleEntryItem({
               active
                 ? "border-blue-300/40 bg-blue-300/15 text-blue-100"
                 : "border-[#2b4264] bg-[#101b2c] text-slate-300"
-            } ${displayMode === "icon" ? "h-8 w-8" : "h-7 w-7"}`}
+            } ${displayMode === "icon" ? "h-8 w-8" : displayMode === "compact" ? "h-10 w-10" : "h-7 w-7"}`}
           >
-            <Icon size={displayMode === "icon" ? 17 : 15} />
+            <Icon size={displayMode === "icon" ? 17 : displayMode === "compact" ? 19 : 15} />
           </span>
-          {displayMode !== "icon" ? (
+          {displayMode !== "icon" && displayMode !== "compact" ? (
             <span className="min-w-0 flex-1">
               <span className="block truncate text-xs font-semibold text-slate-100">
                 {entry.title}
@@ -2493,6 +2516,9 @@ function ModuleEntryItem({
             </span>
           ) : null}
         </div>
+        {displayMode === "summary" ? (
+          <ModuleSummaryOverview id={entry.id} metric={metric} />
+        ) : null}
         {displayMode === "wide-preview" ? (
           <div className="mt-2 border-t border-[#182940] pt-2">
             <ModuleEntryPreview id={entry.id} />
@@ -2506,11 +2532,222 @@ function ModuleEntryItem({
   );
 }
 
-function getModuleEntryData(id: ModuleEntryId): {
-  summary: string;
-  badge: string;
-  rows: readonly (readonly [string, string])[];
-} {
+function RailMarketOverview() {
+  const dataset = historicalCloseDatasets["5d"];
+  const latest = dataset.close.at(-1) ?? 0;
+  const volume = dataset.volume.at(-1) ?? 0;
+  const sentiment = Math.round(sentimentTrendData.at(-1)?.total ?? 51);
+
+  return (
+    <div className="mb-2 rounded-lg border border-[#1d2e47] bg-[#0a1322] p-2.5">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-[11px] font-semibold text-slate-300">
+          今日概览
+        </span>
+        <span className="rounded border border-[#263d60] px-1.5 py-0.5 text-[10px] text-slate-500">
+          实时
+        </span>
+      </div>
+      <div className="grid grid-cols-2 gap-1.5">
+        <OverviewStat label="DR007" value="2.15%" tone="alert" />
+        <OverviewStat label="情绪" value={`${sentiment}`} tone="good" />
+        <OverviewStat label="R001" value={`${latest.toFixed(3)}%`} />
+        <OverviewStat label="成交" value={`${volume}亿`} tone="muted" />
+      </div>
+    </div>
+  );
+}
+
+function OverviewStat({
+  label,
+  value,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  tone?: OverviewTone;
+}) {
+  return (
+    <div className="min-w-0 rounded-md border border-[#1c304c] bg-[#081120] px-2 py-1.5">
+      <div className="truncate text-[10px] text-slate-500">{label}</div>
+      <div className={`mt-0.5 truncate font-mono text-[12px] font-semibold ${overviewToneClass(tone)}`}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function ModuleSummaryOverview({
+  id,
+  metric,
+}: {
+  id: ModuleEntryId;
+  metric: ModuleEntryMetric;
+}) {
+  if (id === "xrepo") return <XrepoSummaryOverview />;
+
+  return (
+    <div className="mt-2 space-y-2 border-t border-[#182940] pt-2">
+      {metric.chips?.length ? (
+        <div className="grid grid-cols-3 gap-1.5">
+          {metric.chips.slice(0, 3).map((chip) => (
+            <div
+              key={`${chip.label}-${chip.value}`}
+              className="min-w-0 rounded-md border border-[#1c304c] bg-[#081120] px-2 py-1"
+            >
+              <div className="truncate text-[9px] text-slate-500">
+                {chip.label}
+              </div>
+              <div
+                className={`mt-0.5 truncate font-mono text-[11px] font-semibold ${overviewToneClass(
+                  chip.tone ?? "neutral",
+                )}`}
+              >
+                {chip.value}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {metric.detailRows?.length ? (
+        <div className="space-y-1">
+          {metric.detailRows.slice(0, 2).map(([label, value, extra]) => (
+            <div
+              key={`${label}-${value}`}
+              className="grid grid-cols-[0.9fr_1fr_auto] items-center gap-2 rounded border border-[#17283f] bg-[#081120]/70 px-2 py-1 text-[10px]"
+            >
+              <span className="truncate text-slate-500">{label}</span>
+              <span className="truncate font-mono font-semibold text-slate-300">
+                {value}
+              </span>
+              {extra ? (
+                <span className="truncate text-right text-slate-500">
+                  {extra}
+                </span>
+              ) : (
+                <span />
+              )}
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {metric.trendValues?.length ? (
+        <SummarySparkline
+          values={metric.trendValues}
+          color={metric.trendColor ?? chartPalette.blue}
+          label={metric.trendLabel ?? "趋势"}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function XrepoSummaryOverview() {
+  const section = leftSections.find(
+    (item): item is SummaryTableSection =>
+      item.layout === "table" && item.title === "XREPO",
+  );
+  const rows = section?.rows.slice(0, 5) ?? [];
+
+  return (
+    <div className="mt-2 border-t border-[#182940] pt-2">
+      <div className="overflow-hidden rounded-md border border-[#1c304c] bg-[#081120]">
+        <div className="grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] border-b border-[#1c304c] bg-[#0d1726] px-2 py-1 text-[9px] text-slate-500">
+          <span className="truncate">合约</span>
+          <span className="truncate text-right">正量</span>
+          <span className="truncate text-right">正利率</span>
+          <span className="truncate text-right">逆利率</span>
+          <span className="truncate text-right">逆量</span>
+        </div>
+        {rows.map((row, index) => (
+          <div
+            key={`${row[0]}-${index}`}
+            className={`grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] items-center gap-1 border-b border-[#162439] px-2 py-1 text-[10px] last:border-b-0 ${
+              index === 0 ? "bg-[#0d1726]/70" : ""
+            }`}
+          >
+            <span className="truncate font-semibold text-slate-300">
+              {row[0]}
+            </span>
+            <span className="truncate text-right font-mono text-slate-300">
+              {row[1]}
+            </span>
+            <span className="truncate text-right font-mono font-semibold text-red-300">
+              {row[2]}
+            </span>
+            <span className="truncate text-right font-mono font-semibold text-emerald-300">
+              {row[3]}
+            </span>
+            <span className="truncate text-right font-mono text-slate-300">
+              {row[4]}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SummarySparkline({
+  values,
+  color,
+  label,
+}: {
+  values: readonly number[];
+  color: string;
+  label: string;
+}) {
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const points = values
+    .map((value, index) => {
+      const x = (index / Math.max(values.length - 1, 1)) * 120;
+      const y = 28 - ((value - min) / range) * 22;
+      return `${index === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
+    })
+    .join(" ");
+  const latest = values[values.length - 1];
+
+  return (
+    <div className="rounded-md border border-[#1c304c] bg-[#081120] px-2 py-1.5">
+      <div className="mb-1 flex items-center justify-between gap-2 text-[10px]">
+        <span className="truncate text-slate-500">{label}</span>
+        <span className="font-mono font-semibold text-slate-300">
+          {latest.toFixed(latest > 100 ? 0 : 3)}
+        </span>
+      </div>
+      <svg
+        className="h-8 w-full overflow-visible"
+        viewBox="0 0 120 32"
+        preserveAspectRatio="none"
+      >
+        <path
+          d={`${points} L 120 32 L 0 32 Z`}
+          fill={color}
+          opacity="0.12"
+        />
+        <path
+          d={points}
+          fill="none"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+        />
+      </svg>
+    </div>
+  );
+}
+
+function overviewToneClass(tone: OverviewTone) {
+  if (tone === "good") return "text-emerald-300";
+  if (tone === "alert") return "text-red-300";
+  if (tone === "muted") return "text-slate-300";
+  return "text-blue-200";
+}
+
+function getModuleEntryData(id: ModuleEntryId): ModuleEntryMetric {
   if (id === "big-bank-price") {
     const on = initialBankRateRows.find(
       (row) => row.institution === "工商银行" && row.tenor === "ON",
@@ -2524,6 +2761,15 @@ function getModuleEntryData(id: ModuleEntryId): {
       rows: [
         ["工商 ON", `非银 ${on?.nonBankRate ?? "-"} / 银行 ${on?.bankRate ?? "-"}`],
         ["工商 7D", `非银 ${seven?.nonBankRate ?? "-"} / 银行 ${seven?.bankRate ?? "-"}`],
+      ],
+      chips: [
+        { label: "ON", value: on?.nonBankRate ?? "-", tone: "good" },
+        { label: "7D", value: seven?.nonBankRate ?? "-", tone: "good" },
+        { label: "银行", value: on?.bankRate ?? "-", tone: "alert" },
+      ],
+      detailRows: [
+        ["工商 ON", on?.nonBankRate ?? "-", `银行 ${on?.bankRate ?? "-"}`],
+        ["工商 7D", seven?.nonBankRate ?? "-", `银行 ${seven?.bankRate ?? "-"}`],
       ],
     };
   }
@@ -2544,6 +2790,15 @@ function getModuleEntryData(id: ModuleEntryId): {
         ["R001", r001 ? `正 ${r001[1]}@${r001[2]} / 逆 ${r001[4]}@${r001[3]}` : "-"],
         ["R007", r007 ? `正 ${r007[1]}@${r007[2]} / 逆 ${r007[4]}@${r007[3]}` : "-"],
       ],
+      chips: [
+        { label: "正利率", value: r001?.[2] ?? "-", tone: "alert" },
+        { label: "逆利率", value: r001?.[3] ?? "-", tone: "good" },
+        { label: "逆量", value: r001?.[4] ?? "-", tone: "neutral" },
+      ],
+      detailRows: [
+        ["R001", r001 ? `正 ${r001[1]} / 逆 ${r001[4]}` : "-", r001 ? `${r001[2]} / ${r001[3]}` : undefined],
+        ["R007", r007 ? `正 ${r007[1]} / 逆 ${r007[4]}` : "-", r007 ? `${r007[2]} / ${r007[3]}` : undefined],
+      ],
     };
   }
 
@@ -2554,6 +2809,15 @@ function getModuleEntryData(id: ModuleEntryId): {
       rows: [
         ["上交所 GC001", "1.3700 / -1.00bp"],
         ["深交所 R-001", "1.3900 / -1.50bp"],
+      ],
+      chips: [
+        { label: "GC001", value: "1.3700", tone: "good" },
+        { label: "R-001", value: "1.3900", tone: "good" },
+        { label: "变动", value: "-1.00bp", tone: "good" },
+      ],
+      detailRows: [
+        ["上交所", "GC001 1.3700", "-1.00bp"],
+        ["深交所", "R-001 1.3900", "-1.50bp"],
       ],
     };
   }
@@ -2570,6 +2834,14 @@ function getModuleEntryData(id: ModuleEntryId): {
         ["3M", `${threeMonth.toFixed(3)}%`],
         ["1Y", `${oneYear.toFixed(3)}%`],
       ],
+      chips: [
+        { label: "1M", value: `${oneMonth.toFixed(3)}%`, tone: "neutral" },
+        { label: "3M", value: `${threeMonth.toFixed(3)}%`, tone: "neutral" },
+        { label: "1Y", value: `${oneYear.toFixed(3)}%`, tone: "neutral" },
+      ],
+      trendValues: ncdTrendSeries,
+      trendColor: chartPalette.amber,
+      trendLabel: "一级 1M",
     };
   }
 
@@ -2587,6 +2859,14 @@ function getModuleEntryData(id: ModuleEntryId): {
         ["较前日", `${bp.startsWith("-") ? "" : "+"}${bp}bp`],
         ["成交量", `${volume}亿`],
       ],
+      chips: [
+        { label: "最新", value: `${latest.toFixed(3)}%`, tone: "neutral" },
+        { label: "变化", value: `${bp.startsWith("-") ? "" : "+"}${bp}bp`, tone: bp.startsWith("-") ? "good" : "alert" },
+        { label: "量", value: `${volume}亿`, tone: "muted" },
+      ],
+      trendValues: dataset.close,
+      trendColor: chartPalette.blue,
+      trendLabel: "R001 5D",
     };
   }
 
@@ -2603,6 +2883,14 @@ function getModuleEntryData(id: ModuleEntryId): {
         ["上一点位", `${prev.toFixed(3)}%`],
         ["成交量", `${volume}亿`],
       ],
+      chips: [
+        { label: "最新", value: `${latest.toFixed(3)}%`, tone: "neutral" },
+        { label: "变化", value: `${bp.startsWith("-") ? "" : "+"}${bp}bp`, tone: bp.startsWith("-") ? "good" : "alert" },
+        { label: "成交", value: `${volume}亿`, tone: "muted" },
+      ],
+      trendValues: intradaySeries,
+      trendColor: chartPalette.violet,
+      trendLabel: "日内 R001",
     };
   }
 
@@ -2615,6 +2903,15 @@ function getModuleEntryData(id: ModuleEntryId): {
         ["基金", "融入 1500亿"],
         ["全市场", "净融入 +420亿"],
       ],
+      chips: [
+        { label: "大行", value: "1.92%", tone: "good" },
+        { label: "基金", value: "1500亿", tone: "muted" },
+        { label: "净融入", value: "+420亿", tone: "alert" },
+      ],
+      detailRows: [
+        ["大行", "买入 1.92%", "卖出 2.05%"],
+        ["基金", "融入 1500亿", "净 +420亿"],
+      ],
     };
   }
 
@@ -2626,6 +2923,14 @@ function getModuleEntryData(id: ModuleEntryId): {
         ["金额", `${topBoardFilters.amountMin} - ${topBoardFilters.amountMax}亿`],
         ["利率", `${topBoardFilters.rateMin} - ${topBoardFilters.rateMax}%`],
       ],
+      chips: [
+        { label: "金额", value: "0-不限", tone: "muted" },
+        { label: "利率", value: "0.00-不限", tone: "muted" },
+      ],
+      detailRows: [
+        ["金额范围", `${topBoardFilters.amountMin}-${topBoardFilters.amountMax}亿`, "已应用"],
+        ["利率范围", `${topBoardFilters.rateMin}-${topBoardFilters.rateMax}%`, "已应用"],
+      ],
     };
   }
 
@@ -2636,6 +2941,14 @@ function getModuleEntryData(id: ModuleEntryId): {
       ["DR007", "2.15%"],
       ["资金情绪", "51 / 平衡"],
     ],
+    chips: [
+      { label: "DR007", value: "2.15%", tone: "alert" },
+      { label: "情绪", value: "51", tone: "neutral" },
+      { label: "状态", value: "平衡", tone: "good" },
+    ],
+    trendValues: sentimentTrendData.map((item) => item.total),
+    trendColor: chartPalette.emerald,
+    trendLabel: "情绪指数",
   };
 }
 
