@@ -124,6 +124,7 @@ export interface ChatThread {
   status: ChatStatus;
   latest: string;
   time: string;
+  waitMinutes?: number;
   relatedQuoteId: string;
   unread: number;
   messages: Array<{
@@ -872,6 +873,7 @@ export const chats: ChatThread[] = [
     status: 'unreplied',
     latest: 'R014 1.68，15 亿以内，上午有效',
     time: '10:52',
+    waitMinutes: 8,
     relatedQuoteId: 'quote-shrcb',
     unread: 2,
     username: 'shrc_kai',
@@ -914,6 +916,7 @@ export const chats: ChatThread[] = [
     status: 'unreplied',
     latest: 'R028 1.78，公募可做',
     time: '10:35',
+    waitMinutes: 15,
     relatedQuoteId: 'quote-nbcb',
     unread: 1,
     username: 'nb_leo',
@@ -926,6 +929,108 @@ export const chats: ChatThread[] = [
     messages: [
       { id: 'm1', from: 'counterparty', text: 'R028 1.78，公募可做，8 亿以内。', time: '10:35' },
       { id: 'm2', from: 'ai', text: 'AI 提示：匹配公募组合，仍需额度校验。', time: '10:35' }
+    ]
+  },
+  {
+    id: 'chat-pf-liu',
+    counterparty: '浦发银行',
+    status: 'unreplied',
+    latest: 'R007 1.43，4亿，自营',
+    time: '10:48',
+    waitMinutes: 1,
+    relatedQuoteId: 'quote-hzbank',
+    unread: 1,
+    username: 'pf_liu',
+    collateral: '地方债',
+    chatTenor: 'R007',
+    chatRate: 1.43,
+    chatAmount: 4,
+    chatGroup: '利率地方',
+    chatLimit: '自营',
+    messages: [
+      { id: 'm1', from: 'counterparty', text: 'R007 1.43，4亿，自营。', time: '10:48' },
+      { id: 'm2', from: 'ai', text: 'AI 已解析：R007，利率 1.43%，金额 4 亿。', time: '10:48' }
+    ]
+  },
+  {
+    id: 'chat-bj-wang',
+    counterparty: '北京银行',
+    status: 'replied',
+    latest: 'R007 1.40，5亿，非专户',
+    time: '10:25',
+    relatedQuoteId: 'quote-beijing-r007',
+    unread: 0,
+    username: 'bj_wang',
+    collateral: '利率/存单',
+    chatTenor: 'R007',
+    chatRate: 1.40,
+    chatAmount: 5,
+    chatGroup: '存单商金',
+    chatLimit: '非专户',
+    messages: [
+      { id: 'm1', from: 'counterparty', text: 'R007 1.40，5亿，非专户。', time: '10:25' },
+      { id: 'm2', from: 'trader', text: '价格可以，先记一下。', time: '10:26' }
+    ]
+  },
+  {
+    id: 'chat-tk-zhang',
+    counterparty: '中信建投',
+    status: 'replied',
+    latest: 'R001 1.43，2.5亿 年金',
+    time: '10:30',
+    relatedQuoteId: 'quote-citic',
+    unread: 0,
+    username: 'tk_zhang',
+    collateral: '年金户',
+    chatTenor: 'R001',
+    chatRate: 1.43,
+    chatAmount: 2.5,
+    chatGroup: '信用',
+    chatLimit: '自营',
+    messages: [
+      { id: 'm1', from: 'counterparty', text: 'R001 1.43，2.5亿，年金户。', time: '10:30' },
+      { id: 'm2', from: 'trader', text: '收到，信用口径我确认下。', time: '10:31' }
+    ]
+  },
+  {
+    id: 'chat-thk-chen',
+    counterparty: '泰康资产',
+    status: 'replied',
+    latest: 'R001 1.42，可专户',
+    time: '10:20',
+    relatedQuoteId: 'quote-taikang-r001',
+    unread: 0,
+    username: 'thk_chen',
+    collateral: '国股存单',
+    chatTenor: 'R001',
+    chatRate: 1.42,
+    chatAmount: 0,
+    chatGroup: '存单商金',
+    chatLimit: '可专户',
+    messages: [
+      { id: 'm1', from: 'counterparty', text: 'R001 1.42，可专户。', time: '10:20' },
+      { id: 'm2', from: 'trader', text: '好，我放到候选里。', time: '10:21' }
+    ]
+  },
+  {
+    id: 'chat-cmb-l2',
+    counterparty: '招商基金',
+    status: 'unreplied',
+    latest: 'R014 1.49，专户可做，6亿',
+    time: '10:44',
+    waitMinutes: 6,
+    relatedQuoteId: 'quote-cmb-fund-r014',
+    unread: 1,
+    username: 'cmb_zhou',
+    collateral: '商金存单',
+    chatTenor: 'R014',
+    chatRate: 1.49,
+    chatAmount: 6,
+    chatGroup: '存单商金',
+    chatLimit: '专户',
+    messages: [
+      { id: 'm1', from: 'counterparty', text: 'R014 1.49，专户可做，6亿。', time: '10:44' },
+      { id: 'm2', from: 'ai', text: 'AI 提示：二级报价，需确认户类准入。', time: '10:45' }
     ]
   },
   {

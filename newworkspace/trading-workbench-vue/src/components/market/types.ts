@@ -1,4 +1,4 @@
-import type { Direction, MarketGroupSummary, MarketQuote, QuoteLevel, QuoteStatus, Tenor } from '../../data/mockData';
+import type { ChatThread, Direction, MarketGroupSummary, MarketQuote, QuoteLevel, QuoteStatus, Tenor } from '../../data/mockData';
 
 export type TenorFilter = Tenor | 'all';
 
@@ -35,4 +35,13 @@ export interface DirectionSectionView {
   activeLevel: QuoteLevel;
   totalLevels: number;
   groups: QuoteGroupView[];
+}
+
+export interface OpponentThreadView {
+  id: string;
+  chat: ChatThread;
+  quote: MarketQuote | undefined;
+  level: QuoteLevel;
+  isBest: boolean;
+  waitLabel: string;
 }

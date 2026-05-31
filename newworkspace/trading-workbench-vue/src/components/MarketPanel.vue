@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue';
-import type { AccountRow, ChatThread, Direction, MarketGroupSummary, MarketQuote, QuoteLevel, Tenor } from '../data/mockData';
+import { computed, ref } from 'vue';
+import type { AccountRow, ChatStatus, ChatThread, Direction, MarketGroupSummary, MarketQuote, QuoteLevel, Tenor } from '../data/mockData';
 import DirectionSection from './market/DirectionSection.vue';
 import MarketFilterBar from './market/MarketFilterBar.vue';
 import MarketTitleBar from './market/MarketTitleBar.vue';
-import type { DirectionSectionView, QuoteLine } from './market/types';
+import OpponentList from './market/OpponentList.vue';
+import type { DirectionSectionView, OpponentThreadView, QuoteLine } from './market/types';
 import { useQuoteColumns } from '../composables/useQuoteColumns';
 import { accountTypeOf, type TaskOverviewFilter } from '../composables/useTaskOverviewMatrix';
 
@@ -27,12 +28,15 @@ const emit = defineEmits<{
   openQuote: [quote: MarketQuote, tenor: Tenor];
   sendQuote: [quote: MarketQuote, tenor: Tenor];
   openChat: [chat: ChatThread, anchor?: PopupAnchor];
+  clearOverviewFilter: [];
 }>();
 
+const activeView = ref<'opponents' | 'market'>('opponents');
 const activeLevel = ref<QuoteLevel>('level1');
 const activeTenor = ref<Tenor | 'all'>('all');
 const activeDirection = ref<Direction>('reverse');
-const chatTab = ref<'unreplied' | 'replied' | 'all'>('unreplied');
+const opponentStatus = ref<ChatStatus | 'all'>('unreplied');
+const opponentLevel = ref<QuoteLevel>('level1');
 const onlySame = ref(false);
 const minAmount = ref('');
 const maxAmount = ref('');
@@ -63,6 +67,23 @@ const parseOptionalNumber = (value: string) => {
 const normalizeText = (value: string | undefined | null) => String(value ?? '').toLowerCase();
 
 const accountById = computed(() => new Map(props.accounts.map((account) => [account.id, account])));
+const quoteById = computed(() => new Map(props.quotes.map((quote) => [quote.id, quote])));
+
+const overviewFilterChips = computed(() => {
+  const filter = props.overviewFilter;
+  if (!filter) return [];
+
+  const chips: Array<{ key: string; label: string }> = [];
+  if (filter.term) chips.push({ key: 'term', label: filter.term });
+  if (filter.pledgeRequirement) chips.push({ key: 'pledge', label: filter.pledgeRequirement });
+  if (filter.accountType) chips.push({ key: 'account', label: filter.accountType });
+  if (chips.length === 0 && filter.label) chips.push({ key: 'label', label: filter.label });
+  return chips;
+});
+
+const clearOverviewFilter = () => {
+  emit('clearOverviewFilter');
+};
 
 const textHasAny = (source: string, needles: string[]) => {
   const normalizedSource = normalizeText(source);
@@ -72,7 +93,7 @@ const textHasAny = (source: string, needles: string[]) => {
 const pledgeAliases: Record<string, string[]> = {
   利率债: ['利率债', '利率', '国债'],
   地方债: ['地方债', '地方'],
-  国股存单: ['国股存单', '存单'],
+  国股存单: ['国股存单', '存单', '商金存单', '大行存单', 'CD'],
   同业存单: ['同业存单', '存单', '国股存单', '商金存单', '大行存单', 'CD'],
   信用债: ['信用债', '信用', '年金户', '债基'],
   非公开定向融资工具PPN: ['非公开定向融资工具', 'PPN'],
@@ -84,12 +105,25 @@ const pledgeAliases: Record<string, string[]> = {
 
 const accountTypeAliases: Record<string, string[]> = {
   专户: ['专户', '可专户', '不限户'],
-  公募户: ['公募', '公募户', '非专户', '不限户'],
+  专户定制: ['专户', '可专户', '不限户'],
+  '专户【1】': ['专户', '可专户', '不限户'],
+  公募: ['公募', '公募户', '基金', '非专户', '不限户'],
+  公募户: ['公募', '公募户', '基金', '非专户', '不限户'],
+  '公募户【2】': ['公募', '公募户', '基金', '非专户', '不限户'],
+  自营: ['自营', '自营户', '证券户', '不限户'],
+  自营户: ['自营', '自营户', '证券户', '不限户'],
+  证券户: ['自营', '自营户', '证券户', '不限户'],
   '自营户/证券户': ['自营', '自营户', '证券户', '不限户'],
+  '自营户/证券户【3】': ['自营', '自营户', '证券户', '不限户'],
+  理财: ['理财', '资管', '资管户', '非专户', '可专户', '不限户'],
+  资管: ['理财', '资管', '资管户', '非专户', '可专户', '不限户'],
   资管户: ['理财', '资管', '资管户', '非专户', '可专户', '不限户'],
+  '资管户【4】': ['理财', '资管', '资管户', '非专户', '可专户', '不限户'],
   信托户: ['信托', '信托户', '不限户'],
   私募户: ['私募', '私募户', '不限户'],
+  年金: ['年金', '年金户'],
   年金户: ['年金', '年金户'],
+  '年金户【7】': ['年金', '年金户'],
   社保户: ['社保', '社保户'],
   养老金户: ['养老金', '养老金户'],
   组合户: ['组合', '组合户'],
@@ -137,6 +171,45 @@ const matchesOverviewChat = (chat: ChatThread) => {
   if (!accountRequirementMatches(filter.accountType, chat.chatLimit)) return false;
   return matchesPledge(filter.pledgeRequirement, chat.chatGroup, chat.collateral);
 };
+
+const MARKET_CLOCK_MINUTES = 11 * 60;
+
+const clockMinutes = (time: string) => {
+  const [hour, minute] = time.split(':').map(Number);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return 0;
+  return hour * 60 + minute;
+};
+
+const waitMinutesOf = (chat: ChatThread) => {
+  if (chat.waitMinutes !== undefined) return chat.waitMinutes;
+  const minutes = MARKET_CLOCK_MINUTES - clockMinutes(chat.time);
+  return Math.max(minutes, 1);
+};
+
+const filteredOpponentItems = computed<OpponentThreadView[]>(() => {
+  return props.chats
+    .map((chat) => {
+      const quote = quoteById.value.get(chat.relatedQuoteId);
+      return {
+        id: chat.id,
+        chat,
+        quote,
+        level: quote?.level ?? 'level1',
+        isBest: quote?.status === 'best',
+        waitLabel: `${waitMinutesOf(chat)}min`
+      };
+    })
+    .filter((item) => {
+      if (!matchesOverviewChat(item.chat)) return false;
+      if (opponentStatus.value !== 'all' && item.chat.status !== opponentStatus.value) return false;
+      return item.level === opponentLevel.value;
+    })
+    .sort((a, b) => {
+      const statusRankA = a.chat.status === 'unreplied' ? 0 : 1;
+      const statusRankB = b.chat.status === 'unreplied' ? 0 : 1;
+      return statusRankA - statusRankB || clockMinutes(b.chat.time) - clockMinutes(a.chat.time);
+    });
+});
 
 const summaryIndex = computed(() => {
   const index = new Map<string, MarketGroupSummary>();
@@ -248,14 +321,6 @@ const directionSections = computed<DirectionSectionView[]>(() => {
     .filter((section) => section.groups.length > 0);
 });
 
-const filteredChats = computed(() => {
-  return props.chats.filter((chat) => {
-    if (!matchesOverviewChat(chat)) return false;
-    if (chatTab.value === 'all') return true;
-    return chat.status === chatTab.value;
-  });
-});
-
 const quoteForLine = (line: QuoteLine): MarketQuote => ({
   ...line.quote,
   institution: line.institution,
@@ -283,44 +348,6 @@ const openChatItem = (chat: ChatThread, event: MouseEvent) => {
 const sendLine = (line: QuoteLine) => {
   emit('sendQuote', quoteForLine(line), line.tenor);
 };
-
-// Manually adjustable split between the quote board (top) and the chat index
-// (bottom). The chat index keeps a draggable pixel height; the quote board takes
-// the remaining space.
-const panelRef = ref<HTMLElement | null>(null);
-const chatHeight = ref(220);
-const CHAT_MIN = 120;
-const TOP_MIN = 220;
-
-const panelStyle = computed(() => ({
-  gridTemplateRows: `minmax(0, 1fr) 8px ${chatHeight.value}px`
-}));
-
-let dragStartY = 0;
-let dragStartHeight = 0;
-
-const onChatGutterMove = (event: PointerEvent) => {
-  const delta = dragStartY - event.clientY;
-  const panelHeight = panelRef.value?.clientHeight ?? 0;
-  const max = Math.max(CHAT_MIN, panelHeight - TOP_MIN);
-  chatHeight.value = Math.min(Math.max(dragStartHeight + delta, CHAT_MIN), max);
-};
-
-const onChatGutterUp = () => {
-  document.body.classList.remove('is-row-resizing');
-  window.removeEventListener('pointermove', onChatGutterMove);
-  window.removeEventListener('pointerup', onChatGutterUp);
-};
-
-const onChatGutterDown = (event: PointerEvent) => {
-  dragStartY = event.clientY;
-  dragStartHeight = chatHeight.value;
-  document.body.classList.add('is-row-resizing');
-  window.addEventListener('pointermove', onChatGutterMove);
-  window.addEventListener('pointerup', onChatGutterUp);
-};
-
-onBeforeUnmount(onChatGutterUp);
 
 const csvCell = (value: string | number) => {
   const text = String(value);
@@ -354,85 +381,78 @@ const exportQuotes = () => {
 </script>
 
 <template>
-  <section ref="panelRef" class="panel market-panel" aria-label="右栏非银行情与聊天" :style="panelStyle">
-    <div class="market-top">
-      <MarketFilterBar
-        v-model:active-level="activeLevel"
-        v-model:min-amount="minAmount"
-        v-model:max-amount="maxAmount"
-        v-model:min-rate="minRate"
-        v-model:max-rate="maxRate"
-        v-model:account-keyword="accountKeyword"
-        v-model:collateral-keyword="collateralKeyword"
-        v-model:only-same="onlySame"
-        @export-quotes="exportQuotes"
-      />
-
-      <MarketTitleBar
-        v-model:active-tenor="activeTenor"
-        v-model:active-direction="activeDirection"
-        :tenors="tenors"
-        :direction-tabs="directionTabs"
-      />
-
-      <div class="quote-board" :style="{ '--quote-grid': columnTemplate }">
-        <DirectionSection
-          v-for="section in directionSections"
-          :key="section.direction"
-          :section="section"
-          @open-line="openLine"
-          @send-line="sendLine"
-        />
-
-        <div v-if="directionSections.length === 0" class="empty-state market-empty">
-          当前筛选条件下暂无报价
-        </div>
+  <section class="panel market-panel" aria-label="右栏对手列表与行情">
+    <div class="market-panel__switchbar">
+      <div class="right-view-tabs" aria-label="右栏视图">
+        <button :class="{ 'is-active': activeView === 'opponents' }" type="button" @click="activeView = 'opponents'">
+          对手列表
+        </button>
+        <button :class="{ 'is-active': activeView === 'market' }" type="button" @click="activeView = 'market'">
+          行情看板
+        </button>
       </div>
     </div>
 
-    <div
-      class="panel-gutter"
-      role="separator"
-      aria-orientation="horizontal"
-      aria-label="拖动调整报价与聊天列表比例"
-      title="拖动调整上下比例"
-      @pointerdown="onChatGutterDown"
-    ></div>
+    <div class="market-panel__filter-line">
+      <span>当前过滤:</span>
+      <template v-if="overviewFilterChips.length">
+        <button
+          v-for="chip in overviewFilterChips"
+          :key="chip.key"
+          class="filter-chip-button"
+          type="button"
+          @click="clearOverviewFilter"
+        >
+          {{ chip.label }} ×
+        </button>
+        <button class="filter-clear-button" type="button" @click="clearOverviewFilter">清除全部</button>
+      </template>
+      <em v-else>全部对手</em>
+    </div>
 
-    <div class="chat-index">
-      <div class="chat-index__head">
-        <strong>历史聊天对手</strong>
-        <div class="mini-tabs">
-          <button :class="{ 'is-active': chatTab === 'unreplied' }" type="button" @click="chatTab = 'unreplied'">未回复</button>
-          <button :class="{ 'is-active': chatTab === 'replied' }" type="button" @click="chatTab = 'replied'">已回复</button>
-          <button :class="{ 'is-active': chatTab === 'all' }" type="button" @click="chatTab = 'all'">全部</button>
+    <OpponentList
+      v-if="activeView === 'opponents'"
+      v-model:active-status="opponentStatus"
+      v-model:active-level="opponentLevel"
+      :items="filteredOpponentItems"
+      @open-chat="openChatItem"
+    />
+
+    <div v-else class="market-board-view">
+      <div class="market-top">
+        <MarketFilterBar
+          v-model:active-level="activeLevel"
+          v-model:min-amount="minAmount"
+          v-model:max-amount="maxAmount"
+          v-model:min-rate="minRate"
+          v-model:max-rate="maxRate"
+          v-model:account-keyword="accountKeyword"
+          v-model:collateral-keyword="collateralKeyword"
+          v-model:only-same="onlySame"
+          @export-quotes="exportQuotes"
+        />
+
+        <MarketTitleBar
+          v-model:active-tenor="activeTenor"
+          v-model:active-direction="activeDirection"
+          :tenors="tenors"
+          :direction-tabs="directionTabs"
+        />
+
+        <div class="quote-board" :style="{ '--quote-grid': columnTemplate }">
+          <DirectionSection
+            v-for="section in directionSections"
+            :key="section.direction"
+            :section="section"
+            @open-line="openLine"
+            @send-line="sendLine"
+          />
+
+          <div v-if="directionSections.length === 0" class="empty-state market-empty">
+            当前筛选条件下暂无报价
+          </div>
         </div>
       </div>
-      <button
-        v-for="chat in filteredChats"
-        :key="chat.id"
-        type="button"
-        class="chat-item"
-        :class="chat.status === 'unreplied' ? 'is-unreplied' : 'is-replied'"
-        @click="openChatItem(chat, $event)"
-        @dblclick="openChatItem(chat, $event)"
-      >
-        <div class="chat-line1">
-          <span class="chat-line1__context">
-            {{ chat.chatTenor }}｜{{ chat.chatGroup }}｜{{ chat.chatLimit }}｜{{ chat.chatAmount.toFixed(1) }}亿｜@{{ chat.chatRate.toFixed(2) }}｜{{ chat.collateral }}
-          </span>
-          <span class="chat-status">
-            {{ chat.status === 'unreplied' ? '未回复' : '已回复' }}
-          </span>
-          <span v-if="chat.unread" class="chat-badge">{{ chat.unread }}</span>
-        </div>
-        <div class="chat-line2">
-          <span class="chat-line2__meta">
-            <b>{{ chat.username }}</b>｜{{ chat.counterparty }}　{{ chat.latest }}
-          </span>
-          <span class="chat-time">{{ chat.time }}</span>
-        </div>
-      </button>
     </div>
   </section>
 </template>

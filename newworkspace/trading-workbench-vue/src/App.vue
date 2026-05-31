@@ -66,11 +66,11 @@ const matrixRef = ref<{ save: () => void; collapse: () => void } | null>(null);
 // the remaining space (1fr) so it stays the main wide area by default.
 const workspaceRef = ref<HTMLElement | null>(null);
 const leftWidth = ref(520);
-const midWidth = ref(430);
+const midWidth = ref(100);
 const LEFT_MIN = 360;
 const LEFT_MAX = 1180;
-const MID_MIN = 220;
-const MID_MAX = 900;
+const MID_MIN = 100;
+const MID_MAX = 100;
 // The right market panel keeps the remaining space; never let dragging squeeze it
 // below this width (matches the CSS `minmax(460px, 1fr)` design floor).
 const RIGHT_MIN = 460;
@@ -308,6 +308,11 @@ const selectOverviewFilter = (filter: TaskOverviewFilter) => {
     : '已取消任务概览筛选，右栏回到全量。';
 };
 
+const clearOverviewFilter = () => {
+  activeOverviewFilter.value = null;
+  lastAction.value = '已清除右栏联动筛选，恢复全量对手与行情。';
+};
+
 const moveSelectedAccount = (direction: 1 | -1) => {
   if (accounts.value.length === 0) return;
   const currentIndex = Math.max(accounts.value.findIndex((account) => account.id === selectedAccountId.value), 0);
@@ -517,6 +522,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
       ></div>
 
       <ResearchPanel
+        class="research-panel--compact"
         :cards="researchCards"
         :active-card="activeCard"
         @open-card="activeCard = $event"
@@ -545,6 +551,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
         @open-quote="openQuote"
         @send-quote="sendQuote"
         @open-chat="openChat"
+        @clear-overview-filter="clearOverviewFilter"
       />
     </div>
 
