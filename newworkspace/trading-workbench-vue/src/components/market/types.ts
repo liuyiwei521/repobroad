@@ -18,6 +18,7 @@ export interface QuoteLine {
   isMatched: boolean;
   isSelected: boolean;
   isSent: boolean;
+  overviewScore?: number;
 }
 
 export interface QuoteGroupView {
@@ -44,4 +45,5 @@ export interface OpponentThreadView {
   level: QuoteLevel;
   isBest: boolean;
   waitLabel: string;
+  overviewScore?: number;
 }

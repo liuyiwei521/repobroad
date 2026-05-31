@@ -7,6 +7,7 @@ defineProps<{
   items: OpponentThreadView[];
   activeStatus: ChatStatus | 'all';
   activeLevel: QuoteLevel;
+  showLevelControls?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -35,13 +36,16 @@ const openChat = (chat: ChatThread, event: MouseEvent) => {
         </button>
       </div>
 
-      <div class="mini-tabs opponent-level-tabs" aria-label="对手层级">
-        <button :class="{ 'is-active': activeLevel === 'level1' }" type="button" @click="emit('update:activeLevel', 'level1')">
-          1级
-        </button>
-        <button :class="{ 'is-active': activeLevel === 'level2' }" type="button" @click="emit('update:activeLevel', 'level2')">
-          2级
-        </button>
+      <div class="opponent-controls-right">
+        <div v-if="showLevelControls !== false" class="mini-tabs opponent-level-tabs" aria-label="对手层级">
+          <button :class="{ 'is-active': activeLevel === 'level1' }" type="button" @click="emit('update:activeLevel', 'level1')">
+            1级
+          </button>
+          <button :class="{ 'is-active': activeLevel === 'level2' }" type="button" @click="emit('update:activeLevel', 'level2')">
+            2级
+          </button>
+        </div>
+        <span class="opponent-legend">颜色=核心/报价优势</span>
       </div>
     </div>
 
@@ -60,9 +64,7 @@ const openChat = (chat: ChatThread, event: MouseEvent) => {
       </div>
 
       <div class="opponent-list__footer">
-        <button type="button">↓ 滚动加载更多</button>
-        <p>┃ 暖色底 = 未回复 · 普通底 = 已回复</p>
-        <p>卡片整体点击 → 唤起聊天弹窗</p>
+        <p>── {{ items.length }} 条已全部加载 ──</p>
       </div>
     </div>
   </div>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import type { AccountRow, ChatStatus, ChatThread, Direction, MarketGroupSummary, MarketQuote, QuoteLevel, Tenor } from '../data/mockData';
+import { normalizeChatTenor, type AccountRow, type ChatStatus, type ChatThread, type Direction, type MarketGroupSummary, type MarketQuote, type QuoteLevel, type Tenor } from '../data/mockData';
 import DirectionSection from './market/DirectionSection.vue';
 import MarketFilterBar from './market/MarketFilterBar.vue';
 import MarketTitleBar from './market/MarketTitleBar.vue';
@@ -38,6 +38,8 @@ const activeDirection = ref<Direction>('reverse');
 const opponentStatus = ref<ChatStatus | 'all'>('unreplied');
 const opponentLevel = ref<QuoteLevel>('level1');
 const onlySame = ref(false);
+const minTenor = ref<Tenor | ''>('');
+const maxTenor = ref<Tenor | ''>('');
 const minAmount = ref('');
 const maxAmount = ref('');
 const minRate = ref('');
@@ -65,6 +67,25 @@ const parseOptionalNumber = (value: string) => {
 };
 
 const normalizeText = (value: string | undefined | null) => String(value ?? '').toLowerCase();
+const currentLevel = computed(() => (activeView.value === 'opponents' ? opponentLevel.value : activeLevel.value));
+const setCurrentLevel = (value: QuoteLevel) => {
+  if (activeView.value === 'opponents') {
+    opponentLevel.value = value;
+  } else {
+    activeLevel.value = value;
+  }
+};
+
+const tenorIndex = computed(() => new Map(props.tenors.map((tenor, index) => [tenor, index])));
+const tenorInRange = (tenor: Tenor) => {
+  const index = tenorIndex.value.get(tenor);
+  if (index === undefined) return false;
+  const minIndex = minTenor.value ? tenorIndex.value.get(minTenor.value) : undefined;
+  const maxIndex = maxTenor.value ? tenorIndex.value.get(maxTenor.value) : undefined;
+  const lower = minIndex ?? 0;
+  const upper = maxIndex ?? props.tenors.length - 1;
+  return index >= Math.min(lower, upper) && index <= Math.max(lower, upper);
+};
 
 const accountById = computed(() => new Map(props.accounts.map((account) => [account.id, account])));
 const quoteById = computed(() => new Map(props.quotes.map((quote) => [quote.id, quote])));
@@ -151,25 +172,45 @@ const quoteAccountTypeMatches = (quote: MarketQuote, accountType: string | undef
   return allowedMatches || accountRequirementMatches(accountType, requirement);
 };
 
-const matchesOverviewQuote = (
+const overviewMatchWeights = {
+  term: 3,
+  pledge: 2,
+  account: 2
+};
+
+const scoreOverviewQuote = (
   quote: MarketQuote,
   tenor: Tenor,
   accountRequirement: string,
   collateralRequirement: string
 ) => {
   const filter = props.overviewFilter;
-  if (!filter) return true;
-  if (filter.term && tenor !== filter.term) return false;
-  if (!quoteAccountTypeMatches(quote, filter.accountType, accountRequirement)) return false;
-  return matchesPledge(filter.pledgeRequirement, quote.group, collateralRequirement, quote.collateral);
+  if (!filter) return 0;
+
+  let score = 0;
+  if (filter.term && tenor === filter.term) score += overviewMatchWeights.term;
+  if (filter.accountType && quoteAccountTypeMatches(quote, filter.accountType, accountRequirement)) {
+    score += overviewMatchWeights.account;
+  }
+  if (filter.pledgeRequirement && matchesPledge(filter.pledgeRequirement, quote.group, collateralRequirement, quote.collateral)) {
+    score += overviewMatchWeights.pledge;
+  }
+  return score;
 };
 
-const matchesOverviewChat = (chat: ChatThread) => {
+const scoreOverviewChat = (chat: ChatThread) => {
   const filter = props.overviewFilter;
-  if (!filter) return true;
-  if (filter.term && chat.chatTenor !== filter.term) return false;
-  if (!accountRequirementMatches(filter.accountType, chat.chatLimit)) return false;
-  return matchesPledge(filter.pledgeRequirement, chat.chatGroup, chat.collateral);
+  if (!filter) return 0;
+
+  let score = 0;
+  if (filter.term && normalizeChatTenor(chat.chatTenor) === filter.term) score += overviewMatchWeights.term;
+  if (filter.accountType && accountRequirementMatches(filter.accountType, chat.chatLimit ?? '')) {
+    score += overviewMatchWeights.account;
+  }
+  if (filter.pledgeRequirement && matchesPledge(filter.pledgeRequirement, chat.chatGroup ?? '', chat.collateral ?? '')) {
+    score += overviewMatchWeights.pledge;
+  }
+  return score;
 };
 
 const MARKET_CLOCK_MINUTES = 11 * 60;
@@ -187,6 +228,13 @@ const waitMinutesOf = (chat: ChatThread) => {
 };
 
 const filteredOpponentItems = computed<OpponentThreadView[]>(() => {
+  const minAmountValue = parseOptionalNumber(minAmount.value);
+  const maxAmountValue = parseOptionalNumber(maxAmount.value);
+  const minRateValue = parseOptionalNumber(minRate.value);
+  const maxRateValue = parseOptionalNumber(maxRate.value);
+  const accountKeywordValue = accountKeyword.value.trim().toLowerCase();
+  const collateralKeywordValue = collateralKeyword.value.trim().toLowerCase();
+
   return props.chats
     .map((chat) => {
       const quote = quoteById.value.get(chat.relatedQuoteId);
@@ -196,15 +244,34 @@ const filteredOpponentItems = computed<OpponentThreadView[]>(() => {
         quote,
         level: quote?.level ?? 'level1',
         isBest: quote?.status === 'best',
-        waitLabel: `${waitMinutesOf(chat)}min`
+        waitLabel: `${waitMinutesOf(chat)}min`,
+        overviewScore: scoreOverviewChat(chat)
       };
     })
     .filter((item) => {
-      if (!matchesOverviewChat(item.chat)) return false;
+      if (props.overviewFilter && (item.overviewScore ?? 0) <= 0) return false;
       if (opponentStatus.value !== 'all' && item.chat.status !== opponentStatus.value) return false;
-      return item.level === opponentLevel.value;
+      if (item.level !== opponentLevel.value) return false;
+      if (onlySame.value && props.selectedAccount && !item.quote?.allowedAccounts.includes(props.selectedAccount.id)) return false;
+
+      const chatTenor = normalizeChatTenor(item.chat.chatTenor);
+      if ((minTenor.value || maxTenor.value) && (!chatTenor || !tenorInRange(chatTenor))) return false;
+      if (minAmountValue !== null && (item.chat.chatAmount ?? 0) < minAmountValue) return false;
+      if (maxAmountValue !== null && (item.chat.chatAmount ?? 0) > maxAmountValue) return false;
+      if (minRateValue !== null && (item.chat.chatRate ?? 0) < minRateValue) return false;
+      if (maxRateValue !== null && (item.chat.chatRate ?? 0) > maxRateValue) return false;
+      if (accountKeywordValue && !normalizeText(item.chat.chatLimit).includes(accountKeywordValue)) return false;
+      if (collateralKeywordValue && !normalizeText(`${item.chat.chatGroup ?? ''} ${item.chat.collateral ?? ''}`).includes(collateralKeywordValue)) {
+        return false;
+      }
+
+      return true;
     })
     .sort((a, b) => {
+      if (props.overviewFilter) {
+        const overviewRank = (b.overviewScore ?? 0) - (a.overviewScore ?? 0);
+        if (overviewRank !== 0) return overviewRank;
+      }
       const statusRankA = a.chat.status === 'unreplied' ? 0 : 1;
       const statusRankB = b.chat.status === 'unreplied' ? 0 : 1;
       return statusRankA - statusRankB || clockMinutes(b.chat.time) - clockMinutes(a.chat.time);
@@ -244,6 +311,7 @@ const quoteLines = computed<QuoteLine[]>(() => {
     const candidateTenors = quote.tenor ? [quote.tenor] : props.tenors;
     for (const tenor of candidateTenors) {
       if (activeTenor.value !== 'all' && tenor !== activeTenor.value) continue;
+      if ((minTenor.value || maxTenor.value) && !tenorInRange(tenor)) continue;
       const rate = quote.rates[tenor] ?? (quote.tenor === tenor ? quote.rate : undefined);
       if (!rate) continue;
 
@@ -255,7 +323,8 @@ const quoteLines = computed<QuoteLine[]>(() => {
 
       const accountRequirement = quote.accountRequirement || quote.limit;
       const collateralRequirement = quote.collateralRequirement || quote.collateral;
-      if (!matchesOverviewQuote(quote, tenor, accountRequirement, collateralRequirement)) continue;
+      const overviewScore = scoreOverviewQuote(quote, tenor, accountRequirement, collateralRequirement);
+      if (props.overviewFilter && overviewScore <= 0) continue;
       if (accountKeywordValue && !String(accountRequirement ?? '').toLowerCase().includes(accountKeywordValue)) continue;
       if (collateralKeywordValue && !String(collateralRequirement ?? '').toLowerCase().includes(collateralKeywordValue)) continue;
 
@@ -274,9 +343,14 @@ const quoteLines = computed<QuoteLine[]>(() => {
         status: quote.status,
         isMatched: isMatch(quote, tenor, rate),
         isSelected: quote.id === props.selectedQuoteId,
-        isSent: Boolean(quote.sent)
+        isSent: Boolean(quote.sent),
+        overviewScore
       });
     }
+  }
+
+  if (props.overviewFilter) {
+    lines.sort((a, b) => (b.overviewScore ?? 0) - (a.overviewScore ?? 0));
   }
 
   return lines;
@@ -393,45 +467,56 @@ const exportQuotes = () => {
       </div>
     </div>
 
-    <div class="market-panel__filter-line">
+    <div v-if="overviewFilterChips.length" class="market-panel__filter-line">
       <span>当前过滤:</span>
-      <template v-if="overviewFilterChips.length">
-        <button
-          v-for="chip in overviewFilterChips"
-          :key="chip.key"
-          class="filter-chip-button"
-          type="button"
-          @click="clearOverviewFilter"
-        >
-          {{ chip.label }} ×
-        </button>
-        <button class="filter-clear-button" type="button" @click="clearOverviewFilter">清除全部</button>
-      </template>
-      <em v-else>全部对手</em>
+      <button
+        v-for="chip in overviewFilterChips"
+        :key="chip.key"
+        class="filter-chip-button"
+        type="button"
+        @click="clearOverviewFilter"
+      >
+        {{ chip.label }} ×
+      </button>
+      <button class="filter-clear-button" type="button" @click="clearOverviewFilter">清除全部</button>
     </div>
+
+    <MarketFilterBar
+      :active-level="currentLevel"
+      :tenors="tenors"
+      :min-tenor="minTenor"
+      :max-tenor="maxTenor"
+      :min-amount="minAmount"
+      :max-amount="maxAmount"
+      :min-rate="minRate"
+      :max-rate="maxRate"
+      :account-keyword="accountKeyword"
+      :collateral-keyword="collateralKeyword"
+      :only-same="onlySame"
+      @update:active-level="setCurrentLevel"
+      @update:min-tenor="minTenor = $event"
+      @update:max-tenor="maxTenor = $event"
+      @update:min-amount="minAmount = $event"
+      @update:max-amount="maxAmount = $event"
+      @update:min-rate="minRate = $event"
+      @update:max-rate="maxRate = $event"
+      @update:account-keyword="accountKeyword = $event"
+      @update:collateral-keyword="collateralKeyword = $event"
+      @update:only-same="onlySame = $event"
+      @export-quotes="exportQuotes"
+    />
 
     <OpponentList
       v-if="activeView === 'opponents'"
       v-model:active-status="opponentStatus"
       v-model:active-level="opponentLevel"
       :items="filteredOpponentItems"
+      :show-level-controls="false"
       @open-chat="openChatItem"
     />
 
     <div v-else class="market-board-view">
       <div class="market-top">
-        <MarketFilterBar
-          v-model:active-level="activeLevel"
-          v-model:min-amount="minAmount"
-          v-model:max-amount="maxAmount"
-          v-model:min-rate="minRate"
-          v-model:max-rate="maxRate"
-          v-model:account-keyword="accountKeyword"
-          v-model:collateral-keyword="collateralKeyword"
-          v-model:only-same="onlySame"
-          @export-quotes="exportQuotes"
-        />
-
         <MarketTitleBar
           v-model:active-tenor="activeTenor"
           v-model:active-direction="activeDirection"
