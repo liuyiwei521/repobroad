@@ -126,21 +126,20 @@ export interface ChatThread {
   time: string;
   waitMinutes?: number;
   relatedQuoteId: string;
-  unread: number;
+  unread?: number;
   messages: Array<{
     id: string;
     from: 'trader' | 'counterparty' | 'ai';
     text: string;
     time: string;
   }>;
-  // Two-line chat display fields
-  username: string;       // e.g. "shrc_kai"
-  collateral: string;     // e.g. "利率债", "国股存单"
-  chatTenor: Tenor;       // main quoted tenor
-  chatRate: number;       // quoted rate
-  chatAmount: number;     // quoted amount (亿)
-  chatGroup: string;      // e.g. "利率地方"
-  chatLimit: string;      // e.g. "自营/理财"
+  username: string;
+  collateral?: string;
+  chatTenor?: string;
+  chatRate?: number;
+  chatAmount?: number;
+  chatGroup?: string;
+  chatLimit?: string;
 }
 
 export interface ResearchCard {
@@ -155,6 +154,28 @@ export interface ResearchCard {
 }
 
 export const tenors: Tenor[] = ['R001', 'R007', 'R014', 'R021', 'R028'];
+
+export const tenorLabels: Record<Tenor, string> = {
+  R001: '1D',
+  R007: '7D',
+  R014: '14D',
+  R021: '21D',
+  R028: '28D'
+};
+
+export const tenorLabel = (tenor: string | undefined): string =>
+  tenor ? tenorLabels[tenor as Tenor] ?? tenor : '';
+
+export const normalizeChatTenor = (tenor: string | undefined): Tenor | undefined => {
+  if (!tenor) return undefined;
+  const normalized = tenor.trim().toUpperCase();
+  if (normalized === 'R001' || normalized === '1D' || normalized === '1天' || normalized === '1' || normalized === 'O/N' || tenor === '隔夜') return 'R001';
+  if (normalized === 'R007' || normalized === '7D' || normalized === '7天' || normalized === '7') return 'R007';
+  if (normalized === 'R014' || normalized === '14D' || normalized === '14天' || normalized === '14') return 'R014';
+  if (normalized === 'R021' || normalized === '21D' || normalized === '21天' || normalized === '21') return 'R021';
+  if (normalized === 'R028' || normalized === '28D' || normalized === '28天' || normalized === '28') return 'R028';
+  return undefined;
+};
 
 export const accounts: AccountRow[] = [
   {
@@ -866,7 +887,7 @@ export const marketGroupSummaries: MarketGroupSummary[] = Array.from(
   };
 });
 
-export const chats: ChatThread[] = [
+const baseChats: ChatThread[] = [
   {
     id: 'chat-shrcb',
     counterparty: '上海农商',
@@ -876,7 +897,7 @@ export const chats: ChatThread[] = [
     waitMinutes: 8,
     relatedQuoteId: 'quote-shrcb',
     unread: 2,
-    username: 'shrc_kai',
+    username: '凯经理',
     collateral: '利率债',
     chatTenor: 'R014',
     chatRate: 1.68,
@@ -898,7 +919,7 @@ export const chats: ChatThread[] = [
     time: '10:41',
     relatedQuoteId: 'quote-hzbank',
     unread: 0,
-    username: 'hz_amy',
+    username: '艾米',
     collateral: '利率债',
     chatTenor: 'R007',
     chatRate: 1.57,
@@ -919,7 +940,7 @@ export const chats: ChatThread[] = [
     waitMinutes: 15,
     relatedQuoteId: 'quote-nbcb',
     unread: 1,
-    username: 'nb_leo',
+    username: '李欧',
     collateral: '国股存单',
     chatTenor: 'R028',
     chatRate: 1.78,
@@ -940,7 +961,7 @@ export const chats: ChatThread[] = [
     waitMinutes: 1,
     relatedQuoteId: 'quote-hzbank',
     unread: 1,
-    username: 'pf_liu',
+    username: '刘经理',
     collateral: '地方债',
     chatTenor: 'R007',
     chatRate: 1.43,
@@ -960,7 +981,7 @@ export const chats: ChatThread[] = [
     time: '10:25',
     relatedQuoteId: 'quote-beijing-r007',
     unread: 0,
-    username: 'bj_wang',
+    username: '王经理',
     collateral: '利率/存单',
     chatTenor: 'R007',
     chatRate: 1.40,
@@ -980,7 +1001,7 @@ export const chats: ChatThread[] = [
     time: '10:30',
     relatedQuoteId: 'quote-citic',
     unread: 0,
-    username: 'tk_zhang',
+    username: '张经理',
     collateral: '年金户',
     chatTenor: 'R001',
     chatRate: 1.43,
@@ -1000,7 +1021,7 @@ export const chats: ChatThread[] = [
     time: '10:20',
     relatedQuoteId: 'quote-taikang-r001',
     unread: 0,
-    username: 'thk_chen',
+    username: '陈经理',
     collateral: '国股存单',
     chatTenor: 'R001',
     chatRate: 1.42,
@@ -1021,7 +1042,7 @@ export const chats: ChatThread[] = [
     waitMinutes: 6,
     relatedQuoteId: 'quote-cmb-fund-r014',
     unread: 1,
-    username: 'cmb_zhou',
+    username: '周经理',
     collateral: '商金存单',
     chatTenor: 'R014',
     chatRate: 1.49,
@@ -1041,7 +1062,7 @@ export const chats: ChatThread[] = [
     time: '10:28',
     relatedQuoteId: 'quote-icbc-repo',
     unread: 0,
-    username: 'icbc_zhang',
+    username: '张经理',
     collateral: '国债',
     chatTenor: 'R007',
     chatRate: 2.15,
@@ -1052,8 +1073,225 @@ export const chats: ChatThread[] = [
       { id: 'm1', from: 'trader', text: 'R007 正回购，10 亿，价格如何？', time: '10:25' },
       { id: 'm2', from: 'counterparty', text: '可以，R007 2.15 给你，国债质押。', time: '10:28' }
     ]
+  },
+  {
+    id: 'chat-spdb-sparse',
+    counterparty: '兴业银行',
+    status: 'unreplied',
+    latest: '有量吗？短期的都行',
+    time: '10:55',
+    waitMinutes: 3,
+    relatedQuoteId: 'quote-shrcb',
+    unread: 1,
+    username: '王经理',
+    messages: [
+      { id: 'm1', from: 'counterparty', text: '有量吗？短期的都行', time: '10:55' },
+      { id: 'm2', from: 'ai', text: 'AI 提示：缺少明确期限、金额与价格，需人工追问。', time: '10:55' }
+    ]
+  },
+  {
+    id: 'chat-abc-sparse',
+    counterparty: '农业银行',
+    status: 'unreplied',
+    latest: '1.55 能做吗',
+    time: '10:58',
+    waitMinutes: 2,
+    relatedQuoteId: 'quote-shrcb',
+    unread: 1,
+    username: '李经理',
+    chatRate: 1.55,
+    messages: [
+      { id: 'm1', from: 'counterparty', text: '1.55 能做吗', time: '10:58' },
+      { id: 'm2', from: 'ai', text: 'AI 提示：仅识别到利率 1.55%，期限与金额缺失。', time: '10:58' }
+    ]
+  },
+  {
+    id: 'chat-bocom-sparse',
+    counterparty: '交通银行',
+    status: 'replied',
+    latest: '20亿 利率债质押 能收就收',
+    time: '10:15',
+    relatedQuoteId: 'quote-shrcb',
+    unread: 0,
+    username: '赵经理',
+    chatAmount: 20,
+    collateral: '利率债',
+    messages: [
+      { id: 'm1', from: 'counterparty', text: '20亿 利率债质押 能收就收', time: '10:15' },
+      { id: 'm2', from: 'trader', text: '好的 等确认', time: '10:16' }
+    ]
+  },
+  {
+    id: 'chat-ccb-sparse',
+    counterparty: '建设银行',
+    status: 'unreplied',
+    latest: '问下14天的价格',
+    time: '11:02',
+    waitMinutes: 1,
+    relatedQuoteId: 'quote-shrcb',
+    unread: 1,
+    username: '孙经理',
+    chatTenor: 'R014',
+    messages: [
+      { id: 'm1', from: 'counterparty', text: '问下14天的价格', time: '11:02' },
+      { id: 'm2', from: 'ai', text: 'AI 提示：识别到 14 天需求，金额与质押要求待补充。', time: '11:02' }
+    ]
   }
 ];
+
+const mockContactNames = [
+  '张经理', '李明', '王晓晨', '陈老师', '赵总', '刘佳', '孙悦', '周宁', '吴昊', '郑欣',
+  '黄晨', '马骁', '何静', '郭磊', '林璐', '高远', '唐敏', '许诺', '宋一凡', '邓琪',
+  '韩雪', '曹睿', '袁航', '蒋雯', '沈越', '程曦', '罗成', '梁夏', '谢雨', '潘宁'
+];
+
+const mockCounterparties = [
+  '工商银行', '农业银行', '中国银行', '建设银行', '交通银行', '邮储银行', '招商银行', '浦发银行',
+  '中信银行', '兴业银行', '民生银行', '光大银行', '平安银行', '华夏银行', '北京银行', '上海银行',
+  '江苏银行', '南京银行', '宁波银行', '杭州银行', '上海农商行', '重庆农商行', '广州农商行', '成都农商行',
+  '中信证券', '国泰君安', '华泰证券', '招商证券', '广发证券', '东方证券', '中金公司', '中信建投证券',
+  '易方达基金', '华夏基金', '南方基金', '嘉实基金', '招商基金', '鹏华基金', '博时基金', '华安基金',
+  '工银理财', '建信理财', '招银理财', '农银理财', '中银理财', '平安理财', '泰康资产', '太保资产',
+  '平安资产', '阳光资产'
+];
+
+const mockCollateralOptions = ['利率债', '地方债', '国股存单', '信用债', '商金存单', '大行存单', '国债', '政策性金融债', '年金户'];
+const mockChatGroups = ['利率地方', '存单商金', '信用'];
+const mockChatLimits = ['自营', '理财', '公募', '可专户', '非专户', '不限户', '专户', '资管户', '自营/理财'];
+const mockOneDayTenors = ['R001', '1D', '1天', '隔夜', '1', 'O/N'];
+const mockSevenDayTenors = ['R007', '7D', '7天', '7'];
+const mockOtherTenors = ['2', '3', '5', '13', 'R014', '14D', '21D', 'R021', 'R028', '跨月'];
+const mockRelatedQuoteIds = marketQuotes.map((quote) => quote.id);
+
+const includeMockField = (index: number, salt: number) => ((index * 7 + salt * 11) % 10) < 4;
+
+const pickMockValue = <T>(values: T[], index: number, salt = 0): T => values[(index * 13 + salt * 5) % values.length];
+
+const mockTimeOf = (index: number) => {
+  const totalMinutes = 9 * 60 + 30 + ((index * 7) % 93);
+  const hour = Math.floor(totalMinutes / 60);
+  const minute = totalMinutes % 60;
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+};
+
+const mockTenorOf = (index: number) => {
+  const bucket = index % 100;
+  if (bucket < 80) return pickMockValue(mockOneDayTenors, index, 1);
+  if (bucket < 92) return pickMockValue(mockSevenDayTenors, index, 2);
+  return pickMockValue(mockOtherTenors, index, 3);
+};
+
+const mockRateOf = (tenor: string, index: number) => {
+  const normalized = tenor.includes('7') ? 1.48 : tenor.includes('14') || tenor.includes('13') ? 1.58 : tenor.includes('21') || tenor.includes('28') || tenor.includes('跨') ? 1.66 : 1.38;
+  return Number((normalized + ((index * 3) % 18) / 100).toFixed(2));
+};
+
+const mockAmountOf = (index: number) => {
+  const raw = 0.5 + ((index * 17) % 60) / 2;
+  return Number(raw.toFixed(raw % 1 === 0 ? 0 : 1));
+};
+
+const compactMockParts = (parts: Array<string | undefined>) => parts.filter(Boolean).join('，');
+
+const createMockLatest = (tenor: string | undefined, rate: number | undefined, amount: number | undefined, collateral: string | undefined, limit: string | undefined, index: number) => {
+  const structured = compactMockParts([
+    tenor,
+    rate == null ? undefined : `${rate.toFixed(2)}`,
+    amount == null ? undefined : `${amount}亿`,
+    collateral,
+    limit
+  ]);
+  if (structured) return structured;
+  return pickMockValue(['短端有点量，价格你看下', '隔夜能不能收一点', '今天还有口子吗', '短钱可谈，等你回', '问下今天价格'], index, 9);
+};
+
+const createMockMessages = (
+  id: string,
+  latest: string,
+  time: string,
+  status: ChatStatus,
+  tenor: string | undefined,
+  rate: number | undefined,
+  amount: number | undefined,
+  index: number
+): ChatThread['messages'] => {
+  const previousMinute = Math.max(Number(time.slice(3, 5)) - 1, 0);
+  const previousTime = `${time.slice(0, 3)}${String(previousMinute).padStart(2, '0')}`;
+  const messages: ChatThread['messages'] = [
+    { id: `${id}-m1`, from: 'counterparty', text: latest, time: previousTime }
+  ];
+
+  const parsed = compactMockParts([
+    tenor ? `期限 ${tenor}` : undefined,
+    rate == null ? undefined : `利率 ${rate.toFixed(2)}%`,
+    amount == null ? undefined : `金额 ${amount} 亿`
+  ]);
+  if (parsed) {
+    messages.push({ id: `${id}-m2`, from: 'ai', text: `AI 已解析：${parsed}。`, time: previousTime });
+  } else {
+    messages.push({ id: `${id}-m2`, from: 'ai', text: 'AI 提示：信息不完整，需补期限/价格/金额。', time: previousTime });
+  }
+
+  if (status === 'replied') {
+    messages.push({
+      id: `${id}-m3`,
+      from: 'trader',
+      text: pickMockValue(['收到，我先记一下。', '价格我看到了，等我确认账户。', '可以，先挂候选。', '这笔我再核一下准入。'], index, 10),
+      time
+    });
+  } else if (index % 3 === 0) {
+    messages.push({
+      id: `${id}-m3`,
+      from: 'trader',
+      text: pickMockValue(['能拆吗？', '可专户吗？', '上午有效还是全天？', '券种限制再确认下。'], index, 11),
+      time: previousTime
+    });
+    messages.push({
+      id: `${id}-m4`,
+      from: 'counterparty',
+      text: pickMockValue(['可以拆，尽快给我量。', '专户要看名单。', '上午先有效。', '券种你发我确认。'], index, 12),
+      time
+    });
+  }
+
+  return messages;
+};
+
+const generatedChats: ChatThread[] = Array.from({ length: 200 }, (_, arrayIndex) => {
+  const index = arrayIndex + 1;
+  const id = `chat-mock-${String(index).padStart(3, '0')}`;
+  const status: ChatStatus = index % 10 < 6 ? 'unreplied' : 'replied';
+  const time = mockTimeOf(index);
+  const tenor = includeMockField(index, 1) ? mockTenorOf(index) : undefined;
+  const rate = includeMockField(index, 2) ? mockRateOf(tenor ?? mockTenorOf(index), index) : undefined;
+  const amount = includeMockField(index, 3) ? mockAmountOf(index) : undefined;
+  const collateral = includeMockField(index, 4) ? pickMockValue(mockCollateralOptions, index, 4) : undefined;
+  const chatGroup = includeMockField(index, 5) ? pickMockValue(mockChatGroups, index, 5) : undefined;
+  const chatLimit = includeMockField(index, 6) ? pickMockValue(mockChatLimits, index, 6) : undefined;
+  const unread = includeMockField(index, 7) ? (status === 'unreplied' ? (index % 3) + 1 : 0) : undefined;
+  const latest = createMockLatest(tenor, rate, amount, collateral, chatLimit, index);
+
+  return {
+    id,
+    counterparty: pickMockValue(mockCounterparties, index),
+    status,
+    latest,
+    time,
+    waitMinutes: status === 'unreplied' ? (index % 18) + 1 : undefined,
+    relatedQuoteId: pickMockValue(mockRelatedQuoteIds, index),
+    unread,
+    username: pickMockValue(mockContactNames, index),
+    collateral,
+    chatTenor: tenor,
+    chatRate: rate,
+    chatAmount: amount,
+    chatGroup,
+    chatLimit,
+    messages: createMockMessages(id, latest, time, status, tenor, rate, amount, index)
+  };
+});
+
+export const chats: ChatThread[] = [...baseChats, ...generatedChats];
 
 export const pendingAllocations: PendingAllocation[] = [
   {

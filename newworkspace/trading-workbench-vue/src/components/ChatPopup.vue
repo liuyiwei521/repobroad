@@ -69,10 +69,10 @@ const eligibleAccounts = computed(() => {
   });
 });
 
-const quoteAmount = computed(() => props.quote.amount > 0 ? props.quote.amount : props.chat.chatAmount);
+const quoteAmount = computed(() => props.quote.amount > 0 ? props.quote.amount : (props.chat.chatAmount ?? 0));
 
 const remainingOf = (account: AccountRow) => Math.max(account.targetAmount - account.allocatedAmount, 0);
-const usableLimit = (account: AccountRow) => Number(Math.min(remainingOf(account), quoteAmount.value).toFixed(1));
+const usableLimit = (account: AccountRow) => Number(Math.min(remainingOf(account), quoteAmount.value ?? 0).toFixed(1));
 
 const allocatedTotal = computed(() => {
   return eligibleAccounts.value
@@ -80,14 +80,14 @@ const allocatedTotal = computed(() => {
     .reduce((sum, account) => sum + Number(draftAmounts.value[account.id] || 0), 0);
 });
 
-const difference = computed(() => Number((quoteAmount.value - allocatedTotal.value).toFixed(2)));
+const difference = computed(() => Number(((quoteAmount.value ?? 0) - allocatedTotal.value).toFixed(2)));
 
 const quoteRate = computed(() => props.quote.rates[props.tenor] ?? props.quote.rate ?? props.chat.chatRate ?? 0);
 
 const resetDraft = () => {
   const next: Record<string, number> = {};
   const nextSelected = new Set<string>();
-  let remainingQuote = quoteAmount.value;
+  let remainingQuote = quoteAmount.value ?? 0;
   for (const account of eligibleAccounts.value) {
     nextSelected.add(account.id);
     const amount = Math.min(remainingOf(account), remainingQuote);
@@ -207,7 +207,7 @@ const openMatrixFromQuick = () => {
     counterparty: props.quote.counterparty || props.chat.counterparty,
     institution: props.quote.institution || props.quote.counterparty || props.chat.counterparty,
     term: props.tenor,
-    dealAmount: quoteAmount.value,
+    dealAmount: quoteAmount.value ?? 0,
     rate: quoteRate.value,
     direction: props.quote.direction,
     dealTime: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
@@ -307,7 +307,7 @@ onUnmounted(() => {
       </div>
 
       <div class="alloc-summary">
-        <span>已成交 <b>{{ quoteAmount.toFixed(2) }}</b> 亿</span>
+        <span>已成交 <b>{{ (quoteAmount ?? 0).toFixed(2) }}</b> 亿</span>
         <span>已分配 <b>{{ allocatedTotal.toFixed(2) }}</b> 亿</span>
         <span>待分配 <b>{{ Math.max(difference, 0).toFixed(2) }}</b> 亿</span>
       </div>

@@ -15,6 +15,7 @@ import {
   institutions as institutionSeed,
   marketGroupSummaries,
   marketQuotes as quoteSeed,
+  normalizeChatTenor,
   pendingAllocations as pendingSeed,
   researchCards,
   tenors,
@@ -61,67 +62,59 @@ const activeChat = ref<{
 
 const matrixRef = ref<{ save: () => void; collapse: () => void } | null>(null);
 
-// Manually adjustable left / middle / right ratio. The left (matrix) and middle
-// (research) columns are pixel-sized and draggable; the right market panel takes
-// the remaining space (1fr) so it stays the main wide area by default.
+// Three-column workspace: a fixed-width research rail on the far left, a
+// draggable matrix in the middle, and the market panel filling the remaining
+// space on the right. Only the matrix↔market boundary is draggable; the rail
+// stays at a constant width.
 const workspaceRef = ref<HTMLElement | null>(null);
-const leftWidth = ref(520);
-const midWidth = ref(100);
-const LEFT_MIN = 360;
-const LEFT_MAX = 1180;
-const MID_MIN = 100;
-const MID_MAX = 100;
+const RAIL_WIDTH = 100;
+const matrixWidth = ref(520);
+const MATRIX_MIN = 360;
+const MATRIX_MAX = 1180;
 // The right market panel keeps the remaining space; never let dragging squeeze it
 // below this width (matches the CSS `minmax(460px, 1fr)` design floor).
 const RIGHT_MIN = 460;
 const GUTTER = 8;
 const clampWidth = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
-// Usable track width = grid content box minus the two gutters.
+// Usable track width = grid content box minus the gutter.
 const trackWidth = () => {
   const el = workspaceRef.value;
   if (!el) return Infinity;
   const styles = getComputedStyle(el);
   const padX = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
-  return el.clientWidth - padX - GUTTER * 2;
+  return el.clientWidth - padX - GUTTER;
 };
 
 const workspaceStyle = computed(() =>
   matrixExpanded.value
     ? undefined
-    : { gridTemplateColumns: `${leftWidth.value}px 8px ${midWidth.value}px 8px minmax(0, 1fr)`, gap: '0' }
+    : { gridTemplateColumns: `${RAIL_WIDTH}px ${matrixWidth.value}px 8px minmax(0, 1fr)`, gap: '0' }
 );
 
-let dragSide: 'left' | 'mid' | null = null;
+let dragging = false;
 let dragStartX = 0;
-let dragStartLeft = 0;
-let dragStartMid = 0;
+let dragStartMatrix = 0;
 
 const onGutterMove = (event: PointerEvent) => {
-  if (!dragSide) return;
+  if (!dragging) return;
   const delta = event.clientX - dragStartX;
   const available = trackWidth();
-  if (dragSide === 'left') {
-    const maxLeft = Math.min(LEFT_MAX, available - midWidth.value - RIGHT_MIN);
-    leftWidth.value = clampWidth(dragStartLeft + delta, LEFT_MIN, maxLeft);
-  } else {
-    const maxMid = Math.min(MID_MAX, available - leftWidth.value - RIGHT_MIN);
-    midWidth.value = clampWidth(dragStartMid + delta, MID_MIN, maxMid);
-  }
+  const maxMatrix = Math.min(MATRIX_MAX, available - RAIL_WIDTH - RIGHT_MIN);
+  matrixWidth.value = clampWidth(dragStartMatrix + delta, MATRIX_MIN, maxMatrix);
 };
 
 const onGutterUp = () => {
-  dragSide = null;
+  dragging = false;
   document.body.classList.remove('is-col-resizing');
   window.removeEventListener('pointermove', onGutterMove);
   window.removeEventListener('pointerup', onGutterUp);
 };
 
-const onGutterDown = (side: 'left' | 'mid', event: PointerEvent) => {
-  dragSide = side;
+const onGutterDown = (event: PointerEvent) => {
+  dragging = true;
   dragStartX = event.clientX;
-  dragStartLeft = leftWidth.value;
-  dragStartMid = midWidth.value;
+  dragStartMatrix = matrixWidth.value;
   document.body.classList.add('is-col-resizing');
   window.addEventListener('pointermove', onGutterMove);
   window.addEventListener('pointerup', onGutterUp);
@@ -353,24 +346,27 @@ const sendQuote = (quote: MarketQuote, tenor: Tenor) => {
 const openChat = (chat: ChatThread, anchor?: PopupAnchor) => {
   const quote = quotes.value.find((item) => item.id === chat.relatedQuoteId) ?? quotes.value[0];
   if (!quote) return;
-  const tenor = chat.chatTenor ?? (
+  const normalizedChatTenor = normalizeChatTenor(chat.chatTenor);
+  const tenor = normalizedChatTenor ?? (
     selectedAccount.value && quote.rates[selectedAccount.value.tenor]
       ? selectedAccount.value.tenor
       : firstRateTenor(quote)
   );
+  const chatRate = chat.chatRate ?? quote.rates[tenor] ?? quote.rate;
+  const chatAmount = chat.chatAmount ?? quote.tenorAmounts[tenor] ?? quote.amount;
   const quoteContext = {
     ...quoteForTenor(quote, tenor),
     counterparty: chat.counterparty,
     institution: chat.counterparty,
-    group: chat.chatGroup,
-    amount: chat.chatAmount,
-    rate: chat.chatRate,
-    limit: chat.chatLimit,
-    accountRequirement: chat.chatLimit,
-    collateral: chat.collateral,
-    collateralRequirement: chat.collateral,
-    rates: { ...quote.rates, [tenor]: chat.chatRate },
-    tenorAmounts: { ...quote.tenorAmounts, [tenor]: chat.chatAmount }
+    group: chat.chatGroup ?? quote.group,
+    amount: chatAmount,
+    rate: chatRate,
+    limit: chat.chatLimit ?? quote.limit,
+    accountRequirement: chat.chatLimit ?? quote.accountRequirement,
+    collateral: chat.collateral ?? quote.collateral,
+    collateralRequirement: chat.collateral ?? quote.collateralRequirement,
+    rates: { ...quote.rates, [tenor]: chatRate },
+    tenorAmounts: { ...quote.tenorAmounts, [tenor]: chatAmount }
   };
   selectedQuoteId.value = quote.id;
   activeChat.value = { chat, quote: quoteContext, tenor, anchor };
@@ -481,6 +477,14 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
     <TopBar :selected-context="selectedContext" :notice-count="noticeCount" :last-action="lastAction" />
 
     <div ref="workspaceRef" class="workspace-grid" :class="{ 'is-matrix-mode': matrixExpanded }" :style="workspaceStyle">
+      <ResearchPanel
+        class="research-panel--compact"
+        :cards="researchCards"
+        :active-card="activeCard"
+        @open-card="activeCard = $event"
+        @close-card="activeCard = null"
+      />
+
       <TaskOverviewMatrix
         v-if="!matrixExpanded"
         class="matrix-workspace"
@@ -516,27 +520,9 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
         class="workspace-gutter"
         role="separator"
         aria-orientation="vertical"
-        aria-label="拖动调整左侧面板宽度"
-        title="拖动调整左右比例"
-        @pointerdown="onGutterDown('left', $event)"
-      ></div>
-
-      <ResearchPanel
-        class="research-panel--compact"
-        :cards="researchCards"
-        :active-card="activeCard"
-        @open-card="activeCard = $event"
-        @close-card="activeCard = null"
-      />
-
-      <div
-        v-if="!matrixExpanded"
-        class="workspace-gutter"
-        role="separator"
-        aria-orientation="vertical"
-        aria-label="拖动调整中间面板宽度"
-        title="拖动调整左右比例"
-        @pointerdown="onGutterDown('mid', $event)"
+        aria-label="拖动调整中间矩阵宽度"
+        title="拖动调整矩阵宽度"
+        @pointerdown="onGutterDown($event)"
       ></div>
 
       <MarketPanel
