@@ -1,4 +1,19 @@
 import { Fragment, useEffect, useRef, useState } from "react";
+import {
+  Activity,
+  BadgePercent,
+  Banknote,
+  Download,
+  Gauge,
+  Landmark,
+  LineChart as LineChartIcon,
+  Network,
+  RefreshCcw,
+  Repeat,
+  SlidersHorizontal,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 
 type TrendMode = "intraday" | "history" | "comparison";
 type SentimentTab = "realtime" | "trend";
@@ -105,6 +120,30 @@ type ExchangeMarketSplitSection = {
   }[];
 };
 
+type EntryDisplayMode = "icon" | "compact" | "summary" | "wide-preview";
+type ModuleEntryId =
+  | "big-bank-price"
+  | "xrepo"
+  | "exchange-repo"
+  | "ncd"
+  | "weighted-price"
+  | "anonymous-trade"
+  | "institution-period"
+  | "global-filter"
+  | "market-sentiment";
+type ActiveFrame = {
+  id: ModuleEntryId;
+  title: string;
+} | null;
+type ModuleEntryConfig = {
+  id: ModuleEntryId;
+  group: string;
+  title: string;
+  description: string;
+  statusText: string;
+  icon: LucideIcon;
+};
+
 const TODAY_STR = "2026-05-10";
 
 const chartPalette = {
@@ -115,6 +154,81 @@ const chartPalette = {
   pink: "#f472b6",
   red: "#f87171",
 } as const;
+
+const moduleEntries: readonly ModuleEntryConfig[] = [
+  {
+    id: "big-bank-price",
+    group: "行情摘要",
+    title: "今天大行价格",
+    description: "大行当日隔夜和 7 天资金价格",
+    statusText: "10:53:27",
+    icon: Banknote,
+  },
+  {
+    id: "xrepo",
+    group: "行情摘要",
+    title: "XREPO",
+    description: "匿名回购报价、发送与下载",
+    statusText: "R001 / R007",
+    icon: Repeat,
+  },
+  {
+    id: "exchange-repo",
+    group: "行情摘要",
+    title: "交易所回购",
+    description: "上交所、深交所核心期限行情",
+    statusText: "GC001 / R-001",
+    icon: Landmark,
+  },
+  {
+    id: "ncd",
+    group: "行情摘要",
+    title: "NCD",
+    description: "一级、二级存单收益率曲线",
+    statusText: "1M / 3M / 1Y",
+    icon: BadgePercent,
+  },
+  {
+    id: "weighted-price",
+    group: "趋势分析",
+    title: "加权价格走势",
+    description: "R001 历史走势、成交量和对比品种",
+    statusText: "R001",
+    icon: LineChartIcon,
+  },
+  {
+    id: "anonymous-trade",
+    group: "趋势分析",
+    title: "匿名成交走势",
+    description: "日内成交走势与叠加品种",
+    statusText: "日内",
+    icon: Activity,
+  },
+  {
+    id: "institution-period",
+    group: "趋势分析",
+    title: "机构分期限统计",
+    description: "期限、指标、机构图例、多线图",
+    statusText: "R001",
+    icon: Network,
+  },
+  {
+    id: "global-filter",
+    group: "全局工具",
+    title: "金额 / 利率筛选",
+    description: "主报价区金额、利率过滤条件",
+    statusText: "已应用",
+    icon: SlidersHorizontal,
+  },
+  {
+    id: "market-sentiment",
+    group: "全局工具",
+    title: "DR007 / 资金情绪",
+    description: "DR007、全市场资金情绪指标",
+    statusText: "平衡",
+    icon: Gauge,
+  },
+] as const;
 
 const initialBankRateRows: readonly BankRateRow[] = [
   {
@@ -241,27 +355,30 @@ const leftSections: readonly (
     layout: "table",
     title: "XREPO",
     columns: [
-      "期限",
-      "可点击量",
-      "正回购金额",
-      "正回购利率",
-      "逆回购利率",
-      "逆回购金额",
-      "可点击量",
-      "操作",
+      "合约名称",
+      "正回购量(亿)",
+      "正回购利率(%)",
+      "逆回购利率(%)",
+      "逆回购量(亿)",
     ],
     rows: [
-      ["R001", "(4)", "442亿", "2.00%", "1.95%", "442亿", "(12)", "发送"],
-      ["R007", "(4)", "28亿", "2.00%", "1.25%", "442亿", "(12)", "发送"],
-      ["R014", "(4)", "442亿", "2.00%", "1.95%", "442亿", "(12)", "发送"],
-      ["R021", "(4)", "442亿", "2.00%", "1.95%", "442亿", "(12)", "发送"],
+      ["R001", "5 (0)", "1.36", "1.25", "1185 (0)"],
+      ["R001", "-", "-", "1.36", "30 (7)"],
+      ["R001", "-", "-", "1.38", "70 (62)"],
+      ["R001_mini", "0.6 (0)", "1.38", "1.30", "12 (0)"],
+      ["DFR001_mini", "5 (0)", "1.37", "1.38", "47 (34)"],
+      ["CDR001_mini", "20.6 (0)", "1.40", "1.41", "20 (10)"],
+      ["R004", "-", "-", "1.42", "3 (0)"],
+      ["R007", "2 (0)", "1.42", "1.40", "132 (0)"],
+      ["R007_mini", "-", "-", "-", "-"],
+      ["R014", "-", "-", "1.45", "5 (0)"],
+      ["R014_mini", "-", "-", "-", "-"],
     ],
-    greenColumns: [4],
-    redColumns: [3],
-    emphasisColumns: [1, 6],
-    buttonColumn: 7,
+    greenColumns: [3],
+    redColumns: [2],
+    emphasisColumns: [1, 4],
     fitToWidth: true,
-    columnWidths: ["14%", "10%", "14%", "12%", "12%", "14%", "10%", "14%"],
+    columnWidths: ["24%", "19%", "19%", "19%", "19%"],
     scrollable: false,
   },
   {
@@ -1919,16 +2036,16 @@ function FloatingBall() {
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       style={{ left: pos.x, top: pos.y }}
-      className="fixed z-[9999] flex h-16 w-16 cursor-grab select-none items-center justify-center rounded-full bg-blue-600/60 shadow-lg backdrop-blur active:cursor-grabbing"
+      className="fixed z-[30] flex h-16 w-16 cursor-grab select-none items-center justify-center rounded-full bg-blue-600/60 shadow-lg backdrop-blur active:cursor-grabbing"
     >
       <span className="text-xl font-bold text-white">42</span>
     </div>
   );
 }
 
-const DEFAULT_COLUMN_RATIOS: [number, number, number] = [23, 47, 30];
-const COLUMN_RATIOS_KEY = "boardColumnRatios.v1";
-const COLUMN_MIN: [number, number, number] = [16, 28, 20];
+const DEFAULT_COLUMN_RATIOS: [number, number, number] = [24, 52, 24];
+const COLUMN_RATIOS_KEY = "boardColumnRatios.v2";
+const COLUMN_MIN: [number, number, number] = [4, 42, 0];
 
 function clampColumns(
   next: [number, number, number],
@@ -1983,6 +2100,10 @@ function App() {
     }
     return DEFAULT_COLUMN_RATIOS;
   });
+  const [activeFrame, setActiveFrame] = useState<ActiveFrame>(null);
+  const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
+  const [historyRange, setHistoryRange] = useState<HistoryRange>("5d");
+  const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
   const mainRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -2051,15 +2172,17 @@ function App() {
     setColumns(DEFAULT_COLUMN_RATIOS);
   }
 
-  const gridTemplate = `${columns[0]}% 10px ${columns[1]}% 10px ${columns[2]}%`;
-  const topGridTemplate = `${columns[0]}fr ${columns[1]}fr ${columns[2]}fr`;
+  function openFrame(entry: ModuleEntryConfig) {
+    setActiveFrame({ id: entry.id, title: entry.title });
+  }
 
+  const railWidth = columns[0];
+  const gridTemplate = `${railWidth}% 10px ${100 - railWidth}%`;
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#09111d] text-slate-100">
       <div className="flex h-full flex-col">
         <TopBar
           currentTime={currentTime}
-          gridTemplateColumns={topGridTemplate}
           onResetColumns={resetColumns}
         />
         <main
@@ -2067,13 +2190,58 @@ function App() {
           className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] overflow-hidden px-3 pb-3 pt-2"
           style={{ gridTemplateColumns: gridTemplate, columnGap: 0 }}
         >
-          <LeftSummaryPanel />
+          <AdaptiveEntryRail
+            activeId={activeFrame?.id ?? null}
+            entries={moduleEntries}
+            onOpen={openFrame}
+          />
           <ColumnSplitter onMouseDown={(e) => startDragSplitter(e, 0)} />
           <MainQuoteBoard />
-          <ColumnSplitter onMouseDown={(e) => startDragSplitter(e, 1)} />
-          <RightSidebar />
         </main>
       </div>
+      {activeFrame ? (
+        <PageFrame
+          title={activeFrame.title}
+          onClose={() => setActiveFrame(null)}
+        >
+          {activeFrame.id === "big-bank-price" ? (
+            <BigBankPriceFrame />
+          ) : activeFrame.id === "weighted-price" ? (
+            <div className="h-full min-h-0">
+              <HistoryClosePanel
+                activeRange={historyRange}
+                overlayProduct={overlayProduct}
+                compareProduct={compareProduct}
+                onRangeChange={setHistoryRange}
+                onCompareChange={setCompareProduct}
+              />
+            </div>
+          ) : activeFrame.id === "anonymous-trade" ? (
+            <div className="h-full min-h-0">
+              <IntradayPanel
+                overlayProduct={overlayProduct}
+                onOverlayChange={setOverlayProduct}
+              />
+            </div>
+          ) : activeFrame.id === "institution-period" ? (
+            <div className="h-full min-h-0 rounded-xl border border-[#284164] bg-[#0b1728] p-3">
+              <CfetsInstPanel />
+            </div>
+          ) : activeFrame.id === "xrepo" ? (
+            <XrepoFrame />
+          ) : activeFrame.id === "exchange-repo" ? (
+            <ExchangeRepoFrame />
+          ) : activeFrame.id === "ncd" ? (
+            <LeftNcdCard />
+          ) : activeFrame.id === "global-filter" ? (
+            <GlobalFilterFrame />
+          ) : activeFrame.id === "market-sentiment" ? (
+            <MarketSentimentFrame />
+          ) : (
+            <ReservedModuleFrame />
+          )}
+        </PageFrame>
+      ) : null}
       <FloatingBall />
     </div>
   );
@@ -2097,20 +2265,701 @@ function ColumnSplitter({
   );
 }
 
+function AdaptiveEntryRail({
+  entries,
+  activeId,
+  onOpen,
+}: {
+  entries: readonly ModuleEntryConfig[];
+  activeId: ModuleEntryId | null;
+  onOpen: (entry: ModuleEntryConfig) => void;
+}) {
+  const railRef = useRef<HTMLElement>(null);
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    const node = railRef.current;
+    if (!node) return;
+    const update = () => setWidth(node.getBoundingClientRect().width);
+    update();
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", update);
+      return () => window.removeEventListener("resize", update);
+    }
+    const observer = new ResizeObserver((records) => {
+      const nextWidth = records[0]?.contentRect.width ?? 0;
+      setWidth(nextWidth);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  const displayMode: EntryDisplayMode =
+    width <= 72
+      ? "icon"
+      : width <= 180
+        ? "compact"
+        : width <= 280
+          ? "summary"
+          : "wide-preview";
+  const groups = Array.from(new Set(entries.map((entry) => entry.group)));
+
+  return (
+    <aside
+      ref={railRef}
+      className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pr-1"
+    >
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
+        <div
+          className={`border-b border-[#18263b] bg-[#101b2c] ${
+            displayMode === "icon" ? "px-1.5 py-2" : "px-3 py-2.5"
+          }`}
+        >
+          {displayMode === "icon" ? (
+            <div className="text-center text-[10px] font-semibold text-slate-400">
+              入口
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold text-slate-50">
+                  行情入口
+                </div>
+                {displayMode === "wide-preview" ? (
+                  <div className="mt-0.5 truncate text-[11px] text-slate-500">
+                    小图 / 小表格预览
+                  </div>
+                ) : null}
+              </div>
+              <div className="rounded border border-[#243a5c] bg-[#0b1424] px-1.5 py-0.5 text-[10px] text-slate-500">
+                {Math.round(width)}px
+              </div>
+            </div>
+          )}
+        </div>
+        <div
+          className={`min-h-0 flex-1 overflow-y-auto ${
+            displayMode === "icon" ? "p-1.5" : "p-2"
+          }`}
+        >
+          {groups.map((group) => (
+            <div
+              key={group}
+              className={displayMode === "icon" ? "space-y-1.5" : "space-y-2"}
+            >
+              {displayMode === "wide-preview" ? (
+                <div className="px-1 pb-1 pt-2 text-[11px] font-semibold text-slate-500">
+                  {group}
+                </div>
+              ) : null}
+              {entries
+                .filter((entry) => entry.group === group)
+                .map((entry) => (
+                  <ModuleEntryItem
+                    key={entry.id}
+                    entry={entry}
+                    active={entry.id === activeId}
+                    displayMode={displayMode}
+                    onOpen={() => onOpen(entry)}
+                  />
+                ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function ModuleEntryItem({
+  entry,
+  active,
+  displayMode,
+  onOpen,
+}: {
+  entry: ModuleEntryConfig;
+  active: boolean;
+  displayMode: EntryDisplayMode;
+  onOpen: () => void;
+}) {
+  const Icon = entry.icon;
+  const metric = getModuleEntryData(entry.id);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+
+  function showPreview() {
+    setAnchorRect(buttonRef.current?.getBoundingClientRect() ?? null);
+  }
+
+  function hidePreview() {
+    setAnchorRect(null);
+  }
+
+  const compact = displayMode === "icon" || displayMode === "compact";
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        type="button"
+        aria-label={entry.title}
+        onClick={onOpen}
+        onFocus={showPreview}
+        onBlur={hidePreview}
+        onMouseEnter={showPreview}
+        onMouseLeave={hidePreview}
+        className={`group w-full min-w-0 overflow-hidden rounded-lg border text-left transition-colors ${
+          active
+            ? "border-[#4c85ff] bg-[#153463] shadow-[0_0_0_1px_rgba(76,133,255,0.28)]"
+            : "border-[#1d2e47] bg-[#0b1424] hover:border-[#335780] hover:bg-[#101d32]"
+        } ${
+          displayMode === "icon"
+            ? "flex h-11 items-center justify-center px-0"
+            : "px-2.5 py-2"
+        }`}
+      >
+        <div
+          className={`flex min-w-0 items-center ${
+            displayMode === "icon" ? "justify-center" : "gap-2"
+          }`}
+        >
+          <span
+            className={`inline-flex shrink-0 items-center justify-center rounded-md border ${
+              active
+                ? "border-blue-300/40 bg-blue-300/15 text-blue-100"
+                : "border-[#2b4264] bg-[#101b2c] text-slate-300"
+            } ${displayMode === "icon" ? "h-8 w-8" : "h-7 w-7"}`}
+          >
+            <Icon size={displayMode === "icon" ? 17 : 15} />
+          </span>
+          {displayMode !== "icon" ? (
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-xs font-semibold text-slate-100">
+                {entry.title}
+              </span>
+              {displayMode === "summary" || displayMode === "wide-preview" ? (
+                <span className="mt-0.5 block truncate text-[11px] font-medium text-slate-400">
+                  {metric.summary}
+                </span>
+              ) : null}
+            </span>
+          ) : null}
+          {!compact && displayMode !== "wide-preview" ? (
+            <span className="shrink-0 rounded border border-[#273d60] px-1.5 py-0.5 text-[10px] text-slate-400">
+              {metric.badge}
+            </span>
+          ) : null}
+        </div>
+        {displayMode === "wide-preview" ? (
+          <div className="mt-2 border-t border-[#182940] pt-2">
+            <ModuleEntryPreview id={entry.id} />
+          </div>
+        ) : null}
+      </button>
+      {anchorRect ? (
+        <EntryPreviewPopover anchorRect={anchorRect} entry={entry} />
+      ) : null}
+    </>
+  );
+}
+
+function getModuleEntryData(id: ModuleEntryId): {
+  summary: string;
+  badge: string;
+  rows: readonly (readonly [string, string])[];
+} {
+  if (id === "big-bank-price") {
+    const on = initialBankRateRows.find(
+      (row) => row.institution === "工商银行" && row.tenor === "ON",
+    );
+    const seven = initialBankRateRows.find(
+      (row) => row.institution === "工商银行" && row.tenor === "7D",
+    );
+    return {
+      summary: `ON 非银 ${on?.nonBankRate ?? "-"} / 银行 ${on?.bankRate ?? "-"} · 7D ${seven?.nonBankRate ?? "-"}`,
+      badge: on?.updatedAt.slice(0, 5) ?? "实时",
+      rows: [
+        ["工商 ON", `非银 ${on?.nonBankRate ?? "-"} / 银行 ${on?.bankRate ?? "-"}`],
+        ["工商 7D", `非银 ${seven?.nonBankRate ?? "-"} / 银行 ${seven?.bankRate ?? "-"}`],
+      ],
+    };
+  }
+
+  if (id === "xrepo") {
+    const section = leftSections.find(
+      (item): item is SummaryTableSection =>
+        item.layout === "table" && item.title === "XREPO",
+    );
+    const r001 = section?.rows[0];
+    const r007 = section?.rows.find((row) => row[0] === "R007");
+    return {
+      summary: r001
+        ? `R001 正 ${r001[1]}@${r001[2]} · 逆 ${r001[4]}@${r001[3]}`
+        : "双边报价待更新",
+      badge: "双边",
+      rows: [
+        ["R001", r001 ? `正 ${r001[1]}@${r001[2]} / 逆 ${r001[4]}@${r001[3]}` : "-"],
+        ["R007", r007 ? `正 ${r007[1]}@${r007[2]} / 逆 ${r007[4]}@${r007[3]}` : "-"],
+      ],
+    };
+  }
+
+  if (id === "exchange-repo") {
+    return {
+      summary: "GC001 1.3700(-1.00bp) · R-001 1.3900(-1.50bp)",
+      badge: "双市",
+      rows: [
+        ["上交所 GC001", "1.3700 / -1.00bp"],
+        ["深交所 R-001", "1.3900 / -1.50bp"],
+      ],
+    };
+  }
+
+  if (id === "ncd") {
+    const oneMonth = ncdTrendSeries.at(-1) ?? 0;
+    const threeMonth = ncdThreeMonthSeries.at(-1) ?? 0;
+    const oneYear = ncdOneYearSeries.at(-1) ?? 0;
+    return {
+      summary: `1M ${oneMonth.toFixed(3)}% · 3M ${threeMonth.toFixed(3)}% · 1Y ${oneYear.toFixed(3)}%`,
+      badge: "近14日",
+      rows: [
+        ["1M", `${oneMonth.toFixed(3)}%`],
+        ["3M", `${threeMonth.toFixed(3)}%`],
+        ["1Y", `${oneYear.toFixed(3)}%`],
+      ],
+    };
+  }
+
+  if (id === "weighted-price") {
+    const dataset = historicalCloseDatasets["5d"];
+    const latest = dataset.close.at(-1) ?? 0;
+    const prev = dataset.close.at(-2) ?? latest;
+    const volume = dataset.volume.at(-1) ?? 0;
+    const bp = ((latest - prev) * 100).toFixed(1);
+    return {
+      summary: `R001 ${latest.toFixed(3)}% · ${bp.startsWith("-") ? "" : "+"}${bp}bp · 量 ${volume}亿`,
+      badge: "5日",
+      rows: [
+        ["最新加权", `${latest.toFixed(3)}%`],
+        ["较前日", `${bp.startsWith("-") ? "" : "+"}${bp}bp`],
+        ["成交量", `${volume}亿`],
+      ],
+    };
+  }
+
+  if (id === "anonymous-trade") {
+    const latest = intradaySeries.at(-1) ?? 0;
+    const prev = intradaySeries.at(-2) ?? latest;
+    const volume = intradayVolumeSeries.at(-1) ?? 0;
+    const bp = ((latest - prev) * 100).toFixed(1);
+    return {
+      summary: `R001 ${latest.toFixed(3)}% · ${bp.startsWith("-") ? "" : "+"}${bp}bp · 成交 ${volume}亿`,
+      badge: "日内",
+      rows: [
+        ["最新成交", `${latest.toFixed(3)}%`],
+        ["上一点位", `${prev.toFixed(3)}%`],
+        ["成交量", `${volume}亿`],
+      ],
+    };
+  }
+
+  if (id === "institution-period") {
+    return {
+      summary: "R001 大行买入1.92% · 基金融入1500亿 · 净融入+420亿",
+      badge: "R001",
+      rows: [
+        ["大行", "买入利率 1.92%"],
+        ["基金", "融入 1500亿"],
+        ["全市场", "净融入 +420亿"],
+      ],
+    };
+  }
+
+  if (id === "global-filter") {
+    return {
+      summary: `金额 ${topBoardFilters.amountMin}-${topBoardFilters.amountMax}亿 · 利率 ${topBoardFilters.rateMin}-${topBoardFilters.rateMax}%`,
+      badge: "筛选",
+      rows: [
+        ["金额", `${topBoardFilters.amountMin} - ${topBoardFilters.amountMax}亿`],
+        ["利率", `${topBoardFilters.rateMin} - ${topBoardFilters.rateMax}%`],
+      ],
+    };
+  }
+
+  return {
+    summary: "DR007 2.15% · 资金情绪 51 · 平衡",
+    badge: "平衡",
+    rows: [
+      ["DR007", "2.15%"],
+      ["资金情绪", "51 / 平衡"],
+    ],
+  };
+}
+
+function EntryPreviewPopover({
+  anchorRect,
+  entry,
+}: {
+  anchorRect: DOMRect;
+  entry: ModuleEntryConfig;
+}) {
+  const Icon = entry.icon;
+  const metric = getModuleEntryData(entry.id);
+  const width = 260;
+  const gap = 8;
+  const canOpenRight = anchorRect.right + gap + width <= window.innerWidth - 8;
+  const left = canOpenRight
+    ? anchorRect.right + gap
+    : Math.max(8, anchorRect.left - width - gap);
+  const top = Math.min(
+    Math.max(8, anchorRect.top - 8),
+    window.innerHeight - 132,
+  );
+
+  return (
+    <div
+      className="pointer-events-none fixed z-[80] rounded-lg border border-[#2a4a6e] bg-[#0e1d31]/95 p-3 text-xs text-slate-200 shadow-2xl backdrop-blur"
+      style={{ left, top, width }}
+    >
+      <div className="flex items-start gap-2">
+        <Icon className="mt-0.5 shrink-0 text-blue-300" size={16} />
+        <div className="min-w-0">
+          <div className="font-semibold text-slate-50">{entry.title}</div>
+          <div className="mt-1 leading-5 text-slate-400">{metric.summary}</div>
+          <div className="mt-2 space-y-1">
+            {metric.rows.map(([label, value]) => (
+              <div
+                key={label}
+                className="flex items-center justify-between gap-3 rounded border border-[#1f3452] bg-[#0b1424] px-2 py-1"
+              >
+                <span className="text-slate-500">{label}</span>
+                <span className="font-mono font-semibold text-slate-200">
+                  {value}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 inline-flex rounded border border-[#2a4164] bg-[#0b1424] px-2 py-0.5 text-[11px] text-slate-300">
+            {metric.badge}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ModuleEntryPreview({ id }: { id: ModuleEntryId }) {
+  if (id === "big-bank-price") {
+    const rows = initialBankRateRows
+      .filter((row) => row.hasQuote)
+      .slice(0, 4)
+      .map((row) => [
+        row.institution.replace("银行", ""),
+        BANK_TENOR_LABEL[row.tenor],
+        row.nonBankRate || "-",
+        row.bankRate || "-",
+      ]);
+    return (
+      <MiniPreviewTable
+        columns={["机构", "期", "非银", "银行"]}
+        rows={rows}
+      />
+    );
+  }
+
+  if (id === "xrepo") {
+    const section = leftSections.find(
+      (item): item is SummaryTableSection =>
+        item.layout === "table" && item.title === "XREPO",
+    );
+    return (
+      <MiniPreviewTable
+        columns={["合约", "正量", "逆量"]}
+        rows={(section?.rows ?? []).slice(0, 3).map((row) => [
+          row[0],
+          row[1],
+          row[4],
+        ])}
+      />
+    );
+  }
+
+  if (id === "exchange-repo") {
+    return (
+      <MiniPreviewTable
+        columns={["市场", "品种", "最新"]}
+        rows={[
+          ["上交所", "GC001", "1.3700"],
+          ["上交所", "GC007", "1.3750"],
+          ["深交所", "R-001", "1.3900"],
+        ]}
+      />
+    );
+  }
+
+  if (id === "ncd") {
+    return (
+      <MiniSparklinePreview
+        label="NCD 1M"
+        values={ncdTrendSeries}
+        color={chartPalette.emerald}
+        footnote="近14天"
+      />
+    );
+  }
+
+  if (id === "weighted-price") {
+    return (
+      <MiniSparklinePreview
+        label="R001 加权"
+        values={historicalCloseDatasets["5d"].close}
+        color={chartPalette.blue}
+        footnote="5日 / 成交量"
+      />
+    );
+  }
+
+  if (id === "anonymous-trade") {
+    return (
+      <MiniSparklinePreview
+        label="匿名成交"
+        values={intradaySeries}
+        color={chartPalette.amber}
+        footnote="日内走势"
+      />
+    );
+  }
+
+  if (id === "institution-period") {
+    return (
+      <MiniMetricPreview
+        rows={[
+          ["大行", "买入利率 1.92%"],
+          ["基金", "融入 1,500亿"],
+          ["券商", "净融入 +420亿"],
+        ]}
+      />
+    );
+  }
+
+  if (id === "global-filter") {
+    return (
+      <MiniMetricPreview
+        rows={[
+          ["金额", `${topBoardFilters.amountMin} - ${topBoardFilters.amountMax}亿`],
+          ["利率", `${topBoardFilters.rateMin} - ${topBoardFilters.rateMax}%`],
+        ]}
+      />
+    );
+  }
+
+  return (
+    <MiniMetricPreview
+      rows={[
+        ["DR007", "2.15%"],
+        ["资金情绪", "51 / 平衡"],
+      ]}
+    />
+  );
+}
+
+function MiniPreviewTable({
+  columns,
+  rows,
+}: {
+  columns: readonly string[];
+  rows: readonly (readonly string[])[];
+}) {
+  return (
+    <div className="overflow-hidden rounded-md border border-[#1d304a] bg-[#081120]">
+      <div
+        className="grid border-b border-[#1d304a] bg-[#101b2c] text-[10px] text-slate-500"
+        style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
+      >
+        {columns.map((column) => (
+          <div key={column} className="truncate px-1.5 py-1">
+            {column}
+          </div>
+        ))}
+      </div>
+      {rows.map((row, rowIndex) => (
+        <div
+          key={`${row[0]}-${rowIndex}`}
+          className="grid text-[10px] text-slate-300"
+          style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
+        >
+          {row.map((cell, cellIndex) => (
+            <div
+              key={`${cell}-${cellIndex}`}
+              className={`truncate px-1.5 py-1 ${
+                cellIndex > 1 ? "font-mono text-emerald-300" : ""
+              }`}
+            >
+              {cell}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MiniSparklinePreview({
+  label,
+  values,
+  color,
+  footnote,
+}: {
+  label: string;
+  values: readonly number[];
+  color: string;
+  footnote: string;
+}) {
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const points = values
+    .map((value, index) => {
+      const x = (index / Math.max(values.length - 1, 1)) * 156;
+      const y = 42 - ((value - min) / range) * 34;
+      return `${index === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
+    })
+    .join(" ");
+
+  return (
+    <div className="rounded-md border border-[#1d304a] bg-[#081120] p-2">
+      <div className="mb-1 flex items-center justify-between gap-2 text-[10px]">
+        <span className="truncate font-semibold text-slate-300">{label}</span>
+        <span className="font-mono text-slate-500">
+          {values[values.length - 1].toFixed(3)}%
+        </span>
+      </div>
+      <svg
+        className="h-[46px] w-full overflow-visible"
+        viewBox="0 0 156 46"
+        preserveAspectRatio="none"
+      >
+        <path
+          d={`${points} L 156 46 L 0 46 Z`}
+          fill={color}
+          opacity="0.12"
+        />
+        <path
+          d={points}
+          fill="none"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+        />
+      </svg>
+      <div className="mt-1 text-[10px] text-slate-500">{footnote}</div>
+    </div>
+  );
+}
+
+function MiniMetricPreview({
+  rows,
+}: {
+  rows: readonly (readonly [string, string])[];
+}) {
+  return (
+    <div className="space-y-1 rounded-md border border-[#1d304a] bg-[#081120] p-2">
+      {rows.map(([label, value]) => (
+        <div
+          key={label}
+          className="flex items-center justify-between gap-2 text-[10px]"
+        >
+          <span className="truncate text-slate-500">{label}</span>
+          <span className="truncate font-semibold text-slate-300">{value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PageFrame({
+  title,
+  onClose,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[40] flex items-center justify-center bg-[#02060d99] px-5 py-5 backdrop-blur-sm"
+      onMouseDown={onClose}
+    >
+      <section
+        className="grid h-[86vh] w-[min(1380px,calc(100vw-40px))] grid-rows-[auto_1fr] overflow-hidden rounded-lg border border-[#284164] bg-[#0a1322] shadow-[0_24px_80px_rgba(2,7,18,0.64)]"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101b2c] px-4 py-3">
+          <div className="min-w-0">
+            <div className="truncate text-base font-semibold text-slate-50">
+              {title}
+            </div>
+            <div className="mt-0.5 text-xs text-slate-500">
+              入口页框 / Esc 关闭
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              className="inline-flex items-center gap-1.5 rounded-md border border-[#293f60] bg-[#0d1726] px-2.5 py-1.5 text-xs text-slate-500 opacity-60"
+              disabled
+              type="button"
+              title="刷新能力待接入"
+            >
+              <RefreshCcw size={13} />
+              刷新
+            </button>
+            <button
+              className="inline-flex items-center gap-1.5 rounded-md border border-[#293f60] bg-[#0d1726] px-2.5 py-1.5 text-xs text-slate-500 opacity-60"
+              disabled
+              type="button"
+              title="下载能力待接入"
+            >
+              <Download size={13} />
+              下载
+            </button>
+            <button
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#33507d] bg-[#14223a] text-slate-300 hover:border-blue-400 hover:text-slate-50"
+              onClick={onClose}
+              type="button"
+              title="关闭"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+        <div className="min-h-0 overflow-hidden p-3">{children}</div>
+      </section>
+    </div>
+  );
+}
+
 function TopBar({
   currentTime,
-  gridTemplateColumns,
   onResetColumns,
 }: {
   currentTime: Date;
-  gridTemplateColumns: string;
   onResetColumns: () => void;
 }) {
   return (
     <header className="border-b border-[#1b2a42] bg-[#0d1726] px-3 py-2 shadow-[inset_0_-1px_0_rgba(74,101,140,0.18)]">
-      <div className="grid items-center gap-3" style={{ gridTemplateColumns }}>
+      <div className="grid grid-cols-[minmax(260px,max-content)_minmax(520px,1fr)_auto] items-center gap-3">
         <div className="flex items-center gap-2">
-          <div className="text-[20px] font-semibold tracking-[0.04em] text-slate-50">
+          <div className="whitespace-nowrap text-[20px] font-semibold tracking-[0.04em] text-slate-50">
             资金实时行情看板
           </div>
           <button
@@ -2166,6 +3015,305 @@ function makeEmptyBankRow(institution: string, tenor: BankTenor): BankRateRow {
 function deriveHasQuote(row: BankRateRow): boolean {
   return (
     (row.nonBankRate ?? "").trim() !== "" || (row.bankRate ?? "").trim() !== ""
+  );
+}
+
+function BigBankPriceFrame() {
+  const [whitelist, setWhitelist] = useState<string[]>([
+    ...defaultBigBankWhitelist,
+  ]);
+  const [bankRateRows, setBankRateRows] = useState<BankRateRow[]>([
+    ...initialBankRateRows,
+  ]);
+  const [draftBankRateRows, setDraftBankRateRows] = useState<BankRateRow[]>([
+    ...initialBankRateRows,
+  ]);
+  const [isBankEditorOpen, setIsBankEditorOpen] = useState(false);
+
+  const rows = bankRateRows
+    .filter((row) => row.hasQuote && whitelist.includes(row.institution))
+    .map((row) => [
+      row.institution,
+      BANK_TENOR_LABEL[row.tenor],
+      row.nonBankRate,
+      row.deltaNonBankBp,
+      row.bankRate,
+      row.deltaBp,
+      row.updatedAt,
+    ]);
+
+  function buildDraft(): BankRateRow[] {
+    const byKey = new Map<string, BankRateRow>();
+    for (const row of bankRateRows) {
+      byKey.set(`${row.institution}__${row.tenor}`, row);
+    }
+    const result: BankRateRow[] = [];
+    for (const institution of whitelist) {
+      for (const tenor of BANK_TENORS) {
+        const existing = byKey.get(`${institution}__${tenor}`);
+        result.push(
+          existing ? { ...existing } : makeEmptyBankRow(institution, tenor),
+        );
+      }
+    }
+    return result;
+  }
+
+  function openBankEditor() {
+    setDraftBankRateRows(buildDraft());
+    setIsBankEditorOpen(true);
+  }
+
+  function updateDraftRow(
+    index: number,
+    field: keyof BankRateRow,
+    value: string,
+  ) {
+    setDraftBankRateRows((current) =>
+      current.map((row, rowIndex) => {
+        if (rowIndex !== index) return row;
+        const updated: BankRateRow = { ...row, [field]: value };
+        if (field === "bankRate") {
+          const cur = parseFloat(value.replace("%", ""));
+          const ref = parseFloat(row.refBankRate.replace("%", ""));
+          if (!isNaN(cur) && !isNaN(ref)) {
+            const bp = Math.round((cur - ref) * 100 * 10) / 10;
+            updated.deltaBp = bp > 0 ? `+${bp}` : String(bp);
+          }
+        }
+        if (field === "nonBankRate") {
+          const cur = parseFloat(value.replace("%", ""));
+          const ref = parseFloat(row.refNonBankRate.replace("%", ""));
+          if (!isNaN(cur) && !isNaN(ref)) {
+            const bp = Math.round((cur - ref) * 100 * 10) / 10;
+            updated.deltaNonBankBp = bp > 0 ? `+${bp}` : String(bp);
+          }
+        }
+        return updated;
+      }),
+    );
+  }
+
+  function addInstitution(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    if (!whitelist.includes(trimmed)) {
+      setWhitelist((prev) => [...prev, trimmed]);
+    }
+    setDraftBankRateRows((current) => {
+      const exists = current.some((row) => row.institution === trimmed);
+      if (exists) return current;
+      return [
+        ...current,
+        makeEmptyBankRow(trimmed, "ON"),
+        makeEmptyBankRow(trimmed, "7D"),
+      ];
+    });
+  }
+
+  function resetDraftRows() {
+    setWhitelist([...defaultBigBankWhitelist]);
+    setDraftBankRateRows(initialBankRateRows.map((row) => ({ ...row })));
+  }
+
+  function saveBankRateRows() {
+    const now = new Date();
+    const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+    setBankRateRows(
+      draftBankRateRows.map((row) => {
+        const hasQuote = deriveHasQuote(row);
+        return {
+          ...row,
+          hasQuote,
+          updatedAt: hasQuote ? time : "",
+        };
+      }),
+    );
+    setIsBankEditorOpen(false);
+  }
+
+  return (
+    <>
+      <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[#1e2f48] bg-[#0d1726]">
+        <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold text-slate-50">
+                今天大行价格
+              </div>
+              <div className="mt-1 text-xs text-slate-500">
+                大行当日隔夜和 7 天资金价格
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1 text-xs font-medium text-slate-300"
+                onClick={openBankEditor}
+                type="button"
+              >
+                手工输入
+              </button>
+              <button
+                className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
+                type="button"
+              >
+                下载
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="min-h-0 flex-1">
+          <StructuredTable
+            columns={[
+              "机构",
+              "期限",
+              "非银利率",
+              "涨跌",
+              "银行利率",
+              "涨跌",
+              "更新时间",
+            ]}
+            rows={rows}
+            greenColumns={[2]}
+            redColumns={[4]}
+            deltaColumns={[3, 5]}
+            fitToWidth
+            flush
+            scrollY
+          />
+        </div>
+      </section>
+      <BankRateEditorModal
+        open={isBankEditorOpen}
+        rows={draftBankRateRows}
+        onChange={updateDraftRow}
+        onAddInstitution={addInstitution}
+        onClose={() => setIsBankEditorOpen(false)}
+        onReset={resetDraftRows}
+        onSave={saveBankRateRows}
+      />
+    </>
+  );
+}
+
+function XrepoFrame() {
+  const section = leftSections.find(
+    (item): item is SummaryTableSection =>
+      item.layout === "table" && item.title === "XREPO",
+  );
+  if (!section) return <ReservedModuleFrame />;
+
+  return (
+    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[#1e2f48] bg-[#0d1726]">
+      <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold text-slate-50">XREPO</div>
+            <div className="mt-1 text-xs text-slate-500">
+              匿名回购报价、发送与下载
+            </div>
+          </div>
+          <button
+            className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
+            type="button"
+          >
+            下载
+          </button>
+        </div>
+      </div>
+      <div className="min-h-0 flex-1">
+        <StructuredTable
+          columns={section.columns}
+          rows={section.rows}
+          greenColumns={section.greenColumns}
+          redColumns={section.redColumns}
+          emphasisColumns={section.emphasisColumns}
+          buttonColumn={section.buttonColumn}
+          fitToWidth
+          columnWidths={section.columnWidths}
+          flush
+          scrollY
+        />
+      </div>
+    </section>
+  );
+}
+
+function ExchangeRepoFrame() {
+  const section = leftSections.find(
+    (item): item is ExchangeMarketSplitSection =>
+      item.layout === "exchange-split",
+  );
+  if (!section) return <ReservedModuleFrame />;
+
+  return <ExchangeRepoCard title={section.title} markets={section.markets} />;
+}
+
+function GlobalFilterFrame() {
+  return (
+    <div className="grid h-full min-h-0 place-items-center rounded-xl border border-[#1e2f48] bg-[#0d1726]">
+      <div className="w-[520px] rounded-lg border border-[#263d5f] bg-[#0b1424] p-5">
+        <div className="text-sm font-semibold text-slate-50">
+          金额 / 利率筛选
+        </div>
+        <div className="mt-4 grid gap-3 text-sm">
+          <div className="flex items-center justify-between border-b border-[#1e2f48] pb-3">
+            <span className="text-slate-500">金额区间</span>
+            <span className="font-mono text-slate-200">
+              {topBoardFilters.amountMin} - {topBoardFilters.amountMax} 亿
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500">利率区间</span>
+            <span className="font-mono text-slate-200">
+              {topBoardFilters.rateMin} - {topBoardFilters.rateMax} %
+            </span>
+          </div>
+        </div>
+        <div className="mt-4 text-xs text-slate-500">
+          筛选入口已迁入页框，编辑能力后续接入。
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MarketSentimentFrame() {
+  return (
+    <div className="grid h-full min-h-0 grid-cols-[320px_1fr] gap-3 rounded-xl border border-[#1e2f48] bg-[#0d1726] p-3">
+      <div className="rounded-lg border border-[#263d5f] bg-[#0b1424] p-4">
+        <div className="text-sm font-semibold text-slate-50">
+          DR007 / 资金情绪
+        </div>
+        <div className="mt-4 space-y-3">
+          <InfoChip label="DR007" value="2.15%" tone="alert" />
+          <InfoChip label="资金情绪" value="51 / 47 / 50 / 49" tone="neutral" />
+          <StatusBadge>平衡</StatusBadge>
+        </div>
+      </div>
+      <div className="min-h-0 rounded-lg border border-[#263d5f] bg-[#0b1424] p-4">
+        <div className="mb-3 text-xs text-slate-500">近 20 日资金情绪</div>
+        <MiniSparklinePreview
+          label="全市场"
+          values={sentimentTrendData.map((item) => item.total)}
+          color={chartPalette.amber}
+          footnote="指数越高代表资金越紧"
+        />
+      </div>
+    </div>
+  );
+}
+
+function ReservedModuleFrame() {
+  return (
+    <div className="grid h-full min-h-0 place-items-center rounded-xl border border-dashed border-[#2a4164] bg-[#0d1726]">
+      <div className="text-center">
+        <div className="text-base font-semibold text-slate-100">模块接入中</div>
+        <div className="mt-2 text-sm text-slate-500">
+          该功能入口已预留，后续会迁移对应模块。
+        </div>
+      </div>
+    </div>
   );
 }
 
