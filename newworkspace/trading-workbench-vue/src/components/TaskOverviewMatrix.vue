@@ -5,8 +5,10 @@ import {
   buildTaskOverviewMatrix,
   taskOverviewFilterKey,
   type TaskOverviewCell,
+  type TaskOverviewColumn,
   type TaskOverviewFilter,
-  type TaskOverviewSegment
+  type TaskOverviewRow,
+  type TaskOverviewTermLine
 } from '../composables/useTaskOverviewMatrix';
 
 const props = defineProps<{
@@ -28,11 +30,17 @@ const pendingTotal = computed(() =>
 );
 
 const accountTypeColors: Record<string, string> = {
-  自营: '#1872f6',
-  公募: '#02adb0',
-  理财: '#e9b842',
-  专户: '#763df2',
-  年金: '#ff8a34'
+  '专户': '#763df2',
+  '公募户': '#02adb0',
+  '自营户/证券户': '#1872f6',
+  '资管户': '#e9b842',
+  '信托户': '#00a870',
+  '私募户': '#a138f5',
+  '年金户': '#ff8a34',
+  '社保户': '#6764f5',
+  '养老金户': '#0060db',
+  '组合户': '#737578',
+  '老户/旧户': '#8b6b36'
 };
 
 const colorOf = (accountType: string) => accountTypeColors[accountType] ?? '#737578';
@@ -40,7 +48,10 @@ const formatAmount = (value: number) => {
   const rounded = Number(value.toFixed(2));
   return Number.isInteger(rounded) ? rounded.toFixed(1) : String(rounded);
 };
-const hasTask = (cell: TaskOverviewCell) => cell.total > 0;
+const amountText = (amount: { total: number; allocated: number; pending: number }) =>
+  `${formatAmount(amount.total)}(${formatAmount(amount.allocated)}/${formatAmount(amount.pending)})`;
+const hasAmount = (amount: { total: number }) => amount.total > 0;
+const hasCellTask = (cell: TaskOverviewCell) => cell.lines.length > 0;
 
 const filterStyle = (accountType: string) => ({
   '--account-type-color': colorOf(accountType)
@@ -52,43 +63,42 @@ const choose = (filter: TaskOverviewFilter) => {
   emit('selectFilter', filter);
 };
 
-const cellFilter = (cell: TaskOverviewCell): TaskOverviewFilter => ({
-  scope: 'cell',
-  term: cell.term,
-  pledgeRequirement: cell.pledgeRequirement,
-  accountType: cell.accountType,
-  label: `${cell.term} / ${cell.pledgeRequirement} / ${cell.accountType}`
-});
-
-const rowFilter = (cell: TaskOverviewCell): TaskOverviewFilter => ({
-  scope: 'row',
-  term: cell.term,
-  pledgeRequirement: cell.pledgeRequirement,
-  label: `${cell.term} / ${cell.pledgeRequirement}`
-});
-
-const segmentFilter = (segment: TaskOverviewSegment): TaskOverviewFilter => ({
-  scope: 'segment',
-  term: segment.term,
-  label: segment.term
-});
-
-const segmentColumnFilter = (segment: TaskOverviewSegment, accountType: string): TaskOverviewFilter => ({
-  scope: 'column',
-  term: segment.term,
-  accountType,
-  label: `${segment.term} / ${accountType}`
-});
-
-const columnFilter = (accountType: string): TaskOverviewFilter => ({
-  scope: 'column',
-  accountType,
-  label: accountType
-});
-
 const allFilter = (): TaskOverviewFilter => ({
   scope: 'all',
   label: '全部任务'
+});
+
+const cellFilter = (cell: TaskOverviewCell): TaskOverviewFilter => ({
+  scope: 'cell',
+  pledgeRequirement: cell.pledgeRequirement,
+  accountType: cell.accountType,
+  label: `${cell.pledgeRequirement} / ${cell.accountType}`
+});
+
+const cellLineFilter = (line: TaskOverviewTermLine): TaskOverviewFilter => ({
+  scope: 'termLine',
+  term: line.term,
+  pledgeRequirement: line.pledgeRequirement || undefined,
+  accountType: line.accountType,
+  label: [line.pledgeRequirement, line.accountType, line.term].filter(Boolean).join(' / ')
+});
+
+const rowFilter = (row: TaskOverviewRow): TaskOverviewFilter => ({
+  scope: 'row',
+  pledgeRequirement: row.pledgeRequirement,
+  label: row.pledgeOption.label
+});
+
+const columnFilter = (column: TaskOverviewColumn): TaskOverviewFilter => ({
+  scope: 'column',
+  accountType: column.accountType,
+  label: column.accountOption.label
+});
+
+const grandTermFilter = (line: TaskOverviewTermLine): TaskOverviewFilter => ({
+  scope: 'total',
+  term: line.term,
+  label: `${line.term} / 全部任务`
 });
 </script>
 
@@ -103,7 +113,7 @@ const allFilter = (): TaskOverviewFilter => ({
     </div>
 
     <div class="task-overview-meta">
-      <span>单元格 = 总额 (已分/待分)</span>
+      <span>单元格 = 期限 总额(已分/待分)</span>
       <button
         class="task-overview-filter"
         :class="{ 'is-active': !props.activeFilter }"
@@ -118,135 +128,154 @@ const allFilter = (): TaskOverviewFilter => ({
       <table class="task-overview-table">
         <thead>
           <tr>
-            <th>押券 / 账户</th>
-            <th v-for="accountType in matrix.accountTypes" :key="accountType">
+            <th>
+              <span class="task-overview-axis-title">押券 / 账户</span>
+            </th>
+            <th v-for="column in matrix.columns" :key="column.accountType">
               <button
                 class="task-overview-head-button"
-                :class="{ 'is-active': isActive(columnFilter(accountType)) }"
+                :class="{ 'is-active': isActive(columnFilter(column)) }"
                 type="button"
-                :style="filterStyle(accountType)"
-                @click="choose(columnFilter(accountType))"
+                :style="filterStyle(column.accountType)"
+                @click="choose(columnFilter(column))"
               >
-                <i></i>
-                {{ accountType }}
+                <span><i></i>{{ column.accountOption.label }}</span>
+                <small>合计{{ amountText(column.total) }}</small>
               </button>
             </th>
-            <th>合计</th>
+            <th>
+              <button
+                class="task-overview-head-button task-overview-head-button--total"
+                :class="{ 'is-active': !props.activeFilter }"
+                type="button"
+                @click="choose(allFilter())"
+              >
+                <span>合计</span>
+                <small>合计{{ amountText(matrix.grandTotal) }}</small>
+              </button>
+            </th>
           </tr>
         </thead>
 
         <tbody>
-          <template v-for="segment in matrix.segments" :key="segment.term">
-            <tr class="task-overview-segment">
-              <th :colspan="matrix.accountTypes.length + 2">
-                <button
-                  type="button"
-                  :class="{ 'is-active': isActive(segmentFilter(segment)) }"
-                  @click="choose(segmentFilter(segment))"
-                >
-                  {{ segment.term }}
-                </button>
-              </th>
-            </tr>
+          <tr v-for="row in matrix.rows" :key="row.id">
+            <th>
+              <button
+                class="task-overview-row-button"
+                type="button"
+                :class="{ 'is-active': isActive(rowFilter(row)) }"
+                @click="choose(rowFilter(row))"
+              >
+                <span>{{ row.pledgeOption.label }}</span>
+                <small>合计{{ amountText(row.total) }}</small>
+              </button>
+            </th>
 
-            <tr v-for="row in segment.rows" :key="row.id">
-              <th>
+            <td v-for="column in matrix.columns" :key="`${row.id}-${column.accountType}`">
+              <div
+                class="task-overview-cell-stack"
+                :class="{ 'is-active': isActive(cellFilter(row.cells[column.accountType])), 'is-empty': !hasCellTask(row.cells[column.accountType]) }"
+                :style="filterStyle(column.accountType)"
+                @click.self="hasCellTask(row.cells[column.accountType]) && choose(cellFilter(row.cells[column.accountType]))"
+              >
                 <button
-                  class="task-overview-row-button"
+                  v-for="line in row.cells[column.accountType].lines"
+                  :key="`${row.id}-${column.accountType}-${line.term}`"
+                  class="task-overview-term-line"
                   type="button"
-                  :class="{ 'is-active': isActive(rowFilter(row.total)) }"
-                  @click="choose(rowFilter(row.total))"
+                  :class="{ 'is-active': isActive(cellLineFilter(line)) }"
+                  @click="choose(cellLineFilter(line))"
                 >
-                  {{ row.pledgeRequirement }}
+                  <b>{{ line.term }}</b>
+                  <span>{{ amountText(line) }}</span>
                 </button>
-              </th>
-              <td v-for="accountType in matrix.accountTypes" :key="`${row.id}-${accountType}`">
-                <button
-                  class="task-overview-cell"
-                  type="button"
-                  :class="{ 'is-active': isActive(cellFilter(row.cells[accountType])), 'is-empty': !hasTask(row.cells[accountType]) }"
-                  :style="filterStyle(accountType)"
-                  :disabled="!hasTask(row.cells[accountType])"
-                  @click="choose(cellFilter(row.cells[accountType]))"
-                >
-                  <template v-if="hasTask(row.cells[accountType])">
-                    <b>{{ formatAmount(row.cells[accountType].total) }}</b>
-                    <small>{{ formatAmount(row.cells[accountType].allocated) }}/{{ formatAmount(row.cells[accountType].pending) }}</small>
-                  </template>
-                  <span v-else>—</span>
-                </button>
-              </td>
-              <td>
-                <button
-                  class="task-overview-cell task-overview-cell--total"
-                  type="button"
-                  :class="{ 'is-active': isActive(rowFilter(row.total)) }"
-                  :disabled="!hasTask(row.total)"
-                  @click="choose(rowFilter(row.total))"
-                >
-                  <b>{{ formatAmount(row.total.total) }}</b>
-                  <small>{{ formatAmount(row.total.allocated) }}/{{ formatAmount(row.total.pending) }}</small>
-                </button>
-              </td>
-            </tr>
+                <span v-if="!hasCellTask(row.cells[column.accountType])" class="task-overview-empty">—</span>
+              </div>
+            </td>
 
-            <tr class="task-overview-subtotal">
-              <th>小计</th>
-              <td v-for="accountType in matrix.accountTypes" :key="`${segment.term}-subtotal-${accountType}`">
+            <td>
+              <div class="task-overview-cell-stack task-overview-cell-stack--total">
                 <button
-                  class="task-overview-cell task-overview-cell--total"
+                  v-for="line in row.termTotals"
+                  :key="`${row.id}-total-${line.term}`"
+                  class="task-overview-term-line"
                   type="button"
-                  :class="{ 'is-active': isActive(segmentColumnFilter(segment, accountType)) }"
-                  :style="filterStyle(accountType)"
-                  :disabled="!hasTask(segment.totals[accountType])"
-                  @click="choose(segmentColumnFilter(segment, accountType))"
+                  :class="{ 'is-active': isActive(cellLineFilter(line)) }"
+                  @click="choose(cellLineFilter(line))"
                 >
-                  <b>{{ formatAmount(segment.totals[accountType].total) }}</b>
-                  <small>{{ formatAmount(segment.totals[accountType].allocated) }}/{{ formatAmount(segment.totals[accountType].pending) }}</small>
+                  <b>{{ line.term }}</b>
+                  <span>{{ amountText(line) }}</span>
                 </button>
-              </td>
-              <td>
-                <button
-                  class="task-overview-cell task-overview-cell--total"
-                  type="button"
-                  :class="{ 'is-active': isActive(segmentFilter(segment)) }"
-                  :disabled="!hasTask(segment.grandTotal)"
-                  @click="choose(segmentFilter(segment))"
-                >
-                  <b>{{ formatAmount(segment.grandTotal.total) }}</b>
-                  <small>{{ formatAmount(segment.grandTotal.allocated) }}/{{ formatAmount(segment.grandTotal.pending) }}</small>
-                </button>
-              </td>
-            </tr>
-          </template>
+                <span v-if="!row.termTotals.length" class="task-overview-empty">—</span>
+              </div>
+            </td>
+          </tr>
         </tbody>
 
         <tfoot>
           <tr>
-            <th>总计</th>
-            <td v-for="accountType in matrix.accountTypes" :key="`grand-${accountType}`">
+            <th>
               <button
-                class="task-overview-cell task-overview-cell--total"
+                class="task-overview-row-button task-overview-row-button--total"
                 type="button"
-                :class="{ 'is-active': isActive(columnFilter(accountType)) }"
-                :style="filterStyle(accountType)"
-                :disabled="!hasTask(matrix.totals[accountType])"
-                @click="choose(columnFilter(accountType))"
-              >
-                <b>{{ formatAmount(matrix.totals[accountType].total) }}</b>
-                <small>{{ formatAmount(matrix.totals[accountType].allocated) }}/{{ formatAmount(matrix.totals[accountType].pending) }}</small>
-              </button>
-            </td>
-            <td>
-              <button
-                class="task-overview-cell task-overview-cell--total"
-                type="button"
-                :class="{ 'is-active': isActive(allFilter()) }"
+                :class="{ 'is-active': !props.activeFilter }"
                 @click="choose(allFilter())"
               >
-                <b>{{ formatAmount(matrix.grandTotal.total) }}</b>
-                <small>{{ formatAmount(matrix.grandTotal.allocated) }}/{{ formatAmount(matrix.grandTotal.pending) }}</small>
+                <span>小计</span>
+                <small>合计{{ amountText(matrix.grandTotal) }}</small>
               </button>
+            </th>
+            <td v-for="column in matrix.columns" :key="`grand-${column.accountType}`">
+              <div
+                class="task-overview-cell-stack task-overview-cell-stack--total"
+                :style="filterStyle(column.accountType)"
+              >
+                <button
+                  v-for="line in column.termTotals"
+                  :key="`grand-${column.accountType}-${line.term}`"
+                  class="task-overview-term-line"
+                  type="button"
+                  :class="{ 'is-active': isActive(cellLineFilter(line)) }"
+                  @click="choose(cellLineFilter(line))"
+                >
+                  <b>{{ line.term }}</b>
+                  <span>{{ amountText(line) }}</span>
+                </button>
+                <button
+                  v-if="hasAmount(column.total)"
+                  class="task-overview-term-line task-overview-term-line--sum"
+                  type="button"
+                  :class="{ 'is-active': isActive(columnFilter(column)) }"
+                  @click="choose(columnFilter(column))"
+                >
+                  <b>合计</b>
+                  <span>{{ amountText(column.total) }}</span>
+                </button>
+              </div>
+            </td>
+            <td>
+              <div class="task-overview-cell-stack task-overview-cell-stack--total">
+                <button
+                  v-for="line in matrix.termTotals"
+                  :key="`grand-total-${line.term}`"
+                  class="task-overview-term-line"
+                  type="button"
+                  :class="{ 'is-active': isActive(grandTermFilter(line)) }"
+                  @click="choose(grandTermFilter(line))"
+                >
+                  <b>{{ line.term }}</b>
+                  <span>{{ amountText(line) }}</span>
+                </button>
+                <button
+                  class="task-overview-term-line task-overview-term-line--sum"
+                  type="button"
+                  :class="{ 'is-active': !props.activeFilter }"
+                  @click="choose(allFilter())"
+                >
+                  <b>合计</b>
+                  <span>{{ amountText(matrix.grandTotal) }}</span>
+                </button>
+              </div>
             </td>
           </tr>
         </tfoot>

@@ -821,6 +821,184 @@ body.is-row-resizing {
   min-height: 48px;
 }
 
+.task-overview-filter.is-active,
+.task-overview-head-button.is-active,
+.task-overview-row-button.is-active,
+.task-overview-cell-stack.is-active,
+.task-overview-term-line.is-active {
+  color: var(--tk-color-brand-primary-deep);
+  background: var(--tk-color-surface-selected);
+  box-shadow: inset 0 0 0 1px var(--tk-color-brand-cyan);
+}
+
+.task-overview-table {
+  min-width: 720px;
+}
+
+.task-overview-table th,
+.task-overview-table td {
+  height: auto;
+  min-height: 58px;
+}
+
+.task-overview-table th:first-child {
+  width: 126px;
+}
+
+.task-overview-table th:last-child,
+.task-overview-table td:last-child {
+  width: 126px;
+}
+
+.task-overview-table thead th {
+  height: 54px;
+}
+
+.task-overview-axis-title {
+  height: 54px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--tk-space-sm);
+  color: var(--tk-color-text-secondary);
+}
+
+.task-overview-head-button,
+.task-overview-row-button {
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  padding: var(--tk-space-xs) var(--tk-space-sm);
+}
+
+.task-overview-head-button {
+  justify-content: stretch;
+}
+
+.task-overview-head-button span,
+.task-overview-row-button span {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--tk-space-xs);
+  color: var(--tk-color-text-heading);
+  line-height: var(--tk-line-height-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-overview-head-button small,
+.task-overview-row-button small {
+  min-width: 0;
+  display: block;
+  color: var(--tk-color-text-secondary);
+  font-family: var(--tk-font-family-number);
+  font-size: 11px;
+  line-height: var(--tk-line-height-compact);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-overview-head-button i {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  background: var(--account-type-color);
+  border-radius: 50%;
+}
+
+.task-overview-head-button--total span,
+.task-overview-row-button--total span {
+  color: var(--tk-color-brand-primary-deep);
+}
+
+.task-overview-table tbody th,
+.task-overview-table tfoot th {
+  background: var(--tk-color-surface-subtle);
+}
+
+.task-overview-table tbody tr:hover td,
+.task-overview-table tbody tr:hover th {
+  background: rgba(0, 210, 220, 0.04);
+}
+
+.task-overview-cell-stack {
+  min-height: 58px;
+  height: 100%;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: var(--tk-space-xs) var(--tk-space-sm);
+  border-left: 2px solid var(--account-type-color, transparent);
+  background: #ffffff;
+}
+
+.task-overview-cell-stack--total {
+  border-left-color: transparent;
+  background: rgba(248, 249, 250, 0.86);
+}
+
+.task-overview-cell-stack.is-empty {
+  place-items: center;
+}
+
+.task-overview-term-line {
+  min-width: 0;
+  width: 100%;
+  min-height: 20px;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--tk-space-xs);
+  padding: 1px 3px;
+  color: var(--tk-color-text-primary);
+  background: transparent;
+  border: 0;
+  border-radius: var(--tk-radius-sm);
+  text-align: left;
+}
+
+.task-overview-term-line:hover {
+  background: var(--tk-color-surface-selected);
+}
+
+.task-overview-term-line b {
+  color: var(--tk-color-text-heading);
+  font-family: var(--tk-font-family-number);
+  font-size: 11px;
+  line-height: var(--tk-line-height-compact);
+  font-weight: var(--tk-font-weight-medium);
+  white-space: nowrap;
+}
+
+.task-overview-term-line span {
+  min-width: 0;
+  color: var(--tk-color-text-primary);
+  font-family: var(--tk-font-family-number);
+  font-size: 11px;
+  line-height: var(--tk-line-height-compact);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-overview-term-line--sum {
+  margin-top: 2px;
+  border-top: 1px solid var(--tk-color-border-divider);
+  color: var(--tk-color-brand-primary-deep);
+}
+
+.task-overview-empty {
+  color: var(--tk-color-text-tertiary);
+  font-family: var(--tk-font-family-number);
+}
+
+.task-overview-table tfoot th,
+.task-overview-table tfoot td {
+  background: var(--tk-color-surface-subtle);
+}
+
 .research-panel {
   overflow: visible;
 }
