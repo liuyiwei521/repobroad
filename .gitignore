@@ -1,0 +1,4 @@
+.codex-run/
+.idea/
+dist/
+node_modules/
