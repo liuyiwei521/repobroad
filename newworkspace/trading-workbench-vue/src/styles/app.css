@@ -555,6 +555,272 @@ body.is-row-resizing {
   background: var(--tk-color-surface-subtle);
 }
 
+.task-overview-panel {
+  min-width: 0;
+}
+
+.task-overview-meta {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  gap: var(--tk-space-sm);
+  padding: 0 var(--tk-space-md);
+  color: var(--tk-color-text-secondary);
+  font-size: var(--tk-font-size-xs);
+  border-bottom: 1px solid var(--tk-color-border-divider);
+  background: var(--tk-color-surface-page);
+}
+
+.task-overview-filter {
+  height: 22px;
+  margin-left: auto;
+  padding: 0 var(--tk-space-sm);
+  color: var(--tk-color-text-secondary);
+  background: var(--tk-color-surface-panel);
+  border: 1px solid var(--tk-color-border-default);
+  border-radius: var(--tk-radius-sm);
+}
+
+.task-overview-filter.is-active,
+.task-overview-head-button.is-active,
+.task-overview-row-button.is-active,
+.task-overview-cell.is-active,
+.task-overview-segment button.is-active {
+  color: var(--tk-color-brand-primary-deep);
+  background: var(--tk-color-surface-selected);
+  box-shadow: inset 0 0 0 1px var(--tk-color-brand-cyan);
+}
+
+.task-overview-table-wrap {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  background: #ffffff;
+}
+
+.task-overview-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  font-size: var(--tk-font-size-xs);
+}
+
+.task-overview-table th,
+.task-overview-table td {
+  height: 44px;
+  padding: 0;
+  border-right: 1px solid var(--tk-color-border-divider);
+  border-bottom: 1px solid var(--tk-color-border-divider);
+  vertical-align: stretch;
+}
+
+.task-overview-table th:first-child {
+  width: 88px;
+}
+
+.task-overview-table th:last-child,
+.task-overview-table td:last-child {
+  width: 76px;
+  border-right: 0;
+}
+
+.task-overview-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  height: 32px;
+  color: var(--tk-color-text-secondary);
+  background: var(--tk-color-surface-panel);
+  font-weight: var(--tk-font-weight-medium);
+}
+
+.task-overview-head-button,
+.task-overview-row-button,
+.task-overview-cell,
+.task-overview-segment button {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  color: var(--tk-color-text-primary);
+  background: transparent;
+  border: 0;
+  text-align: left;
+}
+
+.task-overview-head-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tk-space-xs);
+  padding: 0 var(--tk-space-xs);
+  color: var(--tk-color-text-heading);
+}
+
+.task-overview-head-button i {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  background: var(--account-type-color);
+  border-radius: 50%;
+}
+
+.task-overview-row-button {
+  padding: 0 var(--tk-space-sm);
+  color: var(--tk-color-text-heading);
+  font-weight: var(--tk-font-weight-medium);
+}
+
+.task-overview-cell {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: var(--tk-space-xs) var(--tk-space-sm);
+  border-left: 2px solid var(--account-type-color, transparent);
+}
+
+.task-overview-cell b {
+  min-width: 0;
+  color: var(--tk-color-text-heading);
+  font-family: var(--tk-font-family-number);
+  font-size: var(--tk-font-size-sm);
+  line-height: var(--tk-line-height-normal);
+  font-weight: var(--tk-font-weight-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-overview-cell small {
+  min-width: 0;
+  color: var(--tk-color-text-secondary);
+  font-family: var(--tk-font-family-number);
+  line-height: var(--tk-line-height-compact);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-overview-cell span {
+  color: var(--tk-color-text-tertiary);
+  text-align: center;
+}
+
+.task-overview-cell--total {
+  border-left-color: transparent;
+  background: rgba(248, 249, 250, 0.7);
+}
+
+.task-overview-cell:disabled {
+  cursor: default;
+}
+
+.task-overview-cell.is-empty {
+  justify-content: center;
+}
+
+.task-overview-table tbody tr:not(.task-overview-segment):hover td,
+.task-overview-table tbody tr:not(.task-overview-segment):hover th {
+  background: rgba(0, 210, 220, 0.04);
+}
+
+.task-overview-segment th {
+  position: sticky;
+  top: 32px;
+  z-index: 2;
+  height: 28px;
+  border-right: 0;
+  background: #eef3fa;
+}
+
+.task-overview-segment button {
+  padding: 0 var(--tk-space-sm);
+  color: var(--tk-color-brand-primary-deep);
+  font-family: var(--tk-font-family-number);
+  font-weight: var(--tk-font-weight-medium);
+  letter-spacing: 0;
+}
+
+.task-overview-subtotal th,
+.task-overview-subtotal td,
+.task-overview-table tfoot th,
+.task-overview-table tfoot td {
+  background: var(--tk-color-surface-subtle);
+}
+
+.task-overview-subtotal th,
+.task-overview-table tfoot th {
+  padding: 0 var(--tk-space-sm);
+  color: var(--tk-color-text-heading);
+  text-align: left;
+  font-weight: var(--tk-font-weight-medium);
+}
+
+.task-overview-table tfoot th,
+.task-overview-table tfoot td {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  border-top: 1px solid var(--tk-color-border-dark);
+}
+
+.task-overview-pending {
+  max-height: 218px;
+  border-top: 1px solid var(--tk-color-border-default);
+  background: var(--tk-color-surface-subtle);
+  overflow: hidden;
+}
+
+.task-overview-pending__list {
+  max-height: 184px;
+  overflow: auto;
+}
+
+.task-overview-pending__item {
+  width: 100%;
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 42px;
+  align-items: center;
+  gap: var(--tk-space-sm);
+  padding: var(--tk-space-sm) var(--tk-space-md);
+  color: var(--tk-color-text-primary);
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--tk-color-border-divider);
+  text-align: left;
+}
+
+.task-overview-pending__item:hover {
+  background: var(--tk-color-surface-page);
+}
+
+.task-overview-pending__item b {
+  font-weight: var(--tk-font-weight-medium);
+}
+
+.task-overview-pending__item small {
+  display: block;
+  margin-top: 2px;
+  color: var(--tk-color-text-secondary);
+  font-size: var(--tk-font-size-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-overview-pending__item i {
+  justify-self: end;
+  color: var(--tk-color-brand-primary);
+  font-style: normal;
+  font-size: var(--tk-font-size-xs);
+}
+
+.task-overview-pending__empty {
+  min-height: 48px;
+}
+
 .research-panel {
   overflow: visible;
 }

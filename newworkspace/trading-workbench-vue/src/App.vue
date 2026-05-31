@@ -4,7 +4,9 @@ import AllocationMatrix from './components/AllocationMatrix.vue';
 import ChatPopup from './components/ChatPopup.vue';
 import MarketPanel from './components/MarketPanel.vue';
 import ResearchPanel from './components/ResearchPanel.vue';
+import TaskOverviewMatrix from './components/TaskOverviewMatrix.vue';
 import TopBar from './components/TopBar.vue';
+import { taskOverviewFilterKey, type TaskOverviewFilter } from './composables/useTaskOverviewMatrix';
 import {
   accounts as accountSeed,
   allocationCells as allocationCellSeed,
@@ -48,7 +50,8 @@ const selectedQuoteId = ref('');
 const activeCard = ref<ResearchCard | null>(null);
 const matrixExpanded = ref(false);
 const matrixContext = ref<MatrixContext | null>(null);
-const lastAction = ref('已加载 mock 数据，点击账户行可联动右栏行情。');
+const activeOverviewFilter = ref<TaskOverviewFilter | null>(null);
+const lastAction = ref('已加载 mock 数据，点击任务概览可联动右栏行情。');
 const activeChat = ref<{
   chat: ChatThread;
   quote: MarketQuote;
@@ -127,6 +130,7 @@ const onGutterDown = (side: 'left' | 'mid', event: PointerEvent) => {
 const selectedAccount = computed(() => accounts.value.find((account) => account.id === selectedAccountId.value));
 
 const selectedContext = computed(() => {
+  if (activeOverviewFilter.value) return `任务概览 / ${activeOverviewFilter.value.label}`;
   if (!selectedAccount.value) return '全账户';
   return `${selectedAccount.value.product} / ${selectedAccount.value.tenor}`;
 });
@@ -262,6 +266,7 @@ const syncPendingFromMatrixContext = (payload: AllocationCell[]) => {
 const openMatrix = (contextInput?: MatrixContextInput) => {
   matrixContext.value = contextInput ? createDealColumnFromContext(contextInput) : null;
   matrixExpanded.value = true;
+  activeOverviewFilter.value = null;
   activeCard.value = null;
   activeChat.value = null;
   lastAction.value = matrixContext.value
@@ -272,7 +277,7 @@ const openMatrix = (contextInput?: MatrixContextInput) => {
 const closeMatrix = () => {
   matrixExpanded.value = false;
   matrixContext.value = null;
-  lastAction.value = '已收起为矩阵左侧核心列，底部待分配信息保持展示。';
+  lastAction.value = '已回到左栏任务概览矩阵，待分配信息保持展示。';
 };
 
 const refreshAccountStatus = (account: AccountRow) => {
@@ -293,6 +298,14 @@ const selectAccount = (id: string) => {
   lastAction.value = account
     ? `已选中 ${account.name}，右栏展示匹配 ${account.tenor} 且不低于保本的报价。`
     : '已切换账户。';
+};
+
+const selectOverviewFilter = (filter: TaskOverviewFilter) => {
+  const sameFilter = taskOverviewFilterKey(activeOverviewFilter.value) === taskOverviewFilterKey(filter);
+  activeOverviewFilter.value = sameFilter || filter.scope === 'all' ? null : filter;
+  lastAction.value = activeOverviewFilter.value
+    ? `已按任务概览筛选右栏：${activeOverviewFilter.value.label}。`
+    : '已取消任务概览筛选，右栏回到全量。';
 };
 
 const moveSelectedAccount = (direction: 1 | -1) => {
@@ -463,7 +476,19 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
     <TopBar :selected-context="selectedContext" :notice-count="noticeCount" :last-action="lastAction" />
 
     <div ref="workspaceRef" class="workspace-grid" :class="{ 'is-matrix-mode': matrixExpanded }" :style="workspaceStyle">
+      <TaskOverviewMatrix
+        v-if="!matrixExpanded"
+        class="matrix-workspace"
+        :accounts="accounts"
+        :pending-allocations="pendingAllocations"
+        :active-filter="activeOverviewFilter"
+        @select-filter="selectOverviewFilter"
+        @open-pending="openPending"
+        @open-matrix="openMatrix"
+      />
+
       <AllocationMatrix
+        v-else
         ref="matrixRef"
         class="matrix-workspace"
         :accounts="accounts"
@@ -512,9 +537,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
         :quotes="quotes"
         :group-summaries="marketGroupSummaries"
         :chats="chats"
+        :accounts="accounts"
         :tenors="tenors"
         :selected-account="selectedAccount"
         :selected-quote-id="selectedQuoteId"
+        :overview-filter="activeOverviewFilter"
         @open-quote="openQuote"
         @send-quote="sendQuote"
         @open-chat="openChat"

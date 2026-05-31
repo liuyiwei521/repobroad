@@ -6,6 +6,7 @@ import MarketFilterBar from './market/MarketFilterBar.vue';
 import MarketTitleBar from './market/MarketTitleBar.vue';
 import type { DirectionSectionView, QuoteLine } from './market/types';
 import { useQuoteColumns } from '../composables/useQuoteColumns';
+import { accountTypeOf, type TaskOverviewFilter } from '../composables/useTaskOverviewMatrix';
 
 const { columnTemplate } = useQuoteColumns();
 
@@ -15,9 +16,11 @@ const props = defineProps<{
   quotes: MarketQuote[];
   groupSummaries: MarketGroupSummary[];
   chats: ChatThread[];
+  accounts: AccountRow[];
   tenors: Tenor[];
   selectedAccount: AccountRow | undefined;
   selectedQuoteId: string;
+  overviewFilter: TaskOverviewFilter | null;
 }>();
 
 const emit = defineEmits<{
@@ -55,6 +58,72 @@ const parseOptionalNumber = (value: string) => {
   if (!trimmed) return null;
   const parsed = Number(trimmed);
   return Number.isFinite(parsed) ? parsed : null;
+};
+
+const normalizeText = (value: string | undefined | null) => String(value ?? '').toLowerCase();
+
+const accountById = computed(() => new Map(props.accounts.map((account) => [account.id, account])));
+
+const textHasAny = (source: string, needles: string[]) => {
+  const normalizedSource = normalizeText(source);
+  return needles.some((needle) => normalizedSource.includes(normalizeText(needle)));
+};
+
+const pledgeAliases: Record<string, string[]> = {
+  利率债: ['利率债', '利率', '国债'],
+  地方债: ['地方债', '地方'],
+  同业存单: ['同业存单', '存单', '国股存单', '商金存单', '大行存单', 'CD'],
+  信用债: ['信用债', '信用', '年金户', '债基']
+};
+
+const accountTypeAliases: Record<string, string[]> = {
+  自营: ['自营', '不限户'],
+  公募: ['公募', '非专户', '不限户'],
+  理财: ['理财', '资管', '非专户', '可专户', '不限户'],
+  专户: ['专户', '可专户', '不限户'],
+  年金: ['年金', '年金户']
+};
+
+const matchesPledge = (pledgeRequirement: string | undefined, ...fields: string[]) => {
+  if (!pledgeRequirement) return true;
+  const aliases = pledgeAliases[pledgeRequirement] ?? [pledgeRequirement];
+  return textHasAny(fields.join(' '), aliases);
+};
+
+const accountRequirementMatches = (accountType: string | undefined, requirement: string) => {
+  if (!accountType) return true;
+  const aliases = accountTypeAliases[accountType] ?? [accountType];
+  return textHasAny(requirement, aliases);
+};
+
+const quoteAccountTypeMatches = (quote: MarketQuote, accountType: string | undefined, requirement: string) => {
+  if (!accountType) return true;
+  const allowedMatches = quote.allowedAccounts.some((accountId) => {
+    const account = accountById.value.get(accountId);
+    return account ? accountTypeOf(account) === accountType : false;
+  });
+  return allowedMatches || accountRequirementMatches(accountType, requirement);
+};
+
+const matchesOverviewQuote = (
+  quote: MarketQuote,
+  tenor: Tenor,
+  accountRequirement: string,
+  collateralRequirement: string
+) => {
+  const filter = props.overviewFilter;
+  if (!filter) return true;
+  if (filter.term && tenor !== filter.term) return false;
+  if (!quoteAccountTypeMatches(quote, filter.accountType, accountRequirement)) return false;
+  return matchesPledge(filter.pledgeRequirement, quote.group, collateralRequirement, quote.collateral);
+};
+
+const matchesOverviewChat = (chat: ChatThread) => {
+  const filter = props.overviewFilter;
+  if (!filter) return true;
+  if (filter.term && chat.chatTenor !== filter.term) return false;
+  if (!accountRequirementMatches(filter.accountType, chat.chatLimit)) return false;
+  return matchesPledge(filter.pledgeRequirement, chat.chatGroup, chat.collateral);
 };
 
 const summaryIndex = computed(() => {
@@ -101,6 +170,7 @@ const quoteLines = computed<QuoteLine[]>(() => {
 
       const accountRequirement = quote.accountRequirement || quote.limit;
       const collateralRequirement = quote.collateralRequirement || quote.collateral;
+      if (!matchesOverviewQuote(quote, tenor, accountRequirement, collateralRequirement)) continue;
       if (accountKeywordValue && !String(accountRequirement ?? '').toLowerCase().includes(accountKeywordValue)) continue;
       if (collateralKeywordValue && !String(collateralRequirement ?? '').toLowerCase().includes(collateralKeywordValue)) continue;
 
@@ -168,6 +238,7 @@ const directionSections = computed<DirectionSectionView[]>(() => {
 
 const filteredChats = computed(() => {
   return props.chats.filter((chat) => {
+    if (!matchesOverviewChat(chat)) return false;
     if (chatTab.value === 'all') return true;
     return chat.status === chatTab.value;
   });
