@@ -2694,32 +2694,32 @@ function EntryPreviewPopover({
 function ModuleEntryPreview({ id }: { id: ModuleEntryId }) {
   if (id === "big-bank-price") {
     return (
-      <RichPreviewFrame heightClassName="h-[230px]">
-        <BigBankPriceFrame />
+      <RichPreviewFrame autoHeight>
+        <BigBankPriceFrame embeddedPreview />
       </RichPreviewFrame>
     );
   }
 
   if (id === "xrepo") {
     return (
-      <RichPreviewFrame heightClassName="h-[210px]">
-        <XrepoFrame />
+      <RichPreviewFrame autoHeight>
+        <XrepoFrame embeddedPreview />
       </RichPreviewFrame>
     );
   }
 
   if (id === "exchange-repo") {
     return (
-      <RichPreviewFrame heightClassName="h-[250px]">
-        <ExchangeRepoFrame />
+      <RichPreviewFrame autoHeight>
+        <ExchangeRepoFrame embeddedPreview />
       </RichPreviewFrame>
     );
   }
 
   if (id === "ncd") {
     return (
-      <RichPreviewFrame heightClassName="h-[280px]">
-        <LeftNcdCard />
+      <RichPreviewFrame autoHeight>
+        <LeftNcdCard embeddedPreview />
       </RichPreviewFrame>
     );
   }
@@ -2791,17 +2791,25 @@ function AnonymousTradeEntryPreview() {
 
 function RichPreviewFrame({
   children,
-  heightClassName,
+  heightClassName = "",
   scrollX = false,
+  autoHeight = false,
 }: {
   children: React.ReactNode;
-  heightClassName: string;
+  heightClassName?: string;
   scrollX?: boolean;
+  autoHeight?: boolean;
 }) {
   return (
     <div
-      className={`min-h-0 rounded-lg ${heightClassName} ${
-        scrollX ? "overflow-x-auto overflow-y-hidden" : "overflow-hidden"
+      className={`min-h-0 rounded-lg ${autoHeight ? "h-auto" : heightClassName} ${
+        autoHeight
+          ? scrollX
+            ? "overflow-x-auto overflow-y-visible"
+            : "overflow-visible"
+          : scrollX
+            ? "overflow-x-auto overflow-y-hidden"
+            : "overflow-hidden"
       }`}
     >
       {children}
@@ -3064,7 +3072,11 @@ function deriveHasQuote(row: BankRateRow): boolean {
   );
 }
 
-function BigBankPriceFrame() {
+function BigBankPriceFrame({
+  embeddedPreview = false,
+}: {
+  embeddedPreview?: boolean;
+}) {
   const [whitelist, setWhitelist] = useState<string[]>([
     ...defaultBigBankWhitelist,
   ]);
@@ -3180,7 +3192,11 @@ function BigBankPriceFrame() {
 
   return (
     <>
-      <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[#1e2f48] bg-[#0d1726]">
+      <section
+        className={`flex min-h-0 flex-col rounded-xl border border-[#1e2f48] bg-[#0d1726] ${
+          embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
+        }`}
+      >
         <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -3208,7 +3224,7 @@ function BigBankPriceFrame() {
             </div>
           </div>
         </div>
-        <div className="min-h-0 flex-1">
+        <div className={embeddedPreview ? "min-h-0" : "min-h-0 flex-1"}>
           <StructuredTable
             columns={[
               "机构",
@@ -3225,7 +3241,8 @@ function BigBankPriceFrame() {
             deltaColumns={[3, 5]}
             fitToWidth
             flush
-            scrollY
+            adaptiveHeight={embeddedPreview}
+            scrollY={!embeddedPreview}
           />
         </div>
       </section>
@@ -3242,7 +3259,11 @@ function BigBankPriceFrame() {
   );
 }
 
-function XrepoFrame() {
+function XrepoFrame({
+  embeddedPreview = false,
+}: {
+  embeddedPreview?: boolean;
+}) {
   const section = leftSections.find(
     (item): item is SummaryTableSection =>
       item.layout === "table" && item.title === "XREPO",
@@ -3250,7 +3271,11 @@ function XrepoFrame() {
   if (!section) return <ReservedModuleFrame />;
 
   return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[#1e2f48] bg-[#0d1726]">
+    <section
+      className={`flex min-h-0 flex-col rounded-xl border border-[#1e2f48] bg-[#0d1726] ${
+        embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
+      }`}
+    >
       <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -3267,7 +3292,7 @@ function XrepoFrame() {
           </button>
         </div>
       </div>
-      <div className="min-h-0 flex-1">
+      <div className={embeddedPreview ? "min-h-0" : "min-h-0 flex-1"}>
         <StructuredTable
           columns={section.columns}
           rows={section.rows}
@@ -3278,21 +3303,32 @@ function XrepoFrame() {
           fitToWidth
           columnWidths={section.columnWidths}
           flush
-          scrollY
+          adaptiveHeight={embeddedPreview}
+          scrollY={!embeddedPreview}
         />
       </div>
     </section>
   );
 }
 
-function ExchangeRepoFrame() {
+function ExchangeRepoFrame({
+  embeddedPreview = false,
+}: {
+  embeddedPreview?: boolean;
+}) {
   const section = leftSections.find(
     (item): item is ExchangeMarketSplitSection =>
       item.layout === "exchange-split",
   );
   if (!section) return <ReservedModuleFrame />;
 
-  return <ExchangeRepoCard title={section.title} markets={section.markets} />;
+  return (
+    <ExchangeRepoCard
+      title={section.title}
+      markets={section.markets}
+      embeddedPreview={embeddedPreview}
+    />
+  );
 }
 
 function GlobalFilterFrame() {
@@ -3724,7 +3760,11 @@ function ModalInput({
   );
 }
 
-function LeftNcdCard() {
+function LeftNcdCard({
+  embeddedPreview = false,
+}: {
+  embeddedPreview?: boolean;
+}) {
   const [market, setMarket] = useState<"primary" | "secondary">("primary");
   const [mode, setMode] = useState<"trend" | "table">("trend");
   const [expanded, setExpanded] = useState(false);
@@ -3814,7 +3854,7 @@ function LeftNcdCard() {
     ) : mode === "trend" ? (
       <NcdTrendPanel compact />
     ) : (
-      <div className="h-full min-h-0">
+      <div className={embeddedPreview ? "min-h-0" : "h-full min-h-0"}>
         <StructuredTable
           columns={["期限", "最新", "涨跌bp", "参考收益", "更新时间"]}
           rows={ncdTableRows}
@@ -3824,18 +3864,31 @@ function LeftNcdCard() {
           columnWidths={["14%", "18%", "16%", "22%", "30%"]}
           compact
           flush={false}
-          scrollY
+          adaptiveHeight={embeddedPreview}
+          scrollY={!embeddedPreview}
         />
       </div>
     );
 
   return (
     <>
-      <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
+      <section
+        className={`flex min-h-0 flex-col rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)] ${
+          embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
+        }`}
+      >
         <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-2.5">
           {header()}
         </div>
-        <div className="min-h-0 flex-1 overflow-hidden p-2">{body}</div>
+        <div
+          className={
+            embeddedPreview
+              ? "min-h-[220px] overflow-visible p-2"
+              : "min-h-0 flex-1 overflow-hidden p-2"
+          }
+        >
+          {body}
+        </div>
       </section>
       {expanded && (
         <div
@@ -3881,9 +3934,11 @@ function LeftNcdCard() {
 function ExchangeRepoCard({
   title,
   markets,
+  embeddedPreview = false,
 }: {
   title: string;
   markets: ExchangeMarketSplitSection["markets"];
+  embeddedPreview?: boolean;
 }) {
   const [activeView, setActiveView] = useState<"core" | "sse" | "szse">("core");
   const filteredMarkets =
@@ -3892,7 +3947,11 @@ function ExchangeRepoCard({
       : markets.filter((market) => market.id === activeView);
 
   return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
+    <section
+      className={`flex min-h-0 flex-col rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)] ${
+        embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
+      }`}
+    >
       <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div className="text-sm font-semibold tracking-[0.02em] text-slate-50">
@@ -3922,16 +3981,26 @@ function ExchangeRepoCard({
           </div>
         </div>
       </div>
-      <div className="min-h-0 flex-1 p-2">
+      <div className={embeddedPreview ? "min-h-0 p-2" : "min-h-0 flex-1 p-2"}>
         {activeView === "core" ? (
-          <ExchangeCoreCompactBoard markets={markets} />
+          <ExchangeCoreCompactBoard
+            markets={markets}
+            embeddedPreview={embeddedPreview}
+          />
         ) : (
-          <div className="grid h-full min-h-0 grid-cols-1">
+          <div
+            className={
+              embeddedPreview
+                ? "grid min-h-0 grid-cols-1"
+                : "grid h-full min-h-0 grid-cols-1"
+            }
+          >
             {filteredMarkets.map((market) => (
               <ExchangeMarketTable
                 key={`${activeView}-${market.id}`}
                 market={market}
                 rows={market.rows}
+                embeddedPreview={embeddedPreview}
               />
             ))}
           </div>
@@ -3943,13 +4012,19 @@ function ExchangeRepoCard({
 
 function ExchangeCoreCompactBoard({
   markets,
+  embeddedPreview = false,
 }: {
   markets: ExchangeMarketSplitSection["markets"];
+  embeddedPreview?: boolean;
 }) {
   const combinedRows = markets.flatMap((market) => market.rows.slice(0, 2));
   return (
-    <div className="h-full min-h-0">
-      <ExchangeCoreCompactBlock rows={combinedRows} rowCount={5} />
+    <div className={embeddedPreview ? "min-h-0" : "h-full min-h-0"}>
+      <ExchangeCoreCompactBlock
+        rows={combinedRows}
+        rowCount={5}
+        embeddedPreview={embeddedPreview}
+      />
     </div>
   );
 }
@@ -3957,16 +4032,22 @@ function ExchangeCoreCompactBoard({
 function ExchangeCoreCompactBlock({
   rows,
   rowCount = 2,
+  embeddedPreview = false,
 }: {
   rows: readonly (readonly string[])[];
   rowCount?: number;
+  embeddedPreview?: boolean;
 }) {
   const paddedRows = Array.from(
     { length: rowCount },
     (_, i) => rows[i] ?? null,
   );
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
+    <div
+      className={`flex min-h-0 flex-col rounded-xl border border-[#1c2b42] bg-[#0a1322] ${
+        embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
+      }`}
+    >
       <table className="w-full table-fixed shrink-0">
         <thead>
           <tr className="border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
@@ -3979,7 +4060,11 @@ function ExchangeCoreCompactBlock({
           </tr>
         </thead>
       </table>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div
+        className={
+          embeddedPreview ? "min-h-0 overflow-visible" : "min-h-0 flex-1 overflow-y-auto"
+        }
+      >
         <table className="w-full table-fixed">
           <tbody>
             {paddedRows.map((row, rowIndex) => (
@@ -4021,14 +4106,20 @@ function ExchangeCoreCompactBlock({
 function ExchangeMarketTable({
   market,
   rows,
+  embeddedPreview = false,
 }: {
   market: ExchangeMarketSplitSection["markets"][number];
   rows?: readonly (readonly string[])[];
+  embeddedPreview?: boolean;
 }) {
   const displayRows = rows ?? market.rows;
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
+    <div
+      className={`flex min-h-0 flex-col rounded-xl border border-[#1c2b42] bg-[#0a1322] ${
+        embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
+      }`}
+    >
       <table className="w-full table-fixed shrink-0">
         <thead>
           <tr className="border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
@@ -4051,7 +4142,11 @@ function ExchangeMarketTable({
           </tr>
         </thead>
       </table>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div
+        className={
+          embeddedPreview ? "min-h-0 overflow-visible" : "min-h-0 flex-1 overflow-y-auto"
+        }
+      >
         <table className="w-full table-fixed">
           <tbody>
             {displayRows.map((row, rowIndex) => (
