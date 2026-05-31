@@ -68,29 +68,29 @@ export interface TaskOverviewPledgeLine extends TaskOverviewAmount {
 
 export interface TaskOverviewTermCell {
   accountType: string;
-  term?: Tenor;
+  term: Tenor;
   lines: TaskOverviewPledgeLine[];
   total: TaskOverviewAmount;
 }
 
-export interface TaskOverviewAccountRow {
+export interface TaskOverviewTermRow {
   id: string;
-  accountType: string;
-  accountOption: TaskOverviewEnumOption;
-  cells: Record<Tenor, TaskOverviewTermCell>;
+  term: Tenor;
+  cells: Record<string, TaskOverviewTermCell>;
   pledgeTotals: TaskOverviewPledgeLine[];
   total: TaskOverviewAmount;
 }
 
 export interface TaskOverviewTermColumn {
-  term: Tenor;
+  accountType: string;
+  accountOption: TaskOverviewEnumOption;
   pledgeTotals: TaskOverviewPledgeLine[];
   total: TaskOverviewAmount;
 }
 
 export interface TaskOverviewTermMatrix {
   columns: TaskOverviewTermColumn[];
-  rows: TaskOverviewAccountRow[];
+  rows: TaskOverviewTermRow[];
   pledgeTotals: TaskOverviewPledgeLine[];
   grandTotal: TaskOverviewAmount;
 }
@@ -370,10 +370,10 @@ export const buildTaskTermOverviewMatrix = (accounts: AccountRow[]): TaskOvervie
     Array.from(new Set(termAccounts.map(accountTypeOf))).map((name) => accountOptionIndex.get(name) ?? fallbackOption(name, 99))
   );
 
-  const rowTotals = new Map<string, TaskOverviewAmount>();
-  const rowPledgeTotals = new Map<string, Map<string, TaskOverviewAmount>>();
-  const columnTotals = new Map<Tenor, TaskOverviewAmount>();
-  const columnPledgeTotals = new Map<Tenor, Map<string, TaskOverviewAmount>>();
+  const rowTotals = new Map<Tenor, TaskOverviewAmount>();
+  const rowPledgeTotals = new Map<Tenor, Map<string, TaskOverviewAmount>>();
+  const columnTotals = new Map<string, TaskOverviewAmount>();
+  const columnPledgeTotals = new Map<string, Map<string, TaskOverviewAmount>>();
   const cellTotals = new Map<string, TaskOverviewAmount>();
   const cellPledgeTotals = new Map<string, Map<string, TaskOverviewAmount>>();
   const grandPledgeTotals = new Map<string, TaskOverviewAmount>();
@@ -385,47 +385,47 @@ export const buildTaskTermOverviewMatrix = (accounts: AccountRow[]): TaskOvervie
     const term = account.tenor;
     const total = roundAmount(account.targetAmount);
     const allocated = Math.min(roundAmount(account.allocatedAmount), total);
-    const cellKey = `${accountType}__${term}`;
+    const cellKey = `${term}__${accountType}`;
 
-    addAmount(ensureStringAmount(rowTotals, accountType), total, allocated);
-    addAmount(ensureNestedStringAmount(rowPledgeTotals, accountType, pledgeRequirement), total, allocated);
-    addAmount(ensureTermAmount(columnTotals, term), total, allocated);
-    addAmount(ensureTermPledgeAmount(columnPledgeTotals, term, pledgeRequirement), total, allocated);
+    addAmount(ensureTermAmount(rowTotals, term), total, allocated);
+    addAmount(ensureTermPledgeAmount(rowPledgeTotals, term, pledgeRequirement), total, allocated);
+    addAmount(ensureStringAmount(columnTotals, accountType), total, allocated);
+    addAmount(ensureNestedStringAmount(columnPledgeTotals, accountType, pledgeRequirement), total, allocated);
     addAmount(ensureStringAmount(cellTotals, cellKey), total, allocated);
     addAmount(ensureNestedStringAmount(cellPledgeTotals, cellKey, pledgeRequirement), total, allocated);
     addAmount(ensureStringAmount(grandPledgeTotals, pledgeRequirement), total, allocated);
     addAmount(grandTotal, total, allocated);
   }
 
-  const columns = termOverviewTerms.map<TaskOverviewTermColumn>((term) => ({
-    term,
-    pledgeTotals: toPledgeLines(columnPledgeTotals.get(term) ?? new Map(), pledgeOptionIndex, term),
-    total: columnTotals.get(term) ?? emptyAmount()
+  const columns = accountTypes.map<TaskOverviewTermColumn>((option) => ({
+    accountType: option.name,
+    accountOption: option,
+    pledgeTotals: toPledgeLines(columnPledgeTotals.get(option.name) ?? new Map(), pledgeOptionIndex, undefined, option.name),
+    total: columnTotals.get(option.name) ?? emptyAmount()
   }));
 
-  const rows = accountTypes.map<TaskOverviewAccountRow>((option) => {
+  const rows = termOverviewTerms.map<TaskOverviewTermRow>((term) => {
     const cells = Object.fromEntries(
-      termOverviewTerms.map((term) => {
-        const key = `${option.name}__${term}`;
+      columns.map((column) => {
+        const key = `${term}__${column.accountType}`;
         return [
-          term,
+          column.accountType,
           {
-            accountType: option.name,
+            accountType: column.accountType,
             term,
-            lines: toPledgeLines(cellPledgeTotals.get(key) ?? new Map(), pledgeOptionIndex, term, option.name),
+            lines: toPledgeLines(cellPledgeTotals.get(key) ?? new Map(), pledgeOptionIndex, term, column.accountType),
             total: cellTotals.get(key) ?? emptyAmount()
           }
         ];
       })
-    ) as Record<Tenor, TaskOverviewTermCell>;
+    ) as Record<string, TaskOverviewTermCell>;
 
     return {
-      id: option.name,
-      accountType: option.name,
-      accountOption: option,
+      id: term,
+      term,
       cells,
-      pledgeTotals: toPledgeLines(rowPledgeTotals.get(option.name) ?? new Map(), pledgeOptionIndex, undefined, option.name),
-      total: rowTotals.get(option.name) ?? emptyAmount()
+      pledgeTotals: toPledgeLines(rowPledgeTotals.get(term) ?? new Map(), pledgeOptionIndex, term),
+      total: rowTotals.get(term) ?? emptyAmount()
     };
   });
 
