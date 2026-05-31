@@ -355,30 +355,27 @@ const leftSections: readonly (
     layout: "table",
     title: "XREPO",
     columns: [
-      "合约名称",
-      "正回购量(亿)",
-      "正回购利率(%)",
-      "逆回购利率(%)",
-      "逆回购量(亿)",
+      "期限",
+      "可点击量",
+      "正回购金额",
+      "正回购利率",
+      "逆回购利率",
+      "逆回购金额",
+      "可点击量",
+      "操作",
     ],
     rows: [
-      ["R001", "5 (0)", "1.36", "1.25", "1185 (0)"],
-      ["R001", "-", "-", "1.36", "30 (7)"],
-      ["R001", "-", "-", "1.38", "70 (62)"],
-      ["R001_mini", "0.6 (0)", "1.38", "1.30", "12 (0)"],
-      ["DFR001_mini", "5 (0)", "1.37", "1.38", "47 (34)"],
-      ["CDR001_mini", "20.6 (0)", "1.40", "1.41", "20 (10)"],
-      ["R004", "-", "-", "1.42", "3 (0)"],
-      ["R007", "2 (0)", "1.42", "1.40", "132 (0)"],
-      ["R007_mini", "-", "-", "-", "-"],
-      ["R014", "-", "-", "1.45", "5 (0)"],
-      ["R014_mini", "-", "-", "-", "-"],
+      ["R001", "(4)", "442亿", "2.00%", "1.95%", "442亿", "(12)", "发送"],
+      ["R007", "(4)", "28亿", "2.00%", "1.25%", "442亿", "(12)", "发送"],
+      ["R014", "(4)", "442亿", "2.00%", "1.95%", "442亿", "(12)", "发送"],
+      ["R021", "(4)", "442亿", "2.00%", "1.95%", "442亿", "(12)", "发送"],
     ],
-    greenColumns: [3],
-    redColumns: [2],
-    emphasisColumns: [1, 4],
+    greenColumns: [4],
+    redColumns: [3],
+    emphasisColumns: [1, 6],
+    buttonColumn: 7,
     fitToWidth: true,
-    columnWidths: ["24%", "19%", "19%", "19%", "19%"],
+    columnWidths: ["14%", "10%", "14%", "12%", "12%", "14%", "10%", "14%"],
     scrollable: false,
   },
   {
@@ -2286,9 +2283,8 @@ function AdaptiveEntryRail({
       window.addEventListener("resize", update);
       return () => window.removeEventListener("resize", update);
     }
-    const observer = new ResizeObserver((records) => {
-      const nextWidth = records[0]?.contentRect.width ?? 0;
-      setWidth(nextWidth);
+    const observer = new ResizeObserver(() => {
+      setWidth(node.getBoundingClientRect().width);
     });
     observer.observe(node);
     return () => observer.disconnect();
@@ -2299,7 +2295,7 @@ function AdaptiveEntryRail({
       ? "icon"
       : width <= 180
         ? "compact"
-        : width <= 280
+        : width <= 400
           ? "summary"
           : "wide-preview";
   const groups = Array.from(new Set(entries.map((entry) => entry.group)));
@@ -2327,7 +2323,7 @@ function AdaptiveEntryRail({
                 </div>
                 {displayMode === "wide-preview" ? (
                   <div className="mt-0.5 truncate text-[11px] text-slate-500">
-                    小图 / 小表格预览
+                    图表 / 表格快照
                   </div>
                 ) : null}
               </div>
@@ -2388,6 +2384,7 @@ function ModuleEntryItem({
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
 
   function showPreview() {
+    if (displayMode === "wide-preview") return;
     setAnchorRect(buttonRef.current?.getBoundingClientRect() ?? null);
   }
 
@@ -2396,6 +2393,52 @@ function ModuleEntryItem({
   }
 
   const compact = displayMode === "icon" || displayMode === "compact";
+
+  if (displayMode === "wide-preview") {
+    return (
+      <div
+        className={`w-full min-w-0 overflow-hidden rounded-lg border transition-colors ${
+          active
+            ? "border-[#4c85ff] bg-[#153463] shadow-[0_0_0_1px_rgba(76,133,255,0.28)]"
+            : "border-[#1d2e47] bg-[#0b1424]"
+        }`}
+      >
+        <button
+          ref={buttonRef}
+          type="button"
+          aria-label={entry.title}
+          onClick={onOpen}
+          className="group w-full px-2.5 py-2 text-left transition-colors hover:bg-[#101d32]"
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <span
+              className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${
+                active
+                  ? "border-blue-300/40 bg-blue-300/15 text-blue-100"
+                  : "border-[#2b4264] bg-[#101b2c] text-slate-300"
+              }`}
+            >
+              <Icon size={15} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-xs font-semibold text-slate-100">
+                {entry.title}
+              </span>
+              <span className="mt-0.5 block truncate text-[11px] font-medium text-slate-400">
+                {metric.summary}
+              </span>
+            </span>
+            <span className="shrink-0 rounded border border-[#273d60] px-1.5 py-0.5 text-[10px] text-slate-400">
+              {metric.badge}
+            </span>
+          </div>
+        </button>
+        <div className="border-t border-[#182940] p-2">
+          <ModuleEntryPreview id={entry.id} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -2650,116 +2693,119 @@ function EntryPreviewPopover({
 
 function ModuleEntryPreview({ id }: { id: ModuleEntryId }) {
   if (id === "big-bank-price") {
-    const rows = initialBankRateRows
-      .filter((row) => row.hasQuote)
-      .slice(0, 4)
-      .map((row) => [
-        row.institution.replace("银行", ""),
-        BANK_TENOR_LABEL[row.tenor],
-        row.nonBankRate || "-",
-        row.bankRate || "-",
-      ]);
     return (
-      <MiniPreviewTable
-        columns={["机构", "期", "非银", "银行"]}
-        rows={rows}
-      />
+      <RichPreviewFrame heightClassName="h-[230px]">
+        <BigBankPriceFrame />
+      </RichPreviewFrame>
     );
   }
 
   if (id === "xrepo") {
-    const section = leftSections.find(
-      (item): item is SummaryTableSection =>
-        item.layout === "table" && item.title === "XREPO",
-    );
     return (
-      <MiniPreviewTable
-        columns={["合约", "正量", "逆量"]}
-        rows={(section?.rows ?? []).slice(0, 3).map((row) => [
-          row[0],
-          row[1],
-          row[4],
-        ])}
-      />
+      <RichPreviewFrame heightClassName="h-[210px]">
+        <XrepoFrame />
+      </RichPreviewFrame>
     );
   }
 
   if (id === "exchange-repo") {
     return (
-      <MiniPreviewTable
-        columns={["市场", "品种", "最新"]}
-        rows={[
-          ["上交所", "GC001", "1.3700"],
-          ["上交所", "GC007", "1.3750"],
-          ["深交所", "R-001", "1.3900"],
-        ]}
-      />
+      <RichPreviewFrame heightClassName="h-[250px]">
+        <ExchangeRepoFrame />
+      </RichPreviewFrame>
     );
   }
 
   if (id === "ncd") {
     return (
-      <MiniSparklinePreview
-        label="NCD 1M"
-        values={ncdTrendSeries}
-        color={chartPalette.emerald}
-        footnote="近14天"
-      />
+      <RichPreviewFrame heightClassName="h-[280px]">
+        <LeftNcdCard />
+      </RichPreviewFrame>
     );
   }
 
   if (id === "weighted-price") {
-    return (
-      <MiniSparklinePreview
-        label="R001 加权"
-        values={historicalCloseDatasets["5d"].close}
-        color={chartPalette.blue}
-        footnote="5日 / 成交量"
-      />
-    );
+    return <WeightedPriceEntryPreview />;
   }
 
   if (id === "anonymous-trade") {
-    return (
-      <MiniSparklinePreview
-        label="匿名成交"
-        values={intradaySeries}
-        color={chartPalette.amber}
-        footnote="日内走势"
-      />
-    );
+    return <AnonymousTradeEntryPreview />;
   }
 
   if (id === "institution-period") {
     return (
-      <MiniMetricPreview
-        rows={[
-          ["大行", "买入利率 1.92%"],
-          ["基金", "融入 1,500亿"],
-          ["券商", "净融入 +420亿"],
-        ]}
-      />
+      <RichPreviewFrame heightClassName="h-[270px]">
+        <div className="h-full min-h-0 rounded-xl border border-[#284164] bg-[#0b1728] p-2">
+          <CfetsInstPanel />
+        </div>
+      </RichPreviewFrame>
     );
   }
 
   if (id === "global-filter") {
     return (
-      <MiniMetricPreview
-        rows={[
-          ["金额", `${topBoardFilters.amountMin} - ${topBoardFilters.amountMax}亿`],
-          ["利率", `${topBoardFilters.rateMin} - ${topBoardFilters.rateMax}%`],
-        ]}
-      />
+      <RichPreviewFrame heightClassName="h-[190px]" scrollX>
+        <div className="h-full min-w-[540px]">
+          <GlobalFilterFrame />
+        </div>
+      </RichPreviewFrame>
     );
   }
 
   return (
-    <MiniMetricPreview
-      rows={[
-        ["DR007", "2.15%"],
-        ["资金情绪", "51 / 平衡"],
-      ]}
-    />
+    <RichPreviewFrame heightClassName="h-[220px]" scrollX>
+      <div className="h-full min-w-[560px]">
+        <MarketSentimentFrame />
+      </div>
+    </RichPreviewFrame>
+  );
+}
+
+function WeightedPriceEntryPreview() {
+  const [activeRange, setActiveRange] = useState<HistoryRange>("5d");
+  const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
+  return (
+    <RichPreviewFrame heightClassName="h-[260px]">
+      <HistoryClosePanel
+        activeRange={activeRange}
+        overlayProduct="none"
+        compareProduct={compareProduct}
+        onRangeChange={setActiveRange}
+        onCompareChange={setCompareProduct}
+      />
+    </RichPreviewFrame>
+  );
+}
+
+function AnonymousTradeEntryPreview() {
+  const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
+  return (
+    <RichPreviewFrame heightClassName="h-[235px]">
+      <IntradayPanel
+        overlayProduct={overlayProduct}
+        onOverlayChange={setOverlayProduct}
+      />
+    </RichPreviewFrame>
+  );
+}
+
+function RichPreviewFrame({
+  children,
+  heightClassName,
+  scrollX = false,
+}: {
+  children: React.ReactNode;
+  heightClassName: string;
+  scrollX?: boolean;
+}) {
+  return (
+    <div
+      className={`min-h-0 rounded-lg ${heightClassName} ${
+        scrollX ? "overflow-x-auto overflow-y-hidden" : "overflow-hidden"
+      }`}
+    >
+      {children}
+    </div>
   );
 }
 
