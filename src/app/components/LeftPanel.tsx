@@ -68,19 +68,19 @@ export function LeftPanel() {
           <div className="flex items-center justify-between">
             <span className="text-gray-600 text-xs">当前指数：</span>
             <div className="flex items-center gap-2">
-              <span className="text-xl font-bold text-yellow-600">51</span>
-              <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded border border-yellow-300">平衡</span>
+              <span className="text-xl font-bold text-[var(--tdx-yellow)]">51</span>
+              <span className="rounded-sm border border-[rgba(214,165,65,0.48)] bg-[rgba(214,165,65,0.14)] px-1.5 py-0.5 text-xs text-[var(--tdx-yellow)]">平衡</span>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={100}>
             <LineChart data={sentimentData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="time" stroke="#6b7280" style={{ fontSize: '10px' }} />
-              <YAxis stroke="#6b7280" style={{ fontSize: '10px' }} domain={[0, 100]} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--tdx-border)" />
+              <XAxis dataKey="time" stroke="var(--tdx-text-muted)" style={{ fontSize: '10px' }} />
+              <YAxis stroke="var(--tdx-text-muted)" style={{ fontSize: '10px' }} domain={[0, 100]} />
               <Tooltip
-                contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', fontSize: '10px' }}
+                contentStyle={{ backgroundColor: 'var(--tdx-bg-panel)', border: '1px solid var(--tdx-border)', color: 'var(--tdx-text-main)', fontSize: '10px' }}
               />
-              <Line type="monotone" dataKey="value" stroke="#ca8a04" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="value" stroke="var(--tdx-yellow)" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
           <div className="grid grid-cols-3 gap-1 text-xs">
@@ -90,7 +90,7 @@ export function LeftPanel() {
             </div>
             <div className="text-center">
               <div className="text-gray-500 text-xs">平衡</div>
-              <div className="text-yellow-700 font-semibold text-xs">40-60</div>
+              <div className="font-semibold text-xs text-[var(--tdx-yellow)]">40-60</div>
             </div>
             <div className="text-center">
               <div className="text-gray-500 text-xs">偏紧</div>
@@ -105,16 +105,16 @@ export function LeftPanel() {
         <div className="space-y-2">
           <ResponsiveContainer width="100%" height={120}>
             <LineChart data={rateHistoryData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="date" stroke="#6b7280" style={{ fontSize: '10px' }} />
-              <YAxis stroke="#6b7280" style={{ fontSize: '10px' }} domain={[1.5, 2.5]} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--tdx-border)" />
+              <XAxis dataKey="date" stroke="var(--tdx-text-muted)" style={{ fontSize: '10px' }} />
+              <YAxis stroke="var(--tdx-text-muted)" style={{ fontSize: '10px' }} domain={[1.5, 2.5]} />
               <Tooltip
-                contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', fontSize: '10px' }}
+                contentStyle={{ backgroundColor: 'var(--tdx-bg-panel)', border: '1px solid var(--tdx-border)', color: 'var(--tdx-text-main)', fontSize: '10px' }}
               />
               <Legend wrapperStyle={{ fontSize: '10px' }} />
-              <Line type="monotone" dataKey="DR001" stroke="#10b981" strokeWidth={1.5} />
-              <Line type="monotone" dataKey="DR007" stroke="#3b82f6" strokeWidth={1.5} />
-              <Line type="monotone" dataKey="GC001" stroke="#8b5cf6" strokeWidth={1.5} />
+              <Line type="monotone" dataKey="DR001" stroke="var(--tdx-green)" strokeWidth={1.5} />
+              <Line type="monotone" dataKey="DR007" stroke="var(--tdx-blue)" strokeWidth={1.5} />
+              <Line type="monotone" dataKey="GC001" stroke="var(--tdx-purple)" strokeWidth={1.5} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -125,15 +125,15 @@ export function LeftPanel() {
         <div className="space-y-2">
           <ResponsiveContainer width="100%" height={140}>
             <BarChart data={institutionStructure}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="name" stroke="#6b7280" style={{ fontSize: '9px' }} />
-              <YAxis stroke="#6b7280" style={{ fontSize: '10px' }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--tdx-border)" />
+              <XAxis dataKey="name" stroke="var(--tdx-text-muted)" style={{ fontSize: '9px' }} />
+              <YAxis stroke="var(--tdx-text-muted)" style={{ fontSize: '10px' }} />
               <Tooltip
-                contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', fontSize: '10px' }}
+                contentStyle={{ backgroundColor: 'var(--tdx-bg-panel)', border: '1px solid var(--tdx-border)', color: 'var(--tdx-text-main)', fontSize: '10px' }}
               />
               <Legend wrapperStyle={{ fontSize: '10px' }} />
-              <Bar dataKey="lend" fill="#10b981" name="融出" />
-              <Bar dataKey="borrow" fill="#ef4444" name="融入" />
+              <Bar dataKey="lend" fill="var(--tdx-green)" name="融出" />
+              <Bar dataKey="borrow" fill="var(--tdx-red)" name="融入" />
             </BarChart>
           </ResponsiveContainer>
           <div className="text-xs text-gray-600 space-y-0.5">

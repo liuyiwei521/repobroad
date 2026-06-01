@@ -11,9 +11,9 @@ const PERIOD_LABELS: Record<string, string> = {
 };
 
 const INST_TYPES = [
-  { id: 'xrepo',   label: '大行匿名', baseColor: '#ffffff' },
-  { id: 'qtrade',  label: '指定机构', baseColor: '#60a5fa' },
-  { id: 'nonbank', label: '非银',     baseColor: '#fbbf24' },
+  { id: 'xrepo',   label: '大行匿名', baseColor: '#d8c8ab' },
+  { id: 'qtrade',  label: '指定机构', baseColor: '#3b79b7' },
+  { id: 'nonbank', label: '非银',     baseColor: '#d6a541' },
 ];
 
 const BASE_RATES: Record<string, Record<string, number>> = {
@@ -27,9 +27,9 @@ const PERIOD_DASH: Record<string, string> = {
 };
 
 const PALETTE: Record<string, string[]> = {
-  xrepo:   ['#ffffff', '#cccccc', '#aaaaaa', '#888888', '#666666'],
-  qtrade:  ['#bfdbfe', '#93c5fd', '#60a5fa', '#3b82f6', '#2563eb'],
-  nonbank: ['#fef08a', '#fde047', '#fbbf24', '#f59e0b', '#d97706'],
+  xrepo:   ['#f1e6cf', '#d8c8ab', '#b7a98f', '#9a8c76', '#7f7360'],
+  qtrade:  ['#6fa4d4', '#548cc2', '#3b79b7', '#2f638f', '#254f73'],
+  nonbank: ['#f1c96a', '#d6a541', '#be8c2e', '#9f7022', '#805719'],
 };
 
 const TIME_RANGES = [
@@ -213,25 +213,25 @@ export function MarketChartPage({ onClose }: Props) {
 
   const CustomVolBar = (props: any) => {
     const { x, y, width, height, index } = props;
-    const color = dataWithMA[index]?.volUp ? '#16a34a' : '#dc2626';
+    const color = dataWithMA[index]?.volUp ? '#00a85a' : '#e7353a';
     return <rect x={x} y={y} width={width} height={height} fill={color} opacity={0.75} />;
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: '#0d0d0d', color: '#e5e7eb' }}>
+    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: 'var(--tdx-bg-page)', color: 'var(--tdx-text-main)' }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: '#222', background: '#111' }}>
+      <div className="flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: 'var(--tdx-border)', background: 'var(--tdx-bg-header)' }}>
         <div className="flex items-center gap-4">
-          <h2 className="text-sm font-bold text-white">行情走势图</h2>
+          <h2 className="text-sm font-bold text-[var(--tdx-text-heading)]">行情走势图</h2>
           {/* Time range */}
           <div className="flex gap-1">
             {TIME_RANGES.map(r => (
               <button key={r.label} onClick={() => setTimeRange(r)}
                 className="px-2.5 py-0.5 text-xs rounded transition-colors"
                 style={{
-                  background: timeRange.label === r.label ? '#2563eb' : '#1f1f1f',
-                  color: timeRange.label === r.label ? '#fff' : '#9ca3af',
-                  border: '1px solid ' + (timeRange.label === r.label ? '#3b82f6' : '#333'),
+                  background: timeRange.label === r.label ? 'var(--tdx-red)' : 'var(--tdx-bg-control)',
+                  color: timeRange.label === r.label ? 'var(--tdx-text-inverse)' : 'var(--tdx-text-muted)',
+                  border: '1px solid ' + (timeRange.label === r.label ? 'var(--tdx-red)' : 'var(--tdx-border)'),
                 }}>
                 {r.label}
               </button>
@@ -242,7 +242,7 @@ export function MarketChartPage({ onClose }: Props) {
           <button
             onClick={() => setShowLegend(v => !v)}
             className="text-xs px-2 py-0.5 rounded"
-            style={{ background: '#1f1f1f', color: '#9ca3af', border: '1px solid #333' }}
+            style={{ background: 'var(--tdx-bg-control)', color: 'var(--tdx-text-muted)', border: '1px solid var(--tdx-border)' }}
           >
             {showLegend ? '隐藏图例' : '显示图例'}
           </button>
@@ -253,24 +253,24 @@ export function MarketChartPage({ onClose }: Props) {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2 border-b" style={{ borderColor: '#222', background: '#111' }}>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2 border-b" style={{ borderColor: 'var(--tdx-border)', background: 'var(--tdx-bg-panel)' }}>
         {/* Institution */}
         <div className="flex items-center gap-1.5">
-          <span className="text-xs" style={{ color: '#6b7280' }}>机构类型：</span>
+          <span className="text-xs" style={{ color: 'var(--tdx-text-muted)' }}>机构类型：</span>
           <button onClick={toggleAllInsts}
             className="px-2 py-0.5 text-xs rounded border"
             style={{
-              background: selectedInsts.size === INST_TYPES.length ? '#374151' : 'transparent',
-              borderColor: selectedInsts.size === INST_TYPES.length ? '#6b7280' : '#374151',
-              color: selectedInsts.size === INST_TYPES.length ? '#e5e7eb' : '#6b7280',
+              background: selectedInsts.size === INST_TYPES.length ? '#351b22' : 'transparent',
+              borderColor: selectedInsts.size === INST_TYPES.length ? 'var(--tdx-red)' : 'var(--tdx-border)',
+              color: selectedInsts.size === INST_TYPES.length ? 'var(--tdx-text-heading)' : 'var(--tdx-text-muted)',
             }}>全选</button>
           {INST_TYPES.map(inst => (
             <button key={inst.id} onClick={() => toggleInst(inst.id)}
               className="px-2 py-0.5 text-xs rounded border transition-all"
               style={{
                 background: selectedInsts.has(inst.id) ? inst.baseColor : 'transparent',
-                borderColor: selectedInsts.has(inst.id) ? inst.baseColor : '#374151',
-                color: selectedInsts.has(inst.id) ? '#000' : '#6b7280',
+                borderColor: selectedInsts.has(inst.id) ? inst.baseColor : 'var(--tdx-border)',
+                color: selectedInsts.has(inst.id) ? '#0d0d13' : 'var(--tdx-text-muted)',
                 fontWeight: selectedInsts.has(inst.id) ? 600 : 400,
               }}>
               {inst.label}
@@ -279,27 +279,27 @@ export function MarketChartPage({ onClose }: Props) {
         </div>
         {/* Period */}
         <div className="flex items-center gap-1.5">
-          <span className="text-xs" style={{ color: '#6b7280' }}>期限：</span>
+          <span className="text-xs" style={{ color: 'var(--tdx-text-muted)' }}>期限：</span>
           <button onClick={toggleAllPeriods}
             className="px-2 py-0.5 text-xs rounded border"
             style={{
-              background: selectedPeriods.size === PERIODS.length ? '#374151' : 'transparent',
-              borderColor: selectedPeriods.size === PERIODS.length ? '#6b7280' : '#374151',
-              color: selectedPeriods.size === PERIODS.length ? '#e5e7eb' : '#6b7280',
+              background: selectedPeriods.size === PERIODS.length ? '#351b22' : 'transparent',
+              borderColor: selectedPeriods.size === PERIODS.length ? 'var(--tdx-red)' : 'var(--tdx-border)',
+              color: selectedPeriods.size === PERIODS.length ? 'var(--tdx-text-heading)' : 'var(--tdx-text-muted)',
             }}>全选</button>
           {PERIODS.map(p => (
             <button key={p} onClick={() => togglePeriod(p)}
               className="px-2 py-0.5 text-xs rounded border transition-all"
               style={{
-                background: selectedPeriods.has(p) ? '#1d4ed8' : 'transparent',
-                borderColor: selectedPeriods.has(p) ? '#3b82f6' : '#374151',
-                color: selectedPeriods.has(p) ? '#fff' : '#6b7280',
+                background: selectedPeriods.has(p) ? 'var(--tdx-red)' : 'transparent',
+                borderColor: selectedPeriods.has(p) ? 'var(--tdx-red)' : 'var(--tdx-border)',
+                color: selectedPeriods.has(p) ? 'var(--tdx-text-inverse)' : 'var(--tdx-text-muted)',
               }}>
               {PERIOD_LABELS[p]}
             </button>
           ))}
         </div>
-        <span className="text-xs ml-auto" style={{ color: '#4b5563' }}>
+        <span className="text-xs ml-auto" style={{ color: 'var(--tdx-text-muted)' }}>
           粒度 {timeRange.granularityMin}min · {dataWithMA.length} 点
         </span>
       </div>
@@ -310,17 +310,17 @@ export function MarketChartPage({ onClose }: Props) {
         <div className="flex-1 min-h-0">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={dataWithMA} margin={{ top: 8, right: 65, left: 10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="1 4" stroke="#1e1e1e" vertical={false} />
+              <CartesianGrid strokeDasharray="1 4" stroke="var(--tdx-border)" vertical={false} />
               <XAxis
                 dataKey="timeLabel"
-                tick={{ fill: '#4b5563', fontSize: 10 }}
+                tick={{ fill: 'var(--tdx-text-muted)', fontSize: 10 }}
                 interval={xInterval}
-                axisLine={{ stroke: '#2a2a2a' }}
+                axisLine={{ stroke: 'var(--tdx-border)' }}
                 tickLine={false}
               />
               <YAxis
                 domain={yDomain}
-                tick={{ fill: '#4b5563', fontSize: 10 }}
+                tick={{ fill: 'var(--tdx-text-muted)', fontSize: 10 }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={v => v.toFixed(3)}
@@ -330,7 +330,7 @@ export function MarketChartPage({ onClose }: Props) {
                 yAxisId="right"
                 orientation="right"
                 domain={yDomain}
-                tick={{ fill: '#4b5563', fontSize: 10 }}
+                tick={{ fill: 'var(--tdx-text-muted)', fontSize: 10 }}
                 axisLine={false}
                 tickLine={false}
                 width={62}
@@ -341,14 +341,14 @@ export function MarketChartPage({ onClose }: Props) {
                 }}
               />
               <Tooltip
-                contentStyle={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 4, fontSize: 11 }}
-                labelStyle={{ color: '#9ca3af' }}
-                itemStyle={{ color: '#d1d5db' }}
+                contentStyle={{ background: 'var(--tdx-bg-panel)', border: '1px solid var(--tdx-border)', borderRadius: 2, fontSize: 11 }}
+                labelStyle={{ color: 'var(--tdx-text-muted)' }}
+                itemStyle={{ color: 'var(--tdx-text-main)' }}
                 formatter={(v: number, name: string) => [`${v?.toFixed(4)}%`, name]}
               />
               {showLegend && (
                 <Legend
-                  wrapperStyle={{ fontSize: 10, color: '#9ca3af', paddingTop: 4 }}
+                  wrapperStyle={{ fontSize: 10, color: 'var(--tdx-text-muted)', paddingTop: 4 }}
                   iconType="line"
                 />
               )}
@@ -369,7 +369,7 @@ export function MarketChartPage({ onClose }: Props) {
                 <Line
                   type="monotone"
                   dataKey="__ma"
-                  stroke="#d97706"
+                  stroke="var(--tdx-yellow)"
                   strokeWidth={1.5}
                   dot={false}
                   name="MA20"
@@ -385,10 +385,10 @@ export function MarketChartPage({ onClose }: Props) {
         <div style={{ height: 90 }}>
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={dataWithMA} margin={{ top: 0, right: 65, left: 10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="1 4" stroke="#161616" vertical={false} />
-              <XAxis dataKey="timeLabel" tick={false} axisLine={{ stroke: '#2a2a2a' }} tickLine={false} />
+              <CartesianGrid strokeDasharray="1 4" stroke="var(--tdx-border)" vertical={false} />
+              <XAxis dataKey="timeLabel" tick={false} axisLine={{ stroke: 'var(--tdx-border)' }} tickLine={false} />
               <YAxis
-                tick={{ fill: '#4b5563', fontSize: 9 }}
+                tick={{ fill: 'var(--tdx-text-muted)', fontSize: 9 }}
                 axisLine={false}
                 tickLine={false}
                 width={52}
@@ -396,8 +396,8 @@ export function MarketChartPage({ onClose }: Props) {
               />
               <YAxis yAxisId="right" orientation="right" width={62} tick={false} axisLine={false} tickLine={false} />
               <Tooltip
-                contentStyle={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 4, fontSize: 10 }}
-                labelStyle={{ color: '#9ca3af' }}
+                contentStyle={{ background: 'var(--tdx-bg-panel)', border: '1px solid var(--tdx-border)', borderRadius: 2, fontSize: 10 }}
+                labelStyle={{ color: 'var(--tdx-text-muted)' }}
                 formatter={(v: number) => [`${v}亿`, '成交量']}
               />
               <Bar dataKey="volume" shape={<CustomVolBar />} isAnimationActive={false} name="成交量" />

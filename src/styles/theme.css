@@ -2,90 +2,110 @@
 
 :root {
   --font-size: 16px;
-  --background: #ffffff;
-  --foreground: oklch(0.145 0 0);
-  --card: #ffffff;
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: #030213;
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.95 0.0058 264.53);
-  --secondary-foreground: #030213;
-  --muted: #ececf0;
-  --muted-foreground: #717182;
-  --accent: #e9ebef;
-  --accent-foreground: #030213;
-  --destructive: #d4183d;
-  --destructive-foreground: #ffffff;
-  --border: rgba(0, 0, 0, 0.1);
-  --input: transparent;
-  --input-background: #f3f3f5;
-  --switch-background: #cbced4;
+  --background: #0d0d13;
+  --foreground: #d8c8ab;
+  --card: #15151d;
+  --card-foreground: #d8c8ab;
+  --popover: #15151d;
+  --popover-foreground: #d8c8ab;
+  --primary: #e7353a;
+  --primary-foreground: #fff6e8;
+  --secondary: #20202b;
+  --secondary-foreground: #d8c8ab;
+  --muted: #20202b;
+  --muted-foreground: #8f8d99;
+  --accent: #351b22;
+  --accent-foreground: #f1e6cf;
+  --destructive: #e7353a;
+  --destructive-foreground: #fff6e8;
+  --border: #2f2e3a;
+  --input: #20202b;
+  --input-background: #20202b;
+  --switch-background: #2f2e3a;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: #030213;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --ring: #e7353a;
+  --chart-1: #e7353a;
+  --chart-2: #00a85a;
+  --chart-3: #d6a541;
+  --chart-4: #7a4aa1;
+  --chart-5: #3b79b7;
+  --radius: 0.25rem;
+  --sidebar: #15151d;
+  --sidebar-foreground: #d8c8ab;
+  --sidebar-primary: #e7353a;
+  --sidebar-primary-foreground: #fff6e8;
+  --sidebar-accent: #20202b;
+  --sidebar-accent-foreground: #f1e6cf;
+  --sidebar-border: #2f2e3a;
+  --sidebar-ring: #e7353a;
 }
 
 :root {
-  --tk-color-brand-primary: #0060db;
-  --tk-color-brand-primary-pressed: #0055c7;
-  --tk-color-brand-primary-hover: #1b7eff;
-  --tk-color-brand-primary-deep: #025cab;
-  --tk-color-brand-cyan: #00d2dc;
+  --tdx-bg-page: #0d0d13;
+  --tdx-bg-panel: #15151d;
+  --tdx-bg-header: #292835;
+  --tdx-bg-control: #20202b;
+  --tdx-bg-control-hover: #2a2935;
+  --tdx-bg-row-hover: #1d1c27;
+  --tdx-border: #2f2e3a;
+  --tdx-border-weak: #24232d;
+  --tdx-text-main: #d8c8ab;
+  --tdx-text-muted: #8f8d99;
+  --tdx-text-heading: #f1e6cf;
+  --tdx-text-inverse: #fff6e8;
+  --tdx-red: #e7353a;
+  --tdx-red-deep: #8f2026;
+  --tdx-green: #00a85a;
+  --tdx-yellow: #d6a541;
+  --tdx-blue: #3b79b7;
+  --tdx-purple: #7a4aa1;
+  --tdx-orange: #c76a25;
 
-  --tk-color-success: #00e056;
-  --tk-color-warning: #ffa028;
-  --tk-color-warning-strong: #fdd908;
-  --tk-color-danger: #ff3446;
-  --tk-color-danger-deep: #880f1e;
-  --tk-color-neutral: #737578;
+  --tk-color-brand-primary: var(--tdx-red);
+  --tk-color-brand-primary-pressed: var(--tdx-red-deep);
+  --tk-color-brand-primary-hover: #ff494e;
+  --tk-color-brand-primary-deep: var(--tdx-red-deep);
+  --tk-color-brand-cyan: var(--tdx-yellow);
 
-  --tk-color-text-primary: #333333;
-  --tk-color-text-heading: #111111;
-  --tk-color-text-secondary: #666666;
-  --tk-color-text-tertiary: #919294;
-  --tk-color-text-inverse: #ffffff;
-  --tk-color-text-inverse-secondary: rgba(255, 255, 255, 0.87);
-  --tk-color-text-disabled: rgba(0, 0, 0, 0.3);
+  --tk-color-success: var(--tdx-green);
+  --tk-color-warning: var(--tdx-yellow);
+  --tk-color-warning-strong: #f1c96a;
+  --tk-color-danger: var(--tdx-red);
+  --tk-color-danger-deep: var(--tdx-red-deep);
+  --tk-color-neutral: var(--tdx-text-muted);
 
-  --tk-color-surface-page: #ffffff;
-  --tk-color-surface-subtle: #f8f9fa;
-  --tk-color-surface-panel: #f2f3f5;
-  --tk-color-surface-selected: #e9f1fe;
-  --tk-color-surface-selected-strong: #cdeaff;
-  --tk-color-surface-dark: #393d45;
-  --tk-color-surface-dark-deep: #262626;
+  --tk-color-text-primary: var(--tdx-text-main);
+  --tk-color-text-heading: var(--tdx-text-heading);
+  --tk-color-text-secondary: var(--tdx-text-muted);
+  --tk-color-text-tertiary: #6f6d78;
+  --tk-color-text-inverse: var(--tdx-text-inverse);
+  --tk-color-text-inverse-secondary: var(--tdx-text-main);
+  --tk-color-text-disabled: rgba(143, 141, 153, 0.46);
 
-  --tk-color-border-default: #e3e5e8;
-  --tk-color-border-strong: #dbdce1;
-  --tk-color-border-divider: #dddee4;
-  --tk-color-border-dark: #cad1da;
+  --tk-color-surface-page: var(--tdx-bg-page);
+  --tk-color-surface-subtle: var(--tdx-bg-panel);
+  --tk-color-surface-panel: var(--tdx-bg-panel);
+  --tk-color-surface-selected: #351b22;
+  --tk-color-surface-selected-strong: var(--tdx-red-deep);
+  --tk-color-surface-dark: var(--tdx-bg-page);
+  --tk-color-surface-dark-deep: var(--tdx-bg-panel);
 
-  --tk-color-chart-blue: #1872f6;
-  --tk-color-chart-purple: #763df2;
-  --tk-color-chart-violet: #a138f5;
-  --tk-color-chart-indigo: #6764f5;
-  --tk-color-chart-gold: #e9b842;
-  --tk-color-chart-teal: #02adb0;
+  --tk-color-border-default: var(--tdx-border);
+  --tk-color-border-strong: #43414f;
+  --tk-color-border-divider: var(--tdx-border-weak);
+  --tk-color-border-dark: var(--tdx-border);
+
+  --tk-color-chart-blue: var(--tdx-blue);
+  --tk-color-chart-purple: var(--tdx-purple);
+  --tk-color-chart-violet: #8e5ab6;
+  --tk-color-chart-indigo: #5664a8;
+  --tk-color-chart-gold: var(--tdx-yellow);
+  --tk-color-chart-teal: var(--tdx-green);
 
   --tk-color-overlay-mask: rgba(0, 0, 0, 0.6);
   --tk-color-overlay-mask-light: rgba(0, 0, 0, 0.3);
-  --tk-color-overlay-shadow: rgba(19, 20, 26, 0.05);
+  --tk-color-overlay-shadow: rgba(0, 0, 0, 0.32);
 
   --tk-font-family-base: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
   --tk-font-family-number: "Helvetica Neue", Arial, sans-serif;
@@ -115,8 +135,8 @@
   --tk-space-xl: 20px;
   --tk-space-xxl: 24px;
 
-  --tk-shadow-popup: 0 13px 24px 2px rgba(19, 20, 26, 0.05);
-  --tk-shadow-screen: 0 2px 10px rgba(0, 0, 0, 0.2);
+  --tk-shadow-popup: 0 8px 20px rgba(0, 0, 0, 0.32);
+  --tk-shadow-screen: none;
 
   --tk-modal-width: 642px;
   --tk-modal-header-height: 30px;
@@ -133,7 +153,7 @@
   --primary-foreground: var(--tk-color-text-inverse);
   --border: var(--tk-color-border-default);
   --input-background: var(--tk-color-surface-page);
-  --switch-background: #b3b6b9;
+  --switch-background: var(--tdx-border);
 }
 
 .dark {
@@ -281,7 +301,7 @@ body {
 }
 
 .tk-workbench {
-  background: var(--tk-color-surface-dark);
+  background: var(--tdx-bg-page);
   color: var(--tk-color-text-inverse-secondary);
   font-family: var(--tk-font-family-base);
   font-size: var(--tk-font-size-md);
@@ -290,6 +310,31 @@ body {
 
 .tk-workbench * {
   letter-spacing: 0 !important;
+  scrollbar-color: var(--tdx-border) var(--tdx-bg-page);
+}
+
+.tk-workbench *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.tk-workbench *::-webkit-scrollbar-track,
+.tk-workbench *::-webkit-scrollbar-corner {
+  background: var(--tdx-bg-page);
+}
+
+.tk-workbench *::-webkit-scrollbar-thumb {
+  border: 2px solid var(--tdx-bg-page);
+  border-radius: var(--tdx-radius-sm);
+  background: var(--tdx-border);
+}
+
+.tk-workbench *::-webkit-scrollbar-thumb:hover {
+  background: var(--tdx-red-deep);
+}
+
+.tk-workbench *::-webkit-scrollbar-thumb:active {
+  background: var(--tdx-red);
 }
 
 .tk-workbench .rounded-2xl,
@@ -324,32 +369,57 @@ body {
 .tk-workbench [class*="bg-[#111d30]"],
 .tk-workbench [class*="bg-[#14223a]"],
 .tk-workbench [class*="bg-[#15294a]"] {
-  background: #30343b !important;
+  background: var(--tdx-bg-panel) !important;
 }
 
 .tk-workbench [class*="bg-white"],
 .tk-workbench [class*="bg-gray"],
 .tk-workbench [class*="from-gray"],
-.tk-workbench [class*="to-gray"] {
-  background: var(--tk-color-surface-dark-deep) !important;
+.tk-workbench [class*="to-gray"],
+.tk-workbench [class*="bg-slate"] {
+  background: var(--tdx-bg-panel) !important;
+  background-image: none !important;
+}
+
+.tk-workbench [class*="bg-blue"],
+.tk-workbench [class*="bg-sky"],
+.tk-workbench [class*="from-blue"],
+.tk-workbench [class*="from-sky"],
+.tk-workbench [class*="to-blue"],
+.tk-workbench [class*="to-sky"] {
+  background: var(--tdx-red) !important;
   background-image: none !important;
 }
 
 .tk-workbench [class*="border-[#"],
 .tk-workbench [class*="border-blue"],
-.tk-workbench [class*="border-gray"] {
-  border-color: rgba(202, 209, 218, 0.34) !important;
+.tk-workbench [class*="border-sky"],
+.tk-workbench [class*="border-gray"],
+.tk-workbench [class*="border-slate"] {
+  border-color: var(--tdx-border) !important;
 }
 
 .tk-workbench [class*="text-gray-900"],
 .tk-workbench [class*="text-gray-800"],
-.tk-workbench [class*="text-gray-700"] {
-  color: var(--tk-color-text-inverse-secondary) !important;
+.tk-workbench [class*="text-gray-700"],
+.tk-workbench [class*="text-slate-50"],
+.tk-workbench [class*="text-slate-100"],
+.tk-workbench [class*="text-slate-200"],
+.tk-workbench [class*="text-white"] {
+  color: var(--tdx-text-heading) !important;
 }
 
 .tk-workbench [class*="text-gray-600"],
-.tk-workbench [class*="text-gray-500"] {
-  color: #b1b1b1 !important;
+.tk-workbench [class*="text-gray-500"],
+.tk-workbench [class*="text-slate-300"],
+.tk-workbench [class*="text-slate-400"],
+.tk-workbench [class*="text-slate-500"] {
+  color: var(--tdx-text-muted) !important;
+}
+
+.tk-workbench [class*="text-blue"],
+.tk-workbench [class*="text-sky"] {
+  color: var(--tdx-red) !important;
 }
 
 .tk-workbench__main {
@@ -358,8 +428,8 @@ body {
 
 .tk-topbar {
   min-height: 44px;
-  border-bottom: 1px solid rgba(202, 209, 218, 0.32) !important;
-  background: var(--tk-color-surface-dark-deep) !important;
+  border-bottom: 1px solid var(--tdx-border) !important;
+  background: var(--tdx-bg-header) !important;
   box-shadow: none !important;
 }
 
@@ -371,25 +441,25 @@ body {
 }
 
 .tk-panel {
-  border: 1px solid rgba(202, 209, 218, 0.42) !important;
+  border: 1px solid var(--tdx-border) !important;
   border-radius: var(--tk-radius-md) !important;
-  background: var(--tk-color-surface-dark-deep) !important;
+  background: var(--tdx-bg-panel) !important;
   box-shadow: var(--tk-shadow-screen) !important;
 }
 
 .tk-panel--focus {
-  border-color: rgba(0, 210, 220, 0.76) !important;
+  border-color: rgba(231, 53, 58, 0.72) !important;
 }
 
 .tk-panel__header {
   min-height: 34px;
-  border-bottom: 1px solid rgba(202, 209, 218, 0.26) !important;
-  background: #30343b !important;
+  border-bottom: 1px solid var(--tdx-border) !important;
+  background: var(--tdx-bg-header) !important;
 }
 
 .tk-panel > [class*="border-b"]:first-child {
-  border-bottom-color: rgba(202, 209, 218, 0.26) !important;
-  background: #30343b !important;
+  border-bottom-color: var(--tdx-border) !important;
+  background: var(--tdx-bg-header) !important;
 }
 
 .tk-panel__title {
@@ -410,11 +480,11 @@ body {
 }
 
 .tk-splitter:hover {
-  background: rgba(0, 96, 219, 0.18) !important;
+  background: rgba(231, 53, 58, 0.18) !important;
 }
 
 .tk-splitter__handle {
-  background: rgba(202, 209, 218, 0.66) !important;
+  background: rgba(143, 141, 153, 0.66) !important;
   border-radius: var(--tk-radius-pill) !important;
 }
 
@@ -476,9 +546,9 @@ body {
 }
 
 .tk-chip {
-  border: 1px solid rgba(202, 209, 218, 0.34) !important;
-  border-radius: var(--tk-radius-pill) !important;
-  background: rgba(38, 38, 38, 0.62) !important;
+  border: 1px solid var(--tdx-border) !important;
+  border-radius: var(--tk-radius-sm) !important;
+  background: var(--tdx-bg-control) !important;
   color: var(--tk-color-text-inverse-secondary) !important;
   font-size: var(--tk-font-size-xs) !important;
   line-height: var(--tk-line-height-tight) !important;
@@ -509,9 +579,9 @@ body {
 
 .tk-filter-field {
   height: 28px !important;
-  border: 1px solid rgba(202, 209, 218, 0.42) !important;
+  border: 1px solid var(--tdx-border) !important;
   border-radius: var(--tk-radius-sm) !important;
-  background: rgba(38, 38, 38, 0.82) !important;
+  background: var(--tdx-bg-control) !important;
   color: var(--tk-color-text-inverse-secondary) !important;
   font-size: var(--tk-font-size-md) !important;
   box-shadow: none !important;
@@ -527,21 +597,21 @@ body {
 }
 
 .tk-table-shell {
-  border: 1px solid rgba(202, 209, 218, 0.34) !important;
+  border: 1px solid var(--tdx-border) !important;
   border-radius: var(--tk-radius-md) !important;
-  background: var(--tk-color-surface-dark-deep) !important;
+  background: var(--tdx-bg-panel) !important;
 }
 
 .tk-table-shell thead,
 .tk-table-head {
-  background: #30343b !important;
-  color: #b1b1b1 !important;
+  background: var(--tdx-bg-header) !important;
+  color: var(--tdx-text-muted) !important;
 }
 
 .tk-table-shell th,
 .tk-table-head > * {
-  border-color: rgba(202, 209, 218, 0.26) !important;
-  color: #b1b1b1 !important;
+  border-color: var(--tdx-border) !important;
+  color: var(--tdx-text-muted) !important;
   font-size: var(--tk-font-size-xs) !important;
   line-height: var(--tk-line-height-tight) !important;
   font-weight: var(--tk-font-weight-medium) !important;
@@ -549,18 +619,18 @@ body {
 
 .tk-table-shell td,
 .tk-quote-row {
-  border-color: rgba(202, 209, 218, 0.18) !important;
-  color: var(--tk-color-text-inverse-secondary) !important;
+  border-color: var(--tdx-border-weak) !important;
+  color: var(--tdx-text-main) !important;
   font-size: var(--tk-font-size-sm) !important;
 }
 
 .tk-table-shell tbody tr:hover,
 .tk-quote-row:hover {
-  background: rgba(233, 241, 254, 0.1) !important;
+  background: var(--tdx-bg-row-hover) !important;
 }
 
 .tk-table-shell tbody tr:nth-child(even) {
-  background: rgba(255, 255, 255, 0.035) !important;
+  background: rgba(255, 255, 255, 0.025) !important;
 }
 
 .tk-text-primary {
@@ -617,18 +687,18 @@ body {
 }
 
 .tk-quote-section-title {
-  border-left: var(--tk-section-accent-width) solid var(--tk-color-brand-cyan) !important;
-  background: rgba(48, 52, 59, 0.86) !important;
+  border-left: var(--tk-section-accent-width) solid var(--tdx-yellow) !important;
+  background: var(--tdx-bg-control) !important;
 }
 
 .tk-quote-section-title.is-active {
   border-left-color: var(--tk-color-brand-primary-deep) !important;
-  background: rgba(233, 241, 254, 0.12) !important;
+  background: #351b22 !important;
 }
 
 .tk-quote-group {
   border-left: 2px solid var(--tk-color-brand-primary-deep) !important;
-  background: rgba(233, 241, 254, 0.08) !important;
+  background: #20151c !important;
 }
 
 .tk-modal-mask {

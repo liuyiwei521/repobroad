@@ -148,11 +148,11 @@ export function RightPanel() {
   }, []);
 
   const periodColors = {
-    '1': '#10b981',
-    '7': '#3b82f6',
-    '14': '#8b5cf6',
-    '21': '#f59e0b',
-    '28+': '#ef4444',
+    '1': 'var(--tdx-green)',
+    '7': 'var(--tdx-blue)',
+    '14': 'var(--tdx-purple)',
+    '21': 'var(--tdx-yellow)',
+    '28+': 'var(--tdx-red)',
   };
 
   return (
@@ -198,28 +198,28 @@ function TrendChart({ title, data, periodColors }: TrendChartProps) {
   const periods = ['1', '7', '14', '21', '28+'];
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+    <div className="rounded-sm border border-[var(--tdx-border)] bg-[var(--tdx-bg-panel)]">
       {/* 标题 */}
-      <div className="bg-gray-50 px-2 py-1.5 border-b border-gray-200 flex items-center gap-1.5">
-        <TrendingUp size={12} className="text-blue-600" />
-        <h3 className="font-semibold text-gray-900 text-xs">{title}</h3>
+      <div className="flex items-center gap-1.5 border-b border-[var(--tdx-border)] bg-[var(--tdx-bg-header)] px-2 py-1.5">
+        <TrendingUp size={12} className="text-[var(--tdx-red)]" />
+        <h3 className="text-xs font-semibold text-[var(--tdx-text-heading)]">{title}</h3>
       </div>
 
       {/* 图表区域 */}
       <div className="p-2" style={{ height: '180px' }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--tdx-border)" />
             <XAxis
               dataKey="time"
-              tick={{ fontSize: 9, fill: '#6b7280' }}
-              stroke="#9ca3af"
+              tick={{ fontSize: 9, fill: 'var(--tdx-text-muted)' }}
+              stroke="var(--tdx-text-muted)"
               interval="preserveEnd"
               tickCount={4}
             />
             <YAxis
-              tick={{ fontSize: 9, fill: '#6b7280' }}
-              stroke="#9ca3af"
+              tick={{ fontSize: 9, fill: 'var(--tdx-text-muted)' }}
+              stroke="var(--tdx-text-muted)"
               domain={['auto', 'auto']}
               tickFormatter={(value) => `${value.toFixed(1)}%`}
               width={35}
@@ -227,9 +227,10 @@ function TrendChart({ title, data, periodColors }: TrendChartProps) {
             <Tooltip
               contentStyle={{
                 fontSize: 10,
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                border: '1px solid #e5e7eb',
-                borderRadius: 4,
+                backgroundColor: 'var(--tdx-bg-panel)',
+                border: '1px solid var(--tdx-border)',
+                borderRadius: 2,
+                color: 'var(--tdx-text-main)',
                 padding: 6,
               }}
               formatter={(value: number) => `${value.toFixed(2)}%`}
@@ -260,7 +261,7 @@ function TrendChart({ title, data, periodColors }: TrendChartProps) {
                 className="w-3 h-0.5"
                 style={{ backgroundColor: periodColors[period] }}
               />
-              <span className="text-gray-700" style={{ fontSize: '10px' }}>
+              <span className="text-[var(--tdx-text-muted)]" style={{ fontSize: '10px' }}>
                 {period}
               </span>
               {latestValue && (

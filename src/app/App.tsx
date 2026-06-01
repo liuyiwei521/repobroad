@@ -1020,8 +1020,8 @@ const trendVolumeSeries = randomWalk(1040, 60, 220, 12).map((v) =>
 
 const trendVolumeColors = trendVolumeSeries.map((_, index) =>
   index % 3 === 0 || index % 5 === 0
-    ? "var(--tk-color-warning)"
-    : "var(--tk-color-brand-cyan)",
+    ? "var(--tdx-red)"
+    : "var(--tdx-green)",
 );
 
 const trendAxisLabels = [
@@ -1723,13 +1723,13 @@ const fundStructureBars = [
   [690, 560, 240, 190, 520, 390, 560],
 ] as const;
 const fundStructureLegendItems = [
-  { color: "var(--tk-color-chart-blue)", label: "大行" },
-  { color: "var(--tk-color-success)", label: "股份行" },
-  { color: "var(--tk-color-chart-gold)", label: "理财" },
-  { color: "var(--tk-color-warning)", label: "理财子" },
-  { color: "var(--tk-color-danger)", label: "券商" },
-  { color: "var(--tk-color-brand-cyan)", label: "基金" },
-  { color: "var(--tk-color-chart-teal)", label: "保险" },
+  { color: "var(--tdx-text-main)", label: "大行" },
+  { color: "var(--tdx-green)", label: "股份行" },
+  { color: "var(--tdx-yellow)", label: "理财" },
+  { color: "var(--tdx-orange)", label: "理财子" },
+  { color: "var(--tdx-red)", label: "券商" },
+  { color: "var(--tdx-purple)", label: "基金" },
+  { color: "var(--tdx-blue)", label: "保险" },
 ] as const;
 
 type FundStructureRange = "14d" | "1m" | "6m";
@@ -2934,40 +2934,10 @@ function MainQuoteBoard() {
     RepoQuoteSection["id"]
   >(repoQuoteSections[0].id);
   const [overrides, setOverrides] = useState<Record<string, QuoteOverride>>({});
-  const [editingRow, setEditingRow] = useState<QuoteDetailRow | null>(null);
-  const [editingDraft, setEditingDraft] = useState<QuoteOverride>({});
 
   function applyOverride(row: QuoteDetailRow): QuoteDetailRow {
     const ov = overrides[row.id];
     return ov ? { ...row, ...ov } : row;
-  }
-
-  function openEditor(row: QuoteDetailRow, groupName: string) {
-    const merged = applyOverride(row);
-    const prevGroup = overrides[row.id]?.groupName;
-    setEditingRow(row);
-    setEditingDraft({
-      groupName: prevGroup ?? groupName,
-      institution: merged.institution,
-      tenor: merged.tenor,
-      rank: merged.rank,
-      amount: merged.amount,
-      rate: merged.rate,
-      accountType: merged.accountType,
-      collateral: merged.collateral,
-      minimum: merged.minimum,
-    });
-  }
-
-  function saveEditor() {
-    if (!editingRow) return;
-    const now = new Date();
-    const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
-    setOverrides((prev) => ({
-      ...prev,
-      [editingRow.id]: { ...editingDraft, updatedAt: time },
-    }));
-    setEditingRow(null);
   }
   const [topRatio, setTopRatio] = useState<number>(() => {
     if (typeof window === "undefined") return DEFAULT_LEVEL2_TOP_RATIO;
@@ -3086,7 +3056,6 @@ function MainQuoteBoard() {
                   dragRatio={dragRatio}
                   tenorFilter={tenorFilter}
                   applyOverride={applyOverride}
-                  onEdit={openEditor}
                 />
                 {displayLevel === 2 && !isLast ? (
                   <div
@@ -3103,115 +3072,7 @@ function MainQuoteBoard() {
           })}
         </div>
       </section>
-      <QuoteEditorModal
-        row={editingRow}
-        draft={editingDraft}
-        onChange={(field, value) =>
-          setEditingDraft((prev) => ({ ...prev, [field]: value }))
-        }
-        onClose={() => setEditingRow(null)}
-        onSave={saveEditor}
-      />
     </section>
-  );
-}
-
-function QuoteEditorModal({
-  row,
-  draft,
-  onChange,
-  onClose,
-  onSave,
-}: {
-  row: QuoteDetailRow | null;
-  draft: QuoteOverride;
-  onChange: (field: keyof QuoteOverride, value: string) => void;
-  onClose: () => void;
-  onSave: () => void;
-}) {
-  if (!row) return null;
-  const textFields: {
-    key: keyof QuoteOverride;
-    label: string;
-    placeholder?: string;
-  }[] = [
-    { key: "groupName", label: "分组", placeholder: "如 利率地方" },
-    { key: "institution", label: "机构", placeholder: "如 中信银行" },
-    { key: "tenor", label: "期限", placeholder: "如 R007" },
-    { key: "rate", label: "利率", placeholder: "如 1.40%" },
-    { key: "amount", label: "金额", placeholder: "如 5亿" },
-    { key: "minimum", label: "起投门槛", placeholder: "如 5亿起" },
-    { key: "accountType", label: "账户类型", placeholder: "如 自营户" },
-    { key: "collateral", label: "质押品", placeholder: "如 利率/地方/存单" },
-  ];
-  const rankOptions: QuoteRank[] = ["最优", "次优", "报价"];
-  return (
-    <div className="tk-modal-mask fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc] px-4">
-      <div className="tk-modal w-full max-w-2xl overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]">
-        <div className="tk-modal__header border-b border-[#1c3150] bg-[#101d32] px-5 py-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="tk-modal__title text-base font-semibold text-slate-50">
-                修正报价
-              </div>
-            </div>
-            <button
-              className="tk-btn tk-btn--secondary tk-btn--compact rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
-              onClick={onClose}
-              type="button"
-            >
-              关闭
-            </button>
-          </div>
-        </div>
-        <div className="tk-modal__body grid grid-cols-2 gap-3 px-5 py-4">
-          {textFields.map((f) => (
-            <label
-              key={f.key}
-              className="flex flex-col gap-1 text-[11px] text-slate-400"
-            >
-              <span>{f.label}</span>
-              <input
-                className="tk-input rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
-                value={(draft[f.key] as string) ?? ""}
-                placeholder={f.placeholder}
-                onChange={(e) => onChange(f.key, e.target.value)}
-              />
-            </label>
-          ))}
-          <label className="flex flex-col gap-1 text-[11px] text-slate-400">
-            <span>评级</span>
-            <select
-              className="tk-input rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
-              value={(draft.rank as string) ?? row.rank}
-              onChange={(e) => onChange("rank", e.target.value)}
-            >
-              {rankOptions.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <div className="tk-modal__footer flex items-center justify-end gap-2 border-t border-[#1c3150] bg-[#0d1726] px-5 py-4">
-          <button
-            className="tk-btn tk-btn--secondary tk-btn--compact rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
-            onClick={onClose}
-            type="button"
-          >
-            取消
-          </button>
-          <button
-            className="tk-btn tk-btn--primary tk-btn--compact rounded-lg border border-emerald-500/40 bg-emerald-500/20 px-4 py-1.5 text-xs font-semibold text-emerald-200"
-            onClick={onSave}
-            type="button"
-          >
-            保存
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -3248,7 +3109,6 @@ function RepoQuoteSectionBoard({
   dragRatio,
   tenorFilter,
   applyOverride,
-  onEdit,
 }: {
   section: RepoQuoteSection;
   displayLevel: 1 | 2;
@@ -3258,7 +3118,6 @@ function RepoQuoteSectionBoard({
   dragRatio: number | null;
   tenorFilter: QuoteTenorFilter;
   applyOverride: (row: QuoteDetailRow) => QuoteDetailRow;
-  onEdit: (row: QuoteDetailRow, groupName: string) => void;
 }) {
   const matchTenor = (rowTenor: string) =>
     tenorFilter === "all" || rowTenor === tenorFilter;
@@ -3384,16 +3243,6 @@ function RepoQuoteSectionBoard({
                         </span>
                         <span className="flex items-center justify-end gap-1">
                           <button
-                            className="tk-btn tk-btn--warning tk-btn--compact whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEdit(row, group.name);
-                            }}
-                            type="button"
-                          >
-                            修正
-                          </button>
-                          <button
                             className="tk-btn tk-btn--primary tk-btn--compact whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
                             type="button"
                           >
@@ -3447,16 +3296,6 @@ function RepoQuoteSectionBoard({
                           {row.updatedAt}
                         </span>
                         <span className="flex items-center justify-end gap-1">
-                          <button
-                            className="tk-btn tk-btn--warning tk-btn--compact whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEdit(row, group.name);
-                            }}
-                            type="button"
-                          >
-                            修正
-                          </button>
                           <button
                             className="tk-btn tk-btn--primary tk-btn--compact whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
                             type="button"
@@ -4133,7 +3972,7 @@ function HistoryClosePanel({
                           className="min-h-0 rounded-[2px]"
                           style={{
                             height: `${barH}%`,
-                            backgroundColor: isPos ? "#ef5a6f" : "#2fc3de",
+                            backgroundColor: isPos ? "var(--tdx-red)" : "var(--tdx-green)",
                             opacity: 0.92,
                           }}
                         />
@@ -4163,7 +4002,7 @@ function HistoryClosePanel({
                     className="min-w-0 flex-1 rounded-t-[2px]"
                     style={{
                       height: `${(value / volumeMax) * 100}%`,
-                      backgroundColor: index % 3 === 0 ? "#2fc3de" : "#2f6fd0",
+                      backgroundColor: index % 3 === 0 ? "var(--tdx-red)" : "var(--tdx-green)",
                     }}
                   />
                 ))}
@@ -5836,7 +5675,7 @@ function MultiSeriesChart({
                         className="rounded-t-[2px]"
                         style={{
                           height: `${pct}%`,
-                          backgroundColor: "#ef5a6f",
+                          backgroundColor: "var(--tdx-red)",
                           opacity: 0.85,
                         }}
                       />
@@ -5849,7 +5688,7 @@ function MultiSeriesChart({
                         className="rounded-b-[2px]"
                         style={{
                           height: `${pct}%`,
-                          backgroundColor: "#2fc3de",
+                          backgroundColor: "var(--tdx-green)",
                           opacity: 0.85,
                         }}
                       />
@@ -7528,7 +7367,7 @@ function MiniChartCard({
                   {[
                     chartPalette.violet,
                     chartPalette.emerald,
-                    chartPalette.blue,
+                    chartPalette.amber,
                     chartPalette.pink,
                   ].map((color, barIndex) => (
                     <div
@@ -7683,7 +7522,7 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 
 function trendModeButtonClass(active: boolean) {
   return active
-    ? "tk-btn tk-btn--active rounded-lg border border-[#3d74f1] bg-[#2a5fda] px-3 py-1.5 text-sm font-semibold text-white"
+    ? "tk-btn tk-btn--active rounded-md border border-[var(--tdx-red)] bg-[var(--tdx-red)] px-3 py-1.5 text-sm font-semibold text-[var(--tdx-text-inverse)]"
     : "tk-btn tk-btn--ghost rounded-lg border border-[#2a4164] bg-[#0f1b2f] px-3 py-1.5 text-sm font-semibold text-slate-200";
 }
 
@@ -7931,10 +7770,10 @@ function useHoverPopover(enterDelay = 80, leaveDelay = 120) {
 }
 
 const sentimentSeriesConfig = [
-  { key: "total" as const, label: "全市场", color: "#e2e8f0" },
-  { key: "bigBank" as const, label: "大行", color: "#4ade80" },
-  { key: "smallBank" as const, label: "中小行", color: "#60a5fa" },
-  { key: "nonBank" as const, label: "非银机构", color: "#fb923c" },
+  { key: "total" as const, label: "全市场", color: "var(--tdx-text-main)" },
+  { key: "bigBank" as const, label: "大行", color: "var(--tdx-green)" },
+  { key: "smallBank" as const, label: "中小行", color: "var(--tdx-yellow)" },
+  { key: "nonBank" as const, label: "非银机构", color: "var(--tdx-orange)" },
 ] as const;
 
 function SentimentPopoverPanel({
@@ -8205,7 +8044,7 @@ function ToolbarChip({
     <button
       className={`tk-btn tk-btn--compact rounded-lg border px-3 py-1.5 text-xs transition-colors ${
         active
-          ? "tk-btn--active border-[#3c76f0] bg-[#2551b8] text-white"
+          ? "tk-btn--active border-[var(--tdx-red)] bg-[var(--tdx-red)] text-[var(--tdx-text-inverse)]"
           : "tk-btn--ghost border-[#253754] bg-[#101a2b] text-slate-400 hover:border-[#33507d] hover:text-slate-200"
       }`}
       type="button"
@@ -8247,13 +8086,13 @@ function toneClass(tone: "neutral" | "balanced" | "watch") {
 
 function auxTabClass(active: boolean) {
   return active
-    ? "tk-btn tk-btn--active tk-btn--compact rounded-lg border border-[#3c76f0] bg-[#2551b8] px-3 py-1.5 text-xs text-white"
+    ? "tk-btn tk-btn--active tk-btn--compact rounded-md border border-[var(--tdx-red)] bg-[var(--tdx-red)] px-3 py-1.5 text-xs text-[var(--tdx-text-inverse)]"
     : "tk-btn tk-btn--ghost tk-btn--compact rounded-lg border border-[#253754] bg-[#101a2b] px-3 py-1.5 text-xs text-slate-400 hover:border-[#33507d] hover:text-slate-200";
 }
 
 function miniChipClass(active: boolean) {
   return active
-    ? "tk-btn tk-btn--active tk-btn--compact whitespace-nowrap rounded-md border border-[#3c76f0] bg-[#2551b8] px-1.5 py-0.5 text-[11px] font-medium text-white"
+    ? "tk-btn tk-btn--active tk-btn--compact whitespace-nowrap rounded-sm border border-[var(--tdx-red)] bg-[var(--tdx-red)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--tdx-text-inverse)]"
     : "tk-btn tk-btn--ghost tk-btn--compact whitespace-nowrap rounded-md border border-[#253754] bg-[#101a2b] px-1.5 py-0.5 text-[11px] text-slate-400 hover:border-[#33507d] hover:text-slate-200";
 }
 
