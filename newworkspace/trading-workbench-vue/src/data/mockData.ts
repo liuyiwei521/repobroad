@@ -349,7 +349,7 @@ export const accounts: AccountRow[] = [
   }
 ];
 
-type MarketQuoteSeed = Omit<MarketQuote, 'counterparty' | 'limit' | 'collateral' | 'rates' | 'tenorAmounts'>;
+type MarketQuoteSeed = Omit<MarketQuote, 'counterparty' | 'limit' | 'collateral' | 'rates' | 'tenorAmounts' | 'status'>;
 
 const createMarketQuote = (quote: MarketQuoteSeed): MarketQuote => ({
   ...quote,
@@ -357,7 +357,8 @@ const createMarketQuote = (quote: MarketQuoteSeed): MarketQuote => ({
   limit: quote.accountRequirement,
   collateral: quote.collateralRequirement,
   rates: { [quote.tenor]: quote.rate },
-  tenorAmounts: { [quote.tenor]: quote.amount }
+  tenorAmounts: { [quote.tenor]: quote.amount },
+  status: 'normal'
 });
 
 // ── 逆回购 / 正回购逐行行情（我方融出/融入，供右栏表格直接消费） ─────────────
@@ -367,7 +368,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'reverse',
     group: '利率地方',
     institution: '中信银行',
-    status: 'best',
     level: 'level1',
     tenor: 'R001',
     amount: 0,
@@ -382,7 +382,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'reverse',
     group: '利率地方',
     institution: '上海农商行',
-    status: 'second',
     level: 'level1',
     tenor: 'R001',
     amount: 0,
@@ -397,7 +396,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'reverse',
     group: '利率地方',
     institution: '北京银行',
-    status: 'best',
     level: 'level1',
     tenor: 'R007',
     amount: 5,
@@ -412,7 +410,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'reverse',
     group: '利率地方',
     institution: '浦发银行',
-    status: 'second',
     level: 'level1',
     tenor: 'R007',
     amount: 4,
@@ -427,7 +424,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'reverse',
     group: '存单商金',
     institution: '北京银行',
-    status: 'best',
     level: 'level1',
     tenor: 'R001',
     amount: 0,
@@ -442,7 +438,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'reverse',
     group: '存单商金',
     institution: '泰康资产',
-    status: 'second',
     level: 'level1',
     tenor: 'R001',
     amount: 0,
@@ -457,7 +452,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'reverse',
     group: '存单商金',
     institution: '农银理财',
-    status: 'best',
     level: 'level1',
     tenor: 'R007',
     amount: 2,
@@ -472,7 +466,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'reverse',
     group: '存单商金',
     institution: '阳光资产',
-    status: 'second',
     level: 'level1',
     tenor: 'R007',
     amount: 5,
@@ -487,7 +480,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'reverse',
     group: '存单商金',
     institution: '宁波通商',
-    status: 'normal',
     level: 'level1',
     tenor: 'R028',
     amount: 8,
@@ -502,7 +494,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'reverse',
     group: '信用',
     institution: '中信建投证券',
-    status: 'best',
     level: 'level1',
     tenor: 'R001',
     amount: 2.45,
@@ -517,7 +508,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'reverse',
     group: '信用',
     institution: '平安资产',
-    status: 'second',
     level: 'level1',
     tenor: 'R001',
     amount: 0,
@@ -532,7 +522,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'reverse',
     group: '信用',
     institution: '鹏华基金',
-    status: 'best',
     level: 'level1',
     tenor: 'R007',
     amount: 4,
@@ -547,7 +536,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'reverse',
     group: '信用',
     institution: '中信证券',
-    status: 'second',
     level: 'level1',
     tenor: 'R007',
     amount: 5,
@@ -562,7 +550,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'reverse',
     group: '信用',
     institution: '华安基金',
-    status: 'best',
     level: 'level1',
     tenor: 'R014',
     amount: 3,
@@ -577,7 +564,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'reverse',
     group: '信用',
     institution: '东方红资产',
-    status: 'second',
     level: 'level1',
     tenor: 'R014',
     amount: 0,
@@ -592,7 +578,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'reverse',
     group: '信用',
     institution: '平安资产',
-    status: 'second',
     level: 'level2',
     tenor: 'R007',
     amount: 5,
@@ -607,7 +592,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'reverse',
     group: '存单商金',
     institution: '招商基金',
-    status: 'best',
     level: 'level2',
     tenor: 'R014',
     amount: 6,
@@ -622,7 +606,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'repo',
     group: '利率地方',
     institution: '中国银行',
-    status: 'best',
     level: 'level1',
     tenor: 'R001',
     amount: 8,
@@ -637,7 +620,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'repo',
     group: '利率地方',
     institution: '农业银行',
-    status: 'second',
     level: 'level1',
     tenor: 'R001',
     amount: 6,
@@ -652,7 +634,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'repo',
     group: '利率地方',
     institution: '建设银行',
-    status: 'best',
     level: 'level1',
     tenor: 'R007',
     amount: 0,
@@ -667,7 +648,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'repo',
     group: '利率地方',
     institution: '工商银行',
-    status: 'second',
     level: 'level1',
     tenor: 'R007',
     amount: 5,
@@ -682,7 +662,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'repo',
     group: '存单商金',
     institution: '建信理财',
-    status: 'best',
     level: 'level1',
     tenor: 'R001',
     amount: 4,
@@ -697,7 +676,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'repo',
     group: '存单商金',
     institution: '工银理财',
-    status: 'second',
     level: 'level1',
     tenor: 'R001',
     amount: 3,
@@ -712,7 +690,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'repo',
     group: '存单商金',
     institution: '招银理财',
-    status: 'best',
     level: 'level1',
     tenor: 'R007',
     amount: 0,
@@ -727,7 +704,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'repo',
     group: '存单商金',
     institution: '招商理财',
-    status: 'best',
     level: 'level2',
     tenor: 'R001',
     amount: 7,
@@ -742,7 +718,6 @@ export const marketQuotes: MarketQuote[] = [
     direction: 'repo',
     group: '利率地方',
     institution: '中国银行',
-    status: 'best',
     level: 'level2',
     tenor: 'R007',
     amount: 6,
@@ -753,6 +728,38 @@ export const marketQuotes: MarketQuote[] = [
     allowedAccounts: ['acc-zy-001', 'acc-zy-014']
   })
 ];
+
+// ── 动态计算行情最优/次优：按 (方向, 分组, 层级, 期限) 分组，最低利率为最优 ─────────────
+const computeQuoteStatuses = (quotes: MarketQuote[]): void => {
+  // 按 (方向, 分组, 层级, 期限) 分组
+  const groups = new Map<string, MarketQuote[]>();
+  for (const quote of quotes) {
+    const key = `${quote.direction}|${quote.group}|${quote.level}|${quote.tenor}`;
+    const group = groups.get(key);
+    if (group) {
+      group.push(quote);
+    } else {
+      groups.set(key, [quote]);
+    }
+  }
+
+  // 组内按利率升序（利率越低越优），同利率按金额降序（金额越大越优）
+  for (const [, group] of groups) {
+    group.sort((a, b) => {
+      if (a.rate !== b.rate) return a.rate - b.rate;
+      return b.amount - a.amount;
+    });
+
+    // 第 1 名为最优，第 2 名为次优，其余为普通
+    group.forEach((quote, index) => {
+      if (index === 0) quote.status = 'best';
+      else if (index === 1) quote.status = 'second';
+      // else 保持 'normal'（createMarketQuote 默认值）
+    });
+  }
+};
+
+computeQuoteStatuses(marketQuotes);
 
 // 成交列以「机构 × 期限」网格组织：每个机构下并列多个期限列，columns 按机构
 // 连续排列，矩阵表头才能用机构分组（colspan）+ 期限子列（dashed 分隔）展示。
@@ -1162,10 +1169,25 @@ const mockOneDayTenors = ['R001', '1D', '1天', '隔夜', '1', 'O/N'];
 const mockSevenDayTenors = ['R007', '7D', '7天', '7'];
 const mockOtherTenors = ['2', '3', '5', '13', 'R014', '14D', '21D', 'R021', 'R028', '跨月'];
 const mockRelatedQuoteIds = marketQuotes.map((quote) => quote.id);
+const mockRelatedQuoteIdsByStatus = {
+  best: marketQuotes.filter((quote) => quote.status === 'best').map((quote) => quote.id),
+  second: marketQuotes.filter((quote) => quote.status === 'second').map((quote) => quote.id),
+  normal: marketQuotes.filter((quote) => quote.status === 'normal').map((quote) => quote.id)
+};
 
 const includeMockField = (index: number, salt: number) => ((index * 7 + salt * 11) % 10) < 4;
 
 const pickMockValue = <T>(values: T[], index: number, salt = 0): T => values[(index * 13 + salt * 5) % values.length];
+
+const pickMockRelatedQuoteId = (index: number) => {
+  const score = (index * 37) % 100;
+  const pool = score < 3
+    ? mockRelatedQuoteIdsByStatus.best
+    : score < 15
+      ? mockRelatedQuoteIdsByStatus.second
+      : mockRelatedQuoteIdsByStatus.normal;
+  return pickMockValue(pool.length ? pool : mockRelatedQuoteIds, index, 14);
+};
 
 const mockTimeOf = (index: number) => {
   const totalMinutes = 9 * 60 + 30 + ((index * 7) % 93);
@@ -1278,7 +1300,7 @@ const generatedChats: ChatThread[] = Array.from({ length: 200 }, (_, arrayIndex)
     latest,
     time,
     waitMinutes: status === 'unreplied' ? (index % 18) + 1 : undefined,
-    relatedQuoteId: pickMockValue(mockRelatedQuoteIds, index),
+    relatedQuoteId: pickMockRelatedQuoteId(index),
     unread,
     username: pickMockValue(mockContactNames, index),
     collateral,
