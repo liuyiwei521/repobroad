@@ -10,6 +10,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   openCard: [card: ResearchCard];
   closeCard: [];
+  openQuoteOverview: [];
 }>();
 
 const popoverEl = ref<HTMLElement | null>(null);
@@ -91,6 +92,15 @@ onUnmounted(() => {
     </div>
 
     <div ref="railEl" class="research-rail" aria-label="中栏极窄摘要入口">
+      <button
+        type="button"
+        class="research-rail__entry research-rail__entry--overview"
+        title="QTrade 报价概览"
+        @click="emit('openQuoteOverview')"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 12V4l3 4 3-6 3 5 3-3v8H2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" fill="none"/></svg>
+        <span>概览</span>
+      </button>
       <button
         type="button"
         class="research-rail__toggle"

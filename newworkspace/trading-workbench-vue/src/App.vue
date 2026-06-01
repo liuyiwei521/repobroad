@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import AllocationMatrix from './components/AllocationMatrix.vue';
 import ChatPopup from './components/ChatPopup.vue';
 import MarketPanel from './components/MarketPanel.vue';
+import QuoteOverviewPopup from './components/QuoteOverviewPopup.vue';
 import ResearchPanel from './components/ResearchPanel.vue';
 import TaskOverviewMatrix from './components/TaskOverviewMatrix.vue';
 import TopBar from './components/TopBar.vue';
@@ -49,6 +50,7 @@ const quickAllocationTotals = ref<Record<string, number>>({});
 const selectedAccountId = ref(accounts.value[0]?.id ?? '');
 const selectedQuoteId = ref('');
 const activeCard = ref<ResearchCard | null>(null);
+const quoteOverviewOpen = ref(false);
 const matrixExpanded = ref(false);
 const matrixContext = ref<MatrixContext | null>(null);
 const activeOverviewFilter = ref<TaskOverviewFilter | null>(null);
@@ -427,6 +429,10 @@ const saveMatrix = (payload: Array<{ accountId: string; dealColumnId: string; am
 };
 
 const closeTopLayer = () => {
+  if (quoteOverviewOpen.value) {
+    quoteOverviewOpen.value = false;
+    return;
+  }
   if (matrixExpanded.value) {
     matrixRef.value?.collapse();
     return;
@@ -483,6 +489,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
         :active-card="activeCard"
         @open-card="activeCard = $event"
         @close-card="activeCard = null"
+        @open-quote-overview="quoteOverviewOpen = true"
       />
 
       <TaskOverviewMatrix
@@ -540,6 +547,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
         @clear-overview-filter="clearOverviewFilter"
       />
     </div>
+
+    <QuoteOverviewPopup
+      v-if="quoteOverviewOpen"
+      @close="quoteOverviewOpen = false"
+    />
 
     <ChatPopup
       v-if="activeChat"
