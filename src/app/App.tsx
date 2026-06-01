@@ -108,12 +108,12 @@ type ExchangeMarketSplitSection = {
 const TODAY_STR = "2026-05-10";
 
 const chartPalette = {
-  emerald: "#34d399",
-  blue: "#60a5fa",
-  violet: "#a78bfa",
-  amber: "#fbbf24",
-  pink: "#f472b6",
-  red: "#f87171",
+  emerald: "var(--tk-color-success)",
+  blue: "var(--tk-color-chart-blue)",
+  violet: "var(--tk-color-chart-violet)",
+  amber: "var(--tk-color-warning)",
+  pink: "var(--tk-color-danger)",
+  red: "var(--tk-color-danger)",
 } as const;
 
 const initialBankRateRows: readonly BankRateRow[] = [
@@ -1019,7 +1019,9 @@ const trendVolumeSeries = randomWalk(1040, 60, 220, 12).map((v) =>
 );
 
 const trendVolumeColors = trendVolumeSeries.map((_, index) =>
-  index % 3 === 0 || index % 5 === 0 ? "#ff8a26" : "#22c1dc",
+  index % 3 === 0 || index % 5 === 0
+    ? "var(--tk-color-warning)"
+    : "var(--tk-color-brand-cyan)",
 );
 
 const trendAxisLabels = [
@@ -1721,13 +1723,13 @@ const fundStructureBars = [
   [690, 560, 240, 190, 520, 390, 560],
 ] as const;
 const fundStructureLegendItems = [
-  { color: "#7286d3", label: "大行" },
-  { color: "#a9d57f", label: "股份行" },
-  { color: "#f4cf68", label: "理财" },
-  { color: "#f6a960", label: "理财子" },
-  { color: "#ea7878", label: "券商" },
-  { color: "#8bc6de", label: "基金" },
-  { color: "#63b383", label: "保险" },
+  { color: "var(--tk-color-chart-blue)", label: "大行" },
+  { color: "var(--tk-color-success)", label: "股份行" },
+  { color: "var(--tk-color-chart-gold)", label: "理财" },
+  { color: "var(--tk-color-warning)", label: "理财子" },
+  { color: "var(--tk-color-danger)", label: "券商" },
+  { color: "var(--tk-color-brand-cyan)", label: "基金" },
+  { color: "var(--tk-color-chart-teal)", label: "保险" },
 ] as const;
 
 type FundStructureRange = "14d" | "1m" | "6m";
@@ -2055,7 +2057,7 @@ function App() {
   const topGridTemplate = `${columns[0]}fr ${columns[1]}fr ${columns[2]}fr`;
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#09111d] text-slate-100">
+    <div className="tk-workbench h-screen w-screen overflow-hidden bg-[#09111d] text-slate-100">
       <div className="flex h-full flex-col">
         <TopBar
           currentTime={currentTime}
@@ -2064,7 +2066,7 @@ function App() {
         />
         <main
           ref={mainRef}
-          className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] overflow-hidden px-3 pb-3 pt-2"
+          className="tk-workbench__main grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] overflow-hidden px-3 pb-3 pt-2"
           style={{ gridTemplateColumns: gridTemplate, columnGap: 0 }}
         >
           <LeftSummaryPanel />
@@ -2089,10 +2091,10 @@ function ColumnSplitter({
       role="separator"
       aria-orientation="vertical"
       onMouseDown={onMouseDown}
-      className="group relative h-full cursor-col-resize bg-transparent transition-colors hover:bg-sky-500/30"
+      className="tk-splitter group relative h-full cursor-col-resize bg-transparent transition-colors hover:bg-sky-500/30"
       style={{ width: "100%", minWidth: 6 }}
     >
-      <span className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-[2px] -translate-x-1/2 -translate-y-1/2 rounded bg-[#2a3f5e] group-hover:bg-sky-300" />
+      <span className="tk-splitter__handle pointer-events-none absolute left-1/2 top-1/2 h-12 w-[2px] -translate-x-1/2 -translate-y-1/2 rounded bg-[#2a3f5e] group-hover:bg-sky-300" />
     </div>
   );
 }
@@ -2107,14 +2109,14 @@ function TopBar({
   onResetColumns: () => void;
 }) {
   return (
-    <header className="border-b border-[#1b2a42] bg-[#0d1726] px-3 py-2 shadow-[inset_0_-1px_0_rgba(74,101,140,0.18)]">
+    <header className="tk-topbar border-b border-[#1b2a42] bg-[#0d1726] px-3 py-2 shadow-[inset_0_-1px_0_rgba(74,101,140,0.18)]">
       <div className="grid items-center gap-3" style={{ gridTemplateColumns }}>
         <div className="flex items-center gap-2">
-          <div className="text-[20px] font-semibold tracking-[0.04em] text-slate-50">
+          <div className="tk-topbar__title text-[20px] font-semibold tracking-[0.04em] text-slate-50">
             资金实时行情看板
           </div>
           <button
-            className="rounded-md border border-[#253754] bg-[#101a2b] px-1.5 py-0.5 text-[10px] text-slate-400 hover:border-[#33507d] hover:text-slate-200"
+            className="tk-btn tk-btn--ghost tk-btn--compact rounded-md border border-[#253754] bg-[#101a2b] px-1.5 py-0.5 text-[10px] text-slate-400 hover:border-[#33507d] hover:text-slate-200"
             onClick={onResetColumns}
             type="button"
             title="恢复默认三栏宽度"
@@ -2407,17 +2409,17 @@ function BankRateEditorModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc] px-4">
-      <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]">
-        <div className="border-b border-[#1c3150] bg-[#101d32] px-5 py-4">
+    <div className="tk-modal-mask fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc] px-4">
+      <div className="tk-modal tk-modal--wide w-full max-w-4xl overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]">
+        <div className="tk-modal__header border-b border-[#1c3150] bg-[#101d32] px-5 py-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-base font-semibold text-slate-50">
+              <div className="tk-modal__title text-base font-semibold text-slate-50">
                 今天大行价格手工输入
               </div>
             </div>
             <button
-              className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+              className="tk-btn tk-btn--secondary tk-btn--compact rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
               onClick={onClose}
               type="button"
             >
@@ -2425,9 +2427,9 @@ function BankRateEditorModal({
             </button>
           </div>
         </div>
-        <div className="px-5 py-4">
-          <div className="overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
-            <div className="grid grid-cols-[1.4fr_0.7fr_1fr_1fr] border-b border-[#22324d] bg-[#111d30] px-4 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+        <div className="tk-modal__body px-5 py-4">
+          <div className="tk-table-shell overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
+            <div className="tk-table-head grid grid-cols-[1.4fr_0.7fr_1fr_1fr] border-b border-[#22324d] bg-[#111d30] px-4 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400">
               <span>机构</span>
               <span className="text-center">期限</span>
               <span className="text-right">非银利率</span>
@@ -2436,14 +2438,14 @@ function BankRateEditorModal({
             {rows.map((row, index) => (
               <div
                 key={`${row.institution}-${row.tenor}-${index}`}
-                className={`grid grid-cols-[1.4fr_0.7fr_1fr_1fr] items-center gap-3 border-b border-[#162439] px-4 py-3 ${
+                className={`tk-quote-row grid grid-cols-[1.4fr_0.7fr_1fr_1fr] items-center gap-3 border-b border-[#162439] px-4 py-3 ${
                   index % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
                 }`}
               >
-                <div className="text-sm font-semibold text-slate-100">
+                <div className="tk-text-primary text-sm font-semibold text-slate-100">
                   {row.institution}
                 </div>
-                <div className="text-center text-xs text-slate-300">
+                <div className="tk-text-primary text-center text-xs text-slate-300">
                   {BANK_TENOR_LABEL[row.tenor]}
                 </div>
                 <ModalInput
@@ -2462,7 +2464,7 @@ function BankRateEditorModal({
           <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
             <span className="text-slate-500">新增机构</span>
             <input
-              className="w-44 rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
+              className="tk-input w-44 rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
               placeholder="如 交通银行"
               value={newInstName}
               onChange={(e) => setNewInstName(e.target.value)}
@@ -2474,7 +2476,7 @@ function BankRateEditorModal({
               }}
             />
             <button
-              className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-200"
+              className="tk-btn tk-btn--success tk-btn--compact rounded-md border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-200"
               onClick={commitAddInstitution}
               type="button"
             >
@@ -2482,23 +2484,23 @@ function BankRateEditorModal({
             </button>
           </div>
         </div>
-        <div className="flex items-center justify-end gap-2 border-t border-[#1c3150] bg-[#0d1726] px-5 py-4">
+        <div className="tk-modal__footer flex items-center justify-end gap-2 border-t border-[#1c3150] bg-[#0d1726] px-5 py-4">
           <button
-            className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+            className="tk-btn tk-btn--secondary tk-btn--compact rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
             onClick={onReset}
             type="button"
           >
             重置
           </button>
           <button
-            className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+            className="tk-btn tk-btn--secondary tk-btn--compact rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
             onClick={onClose}
             type="button"
           >
             取消
           </button>
           <button
-            className="rounded-lg border border-blue-500/30 bg-blue-500/20 px-3 py-1.5 text-xs font-medium text-blue-300"
+            className="tk-btn tk-btn--primary tk-btn--compact rounded-lg border border-blue-500/30 bg-blue-500/20 px-3 py-1.5 text-xs font-medium text-blue-300"
             onClick={onSave}
             type="button"
           >
@@ -2521,7 +2523,7 @@ function ModalInput({
 }) {
   return (
     <input
-      className={`w-full rounded-lg border border-[#284164] bg-[#0f1b2f] px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-blue-400 ${
+      className={`tk-input w-full rounded-lg border border-[#284164] bg-[#0f1b2f] px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-blue-400 ${
         align === "right" ? "text-right" : "text-left"
       }`}
       value={value}
@@ -3013,11 +3015,11 @@ function MainQuoteBoard() {
 
   return (
     <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pr-1">
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#2a4a78] bg-[#0c1730]">
-        <div className="border-b border-[#1b2a42] bg-[#101b2c] px-4 py-3">
+      <section className="tk-panel tk-panel--focus flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#2a4a78] bg-[#0c1730]">
+        <div className="tk-panel__header border-b border-[#1b2a42] bg-[#101b2c] px-4 py-3">
           <div className="flex flex-nowrap items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
-              <div className="shrink-0 whitespace-nowrap text-base font-semibold text-slate-50">
+              <div className="tk-panel__title shrink-0 whitespace-nowrap text-base font-semibold text-slate-50">
                 非银报价
               </div>
               <div className="flex flex-nowrap items-center gap-0.5 text-xs text-slate-400">
@@ -3056,7 +3058,7 @@ function MainQuoteBoard() {
                 2级
               </button>
               <button
-                className="whitespace-nowrap rounded-md border border-emerald-500/30 bg-emerald-500/15 px-2 py-1 text-[11px] font-medium text-emerald-300"
+                className="tk-btn tk-btn--success tk-btn--compact whitespace-nowrap rounded-md border border-emerald-500/30 bg-emerald-500/15 px-2 py-1 text-[11px] font-medium text-emerald-300"
                 type="button"
               >
                 下载
@@ -3091,9 +3093,9 @@ function MainQuoteBoard() {
                     role="separator"
                     aria-orientation="horizontal"
                     onMouseDown={startDrag}
-                    className="group relative h-1.5 shrink-0 cursor-row-resize bg-[#18263b] transition-colors hover:bg-sky-500/60"
+                    className="tk-splitter group relative h-1.5 shrink-0 cursor-row-resize bg-[#18263b] transition-colors hover:bg-sky-500/60"
                   >
-                    <span className="pointer-events-none absolute left-1/2 top-1/2 h-[2px] w-10 -translate-x-1/2 -translate-y-1/2 rounded bg-slate-500/60 group-hover:bg-sky-200" />
+                    <span className="tk-splitter__handle pointer-events-none absolute left-1/2 top-1/2 h-[2px] w-10 -translate-x-1/2 -translate-y-1/2 rounded bg-slate-500/60 group-hover:bg-sky-200" />
                   </div>
                 ) : null}
               </Fragment>
@@ -3144,17 +3146,17 @@ function QuoteEditorModal({
   ];
   const rankOptions: QuoteRank[] = ["最优", "次优", "报价"];
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc] px-4">
-      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]">
-        <div className="border-b border-[#1c3150] bg-[#101d32] px-5 py-4">
+    <div className="tk-modal-mask fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc] px-4">
+      <div className="tk-modal w-full max-w-2xl overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]">
+        <div className="tk-modal__header border-b border-[#1c3150] bg-[#101d32] px-5 py-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-base font-semibold text-slate-50">
+              <div className="tk-modal__title text-base font-semibold text-slate-50">
                 修正报价
               </div>
             </div>
             <button
-              className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+              className="tk-btn tk-btn--secondary tk-btn--compact rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
               onClick={onClose}
               type="button"
             >
@@ -3162,7 +3164,7 @@ function QuoteEditorModal({
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3 px-5 py-4">
+        <div className="tk-modal__body grid grid-cols-2 gap-3 px-5 py-4">
           {textFields.map((f) => (
             <label
               key={f.key}
@@ -3170,7 +3172,7 @@ function QuoteEditorModal({
             >
               <span>{f.label}</span>
               <input
-                className="rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
+                className="tk-input rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
                 value={(draft[f.key] as string) ?? ""}
                 placeholder={f.placeholder}
                 onChange={(e) => onChange(f.key, e.target.value)}
@@ -3180,7 +3182,7 @@ function QuoteEditorModal({
           <label className="flex flex-col gap-1 text-[11px] text-slate-400">
             <span>评级</span>
             <select
-              className="rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
+              className="tk-input rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
               value={(draft.rank as string) ?? row.rank}
               onChange={(e) => onChange("rank", e.target.value)}
             >
@@ -3192,16 +3194,16 @@ function QuoteEditorModal({
             </select>
           </label>
         </div>
-        <div className="flex items-center justify-end gap-2 border-t border-[#1c3150] bg-[#0d1726] px-5 py-4">
+        <div className="tk-modal__footer flex items-center justify-end gap-2 border-t border-[#1c3150] bg-[#0d1726] px-5 py-4">
           <button
-            className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+            className="tk-btn tk-btn--secondary tk-btn--compact rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
             onClick={onClose}
             type="button"
           >
             取消
           </button>
           <button
-            className="rounded-lg border border-emerald-500/40 bg-emerald-500/20 px-4 py-1.5 text-xs font-semibold text-emerald-200"
+            className="tk-btn tk-btn--primary tk-btn--compact rounded-lg border border-emerald-500/40 bg-emerald-500/20 px-4 py-1.5 text-xs font-semibold text-emerald-200"
             onClick={onSave}
             type="button"
           >
@@ -3283,19 +3285,19 @@ function RepoQuoteSectionBoard({
       tabIndex={0}
     >
       <div
-        className={`flex cursor-pointer items-center justify-between px-4 py-1.5 ${isActive ? "border-l-[3px] border-sky-300 bg-gradient-to-r from-sky-500/40 via-sky-600/25 to-transparent shadow-[inset_0_-1px_0_rgba(125,211,252,0.35)]" : "bg-[#0f1a2d]"}`}
+        className={`tk-quote-section-title flex cursor-pointer items-center justify-between px-4 py-1.5 ${isActive ? "is-active border-l-[3px] border-sky-300 bg-gradient-to-r from-sky-500/40 via-sky-600/25 to-transparent shadow-[inset_0_-1px_0_rgba(125,211,252,0.35)]" : "bg-[#0f1a2d]"}`}
       >
         <div className="flex items-center gap-2">
-          <div className="text-sm font-semibold text-slate-100">
+          <div className="tk-text-primary text-sm font-semibold text-slate-100">
             {section.title}
           </div>
           {isActive ? (
-            <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-medium text-sky-300">
+            <span className="tk-chip rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-medium text-sky-300">
               焦点
             </span>
           ) : null}
         </div>
-        <div className="rounded-full border border-[#29456c] bg-[#12203a] px-2 py-0.5 text-[11px] text-slate-400">
+        <div className="tk-chip rounded-full border border-[#29456c] bg-[#12203a] px-2 py-0.5 text-[11px] text-slate-400">
           层级 1 / 2
         </div>
       </div>
@@ -3308,7 +3310,7 @@ function RepoQuoteSectionBoard({
               : "flex-1 overflow-y-auto"
         }`}
       >
-        <div className="grid grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] border-y border-[#1c3150] bg-[#111d30] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+        <div className="tk-table-head grid grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] border-y border-[#1c3150] bg-[#111d30] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
           <span>分组 / 机构</span>
           <span className="text-right">期限</span>
           <span className="text-right">金额(总量)</span>
@@ -3320,20 +3322,20 @@ function RepoQuoteSectionBoard({
         </div>
         {section.groups.map((group) => (
           <div key={group.id} className="border-b-2 border-[#1f3759]">
-            <div className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-sky-500/70 bg-gradient-to-r from-[#15294a] via-[#11223c] to-[#0d1a30] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
+            <div className="tk-quote-group grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-sky-500/70 bg-gradient-to-r from-[#15294a] via-[#11223c] to-[#0d1a30] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
               <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-1 rounded-md border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-sky-200">
+                <span className="tk-chip inline-flex items-center gap-1 rounded-md border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-sky-200">
                   汇总
                 </span>
-                <div className="text-xs font-semibold text-slate-50">
+                <div className="tk-text-primary text-xs font-semibold text-slate-50">
                   {group.name}
                 </div>
               </div>
               <span aria-hidden="true" />
-              <span className="text-right text-xs font-semibold text-slate-100">
+              <span className="tk-text-primary text-right text-xs font-semibold text-slate-100">
                 {group.totalAmount}
               </span>
-              <span className="text-right text-xs font-semibold text-amber-300">
+              <span className="tk-rate-warning text-right text-xs font-semibold text-amber-300">
                 {group.averageRate}
               </span>
               <span aria-hidden="true" />
@@ -3350,11 +3352,11 @@ function RepoQuoteSectionBoard({
                     return (
                       <div
                         key={row.id}
-                        className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200"
+                        className="tk-quote-row grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200"
                       >
                         <div className="flex items-center gap-2">
                           <RankBadge rank={row.rank} />
-                          <span className="text-slate-100">
+                          <span className="tk-text-primary text-slate-100">
                             {row.institution}
                           </span>
                         </div>
@@ -3362,7 +3364,7 @@ function RepoQuoteSectionBoard({
                         <span className="text-right">
                           {showRowAmount(row.id) ? row.amount : "--"}
                         </span>
-                        <span className="text-right font-semibold text-amber-300">
+                        <span className="tk-rate-warning text-right font-semibold text-amber-300">
                           {row.rate}
                         </span>
                         <span
@@ -3382,7 +3384,7 @@ function RepoQuoteSectionBoard({
                         </span>
                         <span className="flex items-center justify-end gap-1">
                           <button
-                            className="whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200"
+                            className="tk-btn tk-btn--warning tk-btn--compact whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200"
                             onClick={(e) => {
                               e.stopPropagation();
                               onEdit(row, group.name);
@@ -3392,7 +3394,7 @@ function RepoQuoteSectionBoard({
                             修正
                           </button>
                           <button
-                            className="whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
+                            className="tk-btn tk-btn--primary tk-btn--compact whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
                             type="button"
                           >
                             发送
@@ -3412,13 +3414,13 @@ function RepoQuoteSectionBoard({
                     return (
                       <div
                         key={row.id}
-                        className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200 transition hover:bg-[#11253d]"
+                        className="tk-quote-row grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200 transition hover:bg-[#11253d]"
                       >
                         <div className="flex items-center gap-2">
                           {row.rank === "最优" || row.rank === "次优" ? (
                             <RankBadge rank={row.rank} />
                           ) : null}
-                          <span className="text-slate-100">
+                          <span className="tk-text-primary text-slate-100">
                             {row.institution}
                           </span>
                         </div>
@@ -3426,7 +3428,7 @@ function RepoQuoteSectionBoard({
                         <span className="text-right">
                           {showRowAmount(row.id) ? row.amount : "--"}
                         </span>
-                        <span className="text-right font-semibold text-amber-300">
+                        <span className="tk-rate-warning text-right font-semibold text-amber-300">
                           {row.rate}
                         </span>
                         <span
@@ -3446,7 +3448,7 @@ function RepoQuoteSectionBoard({
                         </span>
                         <span className="flex items-center justify-end gap-1">
                           <button
-                            className="whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200"
+                            className="tk-btn tk-btn--warning tk-btn--compact whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200"
                             onClick={(e) => {
                               e.stopPropagation();
                               onEdit(row, group.name);
@@ -3456,7 +3458,7 @@ function RepoQuoteSectionBoard({
                             修正
                           </button>
                           <button
-                            className="whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
+                            className="tk-btn tk-btn--primary tk-btn--compact whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
                             type="button"
                           >
                             发送
@@ -3540,13 +3542,13 @@ function selectLevel1Rows(group: QuoteGroup): QuoteDetailRow[] {
 function RankBadge({ rank }: { rank: QuoteRank }) {
   const styles =
     rank === "最优"
-      ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+      ? "tk-rank-badge--best border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
       : rank === "次优"
-        ? "border-amber-500/40 bg-amber-500/15 text-amber-300"
-        : "border-slate-500/40 bg-slate-500/15 text-slate-300";
+        ? "tk-rank-badge--second border-amber-500/40 bg-amber-500/15 text-amber-300"
+        : "tk-rank-badge--normal border-slate-500/40 bg-slate-500/15 text-slate-300";
   return (
     <span
-      className={`inline-flex shrink-0 items-center rounded border px-1.5 py-0.5 text-[10px] font-medium ${styles}`}
+      className={`tk-rank-badge inline-flex shrink-0 items-center rounded border px-1.5 py-0.5 text-[10px] font-medium ${styles}`}
     >
       {rank}
     </span>
@@ -3604,7 +3606,7 @@ function RightLowerPanel({
   onTabChange: (tab: RightLowerTab) => void;
 }) {
   return (
-    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
+    <section className="tk-panel grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
       <div className="flex items-center gap-2 border-b border-[#203551] bg-[#101d32] px-3 py-2">
         {rightLowerTabs.map((tab) => (
           <button
@@ -3654,7 +3656,7 @@ function IntradayPanel({
   const ti = tooltipState?.index ?? null;
 
   return (
-    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
+    <section className="tk-panel grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
       <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101d32] px-3 py-2">
         <div className="flex items-center gap-3">
           <div className="text-sm font-semibold text-slate-100">
@@ -3879,7 +3881,7 @@ function HistoryClosePanel({
   const ti = tooltipState?.index ?? null;
 
   return (
-    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
+    <section className="tk-panel grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
       <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101d32] px-3 py-2">
         <div className="flex items-center gap-3">
           <div className="text-sm font-semibold text-slate-100">
@@ -7213,20 +7215,20 @@ function QuoteSection({
 }) {
   return (
     <section
-      className={`flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border ${
+      className={`tk-panel flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border ${
         emphasized
           ? "border-[#3b76f3] bg-[#0c1730]"
           : "border-[#1f2f48] bg-[#0c1524]"
       }`}
     >
-      <div className="border-b border-[#1b2a42] bg-[#101b2c] px-4 py-3">
+      <div className="tk-panel__header border-b border-[#1b2a42] bg-[#101b2c] px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3 whitespace-nowrap">
-            <div className="text-base font-semibold text-slate-50">{title}</div>
-            <div className="text-xs text-slate-500">数据更新：10:53:27</div>
+            <div className="tk-panel__title text-base font-semibold text-slate-50">{title}</div>
+            <div className="tk-panel__subtitle text-xs text-slate-500">数据更新：10:53:27</div>
           </div>
           <button
-            className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
+            className="tk-btn tk-btn--success tk-btn--compact rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
             type="button"
           >
             下载
@@ -7283,7 +7285,7 @@ function StructuredTable({
 }) {
   return (
     <div
-      className={`${adaptiveHeight ? "" : "h-full min-h-0"} bg-[#0a1322] ${
+      className={`tk-table-shell ${adaptiveHeight ? "" : "h-full min-h-0"} bg-[#0a1322] ${
         scrollY
           ? "overflow-y-auto overflow-x-hidden"
           : fitToWidth || adaptiveHeight
@@ -7340,7 +7342,7 @@ function StructuredTable({
                 >
                   {buttonColumn === cellIndex ? (
                     <button
-                      className={`rounded-lg border border-blue-500/30 bg-blue-500/20 font-medium text-blue-300 ${
+                      className={`tk-btn tk-btn--primary tk-btn--compact rounded-lg border border-blue-500/30 bg-blue-500/20 font-medium text-blue-300 ${
                         compact
                           ? "px-1.5 py-0.5 text-[10px]"
                           : "px-3 py-1 text-xs"
@@ -7379,7 +7381,7 @@ function TrendOverviewCard() {
   const areaPath = buildAreaPath(trendRateSeries, 860, 320, 1.82, 2.12);
 
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
+    <div className="tk-panel grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
       <div className="flex items-center justify-between border-b border-[#203551] bg-[#101d32] px-4 py-3">
         <div className="flex gap-2">
           {trendModeTabs.map((tab) => (
@@ -7504,7 +7506,7 @@ function MiniChartCard({
   bars?: boolean;
 }) {
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
+    <div className="tk-panel grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
       <div className="flex items-center justify-between gap-3 border-b border-[#1a2c45] bg-[#0e1827] px-3 py-1.5">
         <div className="text-xs font-medium text-slate-200">{title}</div>
         <div className="flex flex-wrap gap-2 text-[11px] text-slate-500">
@@ -7681,8 +7683,8 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 
 function trendModeButtonClass(active: boolean) {
   return active
-    ? "rounded-lg border border-[#3d74f1] bg-[#2a5fda] px-3 py-1.5 text-sm font-semibold text-white"
-    : "rounded-lg border border-[#2a4164] bg-[#0f1b2f] px-3 py-1.5 text-sm font-semibold text-slate-200";
+    ? "tk-btn tk-btn--active rounded-lg border border-[#3d74f1] bg-[#2a5fda] px-3 py-1.5 text-sm font-semibold text-white"
+    : "tk-btn tk-btn--ghost rounded-lg border border-[#2a4164] bg-[#0f1b2f] px-3 py-1.5 text-sm font-semibold text-slate-200";
 }
 
 function buildLinePath(
@@ -7852,20 +7854,20 @@ function PanelCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
-      <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
+    <section className="tk-panel flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
+      <div className="tk-panel__header border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-sm font-semibold tracking-[0.02em] text-slate-50">
+            <div className="tk-panel__title text-sm font-semibold tracking-[0.02em] text-slate-50">
               {title}
             </div>
             {subtitle ? (
-              <div className="mt-1 text-xs text-slate-500">{subtitle}</div>
+              <div className="tk-panel__subtitle mt-1 text-xs text-slate-500">{subtitle}</div>
             ) : null}
           </div>
           {actions ?? (
             <button
-              className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
+              className="tk-btn tk-btn--success tk-btn--compact rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
               type="button"
             >
               下载
@@ -8178,14 +8180,14 @@ function InfoChip({
 }) {
   const toneStyles =
     tone === "good"
-      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+      ? "tk-chip--good border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
       : tone === "alert"
-        ? "border-amber-500/20 bg-amber-500/10 text-amber-300"
+        ? "tk-chip--alert border-amber-500/20 bg-amber-500/10 text-amber-300"
         : "border-[#253754] bg-[#101a2b] text-slate-300";
 
   return (
-    <div className={`rounded-full border px-3 py-1.5 text-xs ${toneStyles}`}>
-      <span className="text-slate-500">{label}</span>
+    <div className={`tk-chip rounded-full border px-3 py-1.5 text-xs ${toneStyles}`}>
+      <span className="tk-chip__label text-slate-500">{label}</span>
       <span className="mx-2 text-slate-600">|</span>
       <span>{value}</span>
     </div>
@@ -8201,10 +8203,10 @@ function ToolbarChip({
 }) {
   return (
     <button
-      className={`rounded-lg border px-3 py-1.5 text-xs transition-colors ${
+      className={`tk-btn tk-btn--compact rounded-lg border px-3 py-1.5 text-xs transition-colors ${
         active
-          ? "border-[#3c76f0] bg-[#2551b8] text-white"
-          : "border-[#253754] bg-[#101a2b] text-slate-400 hover:border-[#33507d] hover:text-slate-200"
+          ? "tk-btn--active border-[#3c76f0] bg-[#2551b8] text-white"
+          : "tk-btn--ghost border-[#253754] bg-[#101a2b] text-slate-400 hover:border-[#33507d] hover:text-slate-200"
       }`}
       type="button"
     >
@@ -8214,16 +8216,16 @@ function ToolbarChip({
 }
 
 function FilterLabel({ children }: { children: React.ReactNode }) {
-  return <span className="px-1 text-slate-400">{children}</span>;
+  return <span className="tk-filter-label px-1 text-slate-400">{children}</span>;
 }
 
 function FilterDivider() {
-  return <div className="mx-2 h-6 w-px bg-[#243552]" />;
+  return <div className="tk-filter-divider mx-2 h-6 w-px bg-[#243552]" />;
 }
 
 function RangeFilterField({ value }: { value: string }) {
   return (
-    <div className="flex h-8 min-w-[96px] items-center rounded-lg border border-[#2a4164] bg-[#101a2b] px-3 text-sm text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+    <div className="tk-filter-field flex h-8 min-w-[96px] items-center rounded-lg border border-[#2a4164] bg-[#101a2b] px-3 text-sm text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
       {value}
     </div>
   );
@@ -8231,28 +8233,28 @@ function RangeFilterField({ value }: { value: string }) {
 
 function StatusBadge({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-full border border-[#94712a] bg-[#4b3a10] px-4 py-1.5 text-sm font-semibold text-amber-300">
+    <div className="tk-status-badge rounded-full border border-[#94712a] bg-[#4b3a10] px-4 py-1.5 text-sm font-semibold text-amber-300">
       {children}
     </div>
   );
 }
 
 function toneClass(tone: "neutral" | "balanced" | "watch") {
-  if (tone === "balanced") return "text-sm font-semibold text-emerald-300";
-  if (tone === "watch") return "text-sm font-semibold text-amber-300";
-  return "text-sm font-semibold text-slate-300";
+  if (tone === "balanced") return "tk-rate-positive text-sm font-semibold text-emerald-300";
+  if (tone === "watch") return "tk-rate-warning text-sm font-semibold text-amber-300";
+  return "tk-text-primary text-sm font-semibold text-slate-300";
 }
 
 function auxTabClass(active: boolean) {
   return active
-    ? "rounded-lg border border-[#3c76f0] bg-[#2551b8] px-3 py-1.5 text-xs text-white"
-    : "rounded-lg border border-[#253754] bg-[#101a2b] px-3 py-1.5 text-xs text-slate-400 hover:border-[#33507d] hover:text-slate-200";
+    ? "tk-btn tk-btn--active tk-btn--compact rounded-lg border border-[#3c76f0] bg-[#2551b8] px-3 py-1.5 text-xs text-white"
+    : "tk-btn tk-btn--ghost tk-btn--compact rounded-lg border border-[#253754] bg-[#101a2b] px-3 py-1.5 text-xs text-slate-400 hover:border-[#33507d] hover:text-slate-200";
 }
 
 function miniChipClass(active: boolean) {
   return active
-    ? "whitespace-nowrap rounded-md border border-[#3c76f0] bg-[#2551b8] px-1.5 py-0.5 text-[11px] font-medium text-white"
-    : "whitespace-nowrap rounded-md border border-[#253754] bg-[#101a2b] px-1.5 py-0.5 text-[11px] text-slate-400 hover:border-[#33507d] hover:text-slate-200";
+    ? "tk-btn tk-btn--active tk-btn--compact whitespace-nowrap rounded-md border border-[#3c76f0] bg-[#2551b8] px-1.5 py-0.5 text-[11px] font-medium text-white"
+    : "tk-btn tk-btn--ghost tk-btn--compact whitespace-nowrap rounded-md border border-[#253754] bg-[#101a2b] px-1.5 py-0.5 text-[11px] text-slate-400 hover:border-[#33507d] hover:text-slate-200";
 }
 
 function cellClassName(
@@ -8263,17 +8265,17 @@ function cellClassName(
   deltaColumns: readonly number[],
   emphasisColumns: readonly number[],
 ) {
-  if (columnIndex === 0) return "font-semibold text-slate-100";
+  if (columnIndex === 0) return "tk-text-primary font-semibold text-slate-100";
   if (deltaColumns.includes(columnIndex)) {
-    if (value.startsWith("-")) return "font-semibold text-emerald-300";
-    if (value.startsWith("+")) return "font-semibold text-red-400";
-    return "font-medium text-slate-300";
+    if (value.startsWith("-")) return "tk-rate-positive font-semibold text-emerald-300";
+    if (value.startsWith("+")) return "tk-rate-negative font-semibold text-red-400";
+    return "tk-text-primary font-medium text-slate-300";
   }
   if (greenColumns.includes(columnIndex))
-    return "font-semibold text-emerald-300";
-  if (redColumns.includes(columnIndex)) return "font-semibold text-red-400";
-  if (emphasisColumns.includes(columnIndex)) return "font-medium text-red-400";
-  return "text-slate-300";
+    return "tk-rate-positive font-semibold text-emerald-300";
+  if (redColumns.includes(columnIndex)) return "tk-rate-negative font-semibold text-red-400";
+  if (emphasisColumns.includes(columnIndex)) return "tk-rate-negative font-medium text-red-400";
+  return "tk-text-primary text-slate-300";
 }
 
 export default App;
