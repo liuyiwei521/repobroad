@@ -367,7 +367,7 @@ const grandPledgeFilter = (line: TaskOverviewPledgeLine): TaskOverviewFilter => 
       <table v-else class="task-overview-table task-overview-table--term">
         <thead>
           <tr>
-            <th><span class="task-overview-axis-title">期限 / 账户</span></th>
+            <th><span class="task-overview-axis-title">账户 / 期限</span></th>
             <th>
               <button
                 class="task-overview-head-button task-overview-head-button--total"
@@ -379,16 +379,15 @@ const grandPledgeFilter = (line: TaskOverviewPledgeLine): TaskOverviewFilter => 
                 <small>{{ amountText(termMatrix.grandTotal) }}</small>
               </button>
             </th>
-            <th v-for="column in termMatrix.columns" :key="column.accountType">
+            <th v-for="row in termMatrix.rows" :key="row.id">
               <button
                 class="task-overview-head-button task-overview-head-button--term"
-                :class="{ 'is-active': isActive(termColumnFilter(column)) }"
+                :class="{ 'is-active': isActive(termRowFilter(row)) }"
                 type="button"
-                :style="filterStyle(column.accountType)"
-                @click="choose(termColumnFilter(column))"
+                @click="choose(termRowFilter(row))"
               >
-                <span><i></i>{{ column.accountOption.label }}</span>
-                <small>{{ amountText(column.total) }}</small>
+                <span>{{ row.term }}</span>
+                <small>{{ amountText(row.total) }}</small>
               </button>
             </th>
           </tr>
@@ -426,51 +425,11 @@ const grandPledgeFilter = (line: TaskOverviewPledgeLine): TaskOverviewFilter => 
                 </button>
               </div>
             </td>
-            <td v-for="column in termMatrix.columns" :key="`subtotal-${column.accountType}`">
-              <div class="task-overview-cell-stack task-overview-cell-stack--total task-overview-cell-stack--bottom" :style="filterStyle(column.accountType)">
-                <button
-                  v-for="line in column.pledgeTotals"
-                  :key="`subtotal-${column.accountType}-${line.pledgeRequirement}`"
-                  class="task-overview-term-line task-overview-term-line--pledge"
-                  type="button"
-                  :class="{ 'is-active': isActive(pledgeLineFilter(line)) }"
-                  @click="choose(pledgeLineFilter(line))"
-                >
-                  <b>{{ line.pledgeRequirement }}</b>
-                  <AmountParts :amount="line" />
-                </button>
-                <button
-                  v-if="hasAmount(column.total)"
-                  class="task-overview-term-line task-overview-term-line--sum"
-                  type="button"
-                  :class="{ 'is-active': isActive(termColumnFilter(column)) }"
-                  @click="choose(termColumnFilter(column))"
-                >
-                  <b>合计</b>
-                  <AmountParts :amount="column.total" />
-                </button>
-                <span v-if="!column.pledgeTotals.length" class="task-overview-empty"></span>
-              </div>
-            </td>
-          </tr>
-
-          <tr v-for="row in termMatrix.rows" :key="row.id">
-            <th>
-              <button
-                class="task-overview-row-button"
-                type="button"
-                :class="{ 'is-active': isActive(termRowFilter(row)) }"
-                @click="choose(termRowFilter(row))"
-              >
-                <span>{{ row.term }}</span>
-                <small>{{ amountText(row.total) }}</small>
-              </button>
-            </th>
-            <td>
+            <td v-for="row in termMatrix.rows" :key="`subtotal-${row.id}`">
               <div class="task-overview-cell-stack task-overview-cell-stack--total task-overview-cell-stack--bottom">
                 <button
                   v-for="line in row.pledgeTotals"
-                  :key="`${row.id}-total-${line.pledgeRequirement}`"
+                  :key="`subtotal-${row.id}-${line.pledgeRequirement}`"
                   class="task-overview-term-line task-overview-term-line--pledge"
                   type="button"
                   :class="{ 'is-active': isActive(pledgeLineFilter(line)) }"
@@ -492,7 +451,47 @@ const grandPledgeFilter = (line: TaskOverviewPledgeLine): TaskOverviewFilter => 
                 <span v-if="!row.pledgeTotals.length" class="task-overview-empty"></span>
               </div>
             </td>
-            <td v-for="column in termMatrix.columns" :key="`${row.id}-${column.accountType}`">
+          </tr>
+
+          <tr v-for="column in termMatrix.columns" :key="column.accountType">
+            <th :style="filterStyle(column.accountType)">
+              <button
+                class="task-overview-row-button"
+                type="button"
+                :class="{ 'is-active': isActive(termColumnFilter(column)) }"
+                @click="choose(termColumnFilter(column))"
+              >
+                <span><i></i>{{ column.accountOption.label }}</span>
+                <small>{{ amountText(column.total) }}</small>
+              </button>
+            </th>
+            <td>
+              <div class="task-overview-cell-stack task-overview-cell-stack--total task-overview-cell-stack--bottom" :style="filterStyle(column.accountType)">
+                <button
+                  v-for="line in column.pledgeTotals"
+                  :key="`${column.accountType}-total-${line.pledgeRequirement}`"
+                  class="task-overview-term-line task-overview-term-line--pledge"
+                  type="button"
+                  :class="{ 'is-active': isActive(pledgeLineFilter(line)) }"
+                  @click="choose(pledgeLineFilter(line))"
+                >
+                  <b>{{ line.pledgeRequirement }}</b>
+                  <AmountParts :amount="line" />
+                </button>
+                <button
+                  v-if="hasAmount(column.total)"
+                  class="task-overview-term-line task-overview-term-line--sum"
+                  type="button"
+                  :class="{ 'is-active': isActive(termColumnFilter(column)) }"
+                  @click="choose(termColumnFilter(column))"
+                >
+                  <b>合计</b>
+                  <AmountParts :amount="column.total" />
+                </button>
+                <span v-if="!column.pledgeTotals.length" class="task-overview-empty"></span>
+              </div>
+            </td>
+            <td v-for="row in termMatrix.rows" :key="`${column.accountType}-${row.id}`">
               <div
                 class="task-overview-cell-stack task-overview-cell-stack--bottom"
                 :class="{ 'is-active': isActive(termCellFilter(row.cells[column.accountType])), 'is-empty': !hasCellTask(row.cells[column.accountType]) }"

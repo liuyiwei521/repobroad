@@ -6,7 +6,7 @@
 @layer base {
   * {
     scrollbar-width: thin;
-    scrollbar-color: #34527a #0c1524;
+    scrollbar-color: var(--tk-color-border-panel) var(--tk-color-surface-dark-deep);
   }
 
   *::-webkit-scrollbar {
@@ -15,20 +15,20 @@
   }
 
   *::-webkit-scrollbar-track {
-    background: #0c1524;
+    background: var(--tk-color-surface-dark-deep);
   }
 
   *::-webkit-scrollbar-thumb {
-    border: 2px solid #0c1524;
+    border: 2px solid var(--tk-color-surface-dark-deep);
     border-radius: 9999px;
-    background: linear-gradient(180deg, #34527a 0%, #223754 100%);
+    background: var(--tk-color-border-panel);
   }
 
   *::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #4b6f9f 0%, #2e4d73 100%);
+    background: var(--tk-color-brand-primary-hover);
   }
 
   *::-webkit-scrollbar-corner {
-    background: #0c1524;
+    background: var(--tk-color-surface-dark-deep);
   }
 }

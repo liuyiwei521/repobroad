@@ -162,12 +162,12 @@ type ModuleEntryMetric = {
 const TODAY_STR = "2026-05-10";
 
 const chartPalette = {
-  emerald: "#34d399",
-  blue: "#60a5fa",
-  violet: "#a78bfa",
-  amber: "#fbbf24",
-  pink: "#f472b6",
-  red: "#f87171",
+  emerald: "var(--tk-color-success)",
+  blue: "var(--tk-color-chart-blue)",
+  violet: "var(--tk-color-chart-purple)",
+  amber: "var(--tk-color-chart-gold)",
+  pink: "var(--tk-color-chart-violet)",
+  red: "var(--tk-color-danger)",
 } as const;
 
 const moduleEntries: readonly ModuleEntryConfig[] = [
@@ -2186,7 +2186,7 @@ function App() {
   const railWidth = columns[0];
   const gridTemplate = `${railWidth}% 10px ${100 - railWidth}%`;
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#09111d] text-slate-100">
+    <div className="tk-app-shell h-screen w-screen overflow-hidden">
       <div className="flex h-full flex-col">
         <TopBar
           currentTime={currentTime}
@@ -2231,7 +2231,7 @@ function App() {
               />
             </div>
           ) : activeFrame.id === "institution-period" ? (
-            <div className="h-full min-h-0 rounded-xl border border-[#284164] bg-[#0b1728] p-3">
+            <div className="tk-panel h-full min-h-0 border p-3">
               <CfetsInstPanel />
             </div>
           ) : activeFrame.id === "xrepo" ? (
@@ -2264,10 +2264,10 @@ function ColumnSplitter({
       role="separator"
       aria-orientation="vertical"
       onMouseDown={onMouseDown}
-      className="group relative h-full cursor-col-resize bg-transparent transition-colors hover:bg-sky-500/30"
+      className="group relative h-full cursor-col-resize bg-transparent transition-colors hover:bg-[rgba(0,96,219,0.2)]"
       style={{ width: "100%", minWidth: 6 }}
     >
-      <span className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-[2px] -translate-x-1/2 -translate-y-1/2 rounded bg-[#2a3f5e] group-hover:bg-sky-300" />
+      <span className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-[2px] -translate-x-1/2 -translate-y-1/2 rounded bg-[var(--tk-color-border-panel)] group-hover:bg-[var(--tk-color-brand-cyan)]" />
     </div>
   );
 }
@@ -2315,24 +2315,24 @@ function AdaptiveEntryRail({
       ref={railRef}
       className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pr-1"
     >
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
+      <div className="tk-panel flex min-h-0 flex-1 flex-col overflow-hidden border">
         <div
-          className={`border-b border-[#18263b] bg-[#101b2c] ${
+          className={`tk-panel-header border-b ${
             displayMode === "icon" ? "px-1.5 py-2" : "px-3 py-2.5"
           }`}
         >
           {displayMode === "icon" ? (
-            <div className="text-center text-[10px] font-semibold text-slate-400">
+            <div className="tk-muted text-center text-[10px] font-semibold">
               入口
             </div>
           ) : (
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <div className="truncate text-sm font-semibold text-slate-50">
+                <div className="tk-title truncate">
                   行情入口
                 </div>
               </div>
-              <div className="rounded border border-[#243a5c] bg-[#0b1424] px-1.5 py-0.5 text-[10px] text-slate-500">
+              <div className="tk-chip rounded border px-1.5 py-0.5 text-[10px]">
                 {Math.round(width)}px
               </div>
             </div>
@@ -2414,8 +2414,8 @@ function ModuleEntryItem({
       <div
         className={`w-full min-w-0 overflow-hidden rounded-lg border transition-colors ${
           active
-            ? "border-[#4c85ff] bg-[#153463] shadow-[0_0_0_1px_rgba(76,133,255,0.28)]"
-            : "border-[#1d2e47] bg-[#0b1424]"
+            ? "tk-selected"
+            : "tk-chip"
         }`}
       >
         <button
@@ -2423,32 +2423,32 @@ function ModuleEntryItem({
           type="button"
           aria-label={entry.title}
           onClick={onOpen}
-          className="group w-full px-2.5 py-2 text-left transition-colors hover:bg-[#101d32]"
+          className="group w-full px-2.5 py-2 text-left transition-colors hover:bg-[rgba(0,96,219,0.12)]"
         >
           <div className="flex min-w-0 items-center gap-2">
             <span
               className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${
                 active
-                  ? "border-blue-300/40 bg-blue-300/15 text-blue-100"
-                  : "border-[#2b4264] bg-[#101b2c] text-slate-300"
+                  ? "border-[color:var(--tk-color-brand-cyan)] bg-[rgba(0,210,220,0.14)] text-[color:var(--tk-color-text-inverse)]"
+                  : "border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] text-[color:var(--tk-color-text-inverse-secondary)]"
               }`}
             >
               <Icon size={15} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-xs font-semibold text-slate-100">
+              <span className="tk-strong block truncate text-xs font-semibold">
                 {entry.title}
               </span>
-              <span className="mt-0.5 block truncate text-[11px] font-medium text-slate-400">
+              <span className="tk-muted mt-0.5 block truncate text-[11px] font-medium">
                 {metric.summary}
               </span>
             </span>
-            <span className="shrink-0 rounded border border-[#273d60] px-1.5 py-0.5 text-[10px] text-slate-400">
+            <span className="tk-chip shrink-0 rounded border px-1.5 py-0.5 text-[10px]">
               {metric.badge}
             </span>
           </div>
         </button>
-        <div className="border-t border-[#182940] p-2">
+        <div className="border-t border-[color:var(--tk-color-border-divider)] p-2">
           <ModuleEntryPreview id={entry.id} />
         </div>
       </div>
@@ -2468,8 +2468,8 @@ function ModuleEntryItem({
         onMouseLeave={hidePreview}
         className={`group w-full min-w-0 overflow-hidden rounded-lg border text-left transition-colors ${
           active
-            ? "border-[#4c85ff] bg-[#153463] shadow-[0_0_0_1px_rgba(76,133,255,0.28)]"
-            : "border-[#1d2e47] bg-[#0b1424] hover:border-[#335780] hover:bg-[#101d32]"
+            ? "tk-selected"
+            : "tk-chip hover:bg-[rgba(0,96,219,0.12)]"
         } ${
           displayMode === "icon" || displayMode === "compact"
             ? "flex items-center justify-center px-0"
@@ -2492,26 +2492,26 @@ function ModuleEntryItem({
           <span
             className={`inline-flex shrink-0 items-center justify-center rounded-md border ${
               active
-                ? "border-blue-300/40 bg-blue-300/15 text-blue-100"
-                : "border-[#2b4264] bg-[#101b2c] text-slate-300"
+                ? "border-[color:var(--tk-color-brand-cyan)] bg-[rgba(0,210,220,0.14)] text-[color:var(--tk-color-text-inverse)]"
+                : "border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] text-[color:var(--tk-color-text-inverse-secondary)]"
             } ${displayMode === "icon" ? "h-8 w-8" : displayMode === "compact" ? "h-10 w-10" : "h-7 w-7"}`}
           >
             <Icon size={displayMode === "icon" ? 17 : displayMode === "compact" ? 19 : 15} />
           </span>
           {displayMode !== "icon" && displayMode !== "compact" ? (
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-xs font-semibold text-slate-100">
+              <span className="tk-strong block truncate text-xs font-semibold">
                 {entry.title}
               </span>
               {displayMode === "summary" || displayMode === "wide-preview" ? (
-                <span className="mt-0.5 block truncate text-[11px] font-medium text-slate-400">
+                <span className="tk-muted mt-0.5 block truncate text-[11px] font-medium">
                   {metric.summary}
                 </span>
               ) : null}
             </span>
           ) : null}
           {!compact && displayMode !== "wide-preview" ? (
-            <span className="shrink-0 rounded border border-[#273d60] px-1.5 py-0.5 text-[10px] text-slate-400">
+            <span className="tk-chip shrink-0 rounded border px-1.5 py-0.5 text-[10px]">
               {metric.badge}
             </span>
           ) : null}
@@ -2520,7 +2520,7 @@ function ModuleEntryItem({
           <ModuleSummaryOverview id={entry.id} metric={metric} />
         ) : null}
         {displayMode === "wide-preview" ? (
-          <div className="mt-2 border-t border-[#182940] pt-2">
+          <div className="mt-2 border-t border-[color:var(--tk-color-border-divider-dark)] pt-2">
             <ModuleEntryPreview id={entry.id} />
           </div>
         ) : null}
@@ -2539,12 +2539,12 @@ function RailMarketOverview() {
   const sentiment = Math.round(sentimentTrendData.at(-1)?.total ?? 51);
 
   return (
-    <div className="mb-2 rounded-lg border border-[#1d2e47] bg-[#0a1322] p-2.5">
+    <div className="tk-panel-soft mb-2 rounded border border-[color:var(--tk-color-border-panel)] p-2.5">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-[11px] font-semibold text-slate-300">
+        <span className="tk-strong text-[11px] font-semibold">
           今日概览
         </span>
-        <span className="rounded border border-[#263d60] px-1.5 py-0.5 text-[10px] text-slate-500">
+        <span className="tk-chip rounded border px-1.5 py-0.5 text-[10px]">
           实时
         </span>
       </div>
@@ -2568,9 +2568,9 @@ function OverviewStat({
   tone?: OverviewTone;
 }) {
   return (
-    <div className="min-w-0 rounded-md border border-[#1c304c] bg-[#081120] px-2 py-1.5">
-      <div className="truncate text-[10px] text-slate-500">{label}</div>
-      <div className={`mt-0.5 truncate font-mono text-[12px] font-semibold ${overviewToneClass(tone)}`}>
+    <div className="tk-field min-w-0 rounded px-2 py-1.5">
+      <div className="tk-muted truncate text-[10px]">{label}</div>
+      <div className={`tk-number mt-0.5 truncate text-[12px] font-semibold ${overviewToneClass(tone)}`}>
         {value}
       </div>
     </div>
@@ -2587,19 +2587,19 @@ function ModuleSummaryOverview({
   if (id === "xrepo") return <XrepoSummaryOverview />;
 
   return (
-    <div className="mt-2 space-y-2 border-t border-[#182940] pt-2">
+    <div className="mt-2 space-y-2 border-t border-[color:var(--tk-color-border-divider-dark)] pt-2">
       {metric.chips?.length ? (
         <div className="grid grid-cols-3 gap-1.5">
           {metric.chips.slice(0, 3).map((chip) => (
             <div
               key={`${chip.label}-${chip.value}`}
-              className="min-w-0 rounded-md border border-[#1c304c] bg-[#081120] px-2 py-1"
+              className="tk-field min-w-0 rounded px-2 py-1"
             >
-              <div className="truncate text-[9px] text-slate-500">
+              <div className="tk-muted truncate text-[9px]">
                 {chip.label}
               </div>
               <div
-                className={`mt-0.5 truncate font-mono text-[11px] font-semibold ${overviewToneClass(
+                className={`tk-number mt-0.5 truncate text-[11px] font-semibold ${overviewToneClass(
                   chip.tone ?? "neutral",
                 )}`}
               >
@@ -2614,14 +2614,14 @@ function ModuleSummaryOverview({
           {metric.detailRows.slice(0, 2).map(([label, value, extra]) => (
             <div
               key={`${label}-${value}`}
-              className="grid grid-cols-[0.9fr_1fr_auto] items-center gap-2 rounded border border-[#17283f] bg-[#081120]/70 px-2 py-1 text-[10px]"
+              className="tk-field grid grid-cols-[0.9fr_1fr_auto] items-center gap-2 rounded px-2 py-1 text-[10px]"
             >
-              <span className="truncate text-slate-500">{label}</span>
-              <span className="truncate font-mono font-semibold text-slate-300">
+              <span className="tk-muted truncate">{label}</span>
+              <span className="tk-number tk-strong truncate font-semibold">
                 {value}
               </span>
               {extra ? (
-                <span className="truncate text-right text-slate-500">
+                <span className="tk-muted truncate text-right">
                   {extra}
                 </span>
               ) : (
@@ -2650,9 +2650,9 @@ function XrepoSummaryOverview() {
   const rows = section?.rows.slice(0, 5) ?? [];
 
   return (
-    <div className="mt-2 border-t border-[#182940] pt-2">
-      <div className="overflow-hidden rounded-md border border-[#1c304c] bg-[#081120]">
-        <div className="grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] border-b border-[#1c304c] bg-[#0d1726] px-2 py-1 text-[9px] text-slate-500">
+    <div className="mt-2 border-t border-[color:var(--tk-color-border-divider-dark)] pt-2">
+      <div className="tk-table-shell overflow-hidden rounded border">
+        <div className="grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-1 text-[9px] text-[color:var(--tk-color-text-tertiary)]">
           <span className="truncate">合约</span>
           <span className="truncate text-right">正量</span>
           <span className="truncate text-right">正利率</span>
@@ -2662,23 +2662,23 @@ function XrepoSummaryOverview() {
         {rows.map((row, index) => (
           <div
             key={`${row[0]}-${index}`}
-            className={`grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] items-center gap-1 border-b border-[#162439] px-2 py-1 text-[10px] last:border-b-0 ${
-              index === 0 ? "bg-[#0d1726]/70" : ""
+            className={`grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] items-center gap-1 border-b border-[color:var(--tk-color-border-divider-dark)] px-2 py-1 text-[10px] last:border-b-0 ${
+              index === 0 ? "bg-[rgba(0,96,219,0.1)]" : ""
             }`}
           >
-            <span className="truncate font-semibold text-slate-300">
+            <span className="tk-strong truncate font-semibold">
               {row[0]}
             </span>
-            <span className="truncate text-right font-mono text-slate-300">
+            <span className="tk-number tk-strong truncate text-right">
               {row[1]}
             </span>
-            <span className="truncate text-right font-mono font-semibold text-red-300">
+            <span className="tk-number tk-negative truncate text-right font-semibold">
               {row[2]}
             </span>
-            <span className="truncate text-right font-mono font-semibold text-emerald-300">
+            <span className="tk-number tk-positive truncate text-right font-semibold">
               {row[3]}
             </span>
-            <span className="truncate text-right font-mono text-slate-300">
+            <span className="tk-number tk-strong truncate text-right">
               {row[4]}
             </span>
           </div>
@@ -2710,10 +2710,10 @@ function SummarySparkline({
   const latest = values[values.length - 1];
 
   return (
-    <div className="rounded-md border border-[#1c304c] bg-[#081120] px-2 py-1.5">
+    <div className="tk-field rounded px-2 py-1.5">
       <div className="mb-1 flex items-center justify-between gap-2 text-[10px]">
-        <span className="truncate text-slate-500">{label}</span>
-        <span className="font-mono font-semibold text-slate-300">
+        <span className="tk-muted truncate">{label}</span>
+        <span className="tk-number tk-strong font-semibold">
           {latest.toFixed(latest > 100 ? 0 : 3)}
         </span>
       </div>
@@ -2741,10 +2741,10 @@ function SummarySparkline({
 }
 
 function overviewToneClass(tone: OverviewTone) {
-  if (tone === "good") return "text-emerald-300";
-  if (tone === "alert") return "text-red-300";
-  if (tone === "muted") return "text-slate-300";
-  return "text-blue-200";
+  if (tone === "good") return "tk-positive";
+  if (tone === "alert") return "tk-negative";
+  if (tone === "muted") return "tk-muted";
+  return "text-[color:var(--tk-color-brand-cyan)]";
 }
 
 function getModuleEntryData(id: ModuleEntryId): ModuleEntryMetric {
@@ -2974,7 +2974,7 @@ function EntryPreviewPopover({
 
   return (
     <div
-      className="pointer-events-none fixed z-[80] rounded-lg border border-[#2a4a6e] bg-[#0e1d31]/95 p-3 text-xs text-slate-200 shadow-2xl backdrop-blur"
+      className="pointer-events-none fixed z-[80] rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[rgba(255,255,255,0.96)] p-3 text-xs text-slate-200 shadow-2xl backdrop-blur"
       style={{ left, top, width }}
     >
       <div className="flex items-start gap-2">
@@ -2986,7 +2986,7 @@ function EntryPreviewPopover({
             {metric.rows.map(([label, value]) => (
               <div
                 key={label}
-                className="flex items-center justify-between gap-3 rounded border border-[#1f3452] bg-[#0b1424] px-2 py-1"
+                className="flex items-center justify-between gap-3 rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-2 py-1"
               >
                 <span className="text-slate-500">{label}</span>
                 <span className="font-mono font-semibold text-slate-200">
@@ -2995,7 +2995,7 @@ function EntryPreviewPopover({
               </div>
             ))}
           </div>
-          <div className="mt-2 inline-flex rounded border border-[#2a4164] bg-[#0b1424] px-2 py-0.5 text-[11px] text-slate-300">
+          <div className="mt-2 inline-flex rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-2 py-0.5 text-[11px] text-slate-300">
             {metric.badge}
           </div>
         </div>
@@ -3048,7 +3048,7 @@ function ModuleEntryPreview({ id }: { id: ModuleEntryId }) {
   if (id === "institution-period") {
     return (
       <RichPreviewFrame heightClassName="h-[270px]">
-        <div className="h-full min-h-0 rounded-xl border border-[#284164] bg-[#0b1728] p-2">
+        <div className="h-full min-h-0 rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
           <CfetsInstPanel />
         </div>
       </RichPreviewFrame>
@@ -3066,8 +3066,8 @@ function ModuleEntryPreview({ id }: { id: ModuleEntryId }) {
   }
 
   return (
-    <RichPreviewFrame heightClassName="h-[220px]" scrollX>
-      <div className="h-full min-w-[560px]">
+    <RichPreviewFrame heightClassName="h-[220px]">
+      <div className="h-full min-w-0">
         <MarketSentimentFrame />
       </div>
     </RichPreviewFrame>
@@ -3138,9 +3138,9 @@ function MiniPreviewTable({
   rows: readonly (readonly string[])[];
 }) {
   return (
-    <div className="overflow-hidden rounded-md border border-[#1d304a] bg-[#081120]">
+    <div className="tk-table-shell overflow-hidden rounded border">
       <div
-        className="grid border-b border-[#1d304a] bg-[#101b2c] text-[10px] text-slate-500"
+        className="grid border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] text-[10px] text-[color:var(--tk-color-text-tertiary)]"
         style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
       >
         {columns.map((column) => (
@@ -3152,14 +3152,14 @@ function MiniPreviewTable({
       {rows.map((row, rowIndex) => (
         <div
           key={`${row[0]}-${rowIndex}`}
-          className="grid text-[10px] text-slate-300"
+          className="tk-strong grid text-[10px]"
           style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
         >
           {row.map((cell, cellIndex) => (
             <div
               key={`${cell}-${cellIndex}`}
               className={`truncate px-1.5 py-1 ${
-                cellIndex > 1 ? "font-mono text-emerald-300" : ""
+                cellIndex > 1 ? "tk-number tk-positive" : ""
               }`}
             >
               {cell}
@@ -3194,7 +3194,7 @@ function MiniSparklinePreview({
     .join(" ");
 
   return (
-    <div className="rounded-md border border-[#1d304a] bg-[#081120] p-2">
+    <div className="min-w-0 overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
       <div className="mb-1 flex items-center justify-between gap-2 text-[10px]">
         <span className="truncate font-semibold text-slate-300">{label}</span>
         <span className="font-mono text-slate-500">
@@ -3220,7 +3220,7 @@ function MiniSparklinePreview({
           strokeWidth="2"
         />
       </svg>
-      <div className="mt-1 text-[10px] text-slate-500">{footnote}</div>
+      <div className="mt-1 truncate text-[10px] text-slate-500">{footnote}</div>
     </div>
   );
 }
@@ -3231,7 +3231,7 @@ function MiniMetricPreview({
   rows: readonly (readonly [string, string])[];
 }) {
   return (
-    <div className="space-y-1 rounded-md border border-[#1d304a] bg-[#081120] p-2">
+    <div className="space-y-1 rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
       {rows.map(([label, value]) => (
         <div
           key={label}
@@ -3264,25 +3264,25 @@ function PageFrame({
 
   return (
     <div
-      className="fixed inset-0 z-[40] flex items-center justify-center bg-[#02060d99] px-5 py-5 backdrop-blur-sm"
+      className="tk-overlay fixed inset-0 z-[40] flex items-center justify-center px-5 py-5"
       onMouseDown={onClose}
     >
       <section
-        className="grid h-[86vh] w-[min(1380px,calc(100vw-40px))] grid-rows-[auto_1fr] overflow-hidden rounded-lg border border-[#284164] bg-[#0a1322] shadow-[0_24px_80px_rgba(2,7,18,0.64)]"
+        className="tk-modal grid h-[86vh] w-[min(1380px,calc(100vw-40px))] grid-rows-[auto_1fr] overflow-hidden border"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101b2c] px-4 py-3">
+        <div className="tk-panel-header flex items-center justify-between gap-3 border-b px-4 py-3">
           <div className="min-w-0">
-            <div className="truncate text-base font-semibold text-slate-50">
+            <div className="tk-title-lg truncate">
               {title}
             </div>
-            <div className="mt-0.5 text-xs text-slate-500">
+            <div className="tk-muted mt-0.5 text-xs">
               入口页框 / Esc 关闭
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <button
-              className="inline-flex items-center gap-1.5 rounded-md border border-[#293f60] bg-[#0d1726] px-2.5 py-1.5 text-xs text-slate-500 opacity-60"
+              className="tk-button inline-flex items-center gap-1.5 px-2.5 py-1.5 opacity-60"
               disabled
               type="button"
               title="刷新能力待接入"
@@ -3291,7 +3291,7 @@ function PageFrame({
               刷新
             </button>
             <button
-              className="inline-flex items-center gap-1.5 rounded-md border border-[#293f60] bg-[#0d1726] px-2.5 py-1.5 text-xs text-slate-500 opacity-60"
+              className="tk-button inline-flex items-center gap-1.5 px-2.5 py-1.5 opacity-60"
               disabled
               type="button"
               title="下载能力待接入"
@@ -3300,7 +3300,7 @@ function PageFrame({
               下载
             </button>
             <button
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#33507d] bg-[#14223a] text-slate-300 hover:border-blue-400 hover:text-slate-50"
+              className="tk-button inline-flex h-8 w-8 items-center justify-center"
               onClick={onClose}
               type="button"
               title="关闭"
@@ -3323,14 +3323,14 @@ function TopBar({
   onResetColumns: () => void;
 }) {
   return (
-    <header className="border-b border-[#1b2a42] bg-[#0d1726] px-3 py-2 shadow-[inset_0_-1px_0_rgba(74,101,140,0.18)]">
+    <header className="tk-topbar border-b px-3 py-2">
       <div className="grid grid-cols-[minmax(260px,max-content)_minmax(520px,1fr)_auto] items-center gap-3">
         <div className="flex items-center gap-2">
-          <div className="whitespace-nowrap text-[20px] font-semibold tracking-[0.04em] text-slate-50">
+          <div className="whitespace-nowrap text-[20px] font-semibold tracking-[0] text-[color:var(--tk-color-text-inverse)]">
             资金实时行情看板
           </div>
           <button
-            className="rounded-md border border-[#253754] bg-[#101a2b] px-1.5 py-0.5 text-[10px] text-slate-400 hover:border-[#33507d] hover:text-slate-200"
+            className="tk-button px-1.5 py-0.5 text-[10px]"
             onClick={onResetColumns}
             type="button"
             title="恢复默认三栏宽度"
@@ -3506,30 +3506,30 @@ function BigBankPriceFrame({
   return (
     <>
       <section
-        className={`flex min-h-0 flex-col rounded-xl border border-[#1e2f48] bg-[#0d1726] ${
+        className={`tk-panel flex min-h-0 flex-col border ${
           embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
         }`}
       >
-        <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
+        <div className="tk-panel-header border-b px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-sm font-semibold text-slate-50">
+              <div className="tk-title">
                 今天大行价格
               </div>
-              <div className="mt-1 text-xs text-slate-500">
+              <div className="tk-muted mt-1 text-xs">
                 大行当日隔夜和 7 天资金价格
               </div>
             </div>
             <div className="flex items-center gap-2">
               <button
-                className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1 text-xs font-medium text-slate-300"
+                className="tk-button px-3 py-1"
                 onClick={openBankEditor}
                 type="button"
               >
                 手工输入
               </button>
               <button
-                className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
+                className="tk-button tk-button-success px-3 py-1"
                 type="button"
               >
                 下载
@@ -3585,20 +3585,20 @@ function XrepoFrame({
 
   return (
     <section
-      className={`flex min-h-0 flex-col rounded-xl border border-[#1e2f48] bg-[#0d1726] ${
+      className={`tk-panel flex min-h-0 flex-col border ${
         embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
       }`}
     >
-      <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
+      <div className="tk-panel-header border-b px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-sm font-semibold text-slate-50">XREPO</div>
-            <div className="mt-1 text-xs text-slate-500">
+            <div className="tk-title">XREPO</div>
+            <div className="tk-muted mt-1 text-xs">
               匿名回购报价、发送与下载
             </div>
           </div>
           <button
-            className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
+            className="tk-button tk-button-success px-3 py-1"
             type="button"
           >
             下载
@@ -3646,13 +3646,13 @@ function ExchangeRepoFrame({
 
 function GlobalFilterFrame() {
   return (
-    <div className="grid h-full min-h-0 place-items-center rounded-xl border border-[#1e2f48] bg-[#0d1726]">
-      <div className="w-[520px] rounded-lg border border-[#263d5f] bg-[#0b1424] p-5">
+    <div className="tk-panel grid h-full min-h-0 place-items-center border">
+      <div className="tk-panel-soft w-[520px] rounded border border-[color:var(--tk-color-border-panel)] p-5">
         <div className="text-sm font-semibold text-slate-50">
           金额 / 利率筛选
         </div>
         <div className="mt-4 grid gap-3 text-sm">
-          <div className="flex items-center justify-between border-b border-[#1e2f48] pb-3">
+          <div className="flex items-center justify-between border-b border-[color:var(--tk-color-border-divider-dark)] pb-3">
             <span className="text-slate-500">金额区间</span>
             <span className="font-mono text-slate-200">
               {topBoardFilters.amountMin} - {topBoardFilters.amountMax} 亿
@@ -3675,8 +3675,8 @@ function GlobalFilterFrame() {
 
 function MarketSentimentFrame() {
   return (
-    <div className="grid h-full min-h-0 grid-cols-[320px_1fr] gap-3 rounded-xl border border-[#1e2f48] bg-[#0d1726] p-3">
-      <div className="rounded-lg border border-[#263d5f] bg-[#0b1424] p-4">
+    <div className="tk-panel grid h-full min-h-0 grid-cols-[minmax(0,1.45fr)_minmax(112px,0.55fr)] gap-3 overflow-hidden border p-3">
+      <div className="tk-panel-soft min-w-0 rounded border border-[color:var(--tk-color-border-panel)] p-4">
         <div className="text-sm font-semibold text-slate-50">
           DR007 / 资金情绪
         </div>
@@ -3686,7 +3686,7 @@ function MarketSentimentFrame() {
           <StatusBadge>平衡</StatusBadge>
         </div>
       </div>
-      <div className="min-h-0 rounded-lg border border-[#263d5f] bg-[#0b1424] p-4">
+      <div className="tk-panel-soft min-h-0 min-w-0 rounded border border-[color:var(--tk-color-border-panel)] p-3">
         <div className="mb-3 text-xs text-slate-500">近 20 日资金情绪</div>
         <MiniSparklinePreview
           label="全市场"
@@ -3701,7 +3701,7 @@ function MarketSentimentFrame() {
 
 function ReservedModuleFrame() {
   return (
-    <div className="grid h-full min-h-0 place-items-center rounded-xl border border-dashed border-[#2a4164] bg-[#0d1726]">
+    <div className="tk-panel grid h-full min-h-0 place-items-center border border-dashed">
       <div className="text-center">
         <div className="text-base font-semibold text-slate-100">模块接入中</div>
         <div className="mt-2 text-sm text-slate-500">
@@ -3860,14 +3860,14 @@ function LeftSummaryPanel() {
                 section.title === "今天大行价格" ? (
                   <div className="flex items-center gap-2">
                     <button
-                      className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1 text-xs font-medium text-slate-300"
+                      className="tk-button px-3 py-1"
                       onClick={openBankEditor}
                       type="button"
                     >
                       手工输入
                     </button>
                     <button
-                      className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
+                      className="tk-button tk-button-success px-3 py-1"
                       type="button"
                     >
                       下载
@@ -3950,17 +3950,17 @@ function BankRateEditorModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc] px-4">
-      <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]">
-        <div className="border-b border-[#1c3150] bg-[#101d32] px-5 py-4">
+    <div className="tk-overlay fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div className="tk-modal w-full max-w-4xl overflow-hidden border">
+        <div className="tk-panel-header border-b px-5 py-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-base font-semibold text-slate-50">
+              <div className="tk-title-lg">
                 今天大行价格手工输入
               </div>
             </div>
             <button
-              className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+              className="tk-button px-3 py-1.5"
               onClick={onClose}
               type="button"
             >
@@ -3969,8 +3969,8 @@ function BankRateEditorModal({
           </div>
         </div>
         <div className="px-5 py-4">
-          <div className="overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
-            <div className="grid grid-cols-[1.4fr_0.7fr_1fr_1fr] border-b border-[#22324d] bg-[#111d30] px-4 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+          <div className="tk-table-shell overflow-hidden rounded border">
+            <div className="grid grid-cols-[1.4fr_0.7fr_1fr_1fr] border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-4 py-2 text-[11px] font-medium tracking-[0] text-[color:var(--tk-color-text-tertiary)]">
               <span>机构</span>
               <span className="text-center">期限</span>
               <span className="text-right">非银利率</span>
@@ -3979,8 +3979,8 @@ function BankRateEditorModal({
             {rows.map((row, index) => (
               <div
                 key={`${row.institution}-${row.tenor}-${index}`}
-                className={`grid grid-cols-[1.4fr_0.7fr_1fr_1fr] items-center gap-3 border-b border-[#162439] px-4 py-3 ${
-                  index % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
+                className={`grid grid-cols-[1.4fr_0.7fr_1fr_1fr] items-center gap-3 border-b border-[color:var(--tk-color-border-divider-dark)] px-4 py-3 ${
+                  index % 2 === 0 ? "bg-transparent" : "bg-[rgba(255,255,255,0.025)]"
                 }`}
               >
                 <div className="text-sm font-semibold text-slate-100">
@@ -4002,10 +4002,10 @@ function BankRateEditorModal({
               </div>
             ))}
           </div>
-          <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
+          <div className="tk-muted mt-3 flex items-center gap-2 text-xs">
             <span className="text-slate-500">新增机构</span>
             <input
-              className="w-44 rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
+              className="tk-field w-44 px-2 py-1.5 text-xs outline-none focus:border-[color:var(--tk-color-brand-primary-hover)]"
               placeholder="如 交通银行"
               value={newInstName}
               onChange={(e) => setNewInstName(e.target.value)}
@@ -4017,7 +4017,7 @@ function BankRateEditorModal({
               }}
             />
             <button
-              className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-200"
+              className="tk-button tk-button-success px-2.5 py-1"
               onClick={commitAddInstitution}
               type="button"
             >
@@ -4025,23 +4025,23 @@ function BankRateEditorModal({
             </button>
           </div>
         </div>
-        <div className="flex items-center justify-end gap-2 border-t border-[#1c3150] bg-[#0d1726] px-5 py-4">
+        <div className="flex items-center justify-end gap-2 border-t border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-deep)] px-5 py-4">
           <button
-            className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+            className="tk-button px-3 py-1.5"
             onClick={onReset}
             type="button"
           >
             重置
           </button>
           <button
-            className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+            className="tk-button px-3 py-1.5"
             onClick={onClose}
             type="button"
           >
             取消
           </button>
           <button
-            className="rounded-lg border border-blue-500/30 bg-blue-500/20 px-3 py-1.5 text-xs font-medium text-blue-300"
+            className="tk-button tk-button-primary px-3 py-1.5"
             onClick={onSave}
             type="button"
           >
@@ -4064,7 +4064,7 @@ function ModalInput({
 }) {
   return (
     <input
-      className={`w-full rounded-lg border border-[#284164] bg-[#0f1b2f] px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-blue-400 ${
+      className={`tk-field w-full px-3 py-2 text-sm outline-none transition focus:border-[color:var(--tk-color-brand-primary-hover)] ${
         align === "right" ? "text-right" : "text-left"
       }`}
       value={value}
@@ -4122,7 +4122,7 @@ function LeftNcdCard({
           <button
             onClick={onClose}
             type="button"
-            className="ml-1 rounded p-0.5 text-slate-400 hover:bg-[#1e3358] hover:text-slate-100"
+            className="ml-1 rounded p-0.5 text-slate-400 hover:bg-[var(--tk-color-surface-selected)] hover:text-slate-100"
             title="收起"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -4139,7 +4139,7 @@ function LeftNcdCard({
           <button
             onClick={() => setExpanded(true)}
             type="button"
-            className="ml-1 rounded p-0.5 text-slate-400 hover:bg-[#1e3358] hover:text-slate-100"
+            className="ml-1 rounded p-0.5 text-slate-400 hover:bg-[var(--tk-color-surface-selected)] hover:text-slate-100"
             title="展开"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -4186,18 +4186,18 @@ function LeftNcdCard({
   return (
     <>
       <section
-        className={`flex min-h-0 flex-col rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)] ${
+        className={`tk-panel flex min-h-0 flex-col border ${
           embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
         }`}
       >
-        <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-2.5">
+        <div className="tk-panel-header border-b px-4 py-2.5">
           {header()}
         </div>
         <div
           className={
             embeddedPreview
-              ? "min-h-[220px] overflow-visible p-2"
-              : "min-h-0 flex-1 overflow-hidden p-2"
+              ? "flex min-h-[220px] flex-col overflow-visible p-2"
+              : "flex min-h-0 flex-1 flex-col overflow-hidden p-2"
           }
         >
           {body}
@@ -4205,17 +4205,17 @@ function LeftNcdCard({
       </section>
       {expanded && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc]"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(17,24,39,0.32)]"
           onClick={() => setExpanded(false)}
         >
           <div
-            className="relative flex h-[85vh] w-[90vw] max-w-[1400px] flex-col overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]"
+            className="relative flex h-[85vh] w-[90vw] max-w-[1400px] flex-col overflow-hidden rounded-2xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] shadow-[0_12px_28px_rgba(17,24,39,0.12)]"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setExpanded(false)}
               type="button"
-              className="absolute right-3 top-3 z-10 rounded p-1 text-slate-400 hover:bg-[#1e3358] hover:text-slate-100"
+              className="absolute right-3 top-3 z-10 rounded p-1 text-slate-400 hover:bg-[var(--tk-color-surface-selected)] hover:text-slate-100"
               title="收起"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -4261,13 +4261,13 @@ function ExchangeRepoCard({
 
   return (
     <section
-      className={`flex min-h-0 flex-col rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)] ${
+      className={`tk-panel flex min-h-0 flex-col border ${
         embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
       }`}
     >
-      <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
+      <div className="tk-panel-header border-b px-4 py-3">
         <div className="flex items-center justify-between gap-3">
-          <div className="text-sm font-semibold tracking-[0.02em] text-slate-50">
+          <div className="tk-title">
             {title}
           </div>
           <div className="flex items-center gap-2">
@@ -4286,7 +4286,7 @@ function ExchangeRepoCard({
               </button>
             ))}
             <button
-              className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
+              className="tk-button tk-button-success px-3 py-1"
               type="button"
             >
               下载
@@ -4357,13 +4357,13 @@ function ExchangeCoreCompactBlock({
   );
   return (
     <div
-      className={`flex min-h-0 flex-col rounded-xl border border-[#1c2b42] bg-[#0a1322] ${
+      className={`flex min-h-0 flex-col rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] ${
         embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
       }`}
     >
       <table className="w-full table-fixed shrink-0">
         <thead>
-          <tr className="border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
+          <tr className="border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] text-[11px] font-medium tracking-[0.02em] text-slate-400">
             <th className="w-[18%] px-2 py-1.5 text-left font-medium">期限</th>
             <th className="w-[30%] px-2 py-1.5 text-left font-medium">品种</th>
             <th className="w-[28%] px-2 py-1.5 text-right font-medium">最新</th>
@@ -4384,7 +4384,7 @@ function ExchangeCoreCompactBlock({
               <tr
                 key={row ? `${row[1]}-${rowIndex}` : `empty-${rowIndex}`}
                 className={`text-xs ${
-                  rowIndex > 0 ? "border-t border-[#162439]" : ""
+                  rowIndex > 0 ? "border-t border-[color:var(--tk-color-border-divider)]" : ""
                 }`}
               >
                 {row ? (
@@ -4429,13 +4429,13 @@ function ExchangeMarketTable({
 
   return (
     <div
-      className={`flex min-h-0 flex-col rounded-xl border border-[#1c2b42] bg-[#0a1322] ${
+      className={`flex min-h-0 flex-col rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] ${
         embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
       }`}
     >
       <table className="w-full table-fixed shrink-0">
         <thead>
-          <tr className="border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
+          <tr className="border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] text-[11px] font-medium tracking-[0.02em] text-slate-400">
             {market.columns.map((column, index) => (
               <th
                 key={`${market.title}-${column}`}
@@ -4465,8 +4465,8 @@ function ExchangeMarketTable({
             {displayRows.map((row, rowIndex) => (
               <tr
                 key={`${market.title}-${row[0]}-${rowIndex}`}
-                className={`border-b border-[#162439] text-xs ${
-                  rowIndex % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
+                className={`border-b border-[color:var(--tk-color-border-divider)] text-xs ${
+                  rowIndex % 2 === 0 ? "bg-transparent" : "bg-[rgba(255,255,255,0.025)]"
                 }`}
               >
                 {row.map((cell, cellIndex) => (
@@ -4615,14 +4615,14 @@ function MainQuoteBoard() {
 
   return (
     <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pr-1">
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#2a4a78] bg-[#0c1730]">
-        <div className="border-b border-[#1b2a42] bg-[#101b2c] px-4 py-3">
+      <section className="tk-panel flex min-h-0 flex-1 flex-col overflow-hidden border">
+        <div className="tk-panel-header border-b px-4 py-3">
           <div className="flex flex-nowrap items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
-              <div className="shrink-0 whitespace-nowrap text-base font-semibold text-slate-50">
+              <div className="tk-title-lg shrink-0 whitespace-nowrap">
                 非银报价
               </div>
-              <div className="flex flex-nowrap items-center gap-0.5 text-xs text-slate-400">
+              <div className="tk-muted flex flex-nowrap items-center gap-0.5 text-xs">
                 <button
                   className={miniChipClass(tenorFilter === "all")}
                   onClick={() => setTenorFilter("all")}
@@ -4658,7 +4658,7 @@ function MainQuoteBoard() {
                 2级
               </button>
               <button
-                className="whitespace-nowrap rounded-md border border-emerald-500/30 bg-emerald-500/15 px-2 py-1 text-[11px] font-medium text-emerald-300"
+                className="tk-button tk-button-success whitespace-nowrap px-2 py-1 text-[11px]"
                 type="button"
               >
                 下载
@@ -4693,7 +4693,7 @@ function MainQuoteBoard() {
                     role="separator"
                     aria-orientation="horizontal"
                     onMouseDown={startDrag}
-                    className="group relative h-1.5 shrink-0 cursor-row-resize bg-[#18263b] transition-colors hover:bg-sky-500/60"
+                    className="group relative h-1.5 shrink-0 cursor-row-resize bg-[var(--tk-color-border-panel)] transition-colors hover:bg-[var(--tk-color-brand-cyan)]"
                   >
                     <span className="pointer-events-none absolute left-1/2 top-1/2 h-[2px] w-10 -translate-x-1/2 -translate-y-1/2 rounded bg-slate-500/60 group-hover:bg-sky-200" />
                   </div>
@@ -4746,9 +4746,9 @@ function QuoteEditorModal({
   ];
   const rankOptions: QuoteRank[] = ["最优", "次优", "报价"];
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc] px-4">
-      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]">
-        <div className="border-b border-[#1c3150] bg-[#101d32] px-5 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(17,24,39,0.32)] px-4">
+      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] shadow-[0_12px_28px_rgba(17,24,39,0.12)]">
+        <div className="border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-5 py-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-base font-semibold text-slate-50">
@@ -4756,7 +4756,7 @@ function QuoteEditorModal({
               </div>
             </div>
             <button
-              className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+              className="rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-3 py-1.5 text-xs font-medium text-slate-300"
               onClick={onClose}
               type="button"
             >
@@ -4772,7 +4772,7 @@ function QuoteEditorModal({
             >
               <span>{f.label}</span>
               <input
-                className="rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
+                className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[color:var(--tk-color-brand-primary-hover)]"
                 value={(draft[f.key] as string) ?? ""}
                 placeholder={f.placeholder}
                 onChange={(e) => onChange(f.key, e.target.value)}
@@ -4782,7 +4782,7 @@ function QuoteEditorModal({
           <label className="flex flex-col gap-1 text-[11px] text-slate-400">
             <span>评级</span>
             <select
-              className="rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
+              className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[color:var(--tk-color-brand-primary-hover)]"
               value={(draft.rank as string) ?? row.rank}
               onChange={(e) => onChange("rank", e.target.value)}
             >
@@ -4794,9 +4794,9 @@ function QuoteEditorModal({
             </select>
           </label>
         </div>
-        <div className="flex items-center justify-end gap-2 border-t border-[#1c3150] bg-[#0d1726] px-5 py-4">
+        <div className="flex items-center justify-end gap-2 border-t border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-deep)] px-5 py-4">
           <button
-            className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+            className="rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-3 py-1.5 text-xs font-medium text-slate-300"
             onClick={onClose}
             type="button"
           >
@@ -4878,26 +4878,26 @@ function RepoQuoteSectionBoard({
             : isActive
               ? "flex-none"
               : "min-h-0 flex-1"
-      } ${withTopBorder ? "border-t border-[#18314f]" : ""}`}
+      } ${withTopBorder ? "border-t border-[color:var(--tk-color-border-divider)]" : ""}`}
       style={containerStyle}
       onFocus={onActivate}
       onClick={onActivate}
       tabIndex={0}
     >
       <div
-        className={`flex cursor-pointer items-center justify-between px-4 py-1.5 ${isActive ? "border-l-[3px] border-sky-300 bg-gradient-to-r from-sky-500/40 via-sky-600/25 to-transparent shadow-[inset_0_-1px_0_rgba(125,211,252,0.35)]" : "bg-[#0f1a2d]"}`}
+        className={`flex cursor-pointer items-center justify-between px-4 py-1.5 ${isActive ? "border-l-[3px] border-[color:var(--tk-color-brand-cyan)] bg-[var(--tk-color-surface-selected)] shadow-[inset_3px_0_0_var(--tk-color-brand-cyan)]" : "bg-[var(--tk-color-surface-page)]"}`}
       >
         <div className="flex items-center gap-2">
           <div className="text-sm font-semibold text-slate-100">
             {section.title}
           </div>
           {isActive ? (
-            <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-medium text-sky-300">
+            <span className="rounded-full bg-[rgba(0,207,232,0.12)] px-2 py-0.5 text-[10px] font-medium text-sky-300">
               焦点
             </span>
           ) : null}
         </div>
-        <div className="rounded-full border border-[#29456c] bg-[#12203a] px-2 py-0.5 text-[11px] text-slate-400">
+        <div className="rounded-full border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-2 py-0.5 text-[11px] text-slate-400">
           层级 1 / 2
         </div>
       </div>
@@ -4910,7 +4910,7 @@ function RepoQuoteSectionBoard({
               : "flex-1 overflow-y-auto"
         }`}
       >
-        <div className="grid grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] border-y border-[#1c3150] bg-[#111d30] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+        <div className="grid grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] border-y border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
           <span>分组 / 机构</span>
           <span className="text-right">期限</span>
           <span className="text-right">金额(总量)</span>
@@ -4921,10 +4921,10 @@ function RepoQuoteSectionBoard({
           <span className="text-right">操作</span>
         </div>
         {section.groups.map((group) => (
-          <div key={group.id} className="border-b-2 border-[#1f3759]">
-            <div className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-sky-500/70 bg-gradient-to-r from-[#15294a] via-[#11223c] to-[#0d1a30] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
+          <div key={group.id} className="border-b-2 border-[color:var(--tk-color-border-divider)]">
+            <div className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-[color:var(--tk-color-brand-cyan)] bg-[var(--tk-color-surface-selected)] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
               <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-1 rounded-md border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-sky-200">
+                <span className="inline-flex items-center gap-1 rounded-md border border-[color:rgba(0,207,232,0.55)] bg-[rgba(0,207,232,0.12)] px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-[color:var(--tk-color-brand-primary-deep)]">
                   汇总
                 </span>
                 <div className="text-xs font-semibold text-slate-50">
@@ -4944,7 +4944,7 @@ function RepoQuoteSectionBoard({
               <span />
             </div>
             {displayLevel === 1 ? (
-              <div className="divide-y divide-[#152437] bg-[#080f1c]">
+              <div className="divide-y divide-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-page)]">
                 {selectLevel1Rows(group)
                   .filter((row) => matchTenor(row.tenor))
                   .map((rawRow) => {
@@ -5006,7 +5006,7 @@ function RepoQuoteSectionBoard({
               </div>
             ) : null}
             {displayLevel === 2 ? (
-              <div className="divide-y divide-[#152437] bg-[#080f1c]">
+              <div className="divide-y divide-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-page)]">
                 {sortRowsByRank(group.rows)
                   .filter((row) => matchTenor(row.tenor))
                   .map((rawRow) => {
@@ -5014,7 +5014,7 @@ function RepoQuoteSectionBoard({
                     return (
                       <div
                         key={row.id}
-                        className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200 transition hover:bg-[#11253d]"
+                        className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200 transition hover:bg-[var(--tk-color-surface-selected)]"
                       >
                         <div className="flex items-center gap-2">
                           {row.rank === "最优" || row.rank === "次优" ? (
@@ -5206,8 +5206,8 @@ function RightLowerPanel({
   onTabChange: (tab: RightLowerTab) => void;
 }) {
   return (
-    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
-      <div className="flex items-center gap-2 border-b border-[#203551] bg-[#101d32] px-3 py-2">
+    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="flex items-center gap-2 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
         {rightLowerTabs.map((tab) => (
           <button
             key={tab.id}
@@ -5256,13 +5256,13 @@ function IntradayPanel({
   const ti = tooltipState?.index ?? null;
 
   return (
-    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
-      <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101d32] px-3 py-2">
+    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="flex items-center justify-between gap-3 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
         <div className="flex items-center gap-3">
           <div className="text-sm font-semibold text-slate-100">
             匿名成交走势图
           </div>
-          <div className="rounded border border-[#264167] bg-[#13223a] px-1.5 py-0.5 text-[10px] font-medium text-blue-300">
+          <div className="rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-1.5 py-0.5 text-[10px] font-medium text-blue-300">
             R001
           </div>
           <OverlayProductSelect
@@ -5292,11 +5292,11 @@ function IntradayPanel({
             {[0, 1, 2, 3].map((index) => (
               <div
                 key={`intraday-grid-${index}`}
-                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
                 style={{ top: `${(index / 3) * 100}%` }}
               />
             ))}
-            <div className="absolute inset-x-0 top-[58%] border-t border-dashed border-[#ff8a26]" />
+            <div className="absolute inset-x-0 top-[58%] border-t border-dashed border-[color:var(--tk-color-warning)]" />
             <div className="absolute inset-x-0 bottom-0 top-0">
               <svg
                 className="h-full w-full"
@@ -5386,7 +5386,7 @@ function IntradayPanel({
                   </div>
                 )}
                 {overlaySeries && barValues ? (
-                  <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
+                  <div className="mt-1 border-t border-[color:var(--tk-color-border-divider)] pt-1 text-slate-400">
                     利差{" "}
                     <span
                       className={`font-semibold ${barValues[ti] >= 0 ? "text-red-400" : "text-emerald-400"}`}
@@ -5481,8 +5481,8 @@ function HistoryClosePanel({
   const ti = tooltipState?.index ?? null;
 
   return (
-    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
-      <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101d32] px-3 py-2">
+    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="flex items-center justify-between gap-3 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
         <div className="flex items-center gap-3">
           <div className="text-sm font-semibold text-slate-100">
             加权价格走势
@@ -5494,7 +5494,7 @@ function HistoryClosePanel({
           <label className="flex items-center gap-1 text-xs text-slate-400">
             <span>对比</span>
             <select
-              className="rounded-md border border-[#2a4164] bg-[#0f1b2f] px-1.5 py-0.5 text-xs text-slate-200 outline-none"
+              className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-1.5 py-0.5 text-xs text-slate-200 outline-none"
               value={compareProduct}
               onChange={(e) =>
                 onCompareChange(e.target.value as CompareProduct)
@@ -5542,7 +5542,7 @@ function HistoryClosePanel({
             {[0, 1, 2, 3].map((index) => (
               <div
                 key={`k-grid-${index}`}
-                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
                 style={{ top: `${(index / 3) * 100}%` }}
               />
             ))}
@@ -5668,7 +5668,7 @@ function HistoryClosePanel({
                   </div>
                 )}
                 {spreadValues && (
-                  <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
+                  <div className="mt-1 border-t border-[color:var(--tk-color-border-divider)] pt-1 text-slate-400">
                     利差{" "}
                     <span
                       className={`font-semibold ${spreadValues[ti] >= 0 ? "text-red-400" : "text-emerald-400"}`}
@@ -5678,7 +5678,7 @@ function HistoryClosePanel({
                     </span>
                   </div>
                 )}
-                <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
+                <div className="mt-1 border-t border-[color:var(--tk-color-border-divider)] pt-1 text-slate-400">
                   成交量{" "}
                   <span className="font-semibold text-slate-100">
                     {dataset.volume[ti]}亿
@@ -5689,7 +5689,7 @@ function HistoryClosePanel({
           </div>
         </div>
         {compareProduct !== "none" && spreadValues ? (
-          <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
+          <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[color:var(--tk-color-border-divider)] pt-2 pb-1">
             <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
               {(() => {
                 const dMax = Math.max(...spreadValues, 0);
@@ -5746,7 +5746,7 @@ function HistoryClosePanel({
             </div>
           </div>
         ) : (
-          <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
+          <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[color:var(--tk-color-border-divider)] pt-2 pb-1">
             <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
               {buildCompactVolumeTicks(volumeMax).map((tick) => (
                 <div key={tick}>{tick}</div>
@@ -6856,9 +6856,9 @@ const cfetsBondTrend: Record<
 function CfetsDailyPanel() {
   return (
     <div className="h-full min-h-0 overflow-hidden">
-      <div className="overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
+      <div className="overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
         <table className="min-w-full text-xs">
-          <thead className="bg-[#101d32] text-slate-400">
+          <thead className="bg-[var(--tk-color-surface-dark-soft)] text-slate-400">
             <tr>
               {["日期", "公开市场操作", "净投放"].map((column) => (
                 <th key={column} className="px-3 py-2 text-left font-medium">
@@ -6876,7 +6876,7 @@ function CfetsDailyPanel() {
             ].map((row) => (
               <tr
                 key={row[0]}
-                className="border-t border-[#162439] text-slate-300"
+                className="border-t border-[color:var(--tk-color-border-divider)] text-slate-300"
               >
                 {row.map((cell, index) => (
                   <td key={`${row[0]}-${index}`} className="px-3 py-2">
@@ -6949,7 +6949,7 @@ function CfetsMatrixPanel({
                     return (
                       <td key={col} className="px-1 py-1">
                         {rate === null ? (
-                          <div className="flex h-8 w-full items-center justify-center rounded text-[10px] text-slate-600 bg-[#0a1322]">
+                          <div className="flex h-8 w-full items-center justify-center rounded text-[10px] text-slate-600 bg-[var(--tk-color-surface-dark-deep)]">
                             —
                           </div>
                         ) : (
@@ -6990,7 +6990,7 @@ function CfetsMatrixPanel({
           onClick={() => setModal(null)}
         >
           <div
-            className="w-80 rounded-xl border border-[#1d3250] bg-[#0a1322] p-4 shadow-2xl"
+            className="w-80 rounded-xl border border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-deep)] p-4 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-start justify-between">
@@ -7010,7 +7010,7 @@ function CfetsMatrixPanel({
                 ✕
               </button>
             </div>
-            <div className="mb-3 rounded-lg bg-[#0e1827] px-3 py-2 text-center">
+            <div className="mb-3 rounded-lg bg-[var(--tk-color-surface-dark-soft)] px-3 py-2 text-center">
               <span className="text-xl font-semibold text-amber-300">
                 {modal.rate.toFixed(4)}%
               </span>
@@ -7032,7 +7032,7 @@ function CfetsMatrixPanel({
                   .map((r) => (
                     <tr
                       key={r.term}
-                      className="border-t border-[#162439] text-slate-300"
+                      className="border-t border-[color:var(--tk-color-border-divider)] text-slate-300"
                     >
                       <td className="py-1">{r.term}</td>
                       <td className="py-1 text-right">{fmtRate(r.buyRate)}</td>
@@ -7047,9 +7047,9 @@ function CfetsMatrixPanel({
 
       {includeDaily && (
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
+          <div className="overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
             <table className="min-w-full text-xs">
-              <thead className="bg-[#101d32] text-slate-400">
+              <thead className="bg-[var(--tk-color-surface-dark-soft)] text-slate-400">
                 <tr>
                   {["日期", "公开市场操作", "净投放"].map((column) => (
                     <th
@@ -7070,7 +7070,7 @@ function CfetsMatrixPanel({
                 ].map((row) => (
                   <tr
                     key={row[0]}
-                    className="border-t border-[#162439] text-slate-300"
+                    className="border-t border-[color:var(--tk-color-border-divider)] text-slate-300"
                   >
                     {row.map((cell, index) => (
                       <td key={`${row[0]}-${index}`} className="px-3 py-2">
@@ -7145,7 +7145,7 @@ function MultiSeriesChart({
           </div>
           <div
             ref={containerRef}
-            className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[#2a4164]"
+            className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[color:var(--tk-color-border-panel)]"
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
           >
@@ -7201,7 +7201,7 @@ function MultiSeriesChart({
                 !isHidden(si) && Math.min(...vals) > 0 ? (
                   <div
                     key={si}
-                    className="pointer-events-none absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#0a1322]"
+                    className="pointer-events-none absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[color:var(--tk-color-surface-page)]"
                     style={{
                       left: `${(tooltipState.index / (dates.length - 1)) * 100}%`,
                       top: `${((max - vals[tooltipState.index]) / (max - min)) * 100}%`,
@@ -7283,7 +7283,7 @@ function MultiSeriesChart({
           </div>
           <div
             ref={containerRef}
-            className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[#2a4164]"
+            className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[color:var(--tk-color-border-panel)]"
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
           >
@@ -7295,7 +7295,7 @@ function MultiSeriesChart({
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
                 style={{ top: `${(i / 3) * 100}%` }}
               />
             ))}
@@ -7328,7 +7328,7 @@ function MultiSeriesChart({
             </div>
             {tooltipState && (
               <div
-                className="pointer-events-none absolute inset-y-0 w-px bg-[#4a7ab5]/60"
+                className="pointer-events-none absolute inset-y-0 w-px bg-[var(--tk-color-brand-primary)]"
                 style={{
                   left: `${(tooltipState.index / (dates.length - 1)) * 100}%`,
                 }}
@@ -7409,7 +7409,7 @@ function MultiSeriesChart({
         </div>
         <div
           ref={containerRef}
-          className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[#2a4164]"
+          className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[color:var(--tk-color-border-panel)]"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
@@ -7418,7 +7418,7 @@ function MultiSeriesChart({
               {axisCaption}
             </div>
           )}
-          <div className="absolute inset-x-0 top-1/2 border-t border-[#3a5a80]" />
+          <div className="absolute inset-x-0 top-1/2 border-t border-[color:var(--tk-color-border-divider)]" />
           <div className="absolute inset-x-1 bottom-1 top-1 flex items-center gap-[2px]">
             {netVals.map((val, di) => {
               const isPos = val >= 0;
@@ -7462,7 +7462,7 @@ function MultiSeriesChart({
           </div>
           {tooltipState && (
             <div
-              className="pointer-events-none absolute inset-y-0 w-px bg-[#4a7ab5]/60"
+              className="pointer-events-none absolute inset-y-0 w-px bg-[var(--tk-color-brand-primary)]"
               style={{
                 left: `${(tooltipState.index / (dates.length - 1)) * 100}%`,
               }}
@@ -7544,7 +7544,7 @@ function CfetsInstPanel() {
             type="button"
             className={`rounded-md px-2 py-1 text-[11px] transition-colors ${
               period === pt
-                ? "bg-[#1f3d6b] font-semibold text-slate-100"
+                ? "bg-[var(--tk-color-surface-selected)] font-semibold text-slate-100"
                 : "text-slate-400 hover:text-slate-200"
             }`}
             onClick={() => setPeriod(pt)}
@@ -7565,7 +7565,7 @@ function CfetsInstPanel() {
               aria-pressed={active}
               className={`rounded-md px-2 py-1 text-[11px] transition-colors ${
                 active
-                  ? "bg-[#1f3d6b] font-semibold text-slate-100"
+                  ? "bg-[var(--tk-color-surface-selected)] font-semibold text-slate-100"
                   : "text-slate-400 hover:text-slate-200"
               }`}
               onClick={() => setMetricKey(d.key)}
@@ -7637,7 +7637,7 @@ function CfetsBondPanel() {
               type="button"
               className={`rounded-md px-2.5 py-1 text-[11px] transition-colors ${
                 bondType === bt
-                  ? "bg-[#1f3d6b] font-semibold text-slate-100"
+                  ? "bg-[var(--tk-color-surface-selected)] font-semibold text-slate-100"
                   : "text-slate-400 hover:text-slate-200"
               }`}
               onClick={() => setBondType(bt)}
@@ -7648,7 +7648,7 @@ function CfetsBondPanel() {
         </div>
         <div className="flex items-center gap-2">
           <select
-            className="rounded border border-[#253754] bg-[#0e1827] px-2 py-1 text-[11px] text-slate-200 focus:outline-none"
+            className="rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-1 text-[11px] text-slate-200 focus:outline-none"
             value={metricKey}
             onChange={(e) => setMetricKey(e.target.value as CfetsBondMetricKey)}
           >
@@ -7717,7 +7717,7 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
   );
 
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+    <div className="grid h-full min-h-0 flex-1 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
       <div className="flex items-center justify-between text-[11px] text-slate-400">
         <div className="flex flex-wrap items-center gap-3">
           <LegendDot color={chartPalette.blue} label="1M" />
@@ -7734,14 +7734,14 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
         </div>
         <div
           ref={containerRef}
-          className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]"
+          className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[color:var(--tk-color-border-panel)]"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
           {[0, 1, 2, 3].map((index) => (
             <div
               key={`ncd-grid-${index}`}
-              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
               style={{ top: `${(index / 3) * 100}%` }}
             />
           ))}
@@ -7893,7 +7893,7 @@ function NcdPrimaryTrendPanel() {
   ];
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+    <div className="flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
       {/* header: legend + range tabs */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
         {series.map((s) => (
@@ -7923,14 +7923,14 @@ function NcdPrimaryTrendPanel() {
         {/* chart area — x-axis ticks + labels are absolutely inside */}
         <div
           ref={containerRef}
-          className="relative min-h-0 cursor-crosshair overflow-hidden rounded-md border border-dashed border-[#2f456b]"
+          className="relative min-h-0 cursor-crosshair overflow-hidden rounded-md border border-dashed border-[color:var(--tk-color-border-panel)]"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
-              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
               style={{ top: `${(i / 3) * 100}%` }}
             />
           ))}
@@ -8083,7 +8083,7 @@ function NcdLinkedChartPane({
     .filter(({ i }) => i % labelStep === 0 || i === count - 1);
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-1 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+    <div className="flex h-full min-h-0 flex-col gap-1 overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
       <div className="flex flex-wrap items-center gap-x-3 text-[11px] text-slate-400">
         {series.map((s) => (
           <LegendDot key={s.label} color={s.color} label={s.label} />
@@ -8097,14 +8097,14 @@ function NcdLinkedChartPane({
         </div>
         <div
           ref={containerRef}
-          className="relative min-h-0 cursor-crosshair overflow-hidden rounded-md border border-dashed border-[#2f456b]"
+          className="relative min-h-0 cursor-crosshair overflow-hidden rounded-md border border-dashed border-[color:var(--tk-color-border-panel)]"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
-              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
               style={{ top: `${(i / 3) * 100}%` }}
             />
           ))}
@@ -8291,7 +8291,7 @@ function NcdExpandedDualView({ period }: { period: NcdPeriod }) {
           />
         </div>
       </div>
-      <div className="h-px bg-[#1e2f48]" />
+      <div className="h-px bg-[var(--tk-color-border-divider)]" />
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="mb-1 text-[11px] font-medium text-slate-400">二级</div>
         <div className="min-h-0 flex-1 overflow-hidden">
@@ -8321,8 +8321,8 @@ function NcdPrimaryTable() {
   }));
   const maxRows = Math.max(...groups.map((g) => g.rows.length));
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
-      <div className="flex items-center gap-2 border-b border-[#1c3050] bg-[#101d32] px-3 py-1.5">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="flex items-center gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-1.5">
         <div className="flex items-center gap-1">
           {ncdPrimaryPeriods.map((p) => (
             <button
@@ -8347,7 +8347,7 @@ function NcdPrimaryTable() {
         {groups.map((group) => (
           <div
             key={group.label}
-            className="border-b border-r border-[#1c3050] bg-[#0f1d30] px-2 py-1 text-center text-[11px] font-medium text-slate-400 last:border-r-0"
+            className="border-b border-r border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-1 text-center text-[11px] font-medium text-slate-400 last:border-r-0"
           >
             {group.label}
           </div>
@@ -8358,7 +8358,7 @@ function NcdPrimaryTable() {
             return (
               <div
                 key={`${group.label}-${rowIdx}`}
-                className="flex items-center justify-between border-b border-r border-[#172436] px-2 py-[5px] last:border-r-0"
+                className="flex items-center justify-between border-b border-r border-[color:var(--tk-color-border-divider)] px-2 py-[5px] last:border-r-0"
                 style={{
                   borderBottomColor:
                     rowIdx === maxRows - 1 ? "transparent" : undefined,
@@ -8400,14 +8400,14 @@ function NcdPrimaryExpandedTable() {
     <div className="h-full overflow-auto">
       <table className="w-full border-collapse text-xs">
         <thead className="sticky top-0 z-10">
-          <tr className="bg-[#101d32]">
-            <th className="w-20 border-b border-r border-[#1c3050] px-2 py-2 text-left text-[11px] text-slate-500" />
+          <tr className="bg-[var(--tk-color-surface-dark-soft)]">
+            <th className="w-20 border-b border-r border-[color:var(--tk-color-border-divider)] px-2 py-2 text-left text-[11px] text-slate-500" />
             {ncdPrimaryPeriods.map((p) => {
               const h = ncdColHeaders[p];
               return (
                 <th
                   key={p}
-                  className="border-b border-r border-[#1c3050] px-2 py-2 text-center last:border-r-0"
+                  className="border-b border-r border-[color:var(--tk-color-border-divider)] px-2 py-2 text-center last:border-r-0"
                 >
                   <div className="flex items-baseline justify-center gap-1">
                     <span className="font-semibold text-slate-200">{p}</span>
@@ -8428,7 +8428,7 @@ function NcdPrimaryExpandedTable() {
         <tbody>
           {ncdAllPeriodsData.map((group) => (
             <tr key={group.label} className="align-top">
-              <td className="border-b border-r border-[#1c3050] bg-[#0f1d30] px-2 py-2 text-[11px] font-medium text-slate-400">
+              <td className="border-b border-r border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-2 text-[11px] font-medium text-slate-400">
                 {group.label}
               </td>
               {ncdPrimaryPeriods.map((p) => {
@@ -8436,7 +8436,7 @@ function NcdPrimaryExpandedTable() {
                 return (
                   <td
                     key={p}
-                    className="border-b border-r border-[#172436] px-2 py-1.5 last:border-r-0"
+                    className="border-b border-r border-[color:var(--tk-color-border-divider)] px-2 py-1.5 last:border-r-0"
                   >
                     {cells.length > 0 ? (
                       <div className="flex flex-col gap-[3px]">
@@ -8510,7 +8510,7 @@ function FundStructureBars({
           <div key={tick}>{tick.toLocaleString()}</div>
         ))}
       </div>
-      <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]">
+      <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[color:var(--tk-color-border-panel)]">
         {axisCaption && (
           <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[9px] text-slate-500">
             {axisCaption}
@@ -8519,7 +8519,7 @@ function FundStructureBars({
         {yTicks.map((tick, index) => (
           <div
             key={`fund-grid-${tick}`}
-            className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+            className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
             style={{ top: `${(index / (yTicks.length - 1)) * 100}%` }}
           />
         ))}
@@ -8622,7 +8622,7 @@ function FundStructurePanel() {
   } | null>(null);
 
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+    <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
       <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
         <div className="flex flex-wrap items-center gap-3">
           {fundStructureLegendItems.map((item) => (
@@ -8651,11 +8651,11 @@ function FundStructurePanel() {
             <div key={tick}>{tick.toLocaleString()}</div>
           ))}
         </div>
-        <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]">
+        <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[color:var(--tk-color-border-panel)]">
           {yTicks.map((tick, index) => (
             <div
               key={`fund-grid-${tick}`}
-              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
               style={{ top: `${(index / (yTicks.length - 1)) * 100}%` }}
             />
           ))}
@@ -8776,7 +8776,7 @@ function OverlayProductSelect({
     <label className="flex items-center gap-2 text-xs text-slate-400">
       <span>叠加品种</span>
       <select
-        className="rounded-md border border-[#2a4164] bg-[#0f1b2f] px-2 py-1 text-xs text-slate-200 outline-none"
+        className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-2 py-1 text-xs text-slate-200 outline-none"
         value={value}
         onChange={(event) => onChange(event.target.value as OverlayProduct)}
       >
@@ -8817,11 +8817,11 @@ function QuoteSection({
     <section
       className={`flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border ${
         emphasized
-          ? "border-[#3b76f3] bg-[#0c1730]"
-          : "border-[#1f2f48] bg-[#0c1524]"
+          ? "border-[color:var(--tk-color-brand-primary)] bg-[var(--tk-color-surface-page)]"
+          : "border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)]"
       }`}
     >
-      <div className="border-b border-[#1b2a42] bg-[#101b2c] px-4 py-3">
+      <div className="tk-panel-header border-b px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3 whitespace-nowrap">
             <div className="text-base font-semibold text-slate-50">{title}</div>
@@ -8885,18 +8885,18 @@ function StructuredTable({
 }) {
   return (
     <div
-      className={`${adaptiveHeight ? "" : "h-full min-h-0"} bg-[#0a1322] ${
+      className={`tk-table-shell ${adaptiveHeight ? "" : "h-full min-h-0"} ${
         scrollY
           ? "overflow-y-auto overflow-x-hidden"
           : fitToWidth || adaptiveHeight
             ? "overflow-hidden"
             : "overflow-auto"
       } ${
-        flush ? "rounded-none border-0" : "rounded-xl border border-[#1c2b42]"
+        flush ? "rounded-none border-0" : "border"
       }`}
     >
       <table
-        className={`border-separate border-spacing-0 text-xs ${fitToWidth ? "w-full table-fixed" : "min-w-full whitespace-nowrap"}`}
+        className={`tk-table border-separate border-spacing-0 text-xs ${fitToWidth ? "w-full table-fixed" : "min-w-full whitespace-nowrap"}`}
       >
         {columnWidths ? (
           <colgroup>
@@ -8905,12 +8905,12 @@ function StructuredTable({
             ))}
           </colgroup>
         ) : null}
-        <thead className="sticky top-0 z-10 bg-[#111d30]">
+        <thead className="sticky top-0 z-10">
           <tr>
             {columns.map((column, index) => (
               <th
                 key={`${column}-${index}`}
-                className={`border-b border-[#22324d] px-3 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400 ${
+                className={`border-b px-3 py-2 text-[11px] font-medium tracking-[0] ${
                   index === 0 ? "text-left" : "text-right"
                 } ${compact ? "px-2 py-1.5" : "px-3 py-2.5"} ${
                   fitToWidth
@@ -8929,20 +8929,18 @@ function StructuredTable({
           {rows.map((row, rowIndex) => (
             <tr
               key={`${row[0]}-${rowIndex}`}
-              className={
-                rowIndex % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
-              }
+              className={rowIndex % 2 === 0 ? "bg-transparent" : ""}
             >
               {row.map((cell, cellIndex) => (
                 <td
                   key={`${row[0]}-${cellIndex}`}
-                  className={`border-b border-[#162439] ${compact ? "px-2.5 py-2" : "px-3 py-2.5"} ${
+                  className={`border-b ${compact ? "px-2.5 py-2" : "px-3 py-2.5"} ${
                     cellIndex === 0 ? "text-left" : "text-right"
                   } ${fitToWidth && buttonColumn !== cellIndex ? "overflow-hidden text-ellipsis whitespace-nowrap" : ""}`}
                 >
                   {buttonColumn === cellIndex ? (
                     <button
-                      className={`rounded-lg border border-blue-500/30 bg-blue-500/20 font-medium text-blue-300 ${
+                      className={`tk-button tk-button-primary font-medium ${
                         compact
                           ? "px-1.5 py-0.5 text-[10px]"
                           : "px-3 py-1 text-xs"
@@ -8981,8 +8979,8 @@ function TrendOverviewCard() {
   const areaPath = buildAreaPath(trendRateSeries, 860, 320, 1.82, 2.12);
 
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
-      <div className="flex items-center justify-between border-b border-[#203551] bg-[#101d32] px-4 py-3">
+    <div className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="flex items-center justify-between border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-4 py-3">
         <div className="flex gap-2">
           {trendModeTabs.map((tab) => (
             <button
@@ -9000,7 +8998,7 @@ function TrendOverviewCard() {
             nonbankBest · 14
           </div>
           <button
-            className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+            className="rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-3 py-1.5 text-xs font-medium text-slate-300"
             type="button"
           >
             导出
@@ -9018,14 +9016,14 @@ function TrendOverviewCard() {
             {trendPriceTicks.map((_, index) => (
               <div
                 key={`price-grid-${index}`}
-                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
                 style={{
                   top: `${(index / (trendPriceTicks.length - 1)) * 100}%`,
                 }}
               />
             ))}
             <div
-              className="absolute inset-x-0 border-t-2 border-dashed border-[#ff8a26]"
+              className="absolute inset-x-0 border-t-2 border-dashed border-[color:var(--tk-color-warning)]"
               style={{ top: "58%" }}
             />
             <div className="absolute right-3 top-2 flex items-center gap-2 text-xs text-blue-300">
@@ -9055,7 +9053,7 @@ function TrendOverviewCard() {
             </svg>
           </div>
         </div>
-        <div className="grid min-h-0 grid-cols-[4rem_1fr] border-t border-[#1d3250] pt-2">
+        <div className="grid min-h-0 grid-cols-[4rem_1fr] border-t border-[color:var(--tk-color-border-divider)] pt-2">
           <div className="flex flex-col justify-between pr-3 pb-1 text-right text-[10px] text-slate-400">
             {trendVolumeTicks.map((tick) => (
               <div key={tick}>{tick}</div>
@@ -9065,7 +9063,7 @@ function TrendOverviewCard() {
             {[0, 1, 2, 3].map((index) => (
               <div
                 key={`vol-grid-${index}`}
-                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
                 style={{ top: `${(index / 4) * 100}%` }}
               />
             ))}
@@ -9106,8 +9104,8 @@ function MiniChartCard({
   bars?: boolean;
 }) {
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
-      <div className="flex items-center justify-between gap-3 border-b border-[#1a2c45] bg-[#0e1827] px-3 py-1.5">
+    <div className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="flex items-center justify-between gap-3 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-1.5">
         <div className="text-xs font-medium text-slate-200">{title}</div>
         <div className="flex flex-wrap gap-2 text-[11px] text-slate-500">
           <LegendDot color={chartPalette.emerald} label="1" />
@@ -9116,7 +9114,7 @@ function MiniChartCard({
         </div>
       </div>
       <div className="min-h-0 p-1.5">
-        <div className="relative h-full min-h-0 overflow-hidden rounded-lg border border-dashed border-[#2f456b] bg-[#0d1726]">
+        <div className="relative h-full min-h-0 overflow-hidden rounded-lg border border-dashed border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
           <div className="absolute inset-0 bg-[linear-gradient(rgba(58,81,115,0.16)_1px,transparent_1px),linear-gradient(90deg,rgba(58,81,115,0.16)_1px,transparent_1px)] bg-[size:100%_25%,20%_100%]" />
           {bars ? (
             <div className="absolute inset-x-2.5 bottom-2.5 top-2.5 flex items-end gap-1.5">
@@ -9261,7 +9259,7 @@ function ChartTooltip({
 }) {
   return (
     <div
-      className="pointer-events-none fixed z-[200] rounded-lg border border-[#2a4a6e] bg-[#0e1d31]/95 px-3 py-2 text-xs text-slate-200 shadow-xl backdrop-blur-sm"
+      className="pointer-events-none fixed z-[200] rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[rgba(255,255,255,0.96)] px-3 py-2 text-xs text-slate-200 shadow-xl backdrop-blur-sm"
       style={{ left: clientX + 14, top: clientY - 10 }}
     >
       {children}
@@ -9283,8 +9281,8 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 
 function trendModeButtonClass(active: boolean) {
   return active
-    ? "rounded-lg border border-[#3d74f1] bg-[#2a5fda] px-3 py-1.5 text-sm font-semibold text-white"
-    : "rounded-lg border border-[#2a4164] bg-[#0f1b2f] px-3 py-1.5 text-sm font-semibold text-slate-200";
+    ? "tk-chip-active px-3 py-1.5 text-sm font-semibold"
+    : "tk-chip px-3 py-1.5 text-sm font-semibold";
 }
 
 function buildLinePath(
@@ -9454,20 +9452,20 @@ function PanelCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
-      <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
+    <section className="tk-panel flex min-h-0 flex-col overflow-hidden border">
+      <div className="tk-panel-header border-b px-4 py-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-sm font-semibold tracking-[0.02em] text-slate-50">
+            <div className="tk-title">
               {title}
             </div>
             {subtitle ? (
-              <div className="mt-1 text-xs text-slate-500">{subtitle}</div>
+              <div className="tk-muted mt-1 text-xs">{subtitle}</div>
             ) : null}
           </div>
           {actions ?? (
             <button
-              className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
+              className="tk-button tk-button-success px-3 py-1"
               type="button"
             >
               下载
@@ -9583,20 +9581,20 @@ function SentimentPopoverPanel({
 
   return (
     <div
-      className="fixed z-[300] overflow-hidden rounded-xl border border-[#1d3250] bg-[#0a1322] shadow-2xl"
+      className="fixed z-[300] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-deep)] shadow-2xl"
       style={{ left, top, width: panelWidth }}
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
     >
-      <div className="flex items-center gap-2 border-b border-[#1a2c45] bg-[#0e1827] px-3 py-2">
+      <div className="flex items-center gap-2 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
         <span className="text-xs font-semibold text-slate-200">资金情绪</span>
-        <div className="flex gap-0.5 rounded-md bg-[#0a1322] p-0.5">
+        <div className="flex gap-0.5 rounded-md bg-[var(--tk-color-surface-dark-deep)] p-0.5">
           {(["realtime", "trend"] as const).map((t) => (
             <button
               key={t}
               className={`rounded px-2.5 py-0.5 text-[11px] transition-colors ${
                 tab === t
-                  ? "bg-[#c69b3a] font-semibold text-white"
+                  ? "bg-[var(--tk-color-brand-primary)] font-semibold text-white"
                   : "text-slate-400 hover:text-slate-200"
               }`}
               type="button"
@@ -9689,7 +9687,7 @@ function SentimentPopoverPanel({
               return (
                 <div
                   key={key}
-                  className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#0a1322]"
+                  className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[color:var(--tk-color-surface-page)]"
                   style={{
                     left: `${cx}%`,
                     top: `${cy}%`,
@@ -9780,15 +9778,15 @@ function InfoChip({
 }) {
   const toneStyles =
     tone === "good"
-      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+      ? "border-[color:rgba(0,224,86,0.35)] bg-[rgba(0,224,86,0.1)] text-[color:var(--tk-color-success)]"
       : tone === "alert"
-        ? "border-amber-500/20 bg-amber-500/10 text-amber-300"
-        : "border-[#253754] bg-[#101a2b] text-slate-300";
+        ? "border-[color:rgba(255,160,40,0.35)] bg-[rgba(255,160,40,0.1)] text-[color:var(--tk-color-warning)]"
+        : "border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] text-[color:var(--tk-color-text-inverse-secondary)]";
 
   return (
     <div className={`rounded-full border px-3 py-1.5 text-xs ${toneStyles}`}>
-      <span className="text-slate-500">{label}</span>
-      <span className="mx-2 text-slate-600">|</span>
+      <span className="tk-muted">{label}</span>
+      <span className="mx-2 text-[color:var(--tk-color-border-panel)]">|</span>
       <span>{value}</span>
     </div>
   );
@@ -9805,8 +9803,8 @@ function ToolbarChip({
     <button
       className={`rounded-lg border px-3 py-1.5 text-xs transition-colors ${
         active
-          ? "border-[#3c76f0] bg-[#2551b8] text-white"
-          : "border-[#253754] bg-[#101a2b] text-slate-400 hover:border-[#33507d] hover:text-slate-200"
+          ? "tk-chip-active"
+          : "tk-chip"
       }`}
       type="button"
     >
@@ -9816,16 +9814,16 @@ function ToolbarChip({
 }
 
 function FilterLabel({ children }: { children: React.ReactNode }) {
-  return <span className="px-1 text-slate-400">{children}</span>;
+  return <span className="tk-muted px-1">{children}</span>;
 }
 
 function FilterDivider() {
-  return <div className="mx-2 h-6 w-px bg-[#243552]" />;
+  return <div className="mx-2 h-6 w-px bg-[var(--tk-color-border-divider-dark)]" />;
 }
 
 function RangeFilterField({ value }: { value: string }) {
   return (
-    <div className="flex h-8 min-w-[96px] items-center rounded-lg border border-[#2a4164] bg-[#101a2b] px-3 text-sm text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+    <div className="tk-field flex h-8 min-w-[96px] items-center px-3 text-sm">
       {value}
     </div>
   );
@@ -9833,28 +9831,28 @@ function RangeFilterField({ value }: { value: string }) {
 
 function StatusBadge({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-full border border-[#94712a] bg-[#4b3a10] px-4 py-1.5 text-sm font-semibold text-amber-300">
+    <div className="tk-badge px-4 py-1.5 text-sm font-semibold">
       {children}
     </div>
   );
 }
 
 function toneClass(tone: "neutral" | "balanced" | "watch") {
-  if (tone === "balanced") return "text-sm font-semibold text-emerald-300";
-  if (tone === "watch") return "text-sm font-semibold text-amber-300";
-  return "text-sm font-semibold text-slate-300";
+  if (tone === "balanced") return "tk-positive text-sm font-semibold";
+  if (tone === "watch") return "tk-warning text-sm font-semibold";
+  return "tk-strong text-sm font-semibold";
 }
 
 function auxTabClass(active: boolean) {
   return active
-    ? "rounded-lg border border-[#3c76f0] bg-[#2551b8] px-3 py-1.5 text-xs text-white"
-    : "rounded-lg border border-[#253754] bg-[#101a2b] px-3 py-1.5 text-xs text-slate-400 hover:border-[#33507d] hover:text-slate-200";
+    ? "tk-chip-active px-3 py-1.5 text-xs"
+    : "tk-chip px-3 py-1.5 text-xs";
 }
 
 function miniChipClass(active: boolean) {
   return active
-    ? "whitespace-nowrap rounded-md border border-[#3c76f0] bg-[#2551b8] px-1.5 py-0.5 text-[11px] font-medium text-white"
-    : "whitespace-nowrap rounded-md border border-[#253754] bg-[#101a2b] px-1.5 py-0.5 text-[11px] text-slate-400 hover:border-[#33507d] hover:text-slate-200";
+    ? "tk-chip-active whitespace-nowrap px-1.5 py-0.5 text-[11px] font-medium"
+    : "tk-chip whitespace-nowrap px-1.5 py-0.5 text-[11px]";
 }
 
 function cellClassName(
@@ -9865,17 +9863,17 @@ function cellClassName(
   deltaColumns: readonly number[],
   emphasisColumns: readonly number[],
 ) {
-  if (columnIndex === 0) return "font-semibold text-slate-100";
+  if (columnIndex === 0) return "tk-strong font-semibold";
   if (deltaColumns.includes(columnIndex)) {
-    if (value.startsWith("-")) return "font-semibold text-emerald-300";
-    if (value.startsWith("+")) return "font-semibold text-red-400";
-    return "font-medium text-slate-300";
+    if (value.startsWith("-")) return "tk-positive font-semibold";
+    if (value.startsWith("+")) return "tk-negative font-semibold";
+    return "tk-strong font-medium";
   }
   if (greenColumns.includes(columnIndex))
-    return "font-semibold text-emerald-300";
-  if (redColumns.includes(columnIndex)) return "font-semibold text-red-400";
-  if (emphasisColumns.includes(columnIndex)) return "font-medium text-red-400";
-  return "text-slate-300";
+    return "tk-positive font-semibold";
+  if (redColumns.includes(columnIndex)) return "tk-negative font-semibold";
+  if (emphasisColumns.includes(columnIndex)) return "tk-negative font-medium";
+  return "tk-strong";
 }
 
 export default App;

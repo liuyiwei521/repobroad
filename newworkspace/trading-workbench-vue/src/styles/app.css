@@ -658,7 +658,8 @@ body.is-row-resizing {
   color: var(--tk-color-text-heading);
 }
 
-.task-overview-head-button i {
+.task-overview-head-button i,
+.task-overview-row-button i {
   width: 7px;
   height: 7px;
   flex: 0 0 auto;
@@ -1029,6 +1030,10 @@ table.task-overview-table--term td:nth-child(n + 3) {
 
 .task-overview-table tbody th[style*="--pledge-color"] {
   border-left: 3px solid var(--pledge-color, transparent);
+}
+
+.task-overview-table tbody th[style*="--account-type-color"] {
+  border-left: 3px solid var(--account-type-color, transparent);
 }
 
 .task-overview-table tbody tr:hover td,
