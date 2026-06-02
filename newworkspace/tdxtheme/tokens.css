@@ -1,0 +1,89 @@
+:root {
+  --tdx-bg-page: #0d0d13;
+  --tdx-bg-panel: #15151d;
+  --tdx-bg-header: #292835;
+  --tdx-bg-control: #20202b;
+  --tdx-bg-control-hover: #2a2935;
+  --tdx-bg-row-hover: #1d1c27;
+
+  --tdx-border: #2f2e3a;
+  --tdx-border-weak: #24232d;
+  --tdx-border-active: #e7353a;
+
+  --tdx-text-main: #d8c8ab;
+  --tdx-text-muted: #8f8d99;
+  --tdx-text-heading: #f1e6cf;
+  --tdx-text-inverse: #fff6e8;
+
+  --tdx-red: #e7353a;
+  --tdx-red-deep: #8f2026;
+  --tdx-green: #00a85a;
+  --tdx-yellow: #d6a541;
+  --tdx-blue: #3b79b7;
+  --tdx-purple: #7a4aa1;
+  --tdx-orange: #c76a25;
+
+  --tdx-font-family-base: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --tdx-font-family-number: "DIN Alternate", "Helvetica Neue", Arial, sans-serif;
+
+  --tdx-font-size-xs: 12px;
+  --tdx-font-size-sm: 13px;
+  --tdx-font-size-md: 14px;
+
+  --tdx-line-height-tight: 16px;
+  --tdx-line-height-row: 28px;
+  --tdx-line-height-header: 30px;
+
+  --tdx-radius-none: 0;
+  --tdx-radius-xs: 1px;
+  --tdx-radius-sm: 2px;
+  --tdx-radius-md: 4px;
+
+  --tdx-space-xxs: 2px;
+  --tdx-space-xs: 4px;
+  --tdx-space-sm: 8px;
+  --tdx-space-md: 12px;
+
+  --tdx-shadow-popup: 0 8px 20px rgba(0, 0, 0, 0.32);
+
+  /* Optional mapping for the existing TK token system. */
+  --tk-color-brand-primary: var(--tdx-red);
+  --tk-color-brand-primary-pressed: var(--tdx-red-deep);
+  --tk-color-brand-primary-hover: #ff494e;
+
+  --tk-color-success: var(--tdx-green);
+  --tk-color-warning: var(--tdx-yellow);
+  --tk-color-danger: var(--tdx-red);
+  --tk-color-danger-deep: var(--tdx-red-deep);
+
+  --tk-color-text-primary: var(--tdx-text-main);
+  --tk-color-text-heading: var(--tdx-text-heading);
+  --tk-color-text-secondary: var(--tdx-text-muted);
+  --tk-color-text-tertiary: #6f6d78;
+  --tk-color-text-inverse: var(--tdx-text-inverse);
+
+  --tk-color-surface-page: var(--tdx-bg-page);
+  --tk-color-surface-subtle: var(--tdx-bg-panel);
+  --tk-color-surface-panel: var(--tdx-bg-panel);
+  --tk-color-surface-selected: #351b22;
+  --tk-color-surface-selected-strong: var(--tdx-red-deep);
+  --tk-color-surface-dark: var(--tdx-bg-header);
+  --tk-color-surface-dark-deep: var(--tdx-bg-page);
+
+  --tk-color-border-default: var(--tdx-border);
+  --tk-color-border-strong: #43414f;
+  --tk-color-border-divider: var(--tdx-border-weak);
+  --tk-color-border-dark: var(--tdx-border);
+
+  --tk-color-chart-blue: var(--tdx-blue);
+  --tk-color-chart-purple: var(--tdx-purple);
+  --tk-color-chart-violet: #8e5ab6;
+  --tk-color-chart-indigo: #5664a8;
+  --tk-color-chart-gold: var(--tdx-yellow);
+  --tk-color-chart-teal: var(--tdx-green);
+
+  --tk-radius-none: var(--tdx-radius-none);
+  --tk-radius-xs: var(--tdx-radius-xs);
+  --tk-radius-sm: var(--tdx-radius-sm);
+  --tk-radius-md: var(--tdx-radius-md);
+}

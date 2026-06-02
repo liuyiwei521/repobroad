@@ -24,31 +24,52 @@ const emit = defineEmits<{
 <template>
   <div class="trend-tab">
     <div class="trend-tab__toolbar">
-      <label class="trend-tab__field">
-        <span>指标</span>
-        <select :value="metric" @change="emit('setMetric', ($event.target as HTMLSelectElement).value as OverviewMetric)">
-          <option v-for="o in metricOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
-        </select>
-      </label>
-      <label class="trend-tab__field">
-        <span>维度</span>
-        <select :value="dimension" @change="emit('setDimension', ($event.target as HTMLSelectElement).value as OverviewDimension)">
-          <option
-            v-for="o in dimensionOptions" :key="o.value" :value="o.value"
+      <div class="dock-filter-group">
+        <span class="dock-filter-label">指标</span>
+        <div class="segmented dock-segmented">
+          <button
+            v-for="o in metricOptions"
+            :key="o.value"
+            type="button"
+            :class="{ 'is-active': metric === o.value }"
+            @click="emit('setMetric', o.value)"
+          >{{ o.label }}</button>
+        </div>
+      </div>
+      <div class="dock-filter-group">
+        <span class="dock-filter-label">维度</span>
+        <div class="segmented dock-segmented">
+          <button
+            v-for="o in dimensionOptions"
+            :key="o.value"
+            type="button"
             :disabled="!availableDimensions.includes(o.value)"
-          >{{ o.label }}</option>
-        </select>
-      </label>
-      <label class="trend-tab__field">
-        <span>方向</span>
-        <select :value="direction" @change="emit('setDirection', ($event.target as HTMLSelectElement).value as DirectionFilter)">
-          <option v-for="o in directionOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
-        </select>
-      </label>
-      <label class="trend-tab__toggle">
-        <input type="checkbox" :checked="showYesterday" @change="emit('update:showYesterday', ($event.target as HTMLInputElement).checked)" />
-        <span>昨日对比</span>
-      </label>
+            :class="{
+              'is-active': dimension === o.value,
+              'is-disabled': !availableDimensions.includes(o.value),
+            }"
+            @click="emit('setDimension', o.value)"
+          >{{ o.label }}</button>
+        </div>
+      </div>
+      <div class="dock-filter-group">
+        <span class="dock-filter-label">方向</span>
+        <div class="segmented dock-segmented">
+          <button
+            v-for="o in directionOptions"
+            :key="o.value"
+            type="button"
+            :class="{ 'is-active': direction === o.value }"
+            @click="emit('setDirection', o.value)"
+          >{{ o.label }}</button>
+        </div>
+      </div>
+      <button
+        type="button"
+        class="dock-toggle"
+        :class="{ 'is-active': showYesterday }"
+        @click="emit('update:showYesterday', !showYesterday)"
+      >昨日对比</button>
     </div>
 
     <div v-if="slice" class="trend-tab__chart-area">

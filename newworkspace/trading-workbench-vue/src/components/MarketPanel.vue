@@ -97,6 +97,7 @@ const overviewFilterChips = computed(() => {
   const chips: Array<{ key: string; label: string }> = [];
   if (filter.term) chips.push({ key: 'term', label: filter.term });
   if (filter.pledgeRequirement) chips.push({ key: 'pledge', label: filter.pledgeRequirement });
+  else if (filter.pledgeGroup?.length) chips.push({ key: 'pledge', label: filter.pledgeGroupLabel ?? filter.pledgeGroup.join('/') });
   if (filter.accountType) chips.push({ key: 'account', label: filter.accountType });
   if (chips.length === 0 && filter.label) chips.push({ key: 'label', label: filter.label });
   return chips;
@@ -157,6 +158,12 @@ const matchesPledge = (pledgeRequirement: string | undefined, ...fields: string[
   return textHasAny(fields.join(' '), aliases);
 };
 
+const matchesPledgeGroup = (group: string[] | undefined, ...fields: string[]) => {
+  if (!group?.length) return true;
+  const aliases = group.flatMap((name) => pledgeAliases[name] ?? [name]);
+  return textHasAny(fields.join(' '), aliases);
+};
+
 const accountRequirementMatches = (accountType: string | undefined, requirement: string) => {
   if (!accountType) return true;
   const aliases = accountTypeAliases[accountType] ?? [accountType];
@@ -194,6 +201,8 @@ const scoreOverviewQuote = (
   }
   if (filter.pledgeRequirement && matchesPledge(filter.pledgeRequirement, quote.group, collateralRequirement, quote.collateral)) {
     score += overviewMatchWeights.pledge;
+  } else if (filter.pledgeGroup?.length && matchesPledgeGroup(filter.pledgeGroup, quote.group, collateralRequirement, quote.collateral)) {
+    score += overviewMatchWeights.pledge;
   }
   return score;
 };
@@ -208,6 +217,8 @@ const scoreOverviewChat = (chat: ChatThread) => {
     score += overviewMatchWeights.account;
   }
   if (filter.pledgeRequirement && matchesPledge(filter.pledgeRequirement, chat.chatGroup ?? '', chat.collateral ?? '')) {
+    score += overviewMatchWeights.pledge;
+  } else if (filter.pledgeGroup?.length && matchesPledgeGroup(filter.pledgeGroup, chat.chatGroup ?? '', chat.collateral ?? '')) {
     score += overviewMatchWeights.pledge;
   }
   return score;

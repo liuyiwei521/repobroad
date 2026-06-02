@@ -2,6 +2,7 @@
 import { computed, defineComponent, h, ref, type PropType } from 'vue';
 import type { AccountRow, PendingAllocation } from '../data/mockData';
 import { tenorLabel } from '../data/mockData';
+import TaskOverviewMatrixCompact from './TaskOverviewMatrixCompact.vue';
 import {
   buildTaskOverviewMatrix,
   buildTaskTermOverviewMatrix,
@@ -29,7 +30,7 @@ const emit = defineEmits<{
   openMatrix: [];
 }>();
 
-const layoutMode = ref<'pledge' | 'term'>('pledge');
+const layoutMode = ref<'pledge' | 'term' | 'compact'>('pledge');
 const pendingExpanded = ref(false);
 const matrix = computed(() => buildTaskOverviewMatrix(props.accounts));
 const termMatrix = computed(() => buildTaskTermOverviewMatrix(props.accounts));
@@ -37,11 +38,11 @@ const activeFilterKey = computed(() => taskOverviewFilterKey(props.activeFilter)
 const pendingTotal = computed(() =>
   Number(props.pendingAllocations.reduce((sum, item) => sum + item.amount, 0).toFixed(2))
 );
-const cellLegend = computed(() =>
-  layoutMode.value === 'pledge'
-    ? '单元格 = 期限 总额(已分/待分)'
-    : '单元格 = 押券 总额(已分/待分) · 仅看14D以内'
-);
+const cellLegend = computed(() => {
+  if (layoutMode.value === 'pledge') return '单元格 = 期限 总额(已分/待分)';
+  if (layoutMode.value === 'term') return '单元格 = 押券 总额(已分/待分) · 仅看14D以内';
+  return '单元格 = 总额(已分/待分) · 仅看R001/R007 三大类';
+});
 
 const accountTypeColors: Record<string, string> = {
   '专户': '#763df2',
@@ -173,10 +174,10 @@ const grandPledgeFilter = (line: TaskOverviewPledgeLine): TaskOverviewFilter => 
 </script>
 
 <template>
-  <section class="panel task-overview-panel" aria-label="左栏任务概览矩阵">
+  <section class="panel task-overview-panel" aria-label="中栏作战地图">
     <div class="panel__head">
       <div>
-        <p class="eyebrow">左栏 · 作战地图</p>
+        <p class="eyebrow">中栏 · 作战地图</p>
         <h2>任务概览</h2>
       </div>
       <div class="task-overview-head-actions">
@@ -198,6 +199,7 @@ const grandPledgeFilter = (line: TaskOverviewPledgeLine): TaskOverviewFilter => 
       <div class="task-overview-layout-switch" aria-label="矩阵布局切换">
         <button :class="{ 'is-active': layoutMode === 'pledge' }" type="button" @click="layoutMode = 'pledge'">押券视图</button>
         <button :class="{ 'is-active': layoutMode === 'term' }" type="button" @click="layoutMode = 'term'">期限视图</button>
+        <button :class="{ 'is-active': layoutMode === 'compact' }" type="button" @click="layoutMode = 'compact'">简约</button>
       </div>
       <button
         class="task-overview-filter"
@@ -364,7 +366,7 @@ const grandPledgeFilter = (line: TaskOverviewPledgeLine): TaskOverviewFilter => 
         </tbody>
       </table>
 
-      <table v-else class="task-overview-table task-overview-table--term">
+      <table v-else-if="layoutMode === 'term'" class="task-overview-table task-overview-table--term">
         <thead>
           <tr>
             <th><span class="task-overview-axis-title">账户 / 期限</span></th>
@@ -525,6 +527,13 @@ const grandPledgeFilter = (line: TaskOverviewPledgeLine): TaskOverviewFilter => 
           </tr>
         </tbody>
       </table>
+
+      <TaskOverviewMatrixCompact
+        v-else
+        :accounts="accounts"
+        :active-filter="activeFilter"
+        @select-filter="choose($event)"
+      />
     </div>
 
     <div v-if="pendingExpanded" class="task-overview-pending task-overview-pending--overlay">

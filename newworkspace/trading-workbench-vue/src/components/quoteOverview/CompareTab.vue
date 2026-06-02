@@ -18,14 +18,18 @@ const emit = defineEmits<{
 <template>
   <div class="compare-tab">
     <div class="compare-tab__toolbar">
-      <span class="compare-tab__label">期限</span>
-      <button
-        v-for="t in tenors" :key="t"
-        type="button"
-        class="compare-tab__chip"
-        :class="{ 'is-active': enabledTenors.has(t) }"
-        @click="emit('toggleTenor', t)"
-      >{{ t }}</button>
+      <div class="dock-filter-group">
+        <span class="dock-filter-label">期限</span>
+        <div class="compare-tab__chips">
+          <button
+            v-for="t in tenors" :key="t"
+            type="button"
+            class="compare-tab__chip"
+            :class="{ 'is-active': enabledTenors.has(t) }"
+            @click="emit('toggleTenor', t)"
+          >{{ t }}</button>
+        </div>
+      </div>
       <span class="compare-tab__hint">── 个人（实线）&nbsp;&nbsp;┄┄ 机构（虚线）</span>
     </div>
 

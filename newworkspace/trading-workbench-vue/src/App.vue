@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import AllocationMatrix from './components/AllocationMatrix.vue';
+import BarometerPanel, { type DockTab } from './components/BarometerPanel.vue';
 import ChatPopup from './components/ChatPopup.vue';
 import MarketPanel from './components/MarketPanel.vue';
-import QuoteOverviewPopup from './components/QuoteOverviewPopup.vue';
 import ResearchPanel from './components/ResearchPanel.vue';
 import TaskOverviewMatrix from './components/TaskOverviewMatrix.vue';
 import TopBar from './components/TopBar.vue';
@@ -50,7 +50,7 @@ const quickAllocationTotals = ref<Record<string, number>>({});
 const selectedAccountId = ref(accounts.value[0]?.id ?? '');
 const selectedQuoteId = ref('');
 const activeCard = ref<ResearchCard | null>(null);
-const quoteOverviewOpen = ref(false);
+const dockTab = ref<DockTab>('barometer');
 const matrixExpanded = ref(false);
 const matrixContext = ref<MatrixContext | null>(null);
 const activeOverviewFilter = ref<TaskOverviewFilter | null>(null);
@@ -73,13 +73,13 @@ const RAIL_WIDTH = 100;
 const matrixWidth = ref(520);
 const MATRIX_MIN = 360;
 const MATRIX_MAX = 1180;
-// The right market panel keeps the remaining space; never let dragging squeeze it
-// below this width (matches the CSS `minmax(460px, 1fr)` design floor).
 const RIGHT_MIN = 460;
 const GUTTER = 8;
+const dockHeight = ref(280);
+const DOCK_MIN = 160;
+const DOCK_MAX = 520;
 const clampWidth = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
-// Usable track width = grid content box minus the gutter.
 const trackWidth = () => {
   const el = workspaceRef.value;
   if (!el) return Infinity;
@@ -91,9 +91,22 @@ const trackWidth = () => {
 const workspaceStyle = computed(() =>
   matrixExpanded.value
     ? undefined
-    : { gridTemplateColumns: `${RAIL_WIDTH}px ${matrixWidth.value}px 8px minmax(0, 1fr)`, gap: '0' }
+    : {
+        gridTemplateColumns: `${RAIL_WIDTH}px ${matrixWidth.value}px 8px minmax(0, 1fr)`,
+        gridTemplateRows: 'minmax(0, 1fr)',
+        gap: '0',
+      }
 );
 
+const middleColumnStyle = computed(() =>
+  matrixExpanded.value
+    ? undefined
+    : {
+        gridTemplateRows: `minmax(0, 1fr) ${GUTTER}px ${dockHeight.value}px`,
+      }
+);
+
+// ── Column (matrix width) resize ──
 let dragging = false;
 let dragStartX = 0;
 let dragStartMatrix = 0;
@@ -120,6 +133,34 @@ const onGutterDown = (event: PointerEvent) => {
   document.body.classList.add('is-col-resizing');
   window.addEventListener('pointermove', onGutterMove);
   window.addEventListener('pointerup', onGutterUp);
+};
+
+// ── Row (dock height) resize ──
+let rowDragging = false;
+let rowDragStartY = 0;
+let rowDragStartDock = 0;
+
+const onRowGutterMove = (event: PointerEvent) => {
+  if (!rowDragging) return;
+  // Moving up increases dock height (gutter is above the dock)
+  const delta = rowDragStartY - event.clientY;
+  dockHeight.value = clampWidth(rowDragStartDock + delta, DOCK_MIN, DOCK_MAX);
+};
+
+const onRowGutterUp = () => {
+  rowDragging = false;
+  document.body.classList.remove('is-row-resizing');
+  window.removeEventListener('pointermove', onRowGutterMove);
+  window.removeEventListener('pointerup', onRowGutterUp);
+};
+
+const onRowGutterDown = (event: PointerEvent) => {
+  rowDragging = true;
+  rowDragStartY = event.clientY;
+  rowDragStartDock = dockHeight.value;
+  document.body.classList.add('is-row-resizing');
+  window.addEventListener('pointermove', onRowGutterMove);
+  window.addEventListener('pointerup', onRowGutterUp);
 };
 
 const selectedAccount = computed(() => accounts.value.find((account) => account.id === selectedAccountId.value));
@@ -429,10 +470,6 @@ const saveMatrix = (payload: Array<{ accountId: string; dealColumnId: string; am
 };
 
 const closeTopLayer = () => {
-  if (quoteOverviewOpen.value) {
-    quoteOverviewOpen.value = false;
-    return;
-  }
   if (matrixExpanded.value) {
     matrixRef.value?.collapse();
     return;
@@ -484,29 +521,43 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 
     <div ref="workspaceRef" class="workspace-grid" :class="{ 'is-matrix-mode': matrixExpanded }" :style="workspaceStyle">
       <ResearchPanel
-        class="research-panel--compact"
+        class="left-column research-panel--compact"
         :cards="researchCards"
         :active-card="activeCard"
         @open-card="activeCard = $event"
         @close-card="activeCard = null"
-        @open-quote-overview="quoteOverviewOpen = true"
+        @open-quote-overview="dockTab = 'trend'"
       />
 
-      <TaskOverviewMatrix
-        v-if="!matrixExpanded"
-        class="matrix-workspace"
-        :accounts="accounts"
-        :pending-allocations="pendingAllocations"
-        :active-filter="activeOverviewFilter"
-        @select-filter="selectOverviewFilter"
-        @open-pending="openPending"
-        @open-matrix="openMatrix"
-      />
+      <div v-if="!matrixExpanded" class="middle-column" :style="middleColumnStyle">
+        <TaskOverviewMatrix
+          class="matrix-workspace"
+          :accounts="accounts"
+          :pending-allocations="pendingAllocations"
+          :active-filter="activeOverviewFilter"
+          @select-filter="selectOverviewFilter"
+          @open-pending="openPending"
+          @open-matrix="openMatrix"
+        />
+
+        <div
+          class="panel-gutter barometer-row-gutter"
+          role="separator"
+          aria-orientation="horizontal"
+          aria-label="拖动调整图表面板高度"
+          @pointerdown="onRowGutterDown($event)"
+        />
+
+        <BarometerPanel
+          class="barometer-slot"
+          v-model:active-tab="dockTab"
+        />
+      </div>
 
       <AllocationMatrix
         v-else
         ref="matrixRef"
-        class="matrix-workspace"
+        class="matrix-workspace matrix-workspace--expanded"
         :accounts="accounts"
         :institutions="institutions"
         :deal-columns="dealColumns"
@@ -533,6 +584,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
       ></div>
 
       <MarketPanel
+        class="market-panel-slot"
         :quotes="quotes"
         :group-summaries="marketGroupSummaries"
         :chats="chats"
@@ -547,11 +599,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
         @clear-overview-filter="clearOverviewFilter"
       />
     </div>
-
-    <QuoteOverviewPopup
-      v-if="quoteOverviewOpen"
-      @close="quoteOverviewOpen = false"
-    />
 
     <ChatPopup
       v-if="activeChat"

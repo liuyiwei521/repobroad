@@ -16,7 +16,7 @@ defineProps<{
           stroke-width="2"
           :stroke-dasharray="s.lineStyle === 'dashed' ? '4,3' : undefined"
         />
-        <circle cx="10" cy="5" r="3" :fill="s.color" />
+        <circle v-if="s.lineStyle !== 'dashed'" cx="10" cy="5" r="3" :fill="s.color" />
       </svg>
       <span>{{ s.label }}</span>
     </span>

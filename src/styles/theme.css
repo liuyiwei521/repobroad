@@ -756,3 +756,217 @@ body {
 .rounded-2xl {
   border-radius: var(--tk-radius-md);
 }
+
+/* TDX/TKtheme board primitives for legacy split-panel components. */
+.tdx-side-panel {
+  background: var(--tk-color-surface-page);
+  color: var(--tk-color-text-primary);
+  font-family: var(--tk-font-family-base);
+}
+
+.tdx-side-section {
+  border-bottom: 1px solid var(--tk-color-border-divider);
+}
+
+.tdx-side-section__trigger {
+  width: 100%;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--tk-space-sm) var(--tk-space-md);
+  color: var(--tk-color-text-heading);
+  background: var(--tk-color-surface-page);
+  transition: background-color 0.14s ease, color 0.14s ease;
+}
+
+.tdx-side-section__trigger:hover {
+  background: var(--tk-color-surface-selected);
+  color: var(--tk-color-brand-primary-deep);
+}
+
+.tdx-side-section__title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tk-space-xs);
+  font-size: var(--tk-font-size-xs);
+  font-weight: var(--tk-font-weight-medium);
+}
+
+.tdx-side-section__title::before {
+  content: "";
+  width: var(--tk-section-accent-width);
+  height: var(--tk-section-accent-height);
+  background: var(--tk-color-brand-primary-deep);
+}
+
+.tdx-side-section__body {
+  padding: 0 var(--tk-space-md) var(--tk-space-md);
+}
+
+.tdx-label {
+  color: var(--tk-color-text-secondary);
+}
+
+.tdx-muted {
+  color: var(--tk-color-text-tertiary);
+}
+
+.tdx-strong {
+  color: var(--tk-color-text-heading);
+}
+
+.tdx-positive {
+  color: var(--tk-color-success);
+}
+
+.tdx-negative {
+  color: var(--tk-color-danger);
+}
+
+.tdx-warning {
+  color: var(--tk-color-warning);
+}
+
+.tdx-status-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 var(--tk-space-sm);
+  border: 1px solid var(--tk-color-border-default);
+  border-radius: var(--tk-radius-sm);
+  font-size: var(--tk-font-size-xs);
+  font-weight: var(--tk-font-weight-medium);
+  line-height: var(--tk-line-height-tight);
+  white-space: nowrap;
+}
+
+.tdx-status-pill--warning {
+  color: #8a4b00;
+  background: color-mix(in srgb, var(--tk-color-warning) 14%, var(--tk-color-surface-page));
+  border-color: color-mix(in srgb, var(--tk-color-warning) 42%, var(--tk-color-border-default));
+}
+
+.tdx-range-card {
+  padding: var(--tk-space-sm);
+  text-align: center;
+  background: var(--tk-color-surface-subtle);
+  border: 1px solid var(--tk-color-border-divider);
+  border-radius: var(--tk-radius-sm);
+}
+
+.tdx-density-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--tk-font-size-xs);
+}
+
+.tdx-density-table th {
+  height: 30px;
+  padding: 0 var(--tk-space-sm);
+  color: var(--tk-color-text-secondary);
+  font-weight: var(--tk-font-weight-medium);
+  background: var(--tk-color-surface-subtle);
+  border-bottom: 1px solid var(--tk-color-border-divider);
+}
+
+.tdx-density-table td {
+  height: 30px;
+  padding: 0 var(--tk-space-sm);
+  border-bottom: 1px solid var(--tk-color-border-divider);
+}
+
+.tdx-dark-board {
+  --tk-color-text-primary: rgba(255, 255, 255, 0.87);
+  --tk-color-text-heading: #ffffff;
+  --tk-color-text-secondary: #b1b1b1;
+  --tk-color-text-tertiary: #919294;
+  --tk-color-text-inverse: #ffffff;
+  --tk-color-text-inverse-secondary: rgba(255, 255, 255, 0.87);
+  --tk-color-surface-page: #393d45;
+  --tk-color-surface-panel: #262626;
+  --tk-color-surface-dark: #393d45;
+  --tk-color-surface-dark-deep: #262626;
+  --tk-color-surface-dark-soft: #30343c;
+  --tk-color-surface-dark-muted: #2b2f36;
+  --tk-color-border-default: rgba(202, 209, 218, 0.38);
+  --tk-color-border-panel: rgba(202, 209, 218, 0.24);
+  --tk-color-border-divider-dark: rgba(202, 209, 218, 0.16);
+  --tk-color-border-dark: #cad1da;
+  background: var(--tk-color-surface-dark-deep);
+  color: var(--tk-color-text-inverse-secondary);
+  font-family: var(--tk-font-family-base);
+}
+
+.tdx-dark-panel {
+  background: var(--tk-color-surface-dark);
+  border: 1px solid color-mix(in srgb, var(--tk-color-border-dark) 38%, transparent);
+  border-radius: var(--tk-radius-sm);
+  overflow: hidden;
+}
+
+.tdx-dark-panel__head {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: var(--tk-space-sm);
+  padding: var(--tk-space-sm) var(--tk-space-md);
+  color: var(--tk-color-text-inverse);
+  background: var(--tk-color-surface-dark-soft, #30343c);
+  border-bottom: 1px solid color-mix(in srgb, var(--tk-color-border-dark) 24%, transparent);
+}
+
+.tdx-dark-panel__body {
+  background: var(--tk-color-surface-dark);
+}
+
+.tdx-dark-filterbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--tk-space-sm) var(--tk-space-lg);
+  min-height: 40px;
+  padding: var(--tk-space-sm) var(--tk-space-lg);
+  background: var(--tk-color-surface-dark-soft, #30343c);
+  border-bottom: 1px solid color-mix(in srgb, var(--tk-color-border-dark) 24%, transparent);
+}
+
+.tdx-dark-chip,
+.tdx-dark-chip-active {
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--tk-space-sm);
+  border: 1px solid color-mix(in srgb, var(--tk-color-border-dark) 36%, transparent);
+  border-radius: var(--tk-radius-sm);
+  font-size: var(--tk-font-size-xs);
+  line-height: var(--tk-line-height-tight);
+  transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+}
+
+.tdx-dark-chip {
+  color: var(--tk-color-text-secondary);
+  background: var(--tk-color-surface-dark-deep);
+}
+
+.tdx-dark-chip:hover {
+  color: var(--tk-color-text-inverse);
+  border-color: var(--tk-color-brand-cyan);
+}
+
+.tdx-dark-chip-active {
+  color: var(--tk-color-surface-dark-deep);
+  background: var(--tk-color-brand-cyan);
+  border-color: var(--tk-color-brand-cyan);
+  font-weight: var(--tk-font-weight-medium);
+}
+
+.tdx-chart-tooltip {
+  background: color-mix(in srgb, var(--tk-color-surface-dark-deep) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tk-color-border-dark) 44%, transparent);
+  border-radius: var(--tk-radius-sm);
+  color: var(--tk-color-text-inverse-secondary);
+  box-shadow: var(--tk-shadow-screen);
+}

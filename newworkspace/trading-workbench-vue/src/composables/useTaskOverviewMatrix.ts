@@ -6,6 +6,8 @@ export interface TaskOverviewFilter {
   scope: TaskOverviewFilterScope;
   term?: Tenor;
   pledgeRequirement?: string;
+  pledgeGroup?: string[];
+  pledgeGroupLabel?: string;
   accountType?: string;
   label: string;
 }
@@ -148,6 +150,57 @@ export const overviewTerms: Tenor[] = ['R001', 'R007', 'R014', 'R021', 'R028'];
 export const termOverviewTerms: Tenor[] = ['R001', 'R007', 'R014'];
 const termOverviewTermSet = new Set<Tenor>(termOverviewTerms);
 
+export const compactOverviewTerms: Tenor[] = ['R001', 'R007'];
+const compactOverviewTermSet = new Set<Tenor>(compactOverviewTerms);
+
+export interface TaskCompactGroup {
+  id: string;
+  label: string;
+  members: string[];
+  color: string;
+}
+
+export const compactGroups: TaskCompactGroup[] = [
+  { id: 'rates_local', label: '利率地方', members: ['利率债', '地方债'], color: '#1872f6' },
+  { id: 'cd_fin',      label: '存单商金', members: ['国股存单', '同业存单', '金融债'], color: '#e9b842' },
+  {
+    id: 'credit',
+    label: '信用',
+    members: [
+      '信用债', '短融', '中票', '超短融SCP', '企业债', '非公开定向融资工具PPN',
+      '次级债', '永续债', '二级', '次永', '二永',
+      '大行次级', '国股次级', '大行永续', '国股永续',
+      '大行二级', '国股二级', '大行次永', '国股次永', '大行二永', '国股二永',
+      '资产支持证券ABS', 'ABN', '可转债', '可交换债', '保险公司债', '铁道债'
+    ],
+    color: '#763df2'
+  }
+];
+
+const compactGroupByMember = new Map<string, TaskCompactGroup>(
+  compactGroups.flatMap((group) => group.members.map((name) => [name, group] as const))
+);
+
+export interface TaskCompactCell extends TaskOverviewAmount {
+  groupId: string;
+  groupLabel: string;
+  term: Tenor;
+  pledgeGroup: string[];
+}
+
+export interface TaskCompactRow {
+  group: TaskCompactGroup;
+  cells: Record<Tenor, TaskCompactCell>;
+  total: TaskOverviewAmount;
+}
+
+export interface TaskCompactMatrix {
+  terms: Tenor[];
+  rows: TaskCompactRow[];
+  termTotals: Record<Tenor, TaskOverviewAmount>;
+  grandTotal: TaskOverviewAmount;
+}
+
 const fallbackOption = (name: string, code: number): TaskOverviewEnumOption => ({
   code,
   name,
@@ -174,7 +227,13 @@ export const pledgeRequirementOf = (account: AccountRow) => pledgeRequirementOpt
 
 export const taskOverviewFilterKey = (filter: TaskOverviewFilter | null | undefined) =>
   filter
-    ? [filter.scope, filter.term ?? '', filter.pledgeRequirement ?? '', filter.accountType ?? ''].join('|')
+    ? [
+        filter.scope,
+        filter.term ?? '',
+        filter.pledgeRequirement ?? '',
+        (filter.pledgeGroup ?? []).join(','),
+        filter.accountType ?? ''
+      ].join('|')
     : '';
 
 const roundAmount = (value: number) => Number(value.toFixed(2));
@@ -433,6 +492,68 @@ export const buildTaskTermOverviewMatrix = (accounts: AccountRow[]): TaskOvervie
     columns,
     rows,
     pledgeTotals: toPledgeLines(grandPledgeTotals, pledgeOptionIndex),
+    grandTotal
+  };
+};
+
+export const buildTaskCompactMatrix = (accounts: AccountRow[]): TaskCompactMatrix => {
+  const rowTotals = new Map<string, TaskOverviewAmount>(
+    compactGroups.map((group) => [group.id, emptyAmount()])
+  );
+  const cellAmounts = new Map<string, TaskOverviewAmount>();
+  const termTotalsMap = new Map<Tenor, TaskOverviewAmount>(
+    compactOverviewTerms.map((term) => [term, emptyAmount()])
+  );
+  const grandTotal = emptyAmount();
+
+  for (const account of accounts) {
+    if (!compactOverviewTermSet.has(account.tenor)) continue;
+    const pledge = pledgeRequirementOf(account);
+    const group = compactGroupByMember.get(pledge);
+    if (!group) continue;
+
+    const total = roundAmount(account.targetAmount);
+    const allocated = Math.min(roundAmount(account.allocatedAmount), total);
+    const cellKey = `${group.id}__${account.tenor}`;
+
+    addAmount(rowTotals.get(group.id)!, total, allocated);
+    addAmount(termTotalsMap.get(account.tenor)!, total, allocated);
+    addAmount(ensureStringAmount(cellAmounts, cellKey), total, allocated);
+    addAmount(grandTotal, total, allocated);
+  }
+
+  const rows = compactGroups.map<TaskCompactRow>((group) => {
+    const cells = Object.fromEntries(
+      compactOverviewTerms.map((term) => {
+        const amount = cellAmounts.get(`${group.id}__${term}`) ?? emptyAmount();
+        const cell: TaskCompactCell = {
+          groupId: group.id,
+          groupLabel: group.label,
+          term,
+          pledgeGroup: group.members,
+          total: amount.total,
+          allocated: amount.allocated,
+          pending: amount.pending
+        };
+        return [term, cell];
+      })
+    ) as Record<Tenor, TaskCompactCell>;
+
+    return {
+      group,
+      cells,
+      total: rowTotals.get(group.id) ?? emptyAmount()
+    };
+  });
+
+  const termTotals = Object.fromEntries(
+    compactOverviewTerms.map((term) => [term, termTotalsMap.get(term) ?? emptyAmount()])
+  ) as Record<Tenor, TaskOverviewAmount>;
+
+  return {
+    terms: compactOverviewTerms,
+    rows,
+    termTotals,
     grandTotal
   };
 };

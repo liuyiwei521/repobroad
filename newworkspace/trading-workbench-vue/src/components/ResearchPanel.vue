@@ -82,16 +82,16 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section class="panel research-panel" aria-label="中栏投研行情摘要">
+  <section class="panel research-panel" aria-label="左栏摘要导航">
     <div class="panel__head">
       <div>
-        <p class="eyebrow">中栏 · 投研 / 行情</p>
+        <p class="eyebrow">左栏 · 投研 / 行情</p>
         <h2>数据摘要</h2>
       </div>
       <span class="panel__meta">10:55 更新</span>
     </div>
 
-    <div ref="railEl" class="research-rail" aria-label="中栏极窄摘要入口">
+    <div ref="railEl" class="research-rail" aria-label="左栏极窄摘要入口">
       <button
         type="button"
         class="research-rail__entry research-rail__entry--overview"
@@ -150,12 +150,12 @@ onUnmounted(() => {
       ref="drawerEl"
       class="research-drawer"
       :class="{ 'is-open': drawerOpen }"
-      aria-label="中栏摘要滑出层"
+      aria-label="左栏摘要滑出层"
       :aria-hidden="!drawerOpen"
     >
       <div class="research-drawer__head">
         <div>
-          <p class="eyebrow">中栏 · 摘要</p>
+          <p class="eyebrow">左栏 · 摘要</p>
           <h3>关键数据</h3>
         </div>
         <button class="close-button" type="button" @click="drawerOpen = false" aria-label="收起摘要">×</button>

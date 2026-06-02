@@ -37,6 +37,27 @@ const ncdRates = [
   { period: '1Y', rate: 2.75, change: 0.00 },
 ];
 
+const chartTheme = {
+  grid: 'var(--tk-color-border-divider)',
+  axis: 'var(--tk-color-text-tertiary)',
+  tooltipBackground: 'var(--tk-color-surface-page)',
+  tooltipBorder: 'var(--tk-color-border-default)',
+  warning: 'var(--tk-color-warning)',
+  success: 'var(--tk-color-success)',
+  danger: 'var(--tk-color-danger)',
+  blue: 'var(--tk-color-chart-blue)',
+  purple: 'var(--tk-color-chart-purple)',
+} as const;
+
+const lightTooltipStyle = {
+  backgroundColor: chartTheme.tooltipBackground,
+  border: `1px solid ${chartTheme.tooltipBorder}`,
+  borderRadius: 2,
+  color: 'var(--tk-color-text-primary)',
+  fontSize: '10px',
+  padding: '6px 8px',
+};
+
 interface SectionProps {
   title: string;
   children: React.ReactNode;
@@ -46,55 +67,55 @@ function CollapsibleSection({ title, children }: SectionProps) {
   const [isOpen, setIsOpen] = useState(true);
 
   return (
-    <div className="border-b border-gray-200">
+    <div className="tdx-side-section">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-3 py-2 flex items-center justify-between hover:bg-gray-100 transition-colors"
+        className="tdx-side-section__trigger"
       >
-        <span className="font-medium text-gray-900 text-xs">{title}</span>
-        {isOpen ? <ChevronUp size={14} className="text-gray-600" /> : <ChevronDown size={14} className="text-gray-600" />}
+        <span className="tdx-side-section__title">{title}</span>
+        {isOpen ? <ChevronUp size={14} className="tdx-muted" /> : <ChevronDown size={14} className="tdx-muted" />}
       </button>
-      {isOpen && <div className="px-3 pb-3">{children}</div>}
+      {isOpen && <div className="tdx-side-section__body">{children}</div>}
     </div>
   );
 }
 
 export function LeftPanel() {
   return (
-    <div className="text-xs h-full overflow-hidden">
+    <div className="tdx-side-panel text-xs h-full overflow-hidden">
       {/* 资金情绪指数 */}
       <CollapsibleSection title="资金情绪指数">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-gray-600 text-xs">当前指数：</span>
+            <span className="tdx-label text-xs">当前指数：</span>
             <div className="flex items-center gap-2">
-              <span className="text-xl font-bold text-yellow-600">51</span>
-              <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded border border-yellow-300">平衡</span>
+              <span className="tdx-warning text-xl font-bold">51</span>
+              <span className="tdx-status-pill tdx-status-pill--warning">平衡</span>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={100}>
             <LineChart data={sentimentData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="time" stroke="#6b7280" style={{ fontSize: '10px' }} />
-              <YAxis stroke="#6b7280" style={{ fontSize: '10px' }} domain={[0, 100]} />
+              <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+              <XAxis dataKey="time" stroke={chartTheme.axis} style={{ fontSize: '10px' }} />
+              <YAxis stroke={chartTheme.axis} style={{ fontSize: '10px' }} domain={[0, 100]} />
               <Tooltip
-                contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', fontSize: '10px' }}
+                contentStyle={lightTooltipStyle}
               />
-              <Line type="monotone" dataKey="value" stroke="#ca8a04" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="value" stroke={chartTheme.warning} strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
           <div className="grid grid-cols-3 gap-1 text-xs">
-            <div className="text-center">
-              <div className="text-gray-500 text-xs">宽松</div>
-              <div className="text-gray-600 text-xs">0-40</div>
+            <div className="tdx-range-card">
+              <div className="tdx-muted text-xs">宽松</div>
+              <div className="tdx-label text-xs">0-40</div>
             </div>
-            <div className="text-center">
-              <div className="text-gray-500 text-xs">平衡</div>
-              <div className="text-yellow-700 font-semibold text-xs">40-60</div>
+            <div className="tdx-range-card">
+              <div className="tdx-muted text-xs">平衡</div>
+              <div className="tdx-warning font-semibold text-xs">40-60</div>
             </div>
-            <div className="text-center">
-              <div className="text-gray-500 text-xs">偏紧</div>
-              <div className="text-gray-600 text-xs">60-100</div>
+            <div className="tdx-range-card">
+              <div className="tdx-muted text-xs">偏紧</div>
+              <div className="tdx-label text-xs">60-100</div>
             </div>
           </div>
         </div>
@@ -105,16 +126,16 @@ export function LeftPanel() {
         <div className="space-y-2">
           <ResponsiveContainer width="100%" height={120}>
             <LineChart data={rateHistoryData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="date" stroke="#6b7280" style={{ fontSize: '10px' }} />
-              <YAxis stroke="#6b7280" style={{ fontSize: '10px' }} domain={[1.5, 2.5]} />
+              <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+              <XAxis dataKey="date" stroke={chartTheme.axis} style={{ fontSize: '10px' }} />
+              <YAxis stroke={chartTheme.axis} style={{ fontSize: '10px' }} domain={[1.5, 2.5]} />
               <Tooltip
-                contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', fontSize: '10px' }}
+                contentStyle={lightTooltipStyle}
               />
               <Legend wrapperStyle={{ fontSize: '10px' }} />
-              <Line type="monotone" dataKey="DR001" stroke="#10b981" strokeWidth={1.5} />
-              <Line type="monotone" dataKey="DR007" stroke="#3b82f6" strokeWidth={1.5} />
-              <Line type="monotone" dataKey="GC001" stroke="#8b5cf6" strokeWidth={1.5} />
+              <Line type="monotone" dataKey="DR001" stroke={chartTheme.success} strokeWidth={1.5} />
+              <Line type="monotone" dataKey="DR007" stroke={chartTheme.blue} strokeWidth={1.5} />
+              <Line type="monotone" dataKey="GC001" stroke={chartTheme.purple} strokeWidth={1.5} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -125,29 +146,29 @@ export function LeftPanel() {
         <div className="space-y-2">
           <ResponsiveContainer width="100%" height={140}>
             <BarChart data={institutionStructure}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="name" stroke="#6b7280" style={{ fontSize: '9px' }} />
-              <YAxis stroke="#6b7280" style={{ fontSize: '10px' }} />
+              <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+              <XAxis dataKey="name" stroke={chartTheme.axis} style={{ fontSize: '9px' }} />
+              <YAxis stroke={chartTheme.axis} style={{ fontSize: '10px' }} />
               <Tooltip
-                contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', fontSize: '10px' }}
+                contentStyle={lightTooltipStyle}
               />
               <Legend wrapperStyle={{ fontSize: '10px' }} />
-              <Bar dataKey="lend" fill="#10b981" name="融出" />
-              <Bar dataKey="borrow" fill="#ef4444" name="融入" />
+              <Bar dataKey="lend" fill={chartTheme.success} name="融出" />
+              <Bar dataKey="borrow" fill={chartTheme.danger} name="融入" />
             </BarChart>
           </ResponsiveContainer>
-          <div className="text-xs text-gray-600 space-y-0.5">
+          <div className="text-xs tdx-label space-y-0.5">
             <div className="flex justify-between">
               <span>总融出规模：</span>
-              <span className="text-emerald-600 font-semibold">17,900亿</span>
+              <span className="tdx-positive font-semibold">17,900亿</span>
             </div>
             <div className="flex justify-between">
               <span>总融入规模：</span>
-              <span className="text-red-600 font-semibold">14,400亿</span>
+              <span className="tdx-negative font-semibold">14,400亿</span>
             </div>
             <div className="flex justify-between">
               <span>净融出盈余：</span>
-              <span className="text-emerald-600 font-semibold">+3,500亿</span>
+              <span className="tdx-positive font-semibold">+3,500亿</span>
             </div>
           </div>
         </div>
@@ -157,13 +178,13 @@ export function LeftPanel() {
       <CollapsibleSection title="NCD收益率曲线">
         <div className="space-y-1">
           {ncdRates.map((item) => (
-            <div key={item.period} className="flex items-center justify-between py-1 border-b border-gray-200 last:border-0">
-              <span className="text-gray-600 text-xs">{item.period}</span>
+            <div key={item.period} className="flex items-center justify-between py-1 border-b border-[color:var(--tk-color-border-divider)] last:border-0">
+              <span className="tdx-label text-xs">{item.period}</span>
               <div className="flex items-center gap-1.5">
-                <span className={item.change >= 0 ? 'text-red-600 text-xs' : 'text-emerald-600 text-xs'}>
+                <span className={item.change >= 0 ? 'tdx-negative text-xs' : 'tdx-positive text-xs'}>
                   {item.rate.toFixed(2)}%
                 </span>
-                <span className={`text-xs ${item.change >= 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                <span className={`text-xs ${item.change >= 0 ? 'tdx-negative' : 'tdx-positive'}`}>
                   {item.change >= 0 ? '↑' : '↓'}{Math.abs(item.change).toFixed(2)}
                 </span>
               </div>
@@ -173,7 +194,7 @@ export function LeftPanel() {
       </CollapsibleSection>
 
       {/* 更新说明 */}
-      <div className="px-3 py-2 text-xs text-gray-500">
+      <div className="px-3 py-2 text-xs tdx-muted">
         <div className="space-y-0.5">
           <div>· 数据更新：分钟级～日频</div>
           <div>· 仅供参考，不作为交易依据</div>
