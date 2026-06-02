@@ -3,7 +3,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 type TrendMode = "intraday" | "history" | "comparison";
 type SentimentTab = "realtime" | "trend";
 type OverlayProduct = "none" | "dr007" | "gc007" | "r007";
-type RightLowerTab = "matrix" | "inst" | "bond";
+type RightLowerTab = "matrix" | "inst" | "bond" | "ncd";
 type HistoryRange = "5d" | "1m" | "6m";
 type SpreadProduct = "dr001" | "dr007" | "gc007" | "r007";
 type CompareProduct = "none" | SpreadProduct;
@@ -276,33 +276,31 @@ const leftSections: readonly (
     title: "XREPO",
     columns: [
       "期限",
-      "可点击量",
       "正回购金额",
       "正回购利率",
       "逆回购利率",
       "逆回购金额",
-      "可点击量",
       "操作",
     ],
     rows: [
-      ["R001", "-", "5 (0)", "1.36", "1.25", "1185 (0)", "-", "发送"],
-      ["R001", "-", "-", "-", "1.36", "30 (7)", "-", "发送"],
-      ["R001", "-", "-", "-", "1.38", "70 (62)", "-", "发送"],
-      ["R001_mini", "-", "0.6 (0)", "1.38", "1.30", "12 (0)", "-", "发送"],
-      ["DFR001_mini", "-", "5 (0)", "1.37", "1.38", "47 (34)", "-", "发送"],
-      ["CDR001_mini", "-", "20.6 (0)", "1.40", "1.41", "20 (10)", "-", "发送"],
-      ["R004", "-", "-", "-", "1.42", "3 (0)", "-", "发送"],
-      ["R007", "-", "2 (0)", "1.42", "1.40", "132 (0)", "-", "发送"],
-      ["R007_mini", "-", "-", "-", "-", "-", "-", "发送"],
-      ["R014", "-", "-", "-", "1.45", "5 (0)", "-", "发送"],
-      ["R014_mini", "-", "-", "-", "-", "-", "-", "发送"],
+      ["R001", "5 (0)", "1.36", "1.25", "1185 (0)", "发送"],
+      ["R001", "-", "-", "1.36", "30 (7)", "发送"],
+      ["R001", "-", "-", "1.38", "70 (62)", "发送"],
+      ["R001_mini", "0.6 (0)", "1.38", "1.30", "12 (0)", "发送"],
+      ["DFR001_mini", "5 (0)", "1.37", "1.38", "47 (34)", "发送"],
+      ["CDR001_mini", "20.6 (0)", "1.40", "1.41", "20 (10)", "发送"],
+      ["R004", "-", "-", "1.42", "3 (0)", "发送"],
+      ["R007", "2 (0)", "1.42", "1.40", "132 (0)", "发送"],
+      ["R007_mini", "-", "-", "-", "-", "发送"],
+      ["R014", "-", "-", "1.45", "5 (0)", "发送"],
+      ["R014_mini", "-", "-", "-", "-", "发送"],
     ],
-    greenColumns: [4],
-    redColumns: [3],
-    emphasisColumns: [1, 6],
-    buttonColumn: 7,
+    greenColumns: [3],
+    redColumns: [2],
+    emphasisColumns: [],
+    buttonColumn: 5,
     fitToWidth: true,
-    columnWidths: ["14%", "10%", "14%", "12%", "12%", "14%", "10%", "14%"],
+    columnWidths: ["17%", "19%", "16%", "16%", "19%", "13%"],
     scrollable: false,
   },
   {
@@ -1046,6 +1044,7 @@ const compareProductOptions: Array<{ id: CompareProduct; label: string }> = [
 
 const rightLowerTabs: Array<{ id: RightLowerTab; label: string }> = [
   { id: "inst", label: "机构分期限统计" },
+  { id: "ncd", label: "NCD行情" },
 ];
 
 const trendModeTabs: Array<{ id: TrendMode; label: string }> = [
@@ -2395,16 +2394,11 @@ function LeftSummaryPanel() {
           </div>
         ))}
         {exchangeRepoSection ? (
-          <div className="flex min-h-0 flex-1 flex-col gap-3">
-            <div className="h-[250px] shrink-0 overflow-hidden">
-              <ExchangeRepoCard
-                title={exchangeRepoSection.title}
-                markets={exchangeRepoSection.markets}
-              />
-            </div>
-            <div className="min-h-0 flex-1 overflow-hidden">
-              <LeftNcdCard />
-            </div>
+          <div className="min-h-0 flex-1 overflow-hidden">
+            <ExchangeRepoCard
+              title={exchangeRepoSection.title}
+              markets={exchangeRepoSection.markets}
+            />
           </div>
         ) : null}
       </aside>
@@ -2573,7 +2567,7 @@ function ModalInput({
   );
 }
 
-function LeftNcdCard() {
+function NcdMarketPanel() {
   const [market, setMarket] = useState<"primary" | "secondary">("primary");
   const [mode, setMode] = useState<"trend" | "table">("trend");
   const [expanded, setExpanded] = useState(false);
@@ -2680,12 +2674,12 @@ function LeftNcdCard() {
 
   return (
     <>
-      <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
-        <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-2.5">
+      <div className="flex h-full min-h-0 flex-col overflow-hidden">
+        <div className="shrink-0 border-b border-[#18263b] px-1 pb-2">
           {header()}
         </div>
-        <div className="min-h-0 flex-1 overflow-hidden p-2">{body}</div>
-      </section>
+        <div className="min-h-0 flex-1 overflow-hidden pt-2">{body}</div>
+      </div>
       {expanded && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc]"
@@ -4016,7 +4010,7 @@ function RightLowerPanel({
 }) {
   return (
     <section className="tk-panel grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
-      <div className="flex items-center gap-2 border-b border-[#203551] bg-[#101d32] px-3 py-2">
+      <div className="flex flex-wrap items-center gap-2 border-b border-[#203551] bg-[#101d32] px-3 py-2">
         {rightLowerTabs.map((tab) => (
           <button
             key={tab.id}
@@ -4029,9 +4023,18 @@ function RightLowerPanel({
         ))}
       </div>
       <div className="min-h-0 overflow-hidden p-2">
-        {activeTab === "matrix" && <CfetsMatrixPanel includeDaily />}
-        {activeTab === "inst" && <CfetsInstPanel />}
-        {activeTab === "bond" && <CfetsBondPanel />}
+        <div className={activeTab === "matrix" ? "h-full min-h-0" : "hidden"}>
+          <CfetsMatrixPanel includeDaily />
+        </div>
+        <div className={activeTab === "inst" ? "h-full min-h-0" : "hidden"}>
+          <CfetsInstPanel />
+        </div>
+        <div className={activeTab === "bond" ? "h-full min-h-0" : "hidden"}>
+          <CfetsBondPanel />
+        </div>
+        <div className={activeTab === "ncd" ? "h-full min-h-0" : "hidden"}>
+          <NcdMarketPanel />
+        </div>
       </div>
     </section>
   );
