@@ -60,6 +60,40 @@ type QuoteDetailRow = {
   minimum: string;
   updatedAt: string;
 };
+type XrepoMockRow = {
+  id: string;
+  contractName: string;
+  depth: number;
+  repoAmount: string;
+  repoCount: string;
+  repoRate: string;
+  reverseRate: string;
+  reverseAmount: string;
+  reverseCount: string;
+};
+type QuoteReplyTab = "unreplied" | "replied" | "all";
+type QuoteReplyState = Exclude<QuoteReplyTab, "all">;
+type QuoteReplyCardStatus = "waiting" | "quoted";
+type QuoteReplyTemplate = {
+  id: string;
+  trader: string;
+  institution: string;
+  waitMinutes: number;
+  status: QuoteReplyCardStatus;
+  replyState: QuoteReplyState;
+  amount?: string;
+  account?: string;
+  collateral?: string;
+  tags: readonly string[];
+};
+type QuoteReplyCard = QuoteReplyTemplate & {
+  tenorLabel: string;
+  accountLabel: string;
+  collateralLabel: string;
+  accountSearchText: string;
+  collateralSearchText: string;
+  tags: readonly string[];
+};
 type QuoteGroup = {
   id: string;
   name: string;
@@ -251,10 +285,17 @@ const leftSections: readonly (
       "操作",
     ],
     rows: [
-      ["R001", "(4)", "442亿", "2.00%", "1.95%", "442亿", "(12)", "发送"],
-      ["R007", "(4)", "28亿", "2.00%", "1.25%", "442亿", "(12)", "发送"],
-      ["R014", "(4)", "442亿", "2.00%", "1.95%", "442亿", "(12)", "发送"],
-      ["R021", "(4)", "442亿", "2.00%", "1.95%", "442亿", "(12)", "发送"],
+      ["R001", "-", "5 (0)", "1.36", "1.25", "1185 (0)", "-", "发送"],
+      ["R001", "-", "-", "-", "1.36", "30 (7)", "-", "发送"],
+      ["R001", "-", "-", "-", "1.38", "70 (62)", "-", "发送"],
+      ["R001_mini", "-", "0.6 (0)", "1.38", "1.30", "12 (0)", "-", "发送"],
+      ["DFR001_mini", "-", "5 (0)", "1.37", "1.38", "47 (34)", "-", "发送"],
+      ["CDR001_mini", "-", "20.6 (0)", "1.40", "1.41", "20 (10)", "-", "发送"],
+      ["R004", "-", "-", "-", "1.42", "3 (0)", "-", "发送"],
+      ["R007", "-", "2 (0)", "1.42", "1.40", "132 (0)", "-", "发送"],
+      ["R007_mini", "-", "-", "-", "-", "-", "-", "发送"],
+      ["R014", "-", "-", "-", "1.45", "5 (0)", "-", "发送"],
+      ["R014_mini", "-", "-", "-", "-", "-", "-", "发送"],
     ],
     greenColumns: [4],
     redColumns: [3],
@@ -3119,12 +3160,99 @@ function RepoQuoteSectionBoard({
   tenorFilter: QuoteTenorFilter;
   applyOverride: (row: QuoteDetailRow) => QuoteDetailRow;
 }) {
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(() => new Set());
   const matchTenor = (rowTenor: string) =>
     tenorFilter === "all" || rowTenor === tenorFilter;
   const useDrag = displayLevel === 2 && dragRatio != null;
   const containerStyle = useDrag
     ? { flex: `${dragRatio} 1 0%`, minHeight: 0 }
     : undefined;
+  const getRowKey = (groupId: string, rowId: string) =>
+    `${section.id}:${groupId}:${rowId}`;
+  const toggleExpandedRow = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    rowKey: string,
+  ) => {
+    event.stopPropagation();
+    setExpandedRows((current) => {
+      const next = new Set(current);
+      if (next.has(rowKey)) {
+        next.delete(rowKey);
+      } else {
+        next.add(rowKey);
+      }
+      return next;
+    });
+  };
+  const renderQuoteRow = (
+    group: QuoteGroup,
+    rawRow: QuoteDetailRow,
+    showRankBadge: boolean,
+    withHover: boolean,
+  ) => {
+    const row = applyOverride(rawRow);
+    const expandable = isQuoteRankExpandable(row.rank);
+    const rowKey = getRowKey(group.id, row.id);
+    const expanded = expandable && expandedRows.has(rowKey);
+    return (
+      <Fragment key={row.id}>
+        <div
+          className={`tk-quote-row grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent py-1.5 pl-6 pr-4 text-left text-xs text-slate-200 ${
+            withHover ? "transition hover:bg-[#11253d]" : ""
+          }`}
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            {expandable ? (
+              <button
+                aria-expanded={expanded}
+                aria-label={expanded ? "收起XRepo明细" : "展开XRepo明细"}
+                className={`tk-row-toggle ${expanded ? "tk-row-toggle--open" : ""}`}
+                onClick={(event) => toggleExpandedRow(event, rowKey)}
+                type="button"
+              />
+            ) : (
+              <span className="tk-row-toggle-spacer" aria-hidden="true" />
+            )}
+            {showRankBadge ? <RankBadge rank={row.rank} /> : null}
+            <span className="tk-text-primary min-w-0 truncate text-slate-100">
+              {row.institution}
+            </span>
+          </div>
+          <span className="text-right">{row.tenor}</span>
+          <span className="text-right">
+            {showRowAmount(row.id) ? row.amount : "--"}
+          </span>
+          <span className="tk-rate-warning text-right font-semibold text-amber-300">
+            {row.rate}
+          </span>
+          <span
+            className="truncate pl-3 text-right text-xs text-slate-300"
+            title={normalizeAccountRequirement(row.accountType)}
+          >
+            {normalizeAccountRequirement(row.accountType)}
+          </span>
+          <span
+            className="truncate pl-3 text-right text-xs text-slate-300"
+            title={`${row.collateral} / ${row.reason}`}
+          >
+            {row.collateral}
+          </span>
+          <span className="text-right text-xs tabular-nums text-slate-400">
+            {row.updatedAt}
+          </span>
+          <span className="flex items-center justify-end gap-1">
+            <button
+              className="tk-btn tk-btn--trade tk-btn--compact whitespace-nowrap px-1.5 py-0.5 text-[10px] font-medium"
+              type="button"
+            >
+              发送
+            </button>
+          </span>
+        </div>
+        {expanded ? <QuoteReplyMatrixExpansion parentRow={row} /> : null}
+      </Fragment>
+    );
+  };
   return (
     <div
       className={`flex min-h-0 flex-col ${
@@ -3206,106 +3334,21 @@ function RepoQuoteSectionBoard({
               <div className="divide-y divide-[#152437] bg-[#080f1c]">
                 {selectLevel1Rows(group)
                   .filter((row) => matchTenor(row.tenor))
-                  .map((rawRow) => {
-                    const row = applyOverride(rawRow);
-                    return (
-                      <div
-                        key={row.id}
-                        className="tk-quote-row grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200"
-                      >
-                        <div className="flex items-center gap-2">
-                          <RankBadge rank={row.rank} />
-                          <span className="tk-text-primary text-slate-100">
-                            {row.institution}
-                          </span>
-                        </div>
-                        <span className="text-right">{row.tenor}</span>
-                        <span className="text-right">
-                          {showRowAmount(row.id) ? row.amount : "--"}
-                        </span>
-                        <span className="tk-rate-warning text-right font-semibold text-amber-300">
-                          {row.rate}
-                        </span>
-                        <span
-                          className="truncate pl-3 text-right text-xs text-slate-300"
-                          title={normalizeAccountRequirement(row.accountType)}
-                        >
-                          {normalizeAccountRequirement(row.accountType)}
-                        </span>
-                        <span
-                          className="truncate pl-3 text-right text-xs text-slate-300"
-                          title={`${row.collateral} / ${row.reason}`}
-                        >
-                          {row.collateral}
-                        </span>
-                        <span className="text-right text-xs tabular-nums text-slate-400">
-                          {row.updatedAt}
-                        </span>
-                        <span className="flex items-center justify-end gap-1">
-                          <button
-                            className="tk-btn tk-btn--trade tk-btn--compact whitespace-nowrap px-1.5 py-0.5 text-[10px] font-medium"
-                            type="button"
-                          >
-                            发送
-                          </button>
-                        </span>
-                      </div>
-                    );
-                  })}
+                  .map((row) => renderQuoteRow(group, row, true, false))}
               </div>
             ) : null}
             {displayLevel === 2 ? (
               <div className="divide-y divide-[#152437] bg-[#080f1c]">
                 {sortRowsByRank(group.rows)
                   .filter((row) => matchTenor(row.tenor))
-                  .map((rawRow) => {
-                    const row = applyOverride(rawRow);
-                    return (
-                      <div
-                        key={row.id}
-                        className="tk-quote-row grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200 transition hover:bg-[#11253d]"
-                      >
-                        <div className="flex items-center gap-2">
-                          {row.rank === "最优" || row.rank === "次优" ? (
-                            <RankBadge rank={row.rank} />
-                          ) : null}
-                          <span className="tk-text-primary text-slate-100">
-                            {row.institution}
-                          </span>
-                        </div>
-                        <span className="text-right">{row.tenor}</span>
-                        <span className="text-right">
-                          {showRowAmount(row.id) ? row.amount : "--"}
-                        </span>
-                        <span className="tk-rate-warning text-right font-semibold text-amber-300">
-                          {row.rate}
-                        </span>
-                        <span
-                          className="truncate pl-3 text-right text-xs text-slate-300"
-                          title={normalizeAccountRequirement(row.accountType)}
-                        >
-                          {normalizeAccountRequirement(row.accountType)}
-                        </span>
-                        <span
-                          className="truncate pl-3 text-right text-xs text-slate-300"
-                          title={`${row.collateral} / ${row.reason}`}
-                        >
-                          {row.collateral}
-                        </span>
-                        <span className="text-right text-xs tabular-nums text-slate-400">
-                          {row.updatedAt}
-                        </span>
-                        <span className="flex items-center justify-end gap-1">
-                          <button
-                            className="tk-btn tk-btn--trade tk-btn--compact whitespace-nowrap px-1.5 py-0.5 text-[10px] font-medium"
-                            type="button"
-                          >
-                            发送
-                          </button>
-                        </span>
-                      </div>
-                    );
-                  })}
+                  .map((row) =>
+                    renderQuoteRow(
+                      group,
+                      row,
+                      row.rank === "最优" || row.rank === "次优",
+                      true,
+                    ),
+                  )}
               </div>
             ) : null}
           </div>
@@ -3313,6 +3356,413 @@ function RepoQuoteSectionBoard({
       </div>
     </div>
   );
+}
+
+function isQuoteRankExpandable(rank: QuoteRank) {
+  return rank === "最优" || rank === "次优";
+}
+
+function stripPercent(rate: string) {
+  return rate.replace("%", "");
+}
+
+function hashString(value: string) {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) % 9973;
+  }
+  return hash;
+}
+
+function formatXrepoAmount(seed: number, index: number, sideOffset: number) {
+  const raw = ((seed + index * 37 + sideOffset) % 128) + 6;
+  const value = index % 3 === 0 ? raw / 10 : raw;
+  return value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
+}
+
+function buildXrepoMockRows(parentRow: QuoteDetailRow): XrepoMockRow[] {
+  const rate = stripPercent(parentRow.rate);
+  const seed = hashString(`${parentRow.id}:${parentRow.tenor}:${parentRow.rate}`);
+  const tenor = parentRow.tenor;
+  const contracts = [
+    { name: tenor, depth: 0 },
+    { name: tenor, depth: 1 },
+    { name: `${tenor}_mini`, depth: 0 },
+    { name: `DF${tenor}_mini`, depth: 0 },
+    { name: `CD${tenor}_mini`, depth: 0 },
+    { name: tenor.replace(/^R/, "GC"), depth: 0 },
+  ];
+
+  return contracts.map((contract, index) => ({
+    id: `${parentRow.id}-xrepo-${index}`,
+    contractName: contract.name,
+    depth: contract.depth,
+    repoAmount: formatXrepoAmount(seed, index, 13),
+    repoCount: `(${(seed + index * 3) % 8})`,
+    repoRate: rate,
+    reverseRate: rate,
+    reverseAmount: formatXrepoAmount(seed, index, 47),
+    reverseCount: `(${(seed + index * 5 + 2) % 72})`,
+  }));
+}
+
+const QUOTE_REPLY_TABS: readonly { id: QuoteReplyTab; label: string }[] = [
+  { id: "unreplied", label: "未回复" },
+  { id: "replied", label: "已回复" },
+  { id: "all", label: "全部" },
+];
+
+const QUOTE_REPLY_TEMPLATES: readonly QuoteReplyTemplate[] = [
+  {
+    id: "ccbbank-sun",
+    trader: "孙经理",
+    institution: "建设银行",
+    waitMinutes: 1,
+    status: "waiting",
+    replyState: "unreplied",
+    tags: ["核心"],
+  },
+  {
+    id: "huaan-pan",
+    trader: "潘宁",
+    institution: "华安基金",
+    waitMinutes: 18,
+    status: "quoted",
+    replyState: "unreplied",
+    amount: "10亿",
+    tags: ["资管户"],
+  },
+  {
+    id: "hzbank-deng",
+    trader: "邓珊",
+    institution: "杭州银行",
+    waitMinutes: 14,
+    status: "quoted",
+    replyState: "unreplied",
+    tags: [],
+  },
+  {
+    id: "abc-li",
+    trader: "李经理",
+    institution: "农业银行",
+    waitMinutes: 2,
+    status: "quoted",
+    replyState: "unreplied",
+    amount: "5亿",
+    tags: ["核心"],
+  },
+  {
+    id: "cmb-tang",
+    trader: "唐敏",
+    institution: "招商基金",
+    waitMinutes: 11,
+    status: "waiting",
+    replyState: "unreplied",
+    tags: ["资管户"],
+  },
+  {
+    id: "jsbank-sun",
+    trader: "孙悦",
+    institution: "江苏银行",
+    waitMinutes: 7,
+    status: "waiting",
+    replyState: "unreplied",
+    tags: ["自营"],
+  },
+  {
+    id: "taikang-luo",
+    trader: "罗成",
+    institution: "泰康资产",
+    waitMinutes: 3,
+    status: "waiting",
+    replyState: "unreplied",
+    tags: ["公募"],
+  },
+  {
+    id: "psbc-liu",
+    trader: "刘佳",
+    institution: "邮储银行",
+    waitMinutes: 6,
+    status: "waiting",
+    replyState: "unreplied",
+    tags: ["不限户"],
+  },
+  {
+    id: "cib-wang",
+    trader: "王经理",
+    institution: "兴业银行",
+    waitMinutes: 3,
+    status: "waiting",
+    replyState: "replied",
+    tags: [],
+  },
+  {
+    id: "huatai-tang",
+    trader: "唐敏",
+    institution: "华泰证券",
+    waitMinutes: 17,
+    status: "waiting",
+    replyState: "replied",
+    tags: ["非专户"],
+  },
+  {
+    id: "ccbtrust-cheng",
+    trader: "程曦",
+    institution: "嘉实基金",
+    waitMinutes: 2,
+    status: "waiting",
+    replyState: "replied",
+    tags: ["信用"],
+  },
+  {
+    id: "cmb-sun",
+    trader: "孙悦",
+    institution: "招商银行",
+    waitMinutes: 13,
+    status: "waiting",
+    replyState: "replied",
+    tags: ["专户"],
+  },
+  {
+    id: "bosc-gao",
+    trader: "高远",
+    institution: "上海银行",
+    waitMinutes: 16,
+    status: "waiting",
+    replyState: "unreplied",
+    tags: ["存单商金", "自营"],
+  },
+  {
+    id: "pingan-liu",
+    trader: "刘佳",
+    institution: "平安理财",
+    waitMinutes: 12,
+    status: "waiting",
+    replyState: "unreplied",
+    tags: ["公募"],
+  },
+  {
+    id: "shrcb-kai",
+    trader: "凯经理",
+    institution: "上海农商",
+    waitMinutes: 8,
+    status: "quoted",
+    replyState: "unreplied",
+    amount: "15亿",
+    tags: ["自营/理财", "利率债"],
+  },
+];
+
+function QuoteReplyMatrixExpansion({ parentRow }: { parentRow: QuoteDetailRow }) {
+  const [activeTab, setActiveTab] = useState<QuoteReplyTab>("unreplied");
+  const [accountFilter, setAccountFilter] = useState("");
+  const [collateralFilter, setCollateralFilter] = useState("");
+  const cards = buildQuoteReplyCards(parentRow);
+  const cardsByTab =
+    activeTab === "all"
+      ? cards
+      : cards.filter((card) => card.replyState === activeTab);
+  const visibleCards = cardsByTab.filter(
+    (card) =>
+      fuzzyIncludes(card.accountSearchText, accountFilter) &&
+      fuzzyIncludes(card.collateralSearchText, collateralFilter),
+  );
+
+  return (
+    <div className="tk-quote-matrix-expand border-l-[3px] py-2 pl-6 pr-4">
+      <div className="tk-quote-matrix-panel">
+        <div className="tk-quote-matrix-toolbar">
+          <div className="tk-quote-matrix-tabs" role="tablist" aria-label="报价回复状态">
+            {QUOTE_REPLY_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                className={`tk-quote-matrix-tab ${activeTab === tab.id ? "is-active" : ""}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setActiveTab(tab.id);
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <div
+            className="tk-quote-matrix-filters"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <label className="tk-quote-filter-field">
+              <span>账户</span>
+              <input
+                value={accountFilter}
+                onChange={(event) => setAccountFilter(event.target.value)}
+                placeholder="模糊筛选"
+                type="text"
+              />
+            </label>
+            <label className="tk-quote-filter-field">
+              <span>质押</span>
+              <input
+                value={collateralFilter}
+                onChange={(event) => setCollateralFilter(event.target.value)}
+                placeholder="模糊筛选"
+                type="text"
+              />
+            </label>
+          </div>
+          <div className="tk-quote-matrix-context">
+            同期限 {parentRow.tenor} · 同利率 {parentRow.rate}
+          </div>
+          <div className="tk-quote-matrix-legend">颜色=核心/报价优势</div>
+        </div>
+        <div className="tk-reply-matrix-grid">
+          {visibleCards.length > 0 ? (
+            visibleCards.map((card) => (
+              <QuoteReplyCardView key={card.id} card={card} />
+            ))
+          ) : (
+            <div className="tk-reply-empty">暂无匹配报价</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function QuoteReplyCardView({ card }: { card: QuoteReplyCard }) {
+  return (
+    <div
+      className={`tk-reply-card ${
+        card.status === "quoted" ? "tk-reply-card--quoted" : "tk-reply-card--waiting"
+      }`}
+    >
+      <div className="tk-reply-card__head">
+        <div className="tk-reply-card__name">
+          {card.trader} · {card.institution}
+        </div>
+        <span className="tk-reply-card__wait">等 {card.waitMinutes}min</span>
+      </div>
+      <div className="tk-reply-card__body">
+        {card.status === "quoted" ? (
+          <div className={`tk-reply-value ${card.amount ? "" : "tk-reply-value--done"}`}>
+            {card.amount ? (
+              <span className="tk-reply-amount">{card.amount}</span>
+            ) : (
+              <span className="tk-reply-done">已报价</span>
+            )}
+          </div>
+        ) : (
+          <div className="tk-reply-pending">待报价</div>
+        )}
+      </div>
+      <div className="tk-reply-tags">
+        {card.tags.map((tag, index) => (
+          <span
+            key={`${card.id}-${tag}`}
+            className={`tk-reply-tag ${index === 0 ? "tk-reply-tag--tenor" : ""}`}
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function buildQuoteReplyCards(parentRow: QuoteDetailRow): QuoteReplyCard[] {
+  const tenorLabel = formatQuoteTenorLabel(parentRow.tenor);
+  const accountTag = normalizeAccountRequirement(parentRow.accountType);
+  const collateralTag = normalizeCollateralTag(parentRow.collateral);
+
+  return QUOTE_REPLY_TEMPLATES.map((template) => {
+    const accountLabel = template.account ?? pickAccountLabel(template.tags, accountTag);
+    const collateralLabel =
+      template.collateral ?? pickCollateralLabel(template.tags, collateralTag);
+    const tags = uniqTags([
+      tenorLabel,
+      ...template.tags,
+      collateralLabel,
+      accountLabel,
+    ]).slice(0, 4);
+
+    return {
+      ...template,
+      tenorLabel,
+      accountLabel,
+      collateralLabel,
+      accountSearchText: [accountLabel, ...tags].join(" "),
+      collateralSearchText: [collateralLabel, ...tags].join(" "),
+      tags,
+    };
+  });
+}
+
+const ACCOUNT_FILTER_TAGS = [
+  "核心",
+  "资管户",
+  "自营",
+  "公募",
+  "不限户",
+  "非专户",
+  "专户",
+  "自营/理财",
+] as const;
+
+const COLLATERAL_FILTER_TAGS = [
+  "利率债",
+  "利率地方",
+  "地方债",
+  "存单",
+  "商金",
+  "信用",
+  "年金",
+] as const;
+
+function pickAccountLabel(tags: readonly string[], fallback: string) {
+  return tags.find((tag) => ACCOUNT_FILTER_TAGS.includes(tag as any)) ?? fallback;
+}
+
+function pickCollateralLabel(tags: readonly string[], fallback: string) {
+  return tags.find((tag) => COLLATERAL_FILTER_TAGS.includes(tag as any)) ?? fallback;
+}
+
+function fuzzyIncludes(source: string, query: string) {
+  const normalizedQuery = normalizeFuzzyText(query);
+  if (!normalizedQuery) return true;
+  return normalizeFuzzyText(source).includes(normalizedQuery);
+}
+
+function normalizeFuzzyText(value: string) {
+  return value.replace(/\s+/g, "").toLocaleLowerCase("zh-CN");
+}
+
+function formatQuoteTenorLabel(tenor: string) {
+  const dayMatch = tenor.match(/\d+/);
+  if (!dayMatch) return tenor;
+  const day = parseInt(dayMatch[0], 10);
+  if (!Number.isFinite(day)) return tenor;
+  return `${day}D`;
+}
+
+function normalizeCollateralTag(collateral: string) {
+  if (collateral.includes("利率")) return "利率地方";
+  if (collateral.includes("地方")) return "地方债";
+  if (collateral.includes("存单")) return "存单";
+  if (collateral.includes("商金")) return "商金";
+  if (collateral.includes("信用")) return "信用";
+  if (collateral.includes("年金")) return "年金";
+  return collateral.length > 4 ? collateral.slice(0, 4) : collateral;
+}
+
+function uniqTags(tags: readonly string[]) {
+  const result: string[] = [];
+  tags.forEach((tag) => {
+    const clean = tag.trim();
+    if (clean && !result.includes(clean)) result.push(clean);
+  });
+  return result;
 }
 
 function normalizeAccountRequirement(accountType: string) {
