@@ -1,5 +1,9 @@
-.codex-run/
-.idea/
-dist/
 node_modules/
+dist/
+.codex-run/
 *.tsbuildinfo
+
+# Local editor state and dev server logs
+.idea/
+newworkspace/trading-workbench-vue/*.log
+newworkspace/trading-workbench-vue/*.err.log

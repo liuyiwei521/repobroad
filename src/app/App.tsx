@@ -1,4 +1,19 @@
 import { Fragment, useEffect, useRef, useState } from "react";
+import {
+  Activity,
+  BadgePercent,
+  Banknote,
+  Download,
+  Gauge,
+  Landmark,
+  LineChart as LineChartIcon,
+  Network,
+  RefreshCcw,
+  Repeat,
+  SlidersHorizontal,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 
 type TrendMode = "intraday" | "history" | "comparison";
 type SentimentTab = "realtime" | "trend";
@@ -105,16 +120,122 @@ type ExchangeMarketSplitSection = {
   }[];
 };
 
+type EntryDisplayMode = "icon" | "compact" | "summary" | "wide-preview";
+type ModuleEntryId =
+  | "big-bank-price"
+  | "xrepo"
+  | "exchange-repo"
+  | "ncd"
+  | "weighted-price"
+  | "anonymous-trade"
+  | "institution-period"
+  | "global-filter"
+  | "market-sentiment";
+type ActiveFrame = {
+  id: ModuleEntryId;
+  title: string;
+} | null;
+type ModuleEntryConfig = {
+  id: ModuleEntryId;
+  group: string;
+  title: string;
+  description: string;
+  statusText: string;
+  icon: LucideIcon;
+};
+type OverviewTone = "neutral" | "good" | "alert" | "muted";
+type ModuleEntryMetric = {
+  summary: string;
+  badge: string;
+  rows: readonly (readonly [string, string])[];
+  chips?: readonly {
+    label: string;
+    value: string;
+    tone?: OverviewTone;
+  }[];
+  detailRows?: readonly (readonly [string, string, string?])[];
+  trendValues?: readonly number[];
+  trendColor?: string;
+  trendLabel?: string;
+};
+
 const TODAY_STR = "2026-05-10";
 
 const chartPalette = {
-  emerald: "#34d399",
-  blue: "#60a5fa",
-  violet: "#a78bfa",
-  amber: "#fbbf24",
-  pink: "#f472b6",
-  red: "#f87171",
+  emerald: "var(--tk-color-success)",
+  blue: "var(--tk-color-chart-blue)",
+  violet: "var(--tk-color-chart-purple)",
+  amber: "var(--tk-color-chart-gold)",
+  pink: "var(--tk-color-chart-violet)",
+  red: "var(--tk-color-danger)",
 } as const;
+
+const moduleEntries: readonly ModuleEntryConfig[] = [
+  {
+    id: "big-bank-price",
+    group: "行情摘要",
+    title: "今天大行价格",
+    description: "大行当日隔夜和 7 天资金价格",
+    statusText: "10:53:27",
+    icon: Banknote,
+  },
+  {
+    id: "xrepo",
+    group: "行情摘要",
+    title: "XREPO",
+    description: "匿名回购报价、发送与下载",
+    statusText: "R001 / R007",
+    icon: Repeat,
+  },
+  {
+    id: "exchange-repo",
+    group: "行情摘要",
+    title: "交易所回购",
+    description: "上交所、深交所核心期限行情",
+    statusText: "GC001 / R-001",
+    icon: Landmark,
+  },
+  {
+    id: "ncd",
+    group: "行情摘要",
+    title: "NCD",
+    description: "一级、二级存单收益率曲线",
+    statusText: "1M / 3M / 1Y",
+    icon: BadgePercent,
+  },
+  {
+    id: "weighted-price",
+    group: "趋势分析",
+    title: "加权价格走势",
+    description: "R001 历史走势、成交量和对比品种",
+    statusText: "R001",
+    icon: LineChartIcon,
+  },
+  {
+    id: "anonymous-trade",
+    group: "趋势分析",
+    title: "匿名成交走势",
+    description: "日内成交走势与叠加品种",
+    statusText: "日内",
+    icon: Activity,
+  },
+  {
+    id: "institution-period",
+    group: "趋势分析",
+    title: "机构分期限统计",
+    description: "期限、指标、机构图例、多线图",
+    statusText: "R001",
+    icon: Network,
+  },
+  {
+    id: "market-sentiment",
+    group: "全局工具",
+    title: "DR007 / 资金情绪",
+    description: "DR007、全市场资金情绪指标",
+    statusText: "平衡",
+    icon: Gauge,
+  },
+] as const;
 
 const initialBankRateRows: readonly BankRateRow[] = [
   {
@@ -241,27 +362,30 @@ const leftSections: readonly (
     layout: "table",
     title: "XREPO",
     columns: [
-      "期限",
-      "可点击量",
-      "正回购金额",
-      "正回购利率",
-      "逆回购利率",
-      "逆回购金额",
-      "可点击量",
-      "操作",
+      "合约名称",
+      "正回购量(亿)",
+      "正回购利率(%)",
+      "逆回购利率(%)",
+      "逆回购量(亿)",
     ],
     rows: [
-      ["R001", "(4)", "442亿", "2.00%", "1.95%", "442亿", "(12)", "发送"],
-      ["R007", "(4)", "28亿", "2.00%", "1.25%", "442亿", "(12)", "发送"],
-      ["R014", "(4)", "442亿", "2.00%", "1.95%", "442亿", "(12)", "发送"],
-      ["R021", "(4)", "442亿", "2.00%", "1.95%", "442亿", "(12)", "发送"],
+      ["R001", "5 (0)", "1.36", "1.25", "1185 (0)"],
+      ["R001", "-", "-", "1.36", "30 (7)"],
+      ["R001", "-", "-", "1.38", "70 (62)"],
+      ["R001_mini", "0.6 (0)", "1.38", "1.30", "12 (0)"],
+      ["DFR001_mini", "5 (0)", "1.37", "1.38", "47 (34)"],
+      ["CDR001_mini", "20.6 (0)", "1.40", "1.41", "20 (10)"],
+      ["R004", "-", "-", "1.42", "3 (0)"],
+      ["R007", "2 (0)", "1.42", "1.40", "132 (0)"],
+      ["R007_mini", "-", "-", "-", "-"],
+      ["R014", "-", "-", "1.45", "5 (0)"],
+      ["R014_mini", "-", "-", "-", "-"],
     ],
-    greenColumns: [4],
-    redColumns: [3],
-    emphasisColumns: [1, 6],
-    buttonColumn: 7,
+    greenColumns: [3],
+    redColumns: [2],
+    emphasisColumns: [1, 4],
     fitToWidth: true,
-    columnWidths: ["14%", "10%", "14%", "12%", "12%", "14%", "10%", "14%"],
+    columnWidths: ["24%", "19%", "19%", "19%", "19%"],
     scrollable: false,
   },
   {
@@ -1919,16 +2043,16 @@ function FloatingBall() {
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       style={{ left: pos.x, top: pos.y }}
-      className="fixed z-[9999] flex h-16 w-16 cursor-grab select-none items-center justify-center rounded-full bg-blue-600/60 shadow-lg backdrop-blur active:cursor-grabbing"
+      className="fixed z-[30] flex h-16 w-16 cursor-grab select-none items-center justify-center rounded-full bg-blue-600/60 shadow-lg backdrop-blur active:cursor-grabbing"
     >
       <span className="text-xl font-bold text-white">42</span>
     </div>
   );
 }
 
-const DEFAULT_COLUMN_RATIOS: [number, number, number] = [23, 47, 30];
-const COLUMN_RATIOS_KEY = "boardColumnRatios.v1";
-const COLUMN_MIN: [number, number, number] = [16, 28, 20];
+const DEFAULT_COLUMN_RATIOS: [number, number, number] = [24, 52, 24];
+const COLUMN_RATIOS_KEY = "boardColumnRatios.v2";
+const COLUMN_MIN: [number, number, number] = [4, 42, 0];
 
 function clampColumns(
   next: [number, number, number],
@@ -1983,6 +2107,10 @@ function App() {
     }
     return DEFAULT_COLUMN_RATIOS;
   });
+  const [activeFrame, setActiveFrame] = useState<ActiveFrame>(null);
+  const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
+  const [historyRange, setHistoryRange] = useState<HistoryRange>("5d");
+  const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
   const mainRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -2051,15 +2179,17 @@ function App() {
     setColumns(DEFAULT_COLUMN_RATIOS);
   }
 
-  const gridTemplate = `${columns[0]}% 10px ${columns[1]}% 10px ${columns[2]}%`;
-  const topGridTemplate = `${columns[0]}fr ${columns[1]}fr ${columns[2]}fr`;
+  function openFrame(entry: ModuleEntryConfig) {
+    setActiveFrame({ id: entry.id, title: entry.title });
+  }
 
+  const railWidth = columns[0];
+  const gridTemplate = `${railWidth}% 10px ${100 - railWidth}%`;
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#09111d] text-slate-100">
+    <div className="tk-app-shell h-screen w-screen overflow-hidden">
       <div className="flex h-full flex-col">
         <TopBar
           currentTime={currentTime}
-          gridTemplateColumns={topGridTemplate}
           onResetColumns={resetColumns}
         />
         <main
@@ -2067,13 +2197,58 @@ function App() {
           className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] overflow-hidden px-3 pb-3 pt-2"
           style={{ gridTemplateColumns: gridTemplate, columnGap: 0 }}
         >
-          <LeftSummaryPanel />
+          <AdaptiveEntryRail
+            activeId={activeFrame?.id ?? null}
+            entries={moduleEntries}
+            onOpen={openFrame}
+          />
           <ColumnSplitter onMouseDown={(e) => startDragSplitter(e, 0)} />
           <MainQuoteBoard />
-          <ColumnSplitter onMouseDown={(e) => startDragSplitter(e, 1)} />
-          <RightSidebar />
         </main>
       </div>
+      {activeFrame ? (
+        <PageFrame
+          title={activeFrame.title}
+          onClose={() => setActiveFrame(null)}
+        >
+          {activeFrame.id === "big-bank-price" ? (
+            <BigBankPriceFrame />
+          ) : activeFrame.id === "weighted-price" ? (
+            <div className="h-full min-h-0">
+              <HistoryClosePanel
+                activeRange={historyRange}
+                overlayProduct={overlayProduct}
+                compareProduct={compareProduct}
+                onRangeChange={setHistoryRange}
+                onCompareChange={setCompareProduct}
+              />
+            </div>
+          ) : activeFrame.id === "anonymous-trade" ? (
+            <div className="h-full min-h-0">
+              <IntradayPanel
+                overlayProduct={overlayProduct}
+                onOverlayChange={setOverlayProduct}
+              />
+            </div>
+          ) : activeFrame.id === "institution-period" ? (
+            <div className="tk-panel h-full min-h-0 border p-3">
+              <CfetsInstPanel />
+            </div>
+          ) : activeFrame.id === "xrepo" ? (
+            <XrepoFrame />
+          ) : activeFrame.id === "exchange-repo" ? (
+            <ExchangeRepoFrame />
+          ) : activeFrame.id === "ncd" ? (
+            <LeftNcdCard />
+          ) : activeFrame.id === "global-filter" ? (
+            <GlobalFilterFrame />
+          ) : activeFrame.id === "market-sentiment" ? (
+            <MarketSentimentFrame />
+          ) : (
+            <ReservedModuleFrame />
+          )}
+        </PageFrame>
+      ) : null}
       <FloatingBall />
     </div>
   );
@@ -2089,32 +2264,1073 @@ function ColumnSplitter({
       role="separator"
       aria-orientation="vertical"
       onMouseDown={onMouseDown}
-      className="group relative h-full cursor-col-resize bg-transparent transition-colors hover:bg-sky-500/30"
+      className="group relative h-full cursor-col-resize bg-transparent transition-colors hover:bg-[rgba(0,96,219,0.2)]"
       style={{ width: "100%", minWidth: 6 }}
     >
-      <span className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-[2px] -translate-x-1/2 -translate-y-1/2 rounded bg-[#2a3f5e] group-hover:bg-sky-300" />
+      <span className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-[2px] -translate-x-1/2 -translate-y-1/2 rounded bg-[var(--tk-color-border-panel)] group-hover:bg-[var(--tk-color-brand-cyan)]" />
+    </div>
+  );
+}
+
+function AdaptiveEntryRail({
+  entries,
+  activeId,
+  onOpen,
+}: {
+  entries: readonly ModuleEntryConfig[];
+  activeId: ModuleEntryId | null;
+  onOpen: (entry: ModuleEntryConfig) => void;
+}) {
+  const railRef = useRef<HTMLElement>(null);
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    const node = railRef.current;
+    if (!node) return;
+    const update = () => setWidth(node.getBoundingClientRect().width);
+    update();
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", update);
+      return () => window.removeEventListener("resize", update);
+    }
+    const observer = new ResizeObserver(() => {
+      setWidth(node.getBoundingClientRect().width);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  const displayMode: EntryDisplayMode =
+    width <= 72
+      ? "icon"
+      : width <= 180
+        ? "compact"
+        : width <= 400
+          ? "summary"
+          : "wide-preview";
+  const groups = Array.from(new Set(entries.map((entry) => entry.group)));
+
+  return (
+    <aside
+      ref={railRef}
+      className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pr-1"
+    >
+      <div className="tk-panel flex min-h-0 flex-1 flex-col overflow-hidden border">
+        <div
+          className={`tk-panel-header border-b ${
+            displayMode === "icon" ? "px-1.5 py-2" : "px-3 py-2.5"
+          }`}
+        >
+          {displayMode === "icon" ? (
+            <div className="tk-muted text-center text-[10px] font-semibold">
+              入口
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <div className="tk-title truncate">
+                  行情入口
+                </div>
+              </div>
+              <div className="tk-chip rounded border px-1.5 py-0.5 text-[10px]">
+                {Math.round(width)}px
+              </div>
+            </div>
+          )}
+        </div>
+        <div
+          className={`min-h-0 flex-1 overflow-y-auto ${
+            displayMode === "icon" ? "p-1.5" : "p-2"
+          }`}
+        >
+          {displayMode === "summary" ? <RailMarketOverview /> : null}
+          {displayMode === "compact" ? (
+            <div className="flex min-h-full flex-col justify-evenly gap-2">
+              {entries.map((entry) => (
+                <ModuleEntryItem
+                  key={entry.id}
+                  entry={entry}
+                  active={entry.id === activeId}
+                  displayMode={displayMode}
+                  onOpen={() => onOpen(entry)}
+                />
+              ))}
+            </div>
+          ) : (
+            groups.map((group) => (
+              <div
+                key={group}
+                className={displayMode === "icon" ? "space-y-1.5" : "space-y-2"}
+              >
+                {entries
+                  .filter((entry) => entry.group === group)
+                  .map((entry) => (
+                    <ModuleEntryItem
+                      key={entry.id}
+                      entry={entry}
+                      active={entry.id === activeId}
+                      displayMode={displayMode}
+                      onOpen={() => onOpen(entry)}
+                    />
+                  ))}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function ModuleEntryItem({
+  entry,
+  active,
+  displayMode,
+  onOpen,
+}: {
+  entry: ModuleEntryConfig;
+  active: boolean;
+  displayMode: EntryDisplayMode;
+  onOpen: () => void;
+}) {
+  const Icon = entry.icon;
+  const metric = getModuleEntryData(entry.id);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+
+  function showPreview() {
+    if (displayMode === "wide-preview") return;
+    setAnchorRect(buttonRef.current?.getBoundingClientRect() ?? null);
+  }
+
+  function hidePreview() {
+    setAnchorRect(null);
+  }
+
+  const compact = displayMode === "icon" || displayMode === "compact";
+
+  if (displayMode === "wide-preview") {
+    return (
+      <div
+        className={`w-full min-w-0 overflow-hidden rounded-lg border transition-colors ${
+          active
+            ? "tk-selected"
+            : "tk-chip"
+        }`}
+      >
+        <button
+          ref={buttonRef}
+          type="button"
+          aria-label={entry.title}
+          onClick={onOpen}
+          className="group w-full px-2.5 py-2 text-left transition-colors hover:bg-[rgba(0,96,219,0.12)]"
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <span
+              className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${
+                active
+                  ? "border-[color:var(--tk-color-brand-cyan)] bg-[rgba(0,210,220,0.14)] text-[color:var(--tk-color-text-inverse)]"
+                  : "border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] text-[color:var(--tk-color-text-inverse-secondary)]"
+              }`}
+            >
+              <Icon size={15} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="tk-strong block truncate text-xs font-semibold">
+                {entry.title}
+              </span>
+              <span className="tk-muted mt-0.5 block truncate text-[11px] font-medium">
+                {metric.summary}
+              </span>
+            </span>
+            <span className="tk-chip shrink-0 rounded border px-1.5 py-0.5 text-[10px]">
+              {metric.badge}
+            </span>
+          </div>
+        </button>
+        <div className="border-t border-[color:var(--tk-color-border-divider)] p-2">
+          <ModuleEntryPreview id={entry.id} />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        type="button"
+        aria-label={entry.title}
+        onClick={onOpen}
+        onFocus={showPreview}
+        onBlur={hidePreview}
+        onMouseEnter={showPreview}
+        onMouseLeave={hidePreview}
+        className={`group w-full min-w-0 overflow-hidden rounded-lg border text-left transition-colors ${
+          active
+            ? "tk-selected"
+            : "tk-chip hover:bg-[rgba(0,96,219,0.12)]"
+        } ${
+          displayMode === "icon" || displayMode === "compact"
+            ? "flex items-center justify-center px-0"
+            : "px-2.5 py-2"
+        } ${
+          displayMode === "compact"
+            ? "h-16"
+            : displayMode === "icon"
+              ? "h-11"
+              : ""
+        }`}
+      >
+        <div
+          className={`flex min-w-0 items-center ${
+            displayMode === "icon" || displayMode === "compact"
+              ? "justify-center"
+              : "gap-2"
+          }`}
+        >
+          <span
+            className={`inline-flex shrink-0 items-center justify-center rounded-md border ${
+              active
+                ? "border-[color:var(--tk-color-brand-cyan)] bg-[rgba(0,210,220,0.14)] text-[color:var(--tk-color-text-inverse)]"
+                : "border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] text-[color:var(--tk-color-text-inverse-secondary)]"
+            } ${displayMode === "icon" ? "h-8 w-8" : displayMode === "compact" ? "h-10 w-10" : "h-7 w-7"}`}
+          >
+            <Icon size={displayMode === "icon" ? 17 : displayMode === "compact" ? 19 : 15} />
+          </span>
+          {displayMode !== "icon" && displayMode !== "compact" ? (
+            <span className="min-w-0 flex-1">
+              <span className="tk-strong block truncate text-xs font-semibold">
+                {entry.title}
+              </span>
+              {displayMode === "summary" || displayMode === "wide-preview" ? (
+                <span className="tk-muted mt-0.5 block truncate text-[11px] font-medium">
+                  {metric.summary}
+                </span>
+              ) : null}
+            </span>
+          ) : null}
+          {!compact && displayMode !== "wide-preview" ? (
+            <span className="tk-chip shrink-0 rounded border px-1.5 py-0.5 text-[10px]">
+              {metric.badge}
+            </span>
+          ) : null}
+        </div>
+        {displayMode === "summary" ? (
+          <ModuleSummaryOverview id={entry.id} metric={metric} />
+        ) : null}
+        {displayMode === "wide-preview" ? (
+          <div className="mt-2 border-t border-[color:var(--tk-color-border-divider-dark)] pt-2">
+            <ModuleEntryPreview id={entry.id} />
+          </div>
+        ) : null}
+      </button>
+      {anchorRect ? (
+        <EntryPreviewPopover anchorRect={anchorRect} entry={entry} />
+      ) : null}
+    </>
+  );
+}
+
+function RailMarketOverview() {
+  const dataset = historicalCloseDatasets["5d"];
+  const latest = dataset.close.at(-1) ?? 0;
+  const volume = dataset.volume.at(-1) ?? 0;
+  const sentiment = Math.round(sentimentTrendData.at(-1)?.total ?? 51);
+
+  return (
+    <div className="tk-panel-soft mb-2 rounded border border-[color:var(--tk-color-border-panel)] p-2.5">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="tk-strong text-[11px] font-semibold">
+          今日概览
+        </span>
+        <span className="tk-chip rounded border px-1.5 py-0.5 text-[10px]">
+          实时
+        </span>
+      </div>
+      <div className="grid grid-cols-2 gap-1.5">
+        <OverviewStat label="DR007" value="2.15%" tone="alert" />
+        <OverviewStat label="情绪" value={`${sentiment}`} tone="good" />
+        <OverviewStat label="R001" value={`${latest.toFixed(3)}%`} />
+        <OverviewStat label="成交" value={`${volume}亿`} tone="muted" />
+      </div>
+    </div>
+  );
+}
+
+function OverviewStat({
+  label,
+  value,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  tone?: OverviewTone;
+}) {
+  return (
+    <div className="tk-field min-w-0 rounded px-2 py-1.5">
+      <div className="tk-muted truncate text-[10px]">{label}</div>
+      <div className={`tk-number mt-0.5 truncate text-[12px] font-semibold ${overviewToneClass(tone)}`}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function ModuleSummaryOverview({
+  id,
+  metric,
+}: {
+  id: ModuleEntryId;
+  metric: ModuleEntryMetric;
+}) {
+  if (id === "xrepo") return <XrepoSummaryOverview />;
+
+  return (
+    <div className="mt-2 space-y-2 border-t border-[color:var(--tk-color-border-divider-dark)] pt-2">
+      {metric.chips?.length ? (
+        <div className="grid grid-cols-3 gap-1.5">
+          {metric.chips.slice(0, 3).map((chip) => (
+            <div
+              key={`${chip.label}-${chip.value}`}
+              className="tk-field min-w-0 rounded px-2 py-1"
+            >
+              <div className="tk-muted truncate text-[9px]">
+                {chip.label}
+              </div>
+              <div
+                className={`tk-number mt-0.5 truncate text-[11px] font-semibold ${overviewToneClass(
+                  chip.tone ?? "neutral",
+                )}`}
+              >
+                {chip.value}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {metric.detailRows?.length ? (
+        <div className="space-y-1">
+          {metric.detailRows.slice(0, 2).map(([label, value, extra]) => (
+            <div
+              key={`${label}-${value}`}
+              className="tk-field grid grid-cols-[0.9fr_1fr_auto] items-center gap-2 rounded px-2 py-1 text-[10px]"
+            >
+              <span className="tk-muted truncate">{label}</span>
+              <span className="tk-number tk-strong truncate font-semibold">
+                {value}
+              </span>
+              {extra ? (
+                <span className="tk-muted truncate text-right">
+                  {extra}
+                </span>
+              ) : (
+                <span />
+              )}
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {metric.trendValues?.length ? (
+        <SummarySparkline
+          values={metric.trendValues}
+          color={metric.trendColor ?? chartPalette.blue}
+          label={metric.trendLabel ?? "趋势"}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function XrepoSummaryOverview() {
+  const section = leftSections.find(
+    (item): item is SummaryTableSection =>
+      item.layout === "table" && item.title === "XREPO",
+  );
+  const rows = section?.rows.slice(0, 5) ?? [];
+
+  return (
+    <div className="mt-2 border-t border-[color:var(--tk-color-border-divider-dark)] pt-2">
+      <div className="tk-table-shell overflow-hidden rounded border">
+        <div className="grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-1 text-[9px] text-[color:var(--tk-color-text-tertiary)]">
+          <span className="truncate">合约</span>
+          <span className="truncate text-right">正量</span>
+          <span className="truncate text-right">正利率</span>
+          <span className="truncate text-right">逆利率</span>
+          <span className="truncate text-right">逆量</span>
+        </div>
+        {rows.map((row, index) => (
+          <div
+            key={`${row[0]}-${index}`}
+            className={`grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] items-center gap-1 border-b border-[color:var(--tk-color-border-divider-dark)] px-2 py-1 text-[10px] last:border-b-0 ${
+              index === 0 ? "bg-[rgba(0,96,219,0.1)]" : ""
+            }`}
+          >
+            <span className="tk-strong truncate font-semibold">
+              {row[0]}
+            </span>
+            <span className="tk-number tk-strong truncate text-right">
+              {row[1]}
+            </span>
+            <span className="tk-number tk-negative truncate text-right font-semibold">
+              {row[2]}
+            </span>
+            <span className="tk-number tk-positive truncate text-right font-semibold">
+              {row[3]}
+            </span>
+            <span className="tk-number tk-strong truncate text-right">
+              {row[4]}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SummarySparkline({
+  values,
+  color,
+  label,
+}: {
+  values: readonly number[];
+  color: string;
+  label: string;
+}) {
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const points = values
+    .map((value, index) => {
+      const x = (index / Math.max(values.length - 1, 1)) * 120;
+      const y = 28 - ((value - min) / range) * 22;
+      return `${index === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
+    })
+    .join(" ");
+  const latest = values[values.length - 1];
+
+  return (
+    <div className="tk-field rounded px-2 py-1.5">
+      <div className="mb-1 flex items-center justify-between gap-2 text-[10px]">
+        <span className="tk-muted truncate">{label}</span>
+        <span className="tk-number tk-strong font-semibold">
+          {latest.toFixed(latest > 100 ? 0 : 3)}
+        </span>
+      </div>
+      <svg
+        className="h-8 w-full overflow-visible"
+        viewBox="0 0 120 32"
+        preserveAspectRatio="none"
+      >
+        <path
+          d={`${points} L 120 32 L 0 32 Z`}
+          fill={color}
+          opacity="0.12"
+        />
+        <path
+          d={points}
+          fill="none"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+        />
+      </svg>
+    </div>
+  );
+}
+
+function overviewToneClass(tone: OverviewTone) {
+  if (tone === "good") return "tk-positive";
+  if (tone === "alert") return "tk-negative";
+  if (tone === "muted") return "tk-muted";
+  return "text-[color:var(--tk-color-brand-cyan)]";
+}
+
+function getModuleEntryData(id: ModuleEntryId): ModuleEntryMetric {
+  if (id === "big-bank-price") {
+    const on = initialBankRateRows.find(
+      (row) => row.institution === "工商银行" && row.tenor === "ON",
+    );
+    const seven = initialBankRateRows.find(
+      (row) => row.institution === "工商银行" && row.tenor === "7D",
+    );
+    return {
+      summary: `ON 非银 ${on?.nonBankRate ?? "-"} / 银行 ${on?.bankRate ?? "-"} · 7D ${seven?.nonBankRate ?? "-"}`,
+      badge: on?.updatedAt.slice(0, 5) ?? "实时",
+      rows: [
+        ["工商 ON", `非银 ${on?.nonBankRate ?? "-"} / 银行 ${on?.bankRate ?? "-"}`],
+        ["工商 7D", `非银 ${seven?.nonBankRate ?? "-"} / 银行 ${seven?.bankRate ?? "-"}`],
+      ],
+      chips: [
+        { label: "ON", value: on?.nonBankRate ?? "-", tone: "good" },
+        { label: "7D", value: seven?.nonBankRate ?? "-", tone: "good" },
+        { label: "银行", value: on?.bankRate ?? "-", tone: "alert" },
+      ],
+      detailRows: [
+        ["工商 ON", on?.nonBankRate ?? "-", `银行 ${on?.bankRate ?? "-"}`],
+        ["工商 7D", seven?.nonBankRate ?? "-", `银行 ${seven?.bankRate ?? "-"}`],
+      ],
+    };
+  }
+
+  if (id === "xrepo") {
+    const section = leftSections.find(
+      (item): item is SummaryTableSection =>
+        item.layout === "table" && item.title === "XREPO",
+    );
+    const r001 = section?.rows[0];
+    const r007 = section?.rows.find((row) => row[0] === "R007");
+    return {
+      summary: r001
+        ? `R001 正 ${r001[1]}@${r001[2]} · 逆 ${r001[4]}@${r001[3]}`
+        : "双边报价待更新",
+      badge: "双边",
+      rows: [
+        ["R001", r001 ? `正 ${r001[1]}@${r001[2]} / 逆 ${r001[4]}@${r001[3]}` : "-"],
+        ["R007", r007 ? `正 ${r007[1]}@${r007[2]} / 逆 ${r007[4]}@${r007[3]}` : "-"],
+      ],
+      chips: [
+        { label: "正利率", value: r001?.[2] ?? "-", tone: "alert" },
+        { label: "逆利率", value: r001?.[3] ?? "-", tone: "good" },
+        { label: "逆量", value: r001?.[4] ?? "-", tone: "neutral" },
+      ],
+      detailRows: [
+        ["R001", r001 ? `正 ${r001[1]} / 逆 ${r001[4]}` : "-", r001 ? `${r001[2]} / ${r001[3]}` : undefined],
+        ["R007", r007 ? `正 ${r007[1]} / 逆 ${r007[4]}` : "-", r007 ? `${r007[2]} / ${r007[3]}` : undefined],
+      ],
+    };
+  }
+
+  if (id === "exchange-repo") {
+    return {
+      summary: "GC001 1.3700(-1.00bp) · R-001 1.3900(-1.50bp)",
+      badge: "双市",
+      rows: [
+        ["上交所 GC001", "1.3700 / -1.00bp"],
+        ["深交所 R-001", "1.3900 / -1.50bp"],
+      ],
+      chips: [
+        { label: "GC001", value: "1.3700", tone: "good" },
+        { label: "R-001", value: "1.3900", tone: "good" },
+        { label: "变动", value: "-1.00bp", tone: "good" },
+      ],
+      detailRows: [
+        ["上交所", "GC001 1.3700", "-1.00bp"],
+        ["深交所", "R-001 1.3900", "-1.50bp"],
+      ],
+    };
+  }
+
+  if (id === "ncd") {
+    const oneMonth = ncdTrendSeries.at(-1) ?? 0;
+    const threeMonth = ncdThreeMonthSeries.at(-1) ?? 0;
+    const oneYear = ncdOneYearSeries.at(-1) ?? 0;
+    return {
+      summary: `1M ${oneMonth.toFixed(3)}% · 3M ${threeMonth.toFixed(3)}% · 1Y ${oneYear.toFixed(3)}%`,
+      badge: "近14日",
+      rows: [
+        ["1M", `${oneMonth.toFixed(3)}%`],
+        ["3M", `${threeMonth.toFixed(3)}%`],
+        ["1Y", `${oneYear.toFixed(3)}%`],
+      ],
+      chips: [
+        { label: "1M", value: `${oneMonth.toFixed(3)}%`, tone: "neutral" },
+        { label: "3M", value: `${threeMonth.toFixed(3)}%`, tone: "neutral" },
+        { label: "1Y", value: `${oneYear.toFixed(3)}%`, tone: "neutral" },
+      ],
+      trendValues: ncdTrendSeries,
+      trendColor: chartPalette.amber,
+      trendLabel: "一级 1M",
+    };
+  }
+
+  if (id === "weighted-price") {
+    const dataset = historicalCloseDatasets["5d"];
+    const latest = dataset.close.at(-1) ?? 0;
+    const prev = dataset.close.at(-2) ?? latest;
+    const volume = dataset.volume.at(-1) ?? 0;
+    const bp = ((latest - prev) * 100).toFixed(1);
+    return {
+      summary: `R001 ${latest.toFixed(3)}% · ${bp.startsWith("-") ? "" : "+"}${bp}bp · 量 ${volume}亿`,
+      badge: "5日",
+      rows: [
+        ["最新加权", `${latest.toFixed(3)}%`],
+        ["较前日", `${bp.startsWith("-") ? "" : "+"}${bp}bp`],
+        ["成交量", `${volume}亿`],
+      ],
+      chips: [
+        { label: "最新", value: `${latest.toFixed(3)}%`, tone: "neutral" },
+        { label: "变化", value: `${bp.startsWith("-") ? "" : "+"}${bp}bp`, tone: bp.startsWith("-") ? "good" : "alert" },
+        { label: "量", value: `${volume}亿`, tone: "muted" },
+      ],
+      trendValues: dataset.close,
+      trendColor: chartPalette.blue,
+      trendLabel: "R001 5D",
+    };
+  }
+
+  if (id === "anonymous-trade") {
+    const latest = intradaySeries.at(-1) ?? 0;
+    const prev = intradaySeries.at(-2) ?? latest;
+    const volume = intradayVolumeSeries.at(-1) ?? 0;
+    const bp = ((latest - prev) * 100).toFixed(1);
+    return {
+      summary: `R001 ${latest.toFixed(3)}% · ${bp.startsWith("-") ? "" : "+"}${bp}bp · 成交 ${volume}亿`,
+      badge: "日内",
+      rows: [
+        ["最新成交", `${latest.toFixed(3)}%`],
+        ["上一点位", `${prev.toFixed(3)}%`],
+        ["成交量", `${volume}亿`],
+      ],
+      chips: [
+        { label: "最新", value: `${latest.toFixed(3)}%`, tone: "neutral" },
+        { label: "变化", value: `${bp.startsWith("-") ? "" : "+"}${bp}bp`, tone: bp.startsWith("-") ? "good" : "alert" },
+        { label: "成交", value: `${volume}亿`, tone: "muted" },
+      ],
+      trendValues: intradaySeries,
+      trendColor: chartPalette.violet,
+      trendLabel: "日内 R001",
+    };
+  }
+
+  if (id === "institution-period") {
+    return {
+      summary: "R001 大行买入1.92% · 基金融入1500亿 · 净融入+420亿",
+      badge: "R001",
+      rows: [
+        ["大行", "买入利率 1.92%"],
+        ["基金", "融入 1500亿"],
+        ["全市场", "净融入 +420亿"],
+      ],
+      chips: [
+        { label: "大行", value: "1.92%", tone: "good" },
+        { label: "基金", value: "1500亿", tone: "muted" },
+        { label: "净融入", value: "+420亿", tone: "alert" },
+      ],
+      detailRows: [
+        ["大行", "买入 1.92%", "卖出 2.05%"],
+        ["基金", "融入 1500亿", "净 +420亿"],
+      ],
+    };
+  }
+
+  if (id === "global-filter") {
+    return {
+      summary: `金额 ${topBoardFilters.amountMin}-${topBoardFilters.amountMax}亿 · 利率 ${topBoardFilters.rateMin}-${topBoardFilters.rateMax}%`,
+      badge: "筛选",
+      rows: [
+        ["金额", `${topBoardFilters.amountMin} - ${topBoardFilters.amountMax}亿`],
+        ["利率", `${topBoardFilters.rateMin} - ${topBoardFilters.rateMax}%`],
+      ],
+      chips: [
+        { label: "金额", value: "0-不限", tone: "muted" },
+        { label: "利率", value: "0.00-不限", tone: "muted" },
+      ],
+      detailRows: [
+        ["金额范围", `${topBoardFilters.amountMin}-${topBoardFilters.amountMax}亿`, "已应用"],
+        ["利率范围", `${topBoardFilters.rateMin}-${topBoardFilters.rateMax}%`, "已应用"],
+      ],
+    };
+  }
+
+  return {
+    summary: "DR007 2.15% · 资金情绪 51 · 平衡",
+    badge: "平衡",
+    rows: [
+      ["DR007", "2.15%"],
+      ["资金情绪", "51 / 平衡"],
+    ],
+    chips: [
+      { label: "DR007", value: "2.15%", tone: "alert" },
+      { label: "情绪", value: "51", tone: "neutral" },
+      { label: "状态", value: "平衡", tone: "good" },
+    ],
+    trendValues: sentimentTrendData.map((item) => item.total),
+    trendColor: chartPalette.emerald,
+    trendLabel: "情绪指数",
+  };
+}
+
+function EntryPreviewPopover({
+  anchorRect,
+  entry,
+}: {
+  anchorRect: DOMRect;
+  entry: ModuleEntryConfig;
+}) {
+  const Icon = entry.icon;
+  const metric = getModuleEntryData(entry.id);
+  const width = 260;
+  const gap = 8;
+  const canOpenRight = anchorRect.right + gap + width <= window.innerWidth - 8;
+  const left = canOpenRight
+    ? anchorRect.right + gap
+    : Math.max(8, anchorRect.left - width - gap);
+  const top = Math.min(
+    Math.max(8, anchorRect.top - 8),
+    window.innerHeight - 132,
+  );
+
+  return (
+    <div
+      className="pointer-events-none fixed z-[80] rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[rgba(255,255,255,0.96)] p-3 text-xs text-slate-200 shadow-2xl backdrop-blur"
+      style={{ left, top, width }}
+    >
+      <div className="flex items-start gap-2">
+        <Icon className="mt-0.5 shrink-0 text-blue-300" size={16} />
+        <div className="min-w-0">
+          <div className="font-semibold text-slate-50">{entry.title}</div>
+          <div className="mt-1 leading-5 text-slate-400">{metric.summary}</div>
+          <div className="mt-2 space-y-1">
+            {metric.rows.map(([label, value]) => (
+              <div
+                key={label}
+                className="flex items-center justify-between gap-3 rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-2 py-1"
+              >
+                <span className="text-slate-500">{label}</span>
+                <span className="font-mono font-semibold text-slate-200">
+                  {value}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 inline-flex rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-2 py-0.5 text-[11px] text-slate-300">
+            {metric.badge}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ModuleEntryPreview({ id }: { id: ModuleEntryId }) {
+  if (id === "big-bank-price") {
+    return (
+      <RichPreviewFrame autoHeight>
+        <BigBankPriceFrame embeddedPreview />
+      </RichPreviewFrame>
+    );
+  }
+
+  if (id === "xrepo") {
+    return (
+      <RichPreviewFrame autoHeight>
+        <XrepoFrame embeddedPreview />
+      </RichPreviewFrame>
+    );
+  }
+
+  if (id === "exchange-repo") {
+    return (
+      <RichPreviewFrame autoHeight>
+        <ExchangeRepoFrame embeddedPreview />
+      </RichPreviewFrame>
+    );
+  }
+
+  if (id === "ncd") {
+    return (
+      <RichPreviewFrame autoHeight>
+        <LeftNcdCard embeddedPreview />
+      </RichPreviewFrame>
+    );
+  }
+
+  if (id === "weighted-price") {
+    return <WeightedPriceEntryPreview />;
+  }
+
+  if (id === "anonymous-trade") {
+    return <AnonymousTradeEntryPreview />;
+  }
+
+  if (id === "institution-period") {
+    return (
+      <RichPreviewFrame heightClassName="h-[270px]">
+        <div className="h-full min-h-0 rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
+          <CfetsInstPanel />
+        </div>
+      </RichPreviewFrame>
+    );
+  }
+
+  if (id === "global-filter") {
+    return (
+      <RichPreviewFrame heightClassName="h-[190px]" scrollX>
+        <div className="h-full min-w-[540px]">
+          <GlobalFilterFrame />
+        </div>
+      </RichPreviewFrame>
+    );
+  }
+
+  return (
+    <RichPreviewFrame heightClassName="h-[220px]">
+      <div className="h-full min-w-0">
+        <MarketSentimentFrame />
+      </div>
+    </RichPreviewFrame>
+  );
+}
+
+function WeightedPriceEntryPreview() {
+  const [activeRange, setActiveRange] = useState<HistoryRange>("5d");
+  const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
+  return (
+    <RichPreviewFrame heightClassName="h-[260px]">
+      <HistoryClosePanel
+        activeRange={activeRange}
+        overlayProduct="none"
+        compareProduct={compareProduct}
+        onRangeChange={setActiveRange}
+        onCompareChange={setCompareProduct}
+      />
+    </RichPreviewFrame>
+  );
+}
+
+function AnonymousTradeEntryPreview() {
+  const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
+  return (
+    <RichPreviewFrame heightClassName="h-[235px]">
+      <IntradayPanel
+        overlayProduct={overlayProduct}
+        onOverlayChange={setOverlayProduct}
+      />
+    </RichPreviewFrame>
+  );
+}
+
+function RichPreviewFrame({
+  children,
+  heightClassName = "",
+  scrollX = false,
+  autoHeight = false,
+}: {
+  children: React.ReactNode;
+  heightClassName?: string;
+  scrollX?: boolean;
+  autoHeight?: boolean;
+}) {
+  return (
+    <div
+      className={`min-h-0 rounded-lg ${autoHeight ? "h-auto" : heightClassName} ${
+        autoHeight
+          ? scrollX
+            ? "overflow-x-auto overflow-y-visible"
+            : "overflow-visible"
+          : scrollX
+            ? "overflow-x-auto overflow-y-hidden"
+            : "overflow-hidden"
+      }`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function MiniPreviewTable({
+  columns,
+  rows,
+}: {
+  columns: readonly string[];
+  rows: readonly (readonly string[])[];
+}) {
+  return (
+    <div className="tk-table-shell overflow-hidden rounded border">
+      <div
+        className="grid border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] text-[10px] text-[color:var(--tk-color-text-tertiary)]"
+        style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
+      >
+        {columns.map((column) => (
+          <div key={column} className="truncate px-1.5 py-1">
+            {column}
+          </div>
+        ))}
+      </div>
+      {rows.map((row, rowIndex) => (
+        <div
+          key={`${row[0]}-${rowIndex}`}
+          className="tk-strong grid text-[10px]"
+          style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
+        >
+          {row.map((cell, cellIndex) => (
+            <div
+              key={`${cell}-${cellIndex}`}
+              className={`truncate px-1.5 py-1 ${
+                cellIndex > 1 ? "tk-number tk-positive" : ""
+              }`}
+            >
+              {cell}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MiniSparklinePreview({
+  label,
+  values,
+  color,
+  footnote,
+}: {
+  label: string;
+  values: readonly number[];
+  color: string;
+  footnote: string;
+}) {
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const points = values
+    .map((value, index) => {
+      const x = (index / Math.max(values.length - 1, 1)) * 156;
+      const y = 42 - ((value - min) / range) * 34;
+      return `${index === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
+    })
+    .join(" ");
+
+  return (
+    <div className="min-w-0 overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
+      <div className="mb-1 flex items-center justify-between gap-2 text-[10px]">
+        <span className="truncate font-semibold text-slate-300">{label}</span>
+        <span className="font-mono text-slate-500">
+          {values[values.length - 1].toFixed(3)}%
+        </span>
+      </div>
+      <svg
+        className="h-[46px] w-full overflow-visible"
+        viewBox="0 0 156 46"
+        preserveAspectRatio="none"
+      >
+        <path
+          d={`${points} L 156 46 L 0 46 Z`}
+          fill={color}
+          opacity="0.12"
+        />
+        <path
+          d={points}
+          fill="none"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+        />
+      </svg>
+      <div className="mt-1 truncate text-[10px] text-slate-500">{footnote}</div>
+    </div>
+  );
+}
+
+function MiniMetricPreview({
+  rows,
+}: {
+  rows: readonly (readonly [string, string])[];
+}) {
+  return (
+    <div className="space-y-1 rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
+      {rows.map(([label, value]) => (
+        <div
+          key={label}
+          className="flex items-center justify-between gap-2 text-[10px]"
+        >
+          <span className="truncate text-slate-500">{label}</span>
+          <span className="truncate font-semibold text-slate-300">{value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PageFrame({
+  title,
+  onClose,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      className="tk-overlay fixed inset-0 z-[40] flex items-center justify-center px-5 py-5"
+      onMouseDown={onClose}
+    >
+      <section
+        className="tk-modal grid h-[86vh] w-[min(1380px,calc(100vw-40px))] grid-rows-[auto_1fr] overflow-hidden border"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="tk-panel-header flex items-center justify-between gap-3 border-b px-4 py-3">
+          <div className="min-w-0">
+            <div className="tk-title-lg truncate">
+              {title}
+            </div>
+            <div className="tk-muted mt-0.5 text-xs">
+              入口页框 / Esc 关闭
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              className="tk-button inline-flex items-center gap-1.5 px-2.5 py-1.5 opacity-60"
+              disabled
+              type="button"
+              title="刷新能力待接入"
+            >
+              <RefreshCcw size={13} />
+              刷新
+            </button>
+            <button
+              className="tk-button inline-flex items-center gap-1.5 px-2.5 py-1.5 opacity-60"
+              disabled
+              type="button"
+              title="下载能力待接入"
+            >
+              <Download size={13} />
+              下载
+            </button>
+            <button
+              className="tk-button inline-flex h-8 w-8 items-center justify-center"
+              onClick={onClose}
+              type="button"
+              title="关闭"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+        <div className="min-h-0 overflow-hidden p-3">{children}</div>
+      </section>
     </div>
   );
 }
 
 function TopBar({
   currentTime,
-  gridTemplateColumns,
   onResetColumns,
 }: {
   currentTime: Date;
-  gridTemplateColumns: string;
   onResetColumns: () => void;
 }) {
   return (
-    <header className="border-b border-[#1b2a42] bg-[#0d1726] px-3 py-2 shadow-[inset_0_-1px_0_rgba(74,101,140,0.18)]">
-      <div className="grid items-center gap-3" style={{ gridTemplateColumns }}>
+    <header className="tk-topbar border-b px-3 py-2">
+      <div className="grid grid-cols-[minmax(260px,max-content)_minmax(520px,1fr)_auto] items-center gap-3">
         <div className="flex items-center gap-2">
-          <div className="text-[20px] font-semibold tracking-[0.04em] text-slate-50">
+          <div className="whitespace-nowrap text-[20px] font-semibold tracking-[0] text-[color:var(--tk-color-text-inverse)]">
             资金实时行情看板
           </div>
           <button
-            className="rounded-md border border-[#253754] bg-[#101a2b] px-1.5 py-0.5 text-[10px] text-slate-400 hover:border-[#33507d] hover:text-slate-200"
+            className="tk-button px-1.5 py-0.5 text-[10px]"
             onClick={onResetColumns}
             type="button"
             title="恢复默认三栏宽度"
@@ -2166,6 +3382,333 @@ function makeEmptyBankRow(institution: string, tenor: BankTenor): BankRateRow {
 function deriveHasQuote(row: BankRateRow): boolean {
   return (
     (row.nonBankRate ?? "").trim() !== "" || (row.bankRate ?? "").trim() !== ""
+  );
+}
+
+function BigBankPriceFrame({
+  embeddedPreview = false,
+}: {
+  embeddedPreview?: boolean;
+}) {
+  const [whitelist, setWhitelist] = useState<string[]>([
+    ...defaultBigBankWhitelist,
+  ]);
+  const [bankRateRows, setBankRateRows] = useState<BankRateRow[]>([
+    ...initialBankRateRows,
+  ]);
+  const [draftBankRateRows, setDraftBankRateRows] = useState<BankRateRow[]>([
+    ...initialBankRateRows,
+  ]);
+  const [isBankEditorOpen, setIsBankEditorOpen] = useState(false);
+
+  const rows = bankRateRows
+    .filter((row) => row.hasQuote && whitelist.includes(row.institution))
+    .map((row) => [
+      row.institution,
+      BANK_TENOR_LABEL[row.tenor],
+      row.nonBankRate,
+      row.deltaNonBankBp,
+      row.bankRate,
+      row.deltaBp,
+      row.updatedAt,
+    ]);
+
+  function buildDraft(): BankRateRow[] {
+    const byKey = new Map<string, BankRateRow>();
+    for (const row of bankRateRows) {
+      byKey.set(`${row.institution}__${row.tenor}`, row);
+    }
+    const result: BankRateRow[] = [];
+    for (const institution of whitelist) {
+      for (const tenor of BANK_TENORS) {
+        const existing = byKey.get(`${institution}__${tenor}`);
+        result.push(
+          existing ? { ...existing } : makeEmptyBankRow(institution, tenor),
+        );
+      }
+    }
+    return result;
+  }
+
+  function openBankEditor() {
+    setDraftBankRateRows(buildDraft());
+    setIsBankEditorOpen(true);
+  }
+
+  function updateDraftRow(
+    index: number,
+    field: keyof BankRateRow,
+    value: string,
+  ) {
+    setDraftBankRateRows((current) =>
+      current.map((row, rowIndex) => {
+        if (rowIndex !== index) return row;
+        const updated: BankRateRow = { ...row, [field]: value };
+        if (field === "bankRate") {
+          const cur = parseFloat(value.replace("%", ""));
+          const ref = parseFloat(row.refBankRate.replace("%", ""));
+          if (!isNaN(cur) && !isNaN(ref)) {
+            const bp = Math.round((cur - ref) * 100 * 10) / 10;
+            updated.deltaBp = bp > 0 ? `+${bp}` : String(bp);
+          }
+        }
+        if (field === "nonBankRate") {
+          const cur = parseFloat(value.replace("%", ""));
+          const ref = parseFloat(row.refNonBankRate.replace("%", ""));
+          if (!isNaN(cur) && !isNaN(ref)) {
+            const bp = Math.round((cur - ref) * 100 * 10) / 10;
+            updated.deltaNonBankBp = bp > 0 ? `+${bp}` : String(bp);
+          }
+        }
+        return updated;
+      }),
+    );
+  }
+
+  function addInstitution(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    if (!whitelist.includes(trimmed)) {
+      setWhitelist((prev) => [...prev, trimmed]);
+    }
+    setDraftBankRateRows((current) => {
+      const exists = current.some((row) => row.institution === trimmed);
+      if (exists) return current;
+      return [
+        ...current,
+        makeEmptyBankRow(trimmed, "ON"),
+        makeEmptyBankRow(trimmed, "7D"),
+      ];
+    });
+  }
+
+  function resetDraftRows() {
+    setWhitelist([...defaultBigBankWhitelist]);
+    setDraftBankRateRows(initialBankRateRows.map((row) => ({ ...row })));
+  }
+
+  function saveBankRateRows() {
+    const now = new Date();
+    const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+    setBankRateRows(
+      draftBankRateRows.map((row) => {
+        const hasQuote = deriveHasQuote(row);
+        return {
+          ...row,
+          hasQuote,
+          updatedAt: hasQuote ? time : "",
+        };
+      }),
+    );
+    setIsBankEditorOpen(false);
+  }
+
+  return (
+    <>
+      <section
+        className={`tk-panel flex min-h-0 flex-col border ${
+          embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
+        }`}
+      >
+        <div className="tk-panel-header border-b px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="tk-title">
+                今天大行价格
+              </div>
+              <div className="tk-muted mt-1 text-xs">
+                大行当日隔夜和 7 天资金价格
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                className="tk-button px-3 py-1"
+                onClick={openBankEditor}
+                type="button"
+              >
+                手工输入
+              </button>
+              <button
+                className="tk-button tk-button-success px-3 py-1"
+                type="button"
+              >
+                下载
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className={embeddedPreview ? "min-h-0" : "min-h-0 flex-1"}>
+          <StructuredTable
+            columns={[
+              "机构",
+              "期限",
+              "非银利率",
+              "涨跌",
+              "银行利率",
+              "涨跌",
+              "更新时间",
+            ]}
+            rows={rows}
+            greenColumns={[2]}
+            redColumns={[4]}
+            deltaColumns={[3, 5]}
+            fitToWidth
+            flush
+            adaptiveHeight={embeddedPreview}
+            scrollY={!embeddedPreview}
+          />
+        </div>
+      </section>
+      <BankRateEditorModal
+        open={isBankEditorOpen}
+        rows={draftBankRateRows}
+        onChange={updateDraftRow}
+        onAddInstitution={addInstitution}
+        onClose={() => setIsBankEditorOpen(false)}
+        onReset={resetDraftRows}
+        onSave={saveBankRateRows}
+      />
+    </>
+  );
+}
+
+function XrepoFrame({
+  embeddedPreview = false,
+}: {
+  embeddedPreview?: boolean;
+}) {
+  const section = leftSections.find(
+    (item): item is SummaryTableSection =>
+      item.layout === "table" && item.title === "XREPO",
+  );
+  if (!section) return <ReservedModuleFrame />;
+
+  return (
+    <section
+      className={`tk-panel flex min-h-0 flex-col border ${
+        embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
+      }`}
+    >
+      <div className="tk-panel-header border-b px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="tk-title">XREPO</div>
+            <div className="tk-muted mt-1 text-xs">
+              匿名回购报价、发送与下载
+            </div>
+          </div>
+          <button
+            className="tk-button tk-button-success px-3 py-1"
+            type="button"
+          >
+            下载
+          </button>
+        </div>
+      </div>
+      <div className={embeddedPreview ? "min-h-0" : "min-h-0 flex-1"}>
+        <StructuredTable
+          columns={section.columns}
+          rows={section.rows}
+          greenColumns={section.greenColumns}
+          redColumns={section.redColumns}
+          emphasisColumns={section.emphasisColumns}
+          buttonColumn={section.buttonColumn}
+          fitToWidth
+          columnWidths={section.columnWidths}
+          flush
+          adaptiveHeight={embeddedPreview}
+          scrollY={!embeddedPreview}
+        />
+      </div>
+    </section>
+  );
+}
+
+function ExchangeRepoFrame({
+  embeddedPreview = false,
+}: {
+  embeddedPreview?: boolean;
+}) {
+  const section = leftSections.find(
+    (item): item is ExchangeMarketSplitSection =>
+      item.layout === "exchange-split",
+  );
+  if (!section) return <ReservedModuleFrame />;
+
+  return (
+    <ExchangeRepoCard
+      title={section.title}
+      markets={section.markets}
+      embeddedPreview={embeddedPreview}
+    />
+  );
+}
+
+function GlobalFilterFrame() {
+  return (
+    <div className="tk-panel grid h-full min-h-0 place-items-center border">
+      <div className="tk-panel-soft w-[520px] rounded border border-[color:var(--tk-color-border-panel)] p-5">
+        <div className="text-sm font-semibold text-slate-50">
+          金额 / 利率筛选
+        </div>
+        <div className="mt-4 grid gap-3 text-sm">
+          <div className="flex items-center justify-between border-b border-[color:var(--tk-color-border-divider-dark)] pb-3">
+            <span className="text-slate-500">金额区间</span>
+            <span className="font-mono text-slate-200">
+              {topBoardFilters.amountMin} - {topBoardFilters.amountMax} 亿
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500">利率区间</span>
+            <span className="font-mono text-slate-200">
+              {topBoardFilters.rateMin} - {topBoardFilters.rateMax} %
+            </span>
+          </div>
+        </div>
+        <div className="mt-4 text-xs text-slate-500">
+          筛选入口已迁入页框，编辑能力后续接入。
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MarketSentimentFrame() {
+  return (
+    <div className="tk-panel grid h-full min-h-0 grid-cols-[minmax(0,1.45fr)_minmax(112px,0.55fr)] gap-3 overflow-hidden border p-3">
+      <div className="tk-panel-soft min-w-0 rounded border border-[color:var(--tk-color-border-panel)] p-4">
+        <div className="text-sm font-semibold text-slate-50">
+          DR007 / 资金情绪
+        </div>
+        <div className="mt-4 space-y-3">
+          <InfoChip label="DR007" value="2.15%" tone="alert" />
+          <InfoChip label="资金情绪" value="51 / 47 / 50 / 49" tone="neutral" />
+          <StatusBadge>平衡</StatusBadge>
+        </div>
+      </div>
+      <div className="tk-panel-soft min-h-0 min-w-0 rounded border border-[color:var(--tk-color-border-panel)] p-3">
+        <div className="mb-3 text-xs text-slate-500">近 20 日资金情绪</div>
+        <MiniSparklinePreview
+          label="全市场"
+          values={sentimentTrendData.map((item) => item.total)}
+          color={chartPalette.amber}
+          footnote="指数越高代表资金越紧"
+        />
+      </div>
+    </div>
+  );
+}
+
+function ReservedModuleFrame() {
+  return (
+    <div className="tk-panel grid h-full min-h-0 place-items-center border border-dashed">
+      <div className="text-center">
+        <div className="text-base font-semibold text-slate-100">模块接入中</div>
+        <div className="mt-2 text-sm text-slate-500">
+          该功能入口已预留，后续会迁移对应模块。
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -2317,14 +3860,14 @@ function LeftSummaryPanel() {
                 section.title === "今天大行价格" ? (
                   <div className="flex items-center gap-2">
                     <button
-                      className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1 text-xs font-medium text-slate-300"
+                      className="tk-button px-3 py-1"
                       onClick={openBankEditor}
                       type="button"
                     >
                       手工输入
                     </button>
                     <button
-                      className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
+                      className="tk-button tk-button-success px-3 py-1"
                       type="button"
                     >
                       下载
@@ -2407,17 +3950,17 @@ function BankRateEditorModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc] px-4">
-      <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]">
-        <div className="border-b border-[#1c3150] bg-[#101d32] px-5 py-4">
+    <div className="tk-overlay fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div className="tk-modal w-full max-w-4xl overflow-hidden border">
+        <div className="tk-panel-header border-b px-5 py-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-base font-semibold text-slate-50">
+              <div className="tk-title-lg">
                 今天大行价格手工输入
               </div>
             </div>
             <button
-              className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+              className="tk-button px-3 py-1.5"
               onClick={onClose}
               type="button"
             >
@@ -2426,8 +3969,8 @@ function BankRateEditorModal({
           </div>
         </div>
         <div className="px-5 py-4">
-          <div className="overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
-            <div className="grid grid-cols-[1.4fr_0.7fr_1fr_1fr] border-b border-[#22324d] bg-[#111d30] px-4 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+          <div className="tk-table-shell overflow-hidden rounded border">
+            <div className="grid grid-cols-[1.4fr_0.7fr_1fr_1fr] border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-4 py-2 text-[11px] font-medium tracking-[0] text-[color:var(--tk-color-text-tertiary)]">
               <span>机构</span>
               <span className="text-center">期限</span>
               <span className="text-right">非银利率</span>
@@ -2436,8 +3979,8 @@ function BankRateEditorModal({
             {rows.map((row, index) => (
               <div
                 key={`${row.institution}-${row.tenor}-${index}`}
-                className={`grid grid-cols-[1.4fr_0.7fr_1fr_1fr] items-center gap-3 border-b border-[#162439] px-4 py-3 ${
-                  index % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
+                className={`grid grid-cols-[1.4fr_0.7fr_1fr_1fr] items-center gap-3 border-b border-[color:var(--tk-color-border-divider-dark)] px-4 py-3 ${
+                  index % 2 === 0 ? "bg-transparent" : "bg-[rgba(255,255,255,0.025)]"
                 }`}
               >
                 <div className="text-sm font-semibold text-slate-100">
@@ -2459,10 +4002,10 @@ function BankRateEditorModal({
               </div>
             ))}
           </div>
-          <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
+          <div className="tk-muted mt-3 flex items-center gap-2 text-xs">
             <span className="text-slate-500">新增机构</span>
             <input
-              className="w-44 rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
+              className="tk-field w-44 px-2 py-1.5 text-xs outline-none focus:border-[color:var(--tk-color-brand-primary-hover)]"
               placeholder="如 交通银行"
               value={newInstName}
               onChange={(e) => setNewInstName(e.target.value)}
@@ -2474,7 +4017,7 @@ function BankRateEditorModal({
               }}
             />
             <button
-              className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-200"
+              className="tk-button tk-button-success px-2.5 py-1"
               onClick={commitAddInstitution}
               type="button"
             >
@@ -2482,23 +4025,23 @@ function BankRateEditorModal({
             </button>
           </div>
         </div>
-        <div className="flex items-center justify-end gap-2 border-t border-[#1c3150] bg-[#0d1726] px-5 py-4">
+        <div className="flex items-center justify-end gap-2 border-t border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-deep)] px-5 py-4">
           <button
-            className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+            className="tk-button px-3 py-1.5"
             onClick={onReset}
             type="button"
           >
             重置
           </button>
           <button
-            className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+            className="tk-button px-3 py-1.5"
             onClick={onClose}
             type="button"
           >
             取消
           </button>
           <button
-            className="rounded-lg border border-blue-500/30 bg-blue-500/20 px-3 py-1.5 text-xs font-medium text-blue-300"
+            className="tk-button tk-button-primary px-3 py-1.5"
             onClick={onSave}
             type="button"
           >
@@ -2521,7 +4064,7 @@ function ModalInput({
 }) {
   return (
     <input
-      className={`w-full rounded-lg border border-[#284164] bg-[#0f1b2f] px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-blue-400 ${
+      className={`tk-field w-full px-3 py-2 text-sm outline-none transition focus:border-[color:var(--tk-color-brand-primary-hover)] ${
         align === "right" ? "text-right" : "text-left"
       }`}
       value={value}
@@ -2530,7 +4073,11 @@ function ModalInput({
   );
 }
 
-function LeftNcdCard() {
+function LeftNcdCard({
+  embeddedPreview = false,
+}: {
+  embeddedPreview?: boolean;
+}) {
   const [market, setMarket] = useState<"primary" | "secondary">("primary");
   const [mode, setMode] = useState<"trend" | "table">("trend");
   const [expanded, setExpanded] = useState(false);
@@ -2575,7 +4122,7 @@ function LeftNcdCard() {
           <button
             onClick={onClose}
             type="button"
-            className="ml-1 rounded p-0.5 text-slate-400 hover:bg-[#1e3358] hover:text-slate-100"
+            className="ml-1 rounded p-0.5 text-slate-400 hover:bg-[var(--tk-color-surface-selected)] hover:text-slate-100"
             title="收起"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -2592,7 +4139,7 @@ function LeftNcdCard() {
           <button
             onClick={() => setExpanded(true)}
             type="button"
-            className="ml-1 rounded p-0.5 text-slate-400 hover:bg-[#1e3358] hover:text-slate-100"
+            className="ml-1 rounded p-0.5 text-slate-400 hover:bg-[var(--tk-color-surface-selected)] hover:text-slate-100"
             title="展开"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -2620,7 +4167,7 @@ function LeftNcdCard() {
     ) : mode === "trend" ? (
       <NcdTrendPanel compact />
     ) : (
-      <div className="h-full min-h-0">
+      <div className={embeddedPreview ? "min-h-0" : "h-full min-h-0"}>
         <StructuredTable
           columns={["期限", "最新", "涨跌bp", "参考收益", "更新时间"]}
           rows={ncdTableRows}
@@ -2630,32 +4177,45 @@ function LeftNcdCard() {
           columnWidths={["14%", "18%", "16%", "22%", "30%"]}
           compact
           flush={false}
-          scrollY
+          adaptiveHeight={embeddedPreview}
+          scrollY={!embeddedPreview}
         />
       </div>
     );
 
   return (
     <>
-      <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
-        <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-2.5">
+      <section
+        className={`tk-panel flex min-h-0 flex-col border ${
+          embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
+        }`}
+      >
+        <div className="tk-panel-header border-b px-4 py-2.5">
           {header()}
         </div>
-        <div className="min-h-0 flex-1 overflow-hidden p-2">{body}</div>
+        <div
+          className={
+            embeddedPreview
+              ? "flex min-h-[220px] flex-col overflow-visible p-2"
+              : "flex min-h-0 flex-1 flex-col overflow-hidden p-2"
+          }
+        >
+          {body}
+        </div>
       </section>
       {expanded && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc]"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(17,24,39,0.32)]"
           onClick={() => setExpanded(false)}
         >
           <div
-            className="relative flex h-[85vh] w-[90vw] max-w-[1400px] flex-col overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]"
+            className="relative flex h-[85vh] w-[90vw] max-w-[1400px] flex-col overflow-hidden rounded-2xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] shadow-[0_12px_28px_rgba(17,24,39,0.12)]"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setExpanded(false)}
               type="button"
-              className="absolute right-3 top-3 z-10 rounded p-1 text-slate-400 hover:bg-[#1e3358] hover:text-slate-100"
+              className="absolute right-3 top-3 z-10 rounded p-1 text-slate-400 hover:bg-[var(--tk-color-surface-selected)] hover:text-slate-100"
               title="收起"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -2687,9 +4247,11 @@ function LeftNcdCard() {
 function ExchangeRepoCard({
   title,
   markets,
+  embeddedPreview = false,
 }: {
   title: string;
   markets: ExchangeMarketSplitSection["markets"];
+  embeddedPreview?: boolean;
 }) {
   const [activeView, setActiveView] = useState<"core" | "sse" | "szse">("core");
   const filteredMarkets =
@@ -2698,10 +4260,14 @@ function ExchangeRepoCard({
       : markets.filter((market) => market.id === activeView);
 
   return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
-      <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
+    <section
+      className={`tk-panel flex min-h-0 flex-col border ${
+        embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
+      }`}
+    >
+      <div className="tk-panel-header border-b px-4 py-3">
         <div className="flex items-center justify-between gap-3">
-          <div className="text-sm font-semibold tracking-[0.02em] text-slate-50">
+          <div className="tk-title">
             {title}
           </div>
           <div className="flex items-center gap-2">
@@ -2720,7 +4286,7 @@ function ExchangeRepoCard({
               </button>
             ))}
             <button
-              className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
+              className="tk-button tk-button-success px-3 py-1"
               type="button"
             >
               下载
@@ -2728,16 +4294,26 @@ function ExchangeRepoCard({
           </div>
         </div>
       </div>
-      <div className="min-h-0 flex-1 p-2">
+      <div className={embeddedPreview ? "min-h-0 p-2" : "min-h-0 flex-1 p-2"}>
         {activeView === "core" ? (
-          <ExchangeCoreCompactBoard markets={markets} />
+          <ExchangeCoreCompactBoard
+            markets={markets}
+            embeddedPreview={embeddedPreview}
+          />
         ) : (
-          <div className="grid h-full min-h-0 grid-cols-1">
+          <div
+            className={
+              embeddedPreview
+                ? "grid min-h-0 grid-cols-1"
+                : "grid h-full min-h-0 grid-cols-1"
+            }
+          >
             {filteredMarkets.map((market) => (
               <ExchangeMarketTable
                 key={`${activeView}-${market.id}`}
                 market={market}
                 rows={market.rows}
+                embeddedPreview={embeddedPreview}
               />
             ))}
           </div>
@@ -2749,13 +4325,19 @@ function ExchangeRepoCard({
 
 function ExchangeCoreCompactBoard({
   markets,
+  embeddedPreview = false,
 }: {
   markets: ExchangeMarketSplitSection["markets"];
+  embeddedPreview?: boolean;
 }) {
   const combinedRows = markets.flatMap((market) => market.rows.slice(0, 2));
   return (
-    <div className="h-full min-h-0">
-      <ExchangeCoreCompactBlock rows={combinedRows} rowCount={5} />
+    <div className={embeddedPreview ? "min-h-0" : "h-full min-h-0"}>
+      <ExchangeCoreCompactBlock
+        rows={combinedRows}
+        rowCount={5}
+        embeddedPreview={embeddedPreview}
+      />
     </div>
   );
 }
@@ -2763,19 +4345,25 @@ function ExchangeCoreCompactBoard({
 function ExchangeCoreCompactBlock({
   rows,
   rowCount = 2,
+  embeddedPreview = false,
 }: {
   rows: readonly (readonly string[])[];
   rowCount?: number;
+  embeddedPreview?: boolean;
 }) {
   const paddedRows = Array.from(
     { length: rowCount },
     (_, i) => rows[i] ?? null,
   );
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
+    <div
+      className={`flex min-h-0 flex-col rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] ${
+        embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
+      }`}
+    >
       <table className="w-full table-fixed shrink-0">
         <thead>
-          <tr className="border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
+          <tr className="border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] text-[11px] font-medium tracking-[0.02em] text-slate-400">
             <th className="w-[18%] px-2 py-1.5 text-left font-medium">期限</th>
             <th className="w-[30%] px-2 py-1.5 text-left font-medium">品种</th>
             <th className="w-[28%] px-2 py-1.5 text-right font-medium">最新</th>
@@ -2785,14 +4373,18 @@ function ExchangeCoreCompactBlock({
           </tr>
         </thead>
       </table>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div
+        className={
+          embeddedPreview ? "min-h-0 overflow-visible" : "min-h-0 flex-1 overflow-y-auto"
+        }
+      >
         <table className="w-full table-fixed">
           <tbody>
             {paddedRows.map((row, rowIndex) => (
               <tr
                 key={row ? `${row[1]}-${rowIndex}` : `empty-${rowIndex}`}
                 className={`text-xs ${
-                  rowIndex > 0 ? "border-t border-[#162439]" : ""
+                  rowIndex > 0 ? "border-t border-[color:var(--tk-color-border-divider)]" : ""
                 }`}
               >
                 {row ? (
@@ -2827,17 +4419,23 @@ function ExchangeCoreCompactBlock({
 function ExchangeMarketTable({
   market,
   rows,
+  embeddedPreview = false,
 }: {
   market: ExchangeMarketSplitSection["markets"][number];
   rows?: readonly (readonly string[])[];
+  embeddedPreview?: boolean;
 }) {
   const displayRows = rows ?? market.rows;
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
+    <div
+      className={`flex min-h-0 flex-col rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] ${
+        embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
+      }`}
+    >
       <table className="w-full table-fixed shrink-0">
         <thead>
-          <tr className="border-b border-[#22324d] bg-[#111d30] text-[11px] font-medium tracking-[0.02em] text-slate-400">
+          <tr className="border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] text-[11px] font-medium tracking-[0.02em] text-slate-400">
             {market.columns.map((column, index) => (
               <th
                 key={`${market.title}-${column}`}
@@ -2857,14 +4455,18 @@ function ExchangeMarketTable({
           </tr>
         </thead>
       </table>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div
+        className={
+          embeddedPreview ? "min-h-0 overflow-visible" : "min-h-0 flex-1 overflow-y-auto"
+        }
+      >
         <table className="w-full table-fixed">
           <tbody>
             {displayRows.map((row, rowIndex) => (
               <tr
                 key={`${market.title}-${row[0]}-${rowIndex}`}
-                className={`border-b border-[#162439] text-xs ${
-                  rowIndex % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
+                className={`border-b border-[color:var(--tk-color-border-divider)] text-xs ${
+                  rowIndex % 2 === 0 ? "bg-transparent" : "bg-[rgba(255,255,255,0.025)]"
                 }`}
               >
                 {row.map((cell, cellIndex) => (
@@ -3013,14 +4615,14 @@ function MainQuoteBoard() {
 
   return (
     <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pr-1">
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#2a4a78] bg-[#0c1730]">
-        <div className="border-b border-[#1b2a42] bg-[#101b2c] px-4 py-3">
+      <section className="tk-panel flex min-h-0 flex-1 flex-col overflow-hidden border">
+        <div className="tk-panel-header border-b px-4 py-3">
           <div className="flex flex-nowrap items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
-              <div className="shrink-0 whitespace-nowrap text-base font-semibold text-slate-50">
+              <div className="tk-title-lg shrink-0 whitespace-nowrap">
                 非银报价
               </div>
-              <div className="flex flex-nowrap items-center gap-0.5 text-xs text-slate-400">
+              <div className="tk-muted flex flex-nowrap items-center gap-0.5 text-xs">
                 <button
                   className={miniChipClass(tenorFilter === "all")}
                   onClick={() => setTenorFilter("all")}
@@ -3056,7 +4658,7 @@ function MainQuoteBoard() {
                 2级
               </button>
               <button
-                className="whitespace-nowrap rounded-md border border-emerald-500/30 bg-emerald-500/15 px-2 py-1 text-[11px] font-medium text-emerald-300"
+                className="tk-button tk-button-success whitespace-nowrap px-2 py-1 text-[11px]"
                 type="button"
               >
                 下载
@@ -3091,7 +4693,7 @@ function MainQuoteBoard() {
                     role="separator"
                     aria-orientation="horizontal"
                     onMouseDown={startDrag}
-                    className="group relative h-1.5 shrink-0 cursor-row-resize bg-[#18263b] transition-colors hover:bg-sky-500/60"
+                    className="group relative h-1.5 shrink-0 cursor-row-resize bg-[var(--tk-color-border-panel)] transition-colors hover:bg-[var(--tk-color-brand-cyan)]"
                   >
                     <span className="pointer-events-none absolute left-1/2 top-1/2 h-[2px] w-10 -translate-x-1/2 -translate-y-1/2 rounded bg-slate-500/60 group-hover:bg-sky-200" />
                   </div>
@@ -3144,9 +4746,9 @@ function QuoteEditorModal({
   ];
   const rankOptions: QuoteRank[] = ["最优", "次优", "报价"];
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#02060dcc] px-4">
-      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-[#25406a] bg-[#0d1726] shadow-[0_24px_80px_rgba(2,7,18,0.58)]">
-        <div className="border-b border-[#1c3150] bg-[#101d32] px-5 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(17,24,39,0.32)] px-4">
+      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] shadow-[0_12px_28px_rgba(17,24,39,0.12)]">
+        <div className="border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-5 py-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-base font-semibold text-slate-50">
@@ -3154,7 +4756,7 @@ function QuoteEditorModal({
               </div>
             </div>
             <button
-              className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+              className="rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-3 py-1.5 text-xs font-medium text-slate-300"
               onClick={onClose}
               type="button"
             >
@@ -3170,7 +4772,7 @@ function QuoteEditorModal({
             >
               <span>{f.label}</span>
               <input
-                className="rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
+                className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[color:var(--tk-color-brand-primary-hover)]"
                 value={(draft[f.key] as string) ?? ""}
                 placeholder={f.placeholder}
                 onChange={(e) => onChange(f.key, e.target.value)}
@@ -3180,7 +4782,7 @@ function QuoteEditorModal({
           <label className="flex flex-col gap-1 text-[11px] text-slate-400">
             <span>评级</span>
             <select
-              className="rounded-md border border-[#253754] bg-[#0a1322] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[#3c76f0]"
+              className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[color:var(--tk-color-brand-primary-hover)]"
               value={(draft.rank as string) ?? row.rank}
               onChange={(e) => onChange("rank", e.target.value)}
             >
@@ -3192,9 +4794,9 @@ function QuoteEditorModal({
             </select>
           </label>
         </div>
-        <div className="flex items-center justify-end gap-2 border-t border-[#1c3150] bg-[#0d1726] px-5 py-4">
+        <div className="flex items-center justify-end gap-2 border-t border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-deep)] px-5 py-4">
           <button
-            className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+            className="rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-3 py-1.5 text-xs font-medium text-slate-300"
             onClick={onClose}
             type="button"
           >
@@ -3276,26 +4878,26 @@ function RepoQuoteSectionBoard({
             : isActive
               ? "flex-none"
               : "min-h-0 flex-1"
-      } ${withTopBorder ? "border-t border-[#18314f]" : ""}`}
+      } ${withTopBorder ? "border-t border-[color:var(--tk-color-border-divider)]" : ""}`}
       style={containerStyle}
       onFocus={onActivate}
       onClick={onActivate}
       tabIndex={0}
     >
       <div
-        className={`flex cursor-pointer items-center justify-between px-4 py-1.5 ${isActive ? "border-l-[3px] border-sky-300 bg-gradient-to-r from-sky-500/40 via-sky-600/25 to-transparent shadow-[inset_0_-1px_0_rgba(125,211,252,0.35)]" : "bg-[#0f1a2d]"}`}
+        className={`flex cursor-pointer items-center justify-between px-4 py-1.5 ${isActive ? "border-l-[3px] border-[color:var(--tk-color-brand-cyan)] bg-[var(--tk-color-surface-selected)] shadow-[inset_3px_0_0_var(--tk-color-brand-cyan)]" : "bg-[var(--tk-color-surface-page)]"}`}
       >
         <div className="flex items-center gap-2">
           <div className="text-sm font-semibold text-slate-100">
             {section.title}
           </div>
           {isActive ? (
-            <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-medium text-sky-300">
+            <span className="rounded-full bg-[rgba(0,207,232,0.12)] px-2 py-0.5 text-[10px] font-medium text-sky-300">
               焦点
             </span>
           ) : null}
         </div>
-        <div className="rounded-full border border-[#29456c] bg-[#12203a] px-2 py-0.5 text-[11px] text-slate-400">
+        <div className="rounded-full border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-2 py-0.5 text-[11px] text-slate-400">
           层级 1 / 2
         </div>
       </div>
@@ -3308,7 +4910,7 @@ function RepoQuoteSectionBoard({
               : "flex-1 overflow-y-auto"
         }`}
       >
-        <div className="grid grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] border-y border-[#1c3150] bg-[#111d30] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+        <div className="grid grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] border-y border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
           <span>分组 / 机构</span>
           <span className="text-right">期限</span>
           <span className="text-right">金额(总量)</span>
@@ -3319,10 +4921,10 @@ function RepoQuoteSectionBoard({
           <span className="text-right">操作</span>
         </div>
         {section.groups.map((group) => (
-          <div key={group.id} className="border-b-2 border-[#1f3759]">
-            <div className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-sky-500/70 bg-gradient-to-r from-[#15294a] via-[#11223c] to-[#0d1a30] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
+          <div key={group.id} className="border-b-2 border-[color:var(--tk-color-border-divider)]">
+            <div className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-[color:var(--tk-color-brand-cyan)] bg-[var(--tk-color-surface-selected)] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
               <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-1 rounded-md border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-sky-200">
+                <span className="inline-flex items-center gap-1 rounded-md border border-[color:rgba(0,207,232,0.55)] bg-[rgba(0,207,232,0.12)] px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-[color:var(--tk-color-brand-primary-deep)]">
                   汇总
                 </span>
                 <div className="text-xs font-semibold text-slate-50">
@@ -3342,7 +4944,7 @@ function RepoQuoteSectionBoard({
               <span />
             </div>
             {displayLevel === 1 ? (
-              <div className="divide-y divide-[#152437] bg-[#080f1c]">
+              <div className="divide-y divide-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-page)]">
                 {selectLevel1Rows(group)
                   .filter((row) => matchTenor(row.tenor))
                   .map((rawRow) => {
@@ -3404,7 +5006,7 @@ function RepoQuoteSectionBoard({
               </div>
             ) : null}
             {displayLevel === 2 ? (
-              <div className="divide-y divide-[#152437] bg-[#080f1c]">
+              <div className="divide-y divide-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-page)]">
                 {sortRowsByRank(group.rows)
                   .filter((row) => matchTenor(row.tenor))
                   .map((rawRow) => {
@@ -3412,7 +5014,7 @@ function RepoQuoteSectionBoard({
                     return (
                       <div
                         key={row.id}
-                        className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200 transition hover:bg-[#11253d]"
+                        className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200 transition hover:bg-[var(--tk-color-surface-selected)]"
                       >
                         <div className="flex items-center gap-2">
                           {row.rank === "最优" || row.rank === "次优" ? (
@@ -3604,8 +5206,8 @@ function RightLowerPanel({
   onTabChange: (tab: RightLowerTab) => void;
 }) {
   return (
-    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
-      <div className="flex items-center gap-2 border-b border-[#203551] bg-[#101d32] px-3 py-2">
+    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="flex items-center gap-2 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
         {rightLowerTabs.map((tab) => (
           <button
             key={tab.id}
@@ -3654,13 +5256,13 @@ function IntradayPanel({
   const ti = tooltipState?.index ?? null;
 
   return (
-    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
-      <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101d32] px-3 py-2">
+    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="flex items-center justify-between gap-3 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
         <div className="flex items-center gap-3">
           <div className="text-sm font-semibold text-slate-100">
             匿名成交走势图
           </div>
-          <div className="rounded border border-[#264167] bg-[#13223a] px-1.5 py-0.5 text-[10px] font-medium text-blue-300">
+          <div className="rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-1.5 py-0.5 text-[10px] font-medium text-blue-300">
             R001
           </div>
           <OverlayProductSelect
@@ -3690,11 +5292,11 @@ function IntradayPanel({
             {[0, 1, 2, 3].map((index) => (
               <div
                 key={`intraday-grid-${index}`}
-                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
                 style={{ top: `${(index / 3) * 100}%` }}
               />
             ))}
-            <div className="absolute inset-x-0 top-[58%] border-t border-dashed border-[#ff8a26]" />
+            <div className="absolute inset-x-0 top-[58%] border-t border-dashed border-[color:var(--tk-color-warning)]" />
             <div className="absolute inset-x-0 bottom-0 top-0">
               <svg
                 className="h-full w-full"
@@ -3784,7 +5386,7 @@ function IntradayPanel({
                   </div>
                 )}
                 {overlaySeries && barValues ? (
-                  <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
+                  <div className="mt-1 border-t border-[color:var(--tk-color-border-divider)] pt-1 text-slate-400">
                     利差{" "}
                     <span
                       className={`font-semibold ${barValues[ti] >= 0 ? "text-red-400" : "text-emerald-400"}`}
@@ -3879,8 +5481,8 @@ function HistoryClosePanel({
   const ti = tooltipState?.index ?? null;
 
   return (
-    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
-      <div className="flex items-center justify-between gap-3 border-b border-[#203551] bg-[#101d32] px-3 py-2">
+    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="flex items-center justify-between gap-3 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
         <div className="flex items-center gap-3">
           <div className="text-sm font-semibold text-slate-100">
             加权价格走势
@@ -3892,7 +5494,7 @@ function HistoryClosePanel({
           <label className="flex items-center gap-1 text-xs text-slate-400">
             <span>对比</span>
             <select
-              className="rounded-md border border-[#2a4164] bg-[#0f1b2f] px-1.5 py-0.5 text-xs text-slate-200 outline-none"
+              className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-1.5 py-0.5 text-xs text-slate-200 outline-none"
               value={compareProduct}
               onChange={(e) =>
                 onCompareChange(e.target.value as CompareProduct)
@@ -3940,7 +5542,7 @@ function HistoryClosePanel({
             {[0, 1, 2, 3].map((index) => (
               <div
                 key={`k-grid-${index}`}
-                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
                 style={{ top: `${(index / 3) * 100}%` }}
               />
             ))}
@@ -4066,7 +5668,7 @@ function HistoryClosePanel({
                   </div>
                 )}
                 {spreadValues && (
-                  <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
+                  <div className="mt-1 border-t border-[color:var(--tk-color-border-divider)] pt-1 text-slate-400">
                     利差{" "}
                     <span
                       className={`font-semibold ${spreadValues[ti] >= 0 ? "text-red-400" : "text-emerald-400"}`}
@@ -4076,7 +5678,7 @@ function HistoryClosePanel({
                     </span>
                   </div>
                 )}
-                <div className="mt-1 border-t border-[#1e3352] pt-1 text-slate-400">
+                <div className="mt-1 border-t border-[color:var(--tk-color-border-divider)] pt-1 text-slate-400">
                   成交量{" "}
                   <span className="font-semibold text-slate-100">
                     {dataset.volume[ti]}亿
@@ -4087,7 +5689,7 @@ function HistoryClosePanel({
           </div>
         </div>
         {compareProduct !== "none" && spreadValues ? (
-          <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
+          <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[color:var(--tk-color-border-divider)] pt-2 pb-1">
             <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
               {(() => {
                 const dMax = Math.max(...spreadValues, 0);
@@ -4144,7 +5746,7 @@ function HistoryClosePanel({
             </div>
           </div>
         ) : (
-          <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[#1d3250] pt-2 pb-1">
+          <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[color:var(--tk-color-border-divider)] pt-2 pb-1">
             <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
               {buildCompactVolumeTicks(volumeMax).map((tick) => (
                 <div key={tick}>{tick}</div>
@@ -5254,9 +6856,9 @@ const cfetsBondTrend: Record<
 function CfetsDailyPanel() {
   return (
     <div className="h-full min-h-0 overflow-hidden">
-      <div className="overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
+      <div className="overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
         <table className="min-w-full text-xs">
-          <thead className="bg-[#101d32] text-slate-400">
+          <thead className="bg-[var(--tk-color-surface-dark-soft)] text-slate-400">
             <tr>
               {["日期", "公开市场操作", "净投放"].map((column) => (
                 <th key={column} className="px-3 py-2 text-left font-medium">
@@ -5274,7 +6876,7 @@ function CfetsDailyPanel() {
             ].map((row) => (
               <tr
                 key={row[0]}
-                className="border-t border-[#162439] text-slate-300"
+                className="border-t border-[color:var(--tk-color-border-divider)] text-slate-300"
               >
                 {row.map((cell, index) => (
                   <td key={`${row[0]}-${index}`} className="px-3 py-2">
@@ -5347,7 +6949,7 @@ function CfetsMatrixPanel({
                     return (
                       <td key={col} className="px-1 py-1">
                         {rate === null ? (
-                          <div className="flex h-8 w-full items-center justify-center rounded text-[10px] text-slate-600 bg-[#0a1322]">
+                          <div className="flex h-8 w-full items-center justify-center rounded text-[10px] text-slate-600 bg-[var(--tk-color-surface-dark-deep)]">
                             —
                           </div>
                         ) : (
@@ -5388,7 +6990,7 @@ function CfetsMatrixPanel({
           onClick={() => setModal(null)}
         >
           <div
-            className="w-80 rounded-xl border border-[#1d3250] bg-[#0a1322] p-4 shadow-2xl"
+            className="w-80 rounded-xl border border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-deep)] p-4 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-start justify-between">
@@ -5408,7 +7010,7 @@ function CfetsMatrixPanel({
                 ✕
               </button>
             </div>
-            <div className="mb-3 rounded-lg bg-[#0e1827] px-3 py-2 text-center">
+            <div className="mb-3 rounded-lg bg-[var(--tk-color-surface-dark-soft)] px-3 py-2 text-center">
               <span className="text-xl font-semibold text-amber-300">
                 {modal.rate.toFixed(4)}%
               </span>
@@ -5430,7 +7032,7 @@ function CfetsMatrixPanel({
                   .map((r) => (
                     <tr
                       key={r.term}
-                      className="border-t border-[#162439] text-slate-300"
+                      className="border-t border-[color:var(--tk-color-border-divider)] text-slate-300"
                     >
                       <td className="py-1">{r.term}</td>
                       <td className="py-1 text-right">{fmtRate(r.buyRate)}</td>
@@ -5445,9 +7047,9 @@ function CfetsMatrixPanel({
 
       {includeDaily && (
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
+          <div className="overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
             <table className="min-w-full text-xs">
-              <thead className="bg-[#101d32] text-slate-400">
+              <thead className="bg-[var(--tk-color-surface-dark-soft)] text-slate-400">
                 <tr>
                   {["日期", "公开市场操作", "净投放"].map((column) => (
                     <th
@@ -5468,7 +7070,7 @@ function CfetsMatrixPanel({
                 ].map((row) => (
                   <tr
                     key={row[0]}
-                    className="border-t border-[#162439] text-slate-300"
+                    className="border-t border-[color:var(--tk-color-border-divider)] text-slate-300"
                   >
                     {row.map((cell, index) => (
                       <td key={`${row[0]}-${index}`} className="px-3 py-2">
@@ -5543,7 +7145,7 @@ function MultiSeriesChart({
           </div>
           <div
             ref={containerRef}
-            className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[#2a4164]"
+            className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[color:var(--tk-color-border-panel)]"
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
           >
@@ -5599,7 +7201,7 @@ function MultiSeriesChart({
                 !isHidden(si) && Math.min(...vals) > 0 ? (
                   <div
                     key={si}
-                    className="pointer-events-none absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#0a1322]"
+                    className="pointer-events-none absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[color:var(--tk-color-surface-page)]"
                     style={{
                       left: `${(tooltipState.index / (dates.length - 1)) * 100}%`,
                       top: `${((max - vals[tooltipState.index]) / (max - min)) * 100}%`,
@@ -5681,7 +7283,7 @@ function MultiSeriesChart({
           </div>
           <div
             ref={containerRef}
-            className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[#2a4164]"
+            className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[color:var(--tk-color-border-panel)]"
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
           >
@@ -5693,7 +7295,7 @@ function MultiSeriesChart({
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
                 style={{ top: `${(i / 3) * 100}%` }}
               />
             ))}
@@ -5726,7 +7328,7 @@ function MultiSeriesChart({
             </div>
             {tooltipState && (
               <div
-                className="pointer-events-none absolute inset-y-0 w-px bg-[#4a7ab5]/60"
+                className="pointer-events-none absolute inset-y-0 w-px bg-[var(--tk-color-brand-primary)]"
                 style={{
                   left: `${(tooltipState.index / (dates.length - 1)) * 100}%`,
                 }}
@@ -5807,7 +7409,7 @@ function MultiSeriesChart({
         </div>
         <div
           ref={containerRef}
-          className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[#2a4164]"
+          className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[color:var(--tk-color-border-panel)]"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
@@ -5816,7 +7418,7 @@ function MultiSeriesChart({
               {axisCaption}
             </div>
           )}
-          <div className="absolute inset-x-0 top-1/2 border-t border-[#3a5a80]" />
+          <div className="absolute inset-x-0 top-1/2 border-t border-[color:var(--tk-color-border-divider)]" />
           <div className="absolute inset-x-1 bottom-1 top-1 flex items-center gap-[2px]">
             {netVals.map((val, di) => {
               const isPos = val >= 0;
@@ -5860,7 +7462,7 @@ function MultiSeriesChart({
           </div>
           {tooltipState && (
             <div
-              className="pointer-events-none absolute inset-y-0 w-px bg-[#4a7ab5]/60"
+              className="pointer-events-none absolute inset-y-0 w-px bg-[var(--tk-color-brand-primary)]"
               style={{
                 left: `${(tooltipState.index / (dates.length - 1)) * 100}%`,
               }}
@@ -5942,7 +7544,7 @@ function CfetsInstPanel() {
             type="button"
             className={`rounded-md px-2 py-1 text-[11px] transition-colors ${
               period === pt
-                ? "bg-[#1f3d6b] font-semibold text-slate-100"
+                ? "bg-[var(--tk-color-surface-selected)] font-semibold text-slate-100"
                 : "text-slate-400 hover:text-slate-200"
             }`}
             onClick={() => setPeriod(pt)}
@@ -5963,7 +7565,7 @@ function CfetsInstPanel() {
               aria-pressed={active}
               className={`rounded-md px-2 py-1 text-[11px] transition-colors ${
                 active
-                  ? "bg-[#1f3d6b] font-semibold text-slate-100"
+                  ? "bg-[var(--tk-color-surface-selected)] font-semibold text-slate-100"
                   : "text-slate-400 hover:text-slate-200"
               }`}
               onClick={() => setMetricKey(d.key)}
@@ -6035,7 +7637,7 @@ function CfetsBondPanel() {
               type="button"
               className={`rounded-md px-2.5 py-1 text-[11px] transition-colors ${
                 bondType === bt
-                  ? "bg-[#1f3d6b] font-semibold text-slate-100"
+                  ? "bg-[var(--tk-color-surface-selected)] font-semibold text-slate-100"
                   : "text-slate-400 hover:text-slate-200"
               }`}
               onClick={() => setBondType(bt)}
@@ -6046,7 +7648,7 @@ function CfetsBondPanel() {
         </div>
         <div className="flex items-center gap-2">
           <select
-            className="rounded border border-[#253754] bg-[#0e1827] px-2 py-1 text-[11px] text-slate-200 focus:outline-none"
+            className="rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-1 text-[11px] text-slate-200 focus:outline-none"
             value={metricKey}
             onChange={(e) => setMetricKey(e.target.value as CfetsBondMetricKey)}
           >
@@ -6115,7 +7717,7 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
   );
 
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+    <div className="grid h-full min-h-0 flex-1 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
       <div className="flex items-center justify-between text-[11px] text-slate-400">
         <div className="flex flex-wrap items-center gap-3">
           <LegendDot color={chartPalette.blue} label="1M" />
@@ -6132,14 +7734,14 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
         </div>
         <div
           ref={containerRef}
-          className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]"
+          className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[color:var(--tk-color-border-panel)]"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
           {[0, 1, 2, 3].map((index) => (
             <div
               key={`ncd-grid-${index}`}
-              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
               style={{ top: `${(index / 3) * 100}%` }}
             />
           ))}
@@ -6291,7 +7893,7 @@ function NcdPrimaryTrendPanel() {
   ];
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+    <div className="flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
       {/* header: legend + range tabs */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
         {series.map((s) => (
@@ -6321,14 +7923,14 @@ function NcdPrimaryTrendPanel() {
         {/* chart area — x-axis ticks + labels are absolutely inside */}
         <div
           ref={containerRef}
-          className="relative min-h-0 cursor-crosshair overflow-hidden rounded-md border border-dashed border-[#2f456b]"
+          className="relative min-h-0 cursor-crosshair overflow-hidden rounded-md border border-dashed border-[color:var(--tk-color-border-panel)]"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
-              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
               style={{ top: `${(i / 3) * 100}%` }}
             />
           ))}
@@ -6481,7 +8083,7 @@ function NcdLinkedChartPane({
     .filter(({ i }) => i % labelStep === 0 || i === count - 1);
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-1 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+    <div className="flex h-full min-h-0 flex-col gap-1 overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
       <div className="flex flex-wrap items-center gap-x-3 text-[11px] text-slate-400">
         {series.map((s) => (
           <LegendDot key={s.label} color={s.color} label={s.label} />
@@ -6495,14 +8097,14 @@ function NcdLinkedChartPane({
         </div>
         <div
           ref={containerRef}
-          className="relative min-h-0 cursor-crosshair overflow-hidden rounded-md border border-dashed border-[#2f456b]"
+          className="relative min-h-0 cursor-crosshair overflow-hidden rounded-md border border-dashed border-[color:var(--tk-color-border-panel)]"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
-              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
               style={{ top: `${(i / 3) * 100}%` }}
             />
           ))}
@@ -6689,7 +8291,7 @@ function NcdExpandedDualView({ period }: { period: NcdPeriod }) {
           />
         </div>
       </div>
-      <div className="h-px bg-[#1e2f48]" />
+      <div className="h-px bg-[var(--tk-color-border-divider)]" />
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="mb-1 text-[11px] font-medium text-slate-400">二级</div>
         <div className="min-h-0 flex-1 overflow-hidden">
@@ -6719,8 +8321,8 @@ function NcdPrimaryTable() {
   }));
   const maxRows = Math.max(...groups.map((g) => g.rows.length));
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726]">
-      <div className="flex items-center gap-2 border-b border-[#1c3050] bg-[#101d32] px-3 py-1.5">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="flex items-center gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-1.5">
         <div className="flex items-center gap-1">
           {ncdPrimaryPeriods.map((p) => (
             <button
@@ -6745,7 +8347,7 @@ function NcdPrimaryTable() {
         {groups.map((group) => (
           <div
             key={group.label}
-            className="border-b border-r border-[#1c3050] bg-[#0f1d30] px-2 py-1 text-center text-[11px] font-medium text-slate-400 last:border-r-0"
+            className="border-b border-r border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-1 text-center text-[11px] font-medium text-slate-400 last:border-r-0"
           >
             {group.label}
           </div>
@@ -6756,7 +8358,7 @@ function NcdPrimaryTable() {
             return (
               <div
                 key={`${group.label}-${rowIdx}`}
-                className="flex items-center justify-between border-b border-r border-[#172436] px-2 py-[5px] last:border-r-0"
+                className="flex items-center justify-between border-b border-r border-[color:var(--tk-color-border-divider)] px-2 py-[5px] last:border-r-0"
                 style={{
                   borderBottomColor:
                     rowIdx === maxRows - 1 ? "transparent" : undefined,
@@ -6798,14 +8400,14 @@ function NcdPrimaryExpandedTable() {
     <div className="h-full overflow-auto">
       <table className="w-full border-collapse text-xs">
         <thead className="sticky top-0 z-10">
-          <tr className="bg-[#101d32]">
-            <th className="w-20 border-b border-r border-[#1c3050] px-2 py-2 text-left text-[11px] text-slate-500" />
+          <tr className="bg-[var(--tk-color-surface-dark-soft)]">
+            <th className="w-20 border-b border-r border-[color:var(--tk-color-border-divider)] px-2 py-2 text-left text-[11px] text-slate-500" />
             {ncdPrimaryPeriods.map((p) => {
               const h = ncdColHeaders[p];
               return (
                 <th
                   key={p}
-                  className="border-b border-r border-[#1c3050] px-2 py-2 text-center last:border-r-0"
+                  className="border-b border-r border-[color:var(--tk-color-border-divider)] px-2 py-2 text-center last:border-r-0"
                 >
                   <div className="flex items-baseline justify-center gap-1">
                     <span className="font-semibold text-slate-200">{p}</span>
@@ -6826,7 +8428,7 @@ function NcdPrimaryExpandedTable() {
         <tbody>
           {ncdAllPeriodsData.map((group) => (
             <tr key={group.label} className="align-top">
-              <td className="border-b border-r border-[#1c3050] bg-[#0f1d30] px-2 py-2 text-[11px] font-medium text-slate-400">
+              <td className="border-b border-r border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-2 text-[11px] font-medium text-slate-400">
                 {group.label}
               </td>
               {ncdPrimaryPeriods.map((p) => {
@@ -6834,7 +8436,7 @@ function NcdPrimaryExpandedTable() {
                 return (
                   <td
                     key={p}
-                    className="border-b border-r border-[#172436] px-2 py-1.5 last:border-r-0"
+                    className="border-b border-r border-[color:var(--tk-color-border-divider)] px-2 py-1.5 last:border-r-0"
                   >
                     {cells.length > 0 ? (
                       <div className="flex flex-col gap-[3px]">
@@ -6908,7 +8510,7 @@ function FundStructureBars({
           <div key={tick}>{tick.toLocaleString()}</div>
         ))}
       </div>
-      <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]">
+      <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[color:var(--tk-color-border-panel)]">
         {axisCaption && (
           <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[9px] text-slate-500">
             {axisCaption}
@@ -6917,7 +8519,7 @@ function FundStructureBars({
         {yTicks.map((tick, index) => (
           <div
             key={`fund-grid-${tick}`}
-            className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+            className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
             style={{ top: `${(index / (yTicks.length - 1)) * 100}%` }}
           />
         ))}
@@ -7020,7 +8622,7 @@ function FundStructurePanel() {
   } | null>(null);
 
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
+    <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
       <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
         <div className="flex flex-wrap items-center gap-3">
           {fundStructureLegendItems.map((item) => (
@@ -7049,11 +8651,11 @@ function FundStructurePanel() {
             <div key={tick}>{tick.toLocaleString()}</div>
           ))}
         </div>
-        <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[#2f456b]">
+        <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[color:var(--tk-color-border-panel)]">
           {yTicks.map((tick, index) => (
             <div
               key={`fund-grid-${tick}`}
-              className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+              className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
               style={{ top: `${(index / (yTicks.length - 1)) * 100}%` }}
             />
           ))}
@@ -7174,7 +8776,7 @@ function OverlayProductSelect({
     <label className="flex items-center gap-2 text-xs text-slate-400">
       <span>叠加品种</span>
       <select
-        className="rounded-md border border-[#2a4164] bg-[#0f1b2f] px-2 py-1 text-xs text-slate-200 outline-none"
+        className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-2 py-1 text-xs text-slate-200 outline-none"
         value={value}
         onChange={(event) => onChange(event.target.value as OverlayProduct)}
       >
@@ -7215,11 +8817,11 @@ function QuoteSection({
     <section
       className={`flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border ${
         emphasized
-          ? "border-[#3b76f3] bg-[#0c1730]"
-          : "border-[#1f2f48] bg-[#0c1524]"
+          ? "border-[color:var(--tk-color-brand-primary)] bg-[var(--tk-color-surface-page)]"
+          : "border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)]"
       }`}
     >
-      <div className="border-b border-[#1b2a42] bg-[#101b2c] px-4 py-3">
+      <div className="tk-panel-header border-b px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3 whitespace-nowrap">
             <div className="text-base font-semibold text-slate-50">{title}</div>
@@ -7283,18 +8885,18 @@ function StructuredTable({
 }) {
   return (
     <div
-      className={`${adaptiveHeight ? "" : "h-full min-h-0"} bg-[#0a1322] ${
+      className={`tk-table-shell ${adaptiveHeight ? "" : "h-full min-h-0"} ${
         scrollY
           ? "overflow-y-auto overflow-x-hidden"
           : fitToWidth || adaptiveHeight
             ? "overflow-hidden"
             : "overflow-auto"
       } ${
-        flush ? "rounded-none border-0" : "rounded-xl border border-[#1c2b42]"
+        flush ? "rounded-none border-0" : "border"
       }`}
     >
       <table
-        className={`border-separate border-spacing-0 text-xs ${fitToWidth ? "w-full table-fixed" : "min-w-full whitespace-nowrap"}`}
+        className={`tk-table border-separate border-spacing-0 text-xs ${fitToWidth ? "w-full table-fixed" : "min-w-full whitespace-nowrap"}`}
       >
         {columnWidths ? (
           <colgroup>
@@ -7303,12 +8905,12 @@ function StructuredTable({
             ))}
           </colgroup>
         ) : null}
-        <thead className="sticky top-0 z-10 bg-[#111d30]">
+        <thead className="sticky top-0 z-10">
           <tr>
             {columns.map((column, index) => (
               <th
                 key={`${column}-${index}`}
-                className={`border-b border-[#22324d] px-3 py-2 text-[11px] font-medium tracking-[0.02em] text-slate-400 ${
+                className={`border-b px-3 py-2 text-[11px] font-medium tracking-[0] ${
                   index === 0 ? "text-left" : "text-right"
                 } ${compact ? "px-2 py-1.5" : "px-3 py-2.5"} ${
                   fitToWidth
@@ -7327,20 +8929,18 @@ function StructuredTable({
           {rows.map((row, rowIndex) => (
             <tr
               key={`${row[0]}-${rowIndex}`}
-              className={
-                rowIndex % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
-              }
+              className={rowIndex % 2 === 0 ? "bg-transparent" : ""}
             >
               {row.map((cell, cellIndex) => (
                 <td
                   key={`${row[0]}-${cellIndex}`}
-                  className={`border-b border-[#162439] ${compact ? "px-2.5 py-2" : "px-3 py-2.5"} ${
+                  className={`border-b ${compact ? "px-2.5 py-2" : "px-3 py-2.5"} ${
                     cellIndex === 0 ? "text-left" : "text-right"
                   } ${fitToWidth && buttonColumn !== cellIndex ? "overflow-hidden text-ellipsis whitespace-nowrap" : ""}`}
                 >
                   {buttonColumn === cellIndex ? (
                     <button
-                      className={`rounded-lg border border-blue-500/30 bg-blue-500/20 font-medium text-blue-300 ${
+                      className={`tk-button tk-button-primary font-medium ${
                         compact
                           ? "px-1.5 py-0.5 text-[10px]"
                           : "px-3 py-1 text-xs"
@@ -7379,8 +8979,8 @@ function TrendOverviewCard() {
   const areaPath = buildAreaPath(trendRateSeries, 860, 320, 1.82, 2.12);
 
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#284164] bg-[#0b1728]">
-      <div className="flex items-center justify-between border-b border-[#203551] bg-[#101d32] px-4 py-3">
+    <div className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="flex items-center justify-between border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-4 py-3">
         <div className="flex gap-2">
           {trendModeTabs.map((tab) => (
             <button
@@ -7398,7 +8998,7 @@ function TrendOverviewCard() {
             nonbankBest · 14
           </div>
           <button
-            className="rounded-lg border border-[#33507d] bg-[#14223a] px-3 py-1.5 text-xs font-medium text-slate-300"
+            className="rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-3 py-1.5 text-xs font-medium text-slate-300"
             type="button"
           >
             导出
@@ -7416,14 +9016,14 @@ function TrendOverviewCard() {
             {trendPriceTicks.map((_, index) => (
               <div
                 key={`price-grid-${index}`}
-                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
                 style={{
                   top: `${(index / (trendPriceTicks.length - 1)) * 100}%`,
                 }}
               />
             ))}
             <div
-              className="absolute inset-x-0 border-t-2 border-dashed border-[#ff8a26]"
+              className="absolute inset-x-0 border-t-2 border-dashed border-[color:var(--tk-color-warning)]"
               style={{ top: "58%" }}
             />
             <div className="absolute right-3 top-2 flex items-center gap-2 text-xs text-blue-300">
@@ -7453,7 +9053,7 @@ function TrendOverviewCard() {
             </svg>
           </div>
         </div>
-        <div className="grid min-h-0 grid-cols-[4rem_1fr] border-t border-[#1d3250] pt-2">
+        <div className="grid min-h-0 grid-cols-[4rem_1fr] border-t border-[color:var(--tk-color-border-divider)] pt-2">
           <div className="flex flex-col justify-between pr-3 pb-1 text-right text-[10px] text-slate-400">
             {trendVolumeTicks.map((tick) => (
               <div key={tick}>{tick}</div>
@@ -7463,7 +9063,7 @@ function TrendOverviewCard() {
             {[0, 1, 2, 3].map((index) => (
               <div
                 key={`vol-grid-${index}`}
-                className="absolute inset-x-0 border-t border-dashed border-[#29476e]"
+                className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
                 style={{ top: `${(index / 4) * 100}%` }}
               />
             ))}
@@ -7504,8 +9104,8 @@ function MiniChartCard({
   bars?: boolean;
 }) {
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[#1c2b42] bg-[#0a1322]">
-      <div className="flex items-center justify-between gap-3 border-b border-[#1a2c45] bg-[#0e1827] px-3 py-1.5">
+    <div className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="flex items-center justify-between gap-3 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-1.5">
         <div className="text-xs font-medium text-slate-200">{title}</div>
         <div className="flex flex-wrap gap-2 text-[11px] text-slate-500">
           <LegendDot color={chartPalette.emerald} label="1" />
@@ -7514,7 +9114,7 @@ function MiniChartCard({
         </div>
       </div>
       <div className="min-h-0 p-1.5">
-        <div className="relative h-full min-h-0 overflow-hidden rounded-lg border border-dashed border-[#2f456b] bg-[#0d1726]">
+        <div className="relative h-full min-h-0 overflow-hidden rounded-lg border border-dashed border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
           <div className="absolute inset-0 bg-[linear-gradient(rgba(58,81,115,0.16)_1px,transparent_1px),linear-gradient(90deg,rgba(58,81,115,0.16)_1px,transparent_1px)] bg-[size:100%_25%,20%_100%]" />
           {bars ? (
             <div className="absolute inset-x-2.5 bottom-2.5 top-2.5 flex items-end gap-1.5">
@@ -7659,7 +9259,7 @@ function ChartTooltip({
 }) {
   return (
     <div
-      className="pointer-events-none fixed z-[200] rounded-lg border border-[#2a4a6e] bg-[#0e1d31]/95 px-3 py-2 text-xs text-slate-200 shadow-xl backdrop-blur-sm"
+      className="pointer-events-none fixed z-[200] rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[rgba(255,255,255,0.96)] px-3 py-2 text-xs text-slate-200 shadow-xl backdrop-blur-sm"
       style={{ left: clientX + 14, top: clientY - 10 }}
     >
       {children}
@@ -7681,8 +9281,8 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 
 function trendModeButtonClass(active: boolean) {
   return active
-    ? "rounded-lg border border-[#3d74f1] bg-[#2a5fda] px-3 py-1.5 text-sm font-semibold text-white"
-    : "rounded-lg border border-[#2a4164] bg-[#0f1b2f] px-3 py-1.5 text-sm font-semibold text-slate-200";
+    ? "tk-chip-active px-3 py-1.5 text-sm font-semibold"
+    : "tk-chip px-3 py-1.5 text-sm font-semibold";
 }
 
 function buildLinePath(
@@ -7852,20 +9452,20 @@ function PanelCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[#1e2f48] bg-[#0d1726] shadow-[0_12px_28px_rgba(3,8,18,0.32)]">
-      <div className="border-b border-[#18263b] bg-[#101b2c] px-4 py-3">
+    <section className="tk-panel flex min-h-0 flex-col overflow-hidden border">
+      <div className="tk-panel-header border-b px-4 py-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-sm font-semibold tracking-[0.02em] text-slate-50">
+            <div className="tk-title">
               {title}
             </div>
             {subtitle ? (
-              <div className="mt-1 text-xs text-slate-500">{subtitle}</div>
+              <div className="tk-muted mt-1 text-xs">{subtitle}</div>
             ) : null}
           </div>
           {actions ?? (
             <button
-              className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
+              className="tk-button tk-button-success px-3 py-1"
               type="button"
             >
               下载
@@ -7981,20 +9581,20 @@ function SentimentPopoverPanel({
 
   return (
     <div
-      className="fixed z-[300] overflow-hidden rounded-xl border border-[#1d3250] bg-[#0a1322] shadow-2xl"
+      className="fixed z-[300] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-deep)] shadow-2xl"
       style={{ left, top, width: panelWidth }}
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
     >
-      <div className="flex items-center gap-2 border-b border-[#1a2c45] bg-[#0e1827] px-3 py-2">
+      <div className="flex items-center gap-2 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
         <span className="text-xs font-semibold text-slate-200">资金情绪</span>
-        <div className="flex gap-0.5 rounded-md bg-[#0a1322] p-0.5">
+        <div className="flex gap-0.5 rounded-md bg-[var(--tk-color-surface-dark-deep)] p-0.5">
           {(["realtime", "trend"] as const).map((t) => (
             <button
               key={t}
               className={`rounded px-2.5 py-0.5 text-[11px] transition-colors ${
                 tab === t
-                  ? "bg-[#c69b3a] font-semibold text-white"
+                  ? "bg-[var(--tk-color-brand-primary)] font-semibold text-white"
                   : "text-slate-400 hover:text-slate-200"
               }`}
               type="button"
@@ -8087,7 +9687,7 @@ function SentimentPopoverPanel({
               return (
                 <div
                   key={key}
-                  className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#0a1322]"
+                  className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[color:var(--tk-color-surface-page)]"
                   style={{
                     left: `${cx}%`,
                     top: `${cy}%`,
@@ -8178,15 +9778,15 @@ function InfoChip({
 }) {
   const toneStyles =
     tone === "good"
-      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+      ? "border-[color:rgba(0,224,86,0.35)] bg-[rgba(0,224,86,0.1)] text-[color:var(--tk-color-success)]"
       : tone === "alert"
-        ? "border-amber-500/20 bg-amber-500/10 text-amber-300"
-        : "border-[#253754] bg-[#101a2b] text-slate-300";
+        ? "border-[color:rgba(255,160,40,0.35)] bg-[rgba(255,160,40,0.1)] text-[color:var(--tk-color-warning)]"
+        : "border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] text-[color:var(--tk-color-text-inverse-secondary)]";
 
   return (
     <div className={`rounded-full border px-3 py-1.5 text-xs ${toneStyles}`}>
-      <span className="text-slate-500">{label}</span>
-      <span className="mx-2 text-slate-600">|</span>
+      <span className="tk-muted">{label}</span>
+      <span className="mx-2 text-[color:var(--tk-color-border-panel)]">|</span>
       <span>{value}</span>
     </div>
   );
@@ -8203,8 +9803,8 @@ function ToolbarChip({
     <button
       className={`rounded-lg border px-3 py-1.5 text-xs transition-colors ${
         active
-          ? "border-[#3c76f0] bg-[#2551b8] text-white"
-          : "border-[#253754] bg-[#101a2b] text-slate-400 hover:border-[#33507d] hover:text-slate-200"
+          ? "tk-chip-active"
+          : "tk-chip"
       }`}
       type="button"
     >
@@ -8214,16 +9814,16 @@ function ToolbarChip({
 }
 
 function FilterLabel({ children }: { children: React.ReactNode }) {
-  return <span className="px-1 text-slate-400">{children}</span>;
+  return <span className="tk-muted px-1">{children}</span>;
 }
 
 function FilterDivider() {
-  return <div className="mx-2 h-6 w-px bg-[#243552]" />;
+  return <div className="mx-2 h-6 w-px bg-[var(--tk-color-border-divider-dark)]" />;
 }
 
 function RangeFilterField({ value }: { value: string }) {
   return (
-    <div className="flex h-8 min-w-[96px] items-center rounded-lg border border-[#2a4164] bg-[#101a2b] px-3 text-sm text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+    <div className="tk-field flex h-8 min-w-[96px] items-center px-3 text-sm">
       {value}
     </div>
   );
@@ -8231,28 +9831,28 @@ function RangeFilterField({ value }: { value: string }) {
 
 function StatusBadge({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-full border border-[#94712a] bg-[#4b3a10] px-4 py-1.5 text-sm font-semibold text-amber-300">
+    <div className="tk-badge px-4 py-1.5 text-sm font-semibold">
       {children}
     </div>
   );
 }
 
 function toneClass(tone: "neutral" | "balanced" | "watch") {
-  if (tone === "balanced") return "text-sm font-semibold text-emerald-300";
-  if (tone === "watch") return "text-sm font-semibold text-amber-300";
-  return "text-sm font-semibold text-slate-300";
+  if (tone === "balanced") return "tk-positive text-sm font-semibold";
+  if (tone === "watch") return "tk-warning text-sm font-semibold";
+  return "tk-strong text-sm font-semibold";
 }
 
 function auxTabClass(active: boolean) {
   return active
-    ? "rounded-lg border border-[#3c76f0] bg-[#2551b8] px-3 py-1.5 text-xs text-white"
-    : "rounded-lg border border-[#253754] bg-[#101a2b] px-3 py-1.5 text-xs text-slate-400 hover:border-[#33507d] hover:text-slate-200";
+    ? "tk-chip-active px-3 py-1.5 text-xs"
+    : "tk-chip px-3 py-1.5 text-xs";
 }
 
 function miniChipClass(active: boolean) {
   return active
-    ? "whitespace-nowrap rounded-md border border-[#3c76f0] bg-[#2551b8] px-1.5 py-0.5 text-[11px] font-medium text-white"
-    : "whitespace-nowrap rounded-md border border-[#253754] bg-[#101a2b] px-1.5 py-0.5 text-[11px] text-slate-400 hover:border-[#33507d] hover:text-slate-200";
+    ? "tk-chip-active whitespace-nowrap px-1.5 py-0.5 text-[11px] font-medium"
+    : "tk-chip whitespace-nowrap px-1.5 py-0.5 text-[11px]";
 }
 
 function cellClassName(
@@ -8263,17 +9863,17 @@ function cellClassName(
   deltaColumns: readonly number[],
   emphasisColumns: readonly number[],
 ) {
-  if (columnIndex === 0) return "font-semibold text-slate-100";
+  if (columnIndex === 0) return "tk-strong font-semibold";
   if (deltaColumns.includes(columnIndex)) {
-    if (value.startsWith("-")) return "font-semibold text-emerald-300";
-    if (value.startsWith("+")) return "font-semibold text-red-400";
-    return "font-medium text-slate-300";
+    if (value.startsWith("-")) return "tk-positive font-semibold";
+    if (value.startsWith("+")) return "tk-negative font-semibold";
+    return "tk-strong font-medium";
   }
   if (greenColumns.includes(columnIndex))
-    return "font-semibold text-emerald-300";
-  if (redColumns.includes(columnIndex)) return "font-semibold text-red-400";
-  if (emphasisColumns.includes(columnIndex)) return "font-medium text-red-400";
-  return "text-slate-300";
+    return "tk-positive font-semibold";
+  if (redColumns.includes(columnIndex)) return "tk-negative font-semibold";
+  if (emphasisColumns.includes(columnIndex)) return "tk-negative font-medium";
+  return "tk-strong";
 }
 
 export default App;
