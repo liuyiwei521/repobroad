@@ -1025,9 +1025,9 @@ body {
   min-width: 0;
   overflow: hidden;
   color: var(--tdx-text-heading);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 18px;
+  font-size: var(--tk-font-size-sm);
+  font-weight: 600;
+  line-height: var(--tk-line-height-normal);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1039,7 +1039,7 @@ body {
   background: rgba(214, 165, 65, 0.14);
   color: #f1c96a;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 17px;
   padding: 0 8px;
 }
@@ -1052,9 +1052,9 @@ body {
 
 .tk-reply-pending {
   color: var(--tdx-text-muted);
-  font-size: 16px;
+  font-size: var(--tk-font-size-sm);
   font-style: italic;
-  line-height: 26px;
+  line-height: var(--tk-line-height-relaxed);
 }
 
 .tk-reply-value {
@@ -1063,25 +1063,30 @@ body {
   min-width: 0;
   color: var(--tdx-text-heading);
   font-family: var(--tk-font-family-number);
-  font-weight: 800;
-  line-height: 30px;
+  font-size: var(--tk-font-size-sm);
+  font-weight: 600;
+  line-height: var(--tk-line-height-relaxed);
   white-space: nowrap;
 }
 
 .tk-reply-value--done {
   font-family: var(--tk-font-family-base);
+  font-weight: 600;
 }
 
 .tk-reply-amount {
   color: var(--tdx-text-heading);
   font-size: 28px;
+  font-weight: 800;
+  line-height: 30px;
   letter-spacing: 0;
 }
 
 .tk-reply-done {
   color: var(--tdx-green);
-  font-size: 18px;
-  font-weight: 800;
+  font-size: var(--tk-font-size-sm);
+  font-weight: 600;
+  line-height: var(--tk-line-height-relaxed);
 }
 
 .tk-reply-tags {
@@ -1113,7 +1118,14 @@ body {
   border-color: rgba(231, 53, 58, 0.56);
   background: rgba(231, 53, 58, 0.12);
   color: var(--tdx-text-heading);
-  font-weight: 800;
+  font-weight: 600;
+}
+
+.tk-reply-tag--core {
+  border-color: rgba(0, 168, 90, 0.5);
+  background: rgba(0, 168, 90, 0.12);
+  color: var(--tdx-green);
+  font-weight: 600;
 }
 
 .tk-reply-empty {

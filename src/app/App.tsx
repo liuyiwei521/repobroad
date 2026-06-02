@@ -3661,7 +3661,7 @@ function QuoteReplyCardView({ card }: { card: QuoteReplyCard }) {
         {card.tags.map((tag, index) => (
           <span
             key={`${card.id}-${tag}`}
-            className={`tk-reply-tag ${index === 0 ? "tk-reply-tag--tenor" : ""}`}
+            className={getReplyTagClassName(tag, index)}
           >
             {tag}
           </span>
@@ -3671,21 +3671,40 @@ function QuoteReplyCardView({ card }: { card: QuoteReplyCard }) {
   );
 }
 
+function getReplyTagClassName(tag: string, index: number) {
+  return [
+    "tk-reply-tag",
+    index === 0 ? "tk-reply-tag--tenor" : "",
+    isCoreCounterpartyTag(tag) ? "tk-reply-tag--core" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 function buildQuoteReplyCards(parentRow: QuoteDetailRow): QuoteReplyCard[] {
-  const tenorLabel = formatQuoteTenorLabel(parentRow.tenor);
   const accountTag = normalizeAccountRequirement(parentRow.accountType);
   const collateralTag = normalizeCollateralTag(parentRow.collateral);
 
   return QUOTE_REPLY_TEMPLATES.map((template) => {
-    const accountLabel = template.account ?? pickAccountLabel(template.tags, accountTag);
+    const tenorLabel = buildReplyTenorLabel(parentRow.tenor, template.id);
+    const templateTags = template.tags.map(normalizeReplyTemplateTag);
+    const accountLabel = template.account
+      ? normalizeReplyTemplateTag(template.account)
+      : pickAccountLabel(templateTags, accountTag);
     const collateralLabel =
-      template.collateral ?? pickCollateralLabel(template.tags, collateralTag);
+      template.collateral ?? pickCollateralLabel(templateTags, collateralTag);
+    const supplementalTags = buildSupplementalReplyTags(
+      parentRow,
+      template,
+      accountLabel,
+      collateralLabel,
+    );
+    const tagLimit = 3 + (hashString(`${parentRow.id}:${template.id}:tag-limit`) % 3);
     const tags = uniqTags([
       tenorLabel,
-      ...template.tags,
-      collateralLabel,
-      accountLabel,
-    ]).slice(0, 4);
+      ...supplementalTags,
+      ...templateTags,
+    ]).slice(0, tagLimit);
 
     return {
       ...template,
@@ -3696,11 +3715,108 @@ function buildQuoteReplyCards(parentRow: QuoteDetailRow): QuoteReplyCard[] {
       collateralSearchText: [collateralLabel, ...tags].join(" "),
       tags,
     };
-  });
+  }).sort(
+    (left, right) =>
+      getReplyTenorPriority(left.tenorLabel, parentRow.tenor) -
+        getReplyTenorPriority(right.tenorLabel, parentRow.tenor) ||
+      left.waitMinutes - right.waitMinutes,
+  );
+}
+
+const AMOUNT_REPLY_TAGS = ["5kw起", "1e起", "整量", "可拆", "足额优先"] as const;
+const IDENTITY_REPLY_TAGS = ["核心对手", "活跃对手", "熟户", "白名单"] as const;
+const LIMIT_REPLY_TAGS = ["限户", "限名单", "需授信", "限非银"] as const;
+
+function buildSupplementalReplyTags(
+  parentRow: QuoteDetailRow,
+  template: QuoteReplyTemplate,
+  accountLabel: string,
+  collateralLabel: string,
+) {
+  const key = `${parentRow.id}:${template.id}`;
+  const tags: string[] = [];
+
+  const isCoreTemplate = template.tags.some(isCoreCounterpartyTag);
+
+  if (isCoreTemplate || stableChance(`${key}:identity`, 42)) {
+    tags.push(
+      isCoreTemplate
+        ? "核心对手"
+        : stablePick(IDENTITY_REPLY_TAGS, `${key}:identity-tag`),
+    );
+  }
+
+  if (stableChance(`${key}:amount`, template.amount ? 48 : 34)) {
+    tags.push(stablePick(AMOUNT_REPLY_TAGS, `${key}:amount-tag`));
+  }
+
+  if (stableChance(`${key}:limit`, 32)) {
+    tags.push(stablePick(LIMIT_REPLY_TAGS, `${key}:limit-tag`));
+  }
+
+  if (stableChance(`${key}:account`, 46)) {
+    tags.push(accountLabel);
+  }
+
+  if (stableChance(`${key}:collateral`, 42)) {
+    tags.push(collateralLabel);
+  }
+
+  return tags;
+}
+
+function normalizeReplyTemplateTag(tag: string) {
+  return isCoreCounterpartyTag(tag) ? "核心对手" : tag;
+}
+
+function isCoreCounterpartyTag(tag: string) {
+  const normalized = normalizeFuzzyText(tag.trim());
+  return normalized === "核心" || normalized === "核心对手";
+}
+
+function stableChance(key: string, percent: number) {
+  return hashString(key) % 100 < percent;
+}
+
+function stablePick<T>(items: readonly T[], key: string) {
+  return items[hashString(key) % items.length];
+}
+
+const REPLY_TENOR_VARIANTS_BY_DAY: Record<number, readonly number[]> = {
+  7: [7, 4, 6, 5],
+  14: [14, 12, 8, 10],
+  21: [21, 14, 18],
+  28: [28, 21, 14],
+};
+
+function buildReplyTenorLabel(parentTenor: string, templateId: string) {
+  const parentDay = getQuoteTenorDay(parentTenor);
+  if (parentDay == null) return formatQuoteTenorLabel(parentTenor);
+
+  const variants = REPLY_TENOR_VARIANTS_BY_DAY[parentDay];
+  if (!variants) return `${parentDay}D`;
+
+  const variantPercent = parentDay === 7 ? 38 : parentDay === 14 ? 42 : 28;
+  if (!stableChance(`${parentTenor}:${templateId}:tenor-variant`, variantPercent)) {
+    return `${parentDay}D`;
+  }
+
+  const nonMatchingVariants = variants.filter((day) => day !== parentDay);
+  return `${stablePick(nonMatchingVariants, `${parentTenor}:${templateId}:tenor-day`)}D`;
+}
+
+function getReplyTenorPriority(tenorLabel: string, parentTenor: string) {
+  const parentDay = getQuoteTenorDay(parentTenor);
+  const cardDay = getQuoteTenorDay(tenorLabel);
+  return parentDay != null && cardDay === parentDay ? 0 : 1;
 }
 
 const ACCOUNT_FILTER_TAGS = [
   "核心",
+  "核心对手",
+  "活跃对手",
+  "熟户",
+  "白名单",
   "资管户",
   "自营",
   "公募",
@@ -3739,11 +3855,15 @@ function normalizeFuzzyText(value: string) {
 }
 
 function formatQuoteTenorLabel(tenor: string) {
+  const day = getQuoteTenorDay(tenor);
+  return day == null ? tenor : `${day}D`;
+}
+
+function getQuoteTenorDay(tenor: string) {
   const dayMatch = tenor.match(/\d+/);
-  if (!dayMatch) return tenor;
+  if (!dayMatch) return null;
   const day = parseInt(dayMatch[0], 10);
-  if (!Number.isFinite(day)) return tenor;
-  return `${day}D`;
+  return Number.isFinite(day) ? day : null;
 }
 
 function normalizeCollateralTag(collateral: string) {
