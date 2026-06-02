@@ -50,6 +50,7 @@
   --tdx-bg-row-hover: #1d1c27;
   --tdx-border: #2f2e3a;
   --tdx-border-weak: #24232d;
+  --tdx-border-active: #e7353a;
   --tdx-text-main: #d8c8ab;
   --tdx-text-muted: #8f8d99;
   --tdx-text-heading: #f1e6cf;
@@ -381,16 +382,6 @@ body {
   background-image: none !important;
 }
 
-.tk-workbench [class*="bg-blue"],
-.tk-workbench [class*="bg-sky"],
-.tk-workbench [class*="from-blue"],
-.tk-workbench [class*="from-sky"],
-.tk-workbench [class*="to-blue"],
-.tk-workbench [class*="to-sky"] {
-  background: var(--tdx-red) !important;
-  background-image: none !important;
-}
-
 .tk-workbench [class*="border-[#"],
 .tk-workbench [class*="border-blue"],
 .tk-workbench [class*="border-sky"],
@@ -415,11 +406,6 @@ body {
 .tk-workbench [class*="text-slate-400"],
 .tk-workbench [class*="text-slate-500"] {
   color: var(--tdx-text-muted) !important;
-}
-
-.tk-workbench [class*="text-blue"],
-.tk-workbench [class*="text-sky"] {
-  color: var(--tdx-red) !important;
 }
 
 .tk-workbench__main {
@@ -480,12 +466,21 @@ body {
 }
 
 .tk-splitter:hover {
-  background: rgba(231, 53, 58, 0.18) !important;
+  background: rgba(231, 53, 58, 0.08) !important;
+}
+
+.tk-splitter:active {
+  background: rgba(231, 53, 58, 0.14) !important;
 }
 
 .tk-splitter__handle {
-  background: rgba(143, 141, 153, 0.66) !important;
+  background: rgba(143, 141, 153, 0.48) !important;
   border-radius: var(--tk-radius-pill) !important;
+}
+
+.tk-splitter:hover .tk-splitter__handle,
+.tk-splitter:active .tk-splitter__handle {
+  background: rgba(231, 53, 58, 0.58) !important;
 }
 
 .tk-btn {
@@ -509,28 +504,38 @@ body {
   font-size: var(--tk-font-size-xs) !important;
 }
 
-.tk-btn--primary,
-.tk-btn--active {
+.tk-btn--primary {
   border-color: var(--tk-color-brand-primary) !important;
   background: var(--tk-color-brand-primary) !important;
   color: var(--tk-color-text-inverse) !important;
 }
 
-.tk-btn--primary:hover,
-.tk-btn--active:hover {
+.tk-btn--primary:hover {
   background: var(--tk-color-brand-primary-hover) !important;
+}
+
+.tk-btn--active {
+  border-color: rgba(231, 53, 58, 0.82) !important;
+  background: #351b22 !important;
+  color: var(--tdx-text-heading) !important;
+}
+
+.tk-btn--active:hover {
+  background: rgba(231, 53, 58, 0.24) !important;
+  color: var(--tk-color-text-inverse) !important;
 }
 
 .tk-btn--secondary,
 .tk-btn--ghost {
-  background: rgba(255, 255, 255, 0.06) !important;
-  color: var(--tk-color-text-inverse-secondary) !important;
+  background: var(--tdx-bg-control) !important;
+  color: var(--tk-color-text-secondary) !important;
 }
 
 .tk-btn--secondary:hover,
 .tk-btn--ghost:hover {
   border-color: var(--tk-color-brand-primary-hover) !important;
   color: var(--tk-color-text-inverse) !important;
+  background: var(--tdx-bg-control-hover) !important;
 }
 
 .tk-btn--warning {
@@ -540,9 +545,20 @@ body {
 }
 
 .tk-btn--success {
-  border-color: rgba(0, 224, 86, 0.48) !important;
-  background: rgba(0, 224, 86, 0.12) !important;
+  border-color: rgba(0, 168, 90, 0.46) !important;
+  background: rgba(0, 168, 90, 0.1) !important;
   color: var(--tk-color-success) !important;
+}
+
+.tk-btn--trade {
+  border-color: rgba(231, 53, 58, 0.62) !important;
+  background: rgba(231, 53, 58, 0.08) !important;
+  color: var(--tdx-red) !important;
+}
+
+.tk-btn--trade:hover {
+  background: rgba(231, 53, 58, 0.2) !important;
+  color: var(--tdx-text-inverse) !important;
 }
 
 .tk-chip {
@@ -566,6 +582,12 @@ body {
 .tk-chip--alert {
   border-color: rgba(255, 160, 40, 0.42) !important;
   color: var(--tk-color-warning) !important;
+}
+
+.tk-chip--summary {
+  border-color: rgba(214, 165, 65, 0.42) !important;
+  background: rgba(214, 165, 65, 0.1) !important;
+  color: var(--tdx-yellow) !important;
 }
 
 .tk-filter-label {
@@ -692,12 +714,12 @@ body {
 }
 
 .tk-quote-section-title.is-active {
-  border-left-color: var(--tk-color-brand-primary-deep) !important;
+  border-left-color: var(--tdx-border) !important;
   background: #351b22 !important;
 }
 
 .tk-quote-group {
-  border-left: 2px solid var(--tk-color-brand-primary-deep) !important;
+  border-left: 2px solid var(--tdx-border) !important;
   background: #20151c !important;
 }
 
