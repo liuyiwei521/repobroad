@@ -11,6 +11,7 @@ export type QuoteChatAnchor = { x: number; y: number };
 export type QuoteChatContext = {
   id: string;
   institution: string;
+  sender: string;
   groupName: string;
   sectionTitle: string;
   tenor: string;
@@ -80,19 +81,16 @@ function positionFromAnchor(anchor?: QuoteChatAnchor) {
 
 function buildInitialMessages(context: QuoteChatContext): QuoteChatMessage[] {
   const time = context.updatedAt || currentMinuteTime();
-  const displayAmount = context.amount && context.amount !== "--" ? context.amount : "待确认";
+  const displayAmount = context.amount?.trim() || "待确认";
+  const senderPrefix = context.sender
+    ? `${context.sender} · ${context.institution}`
+    : context.institution;
 
   return [
     {
-      id: `${context.id}-system`,
-      from: "system",
-      text: `已定位 ${context.sectionTitle} / ${context.groupName} 的${context.rank}报价。`,
-      time,
-    },
-    {
       id: `${context.id}-counterparty-1`,
       from: "counterparty",
-      text: `${context.tenor} ${displayAmount} @ ${context.rate}，${context.accountRequirement}，押券 ${context.collateral}。`,
+      text: `${senderPrefix}：${context.tenor} ${displayAmount} @ ${context.rate}，${context.accountRequirement}，押券 ${context.collateral}。`,
       time,
     },
     {
@@ -224,7 +222,7 @@ export function QuoteChatPopup({
     >
       <div className="tk-chat-popup__head" onMouseDown={startDrag}>
         <div className="min-w-0">
-          <p>聊天弹窗</p>
+          <p>发送人 · {context.sender || context.institution}</p>
           <h3>{context.institution}</h3>
         </div>
         <button
@@ -245,7 +243,7 @@ export function QuoteChatPopup({
         <strong>
           {context.tenor} / {context.rate}
         </strong>
-        <em>{context.amount && context.amount !== "--" ? context.amount : "金额待确认"}</em>
+        <em>{context.amount?.trim() || "金额待确认"}</em>
       </div>
 
       <div className="tk-chat-meta">
@@ -295,7 +293,7 @@ export function QuoteChatPopup({
               {
                 id: `deal-${Date.now()}`,
                 from: "system",
-                text: `已确认成交：${context.tenor} ${context.amount && context.amount !== "--" ? context.amount : "待分配"} @ ${context.rate}，等待快捷分配。`,
+                text: `已确认成交：${context.tenor} ${context.amount?.trim() || "待分配"} @ ${context.rate}，等待快捷分配。`,
                 time: currentMinuteTime(),
               },
             ]);

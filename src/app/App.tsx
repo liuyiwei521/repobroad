@@ -127,6 +127,7 @@ type SummaryTableSection = {
   buttonColumn?: number;
   fitToWidth?: boolean;
   columnWidths?: readonly string[];
+  noTruncateColumns?: readonly number[];
   scrollable: boolean;
 };
 
@@ -305,7 +306,8 @@ const leftSections: readonly (
     emphasisColumns: [],
     buttonColumn: 5,
     fitToWidth: true,
-    columnWidths: ["17%", "19%", "16%", "16%", "19%", "13%"],
+    columnWidths: ["24%", "17%", "14%", "14%", "18%", "13%"],
+    noTruncateColumns: [0],
     scrollable: false,
   },
   {
@@ -367,7 +369,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             rate: "1.35%",
             collateral: "利率",
             rank: "最优",
-            reason: "这是 R001 最优",
+            reason: "R001 最优",
             accountType: "自营户",
             minimum: "5亿起",
             updatedAt: "10:53:27",
@@ -380,7 +382,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             rate: "1.40%",
             collateral: "利率地方存单商金",
             rank: "最优",
-            reason: "这是 R007 最优",
+            reason: "R007 最优",
             accountType: "商金户",
             minimum: "2亿起",
             updatedAt: "10:53:27",
@@ -406,7 +408,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             rate: "1.43%",
             collateral: "利率地方存单商金",
             rank: "最优",
-            reason: "这是 R014 最优",
+            reason: "R014 最优",
             accountType: "自营户",
             minimum: "3亿起",
             updatedAt: "10:53:27",
@@ -495,7 +497,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             rate: "1.40%",
             collateral: "利率地方存单商金",
             rank: "最优",
-            reason: "这是 R001 最优",
+            reason: "R001 最优",
             accountType: "商金户",
             minimum: "5亿起",
             updatedAt: "10:53:27",
@@ -508,7 +510,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             rate: "1.42%",
             collateral: "大行存单",
             rank: "最优",
-            reason: "这是 R007 最优",
+            reason: "R007 最优",
             accountType: "理财子",
             minimum: "2亿起",
             updatedAt: "10:53:27",
@@ -553,8 +555,8 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             updatedAt: "10:53:11",
           },
           {
-            id: "reverse-cd-sj-taikang",
-            institution: "泰康资产",
+            id: "reverse-cd-sj-guoshou",
+            institution: "国寿资产",
             tenor: "R001",
             amount: "5亿",
             rate: "1.42%",
@@ -597,7 +599,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             rate: "1.45%",
             collateral: "信用",
             rank: "最优",
-            reason: "这是 R007 最优",
+            reason: "R007 最优",
             accountType: "公募基金",
             minimum: "1亿起",
             updatedAt: "10:53:27",
@@ -623,7 +625,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             rate: "1.43%",
             collateral: "年金户",
             rank: "最优",
-            reason: "这是 R001 最优",
+            reason: "R001 最优",
             accountType: "券商自营",
             minimum: "2亿起",
             updatedAt: "10:53:27",
@@ -636,7 +638,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             rate: "1.45%",
             collateral: "信用",
             rank: "最优",
-            reason: "这是 R014 最优",
+            reason: "R014 最优",
             accountType: "公募基金",
             minimum: "1亿起",
             updatedAt: "10:53:27",
@@ -731,7 +733,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             rate: "1.51%",
             collateral: "利率",
             rank: "最优",
-            reason: "这是 R001 最优",
+            reason: "R001 最优",
             accountType: "大行自营",
             minimum: "5亿起",
             updatedAt: "10:53:27",
@@ -744,7 +746,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             rate: "1.53%",
             collateral: "利率地方",
             rank: "最优",
-            reason: "这是 R007 最优",
+            reason: "R007 最优",
             accountType: "大行自营",
             minimum: "3亿起",
             updatedAt: "10:53:27",
@@ -833,7 +835,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             rate: "1.58%",
             collateral: "国股存单",
             rank: "最优",
-            reason: "这是 R007 最优",
+            reason: "R007 最优",
             accountType: "理财子",
             minimum: "2亿起",
             updatedAt: "10:53:27",
@@ -872,7 +874,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             rate: "1.57%",
             collateral: "国股存单",
             rank: "最优",
-            reason: "这是 R001 最优",
+            reason: "R001 最优",
             accountType: "理财子",
             minimum: "2亿起",
             updatedAt: "10:53:14",
@@ -922,7 +924,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             rate: "1.60%",
             collateral: "信用",
             rank: "最优",
-            reason: "这是 R001 最优",
+            reason: "R001 最优",
             accountType: "券商自营",
             minimum: "1亿起",
             updatedAt: "10:53:27",
@@ -948,7 +950,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             rate: "1.63%",
             collateral: "年金户",
             rank: "最优",
-            reason: "这是 R021 最优",
+            reason: "R021 最优",
             accountType: "券商资管",
             minimum: "2亿起",
             updatedAt: "10:53:27",
@@ -1376,9 +1378,18 @@ const ncdPrimaryAAABase6m = randomWalk(2.05, 130, 0.006, 21);
 const ncdPrimaryAAPlsBase6m = randomWalk(2.1, 130, 0.007, 22);
 const ncdPrimaryAABase6m = randomWalk(2.15, 130, 0.007, 23);
 const ncdTrendDates6m = generateTradingDates(TODAY_STR, 130);
+const NCD_AA_PLUS_DISPLAY_FACTOR = 0.8;
 
 function shiftSeries(base: number[], offset: number): number[] {
   return base.map((v) => parseFloat((v + offset).toFixed(4)));
+}
+
+function scaleSeriesValues(values: readonly number[], factor: number): number[] {
+  return values.map((value) => parseFloat((value * factor).toFixed(4)));
+}
+
+function scaleRateString(rate: string, factor: number, digits = 3): string {
+  return (parseFloat(rate) * factor).toFixed(digits);
 }
 
 type NcdPrimaryRow = {
@@ -2390,6 +2401,7 @@ function LeftSummaryPanel() {
                 buttonColumn={section.buttonColumn}
                 fitToWidth={section.fitToWidth}
                 columnWidths={section.columnWidths}
+                noTruncateColumns={section.noTruncateColumns}
                 compact
                 flush
                 adaptiveHeight={!section.scrollable}
@@ -3153,8 +3165,7 @@ function clampRatio(value: number) {
   return Math.max(15, Math.min(85, value));
 }
 
-// 60% 行展示 amount，剩下 40% 行展示 "--"。按 id 字典序均匀取 40% 行。
-const BLANK_AMOUNT_IDS = (() => {
+function buildMockBlankIds(blankSlots: readonly number[]) {
   const ids: string[] = [];
   for (const section of repoQuoteSections) {
     for (const group of section.groups) {
@@ -3164,13 +3175,22 @@ const BLANK_AMOUNT_IDS = (() => {
   ids.sort();
   const blanks = new Set<string>();
   ids.forEach((id, i) => {
-    if (i % 5 === 1 || i % 5 === 3) blanks.add(id);
+    if (blankSlots.includes(i % 5)) blanks.add(id);
   });
   return blanks;
-})();
+}
 
-function showRowAmount(id: string): boolean {
-  return !BLANK_AMOUNT_IDS.has(id);
+// 账户要求、质押要求两列保留，但各自约 40% 的模拟填充值留空。
+const BLANK_ACCOUNT_REQUIREMENT_IDS = buildMockBlankIds([1, 3] as const);
+const BLANK_COLLATERAL_IDS = buildMockBlankIds([2, 4] as const);
+
+function getDisplayAccountRequirement(row: Pick<QuoteDetailRow, "id" | "accountType">) {
+  if (BLANK_ACCOUNT_REQUIREMENT_IDS.has(row.id)) return "";
+  return normalizeAccountRequirement(row.accountType);
+}
+
+function getDisplayCollateral(row: Pick<QuoteDetailRow, "id" | "collateral">) {
+  return BLANK_COLLATERAL_IDS.has(row.id) ? "" : row.collateral;
 }
 
 function buildQuoteChatContext(
@@ -3179,13 +3199,16 @@ function buildQuoteChatContext(
   row: QuoteDetailRow,
   anchor?: QuoteChatAnchor,
 ): QuoteChatContext {
+  const matchedTemplate = findReplyTemplateByInstitution(row.institution);
+  const sender = matchedTemplate?.trader ?? "张经理";
   return {
     id: `${section.id}:${group.id}:${row.id}`,
     institution: row.institution,
+    sender,
     groupName: group.name,
     sectionTitle: section.title,
     tenor: row.tenor,
-    amount: showRowAmount(row.id) ? row.amount : "--",
+    amount: row.amount,
     rate: row.rate,
     accountRequirement: normalizeAccountRequirement(row.accountType),
     collateral: row.collateral,
@@ -3259,6 +3282,8 @@ function RepoQuoteSectionBoard({
     const rowKey = getRowKey(group.id, row.id);
     const expanded = expandable && expandedRows.has(rowKey);
     const isSent = sentRowIds.has(row.id);
+    const accountRequirement = getDisplayAccountRequirement(row);
+    const collateral = getDisplayCollateral(row);
     const openChatFromCell = (
       event: React.MouseEvent<HTMLElement>,
     ) => {
@@ -3311,7 +3336,7 @@ function RepoQuoteSectionBoard({
             className={`text-right ${cellChatClass}`}
             onClick={openChatFromCell}
           >
-            {showRowAmount(row.id) ? row.amount : "--"}
+            {row.amount}
           </span>
           <span
             className={`tk-rate-warning text-right font-semibold text-amber-300 ${cellChatClass}`}
@@ -3322,16 +3347,16 @@ function RepoQuoteSectionBoard({
           <span
             className={`truncate pl-3 text-right text-xs text-slate-300 ${cellChatClass}`}
             onClick={openChatFromCell}
-            title={normalizeAccountRequirement(row.accountType)}
+            title={accountRequirement || undefined}
           >
-            {normalizeAccountRequirement(row.accountType)}
+            {accountRequirement}
           </span>
           <span
             className={`truncate pl-3 text-right text-xs text-slate-300 ${cellChatClass}`}
             onClick={openChatFromCell}
-            title={`${row.collateral} / ${row.reason}`}
+            title={collateral ? `${collateral} / ${row.reason}` : undefined}
           >
-            {row.collateral}
+            {collateral}
           </span>
           <span
             className={`text-right text-xs tabular-nums text-slate-400 ${cellChatClass}`}
@@ -3355,7 +3380,9 @@ function RepoQuoteSectionBoard({
             </button>
           </span>
         </div>
-        {expanded ? <QuoteReplyMatrixExpansion parentRow={row} /> : null}
+        {expanded ? (
+          <QuoteReplyMatrixExpansion group={group} parentRow={row} />
+        ) : null}
       </Fragment>
     );
   };
@@ -3576,9 +3603,9 @@ const QUOTE_REPLY_TEMPLATES: readonly QuoteReplyTemplate[] = [
     tags: ["自营"],
   },
   {
-    id: "taikang-luo",
+    id: "guoshou-luo",
     trader: "罗成",
-    institution: "泰康资产",
+    institution: "国寿资产",
     waitMinutes: 3,
     status: "waiting",
     replyState: "unreplied",
@@ -3659,10 +3686,17 @@ const QUOTE_REPLY_TEMPLATES: readonly QuoteReplyTemplate[] = [
   },
 ];
 
-function QuoteReplyMatrixExpansion({ parentRow }: { parentRow: QuoteDetailRow }) {
+function QuoteReplyMatrixExpansion({
+  group,
+  parentRow,
+}: {
+  group: QuoteGroup;
+  parentRow: QuoteDetailRow;
+}) {
   const [activeTab, setActiveTab] = useState<QuoteReplyTab>("unreplied");
   const [accountFilter, setAccountFilter] = useState("");
   const [collateralFilter, setCollateralFilter] = useState("");
+  const pinnedCard = buildPinnedQuoteReplyCard(group, parentRow);
   const cards = buildQuoteReplyCards(parentRow);
   const cardsByTab =
     activeTab === "all"
@@ -3673,6 +3707,16 @@ function QuoteReplyMatrixExpansion({ parentRow }: { parentRow: QuoteDetailRow })
       fuzzyIncludes(card.accountSearchText, accountFilter) &&
       fuzzyIncludes(card.collateralSearchText, collateralFilter),
   );
+  const cardsToRender = pinnedCard
+    ? [
+        pinnedCard,
+        ...visibleCards.filter(
+          (card) =>
+            normalizeFuzzyText(card.institution) !==
+            normalizeFuzzyText(pinnedCard.institution),
+        ),
+      ]
+    : visibleCards;
 
   return (
     <div className="tk-quote-matrix-expand border-l-[3px] py-2 pl-6 pr-4">
@@ -3724,8 +3768,8 @@ function QuoteReplyMatrixExpansion({ parentRow }: { parentRow: QuoteDetailRow })
           <div className="tk-quote-matrix-legend">颜色=核心/报价优势</div>
         </div>
         <div className="tk-reply-matrix-grid">
-          {visibleCards.length > 0 ? (
-            visibleCards.map((card) => (
+          {cardsToRender.length > 0 ? (
+            cardsToRender.map((card) => (
               <QuoteReplyCardView key={card.id} card={card} />
             ))
           ) : (
@@ -3785,6 +3829,61 @@ function getReplyTagClassName(tag: string, index: number) {
   ]
     .filter(Boolean)
     .join(" ");
+}
+
+function findPinnedQuoteRow(group: QuoteGroup, parentRow: QuoteDetailRow) {
+  const sameTenorRows = group.rows.filter((row) => row.tenor === parentRow.tenor);
+  const candidateRows = sameTenorRows.length > 0 ? sameTenorRows : group.rows;
+  const sortedRows = sortRowsByRank(candidateRows);
+  return sortedRows[0] ?? parentRow;
+}
+
+function findReplyTemplateByInstitution(institution: string) {
+  return QUOTE_REPLY_TEMPLATES.find(
+    (template) =>
+      normalizeFuzzyText(template.institution) ===
+      normalizeFuzzyText(institution),
+  );
+}
+
+function buildPinnedQuoteReplyCard(
+  group: QuoteGroup,
+  parentRow: QuoteDetailRow,
+): QuoteReplyCard {
+  const pinnedRow = findPinnedQuoteRow(group, parentRow);
+  const matchedTemplate = findReplyTemplateByInstitution(pinnedRow.institution);
+  const tenorLabel = formatQuoteTenorLabel(pinnedRow.tenor);
+  const accountLabel = normalizeAccountRequirement(pinnedRow.accountType);
+  const collateralLabel = normalizeCollateralTag(pinnedRow.collateral);
+  const templateTags = matchedTemplate
+    ? matchedTemplate.tags.map(normalizeReplyTemplateTag)
+    : [];
+  const tags = uniqTags([
+    tenorLabel,
+    "TOP1",
+    "核心对手",
+    accountLabel,
+    collateralLabel,
+    ...templateTags,
+  ]).slice(0, 6);
+
+  return {
+    id: `pinned-${group.id}-${pinnedRow.id}`,
+    trader: matchedTemplate?.trader ?? "张经理",
+    institution: pinnedRow.institution,
+    waitMinutes: matchedTemplate?.waitMinutes ?? 1,
+    status: "quoted",
+    replyState: matchedTemplate?.replyState ?? "unreplied",
+    amount: pinnedRow.amount || "整量",
+    account: accountLabel,
+    collateral: pinnedRow.collateral,
+    tags,
+    tenorLabel,
+    accountLabel,
+    collateralLabel,
+    accountSearchText: [accountLabel, ...tags].join(" "),
+    collateralSearchText: [collateralLabel, ...tags].join(" "),
+  };
 }
 
 function buildQuoteReplyCards(parentRow: QuoteDetailRow): QuoteReplyCard[] {
@@ -6778,7 +6877,10 @@ function NcdPrimaryTrendPanel() {
 
   const gov = shiftSeries(ncdPrimaryGovBase6m.slice(-count), off);
   const aaa = shiftSeries(ncdPrimaryAAABase6m.slice(-count), off);
-  const aaPlus = shiftSeries(ncdPrimaryAAPlsBase6m.slice(-count), off);
+  const aaPlus = scaleSeriesValues(
+    shiftSeries(ncdPrimaryAAPlsBase6m.slice(-count), off),
+    NCD_AA_PLUS_DISPLAY_FACTOR,
+  );
   const aa = shiftSeries(ncdPrimaryAABase6m.slice(-count), off);
   const dates = ncdTrendDates6m.slice(-count);
 
@@ -6819,7 +6921,7 @@ function NcdPrimaryTrendPanel() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
       {/* header: legend + range tabs */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-slate-300">
         {series.map((s) => (
           <LegendDot key={s.label} color={s.color} label={s.label} />
         ))}
@@ -6839,7 +6941,7 @@ function NcdPrimaryTrendPanel() {
       {/* chart */}
       <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr] gap-x-1">
         {/* y-axis: top portion only (bottom 20px reserved for x-axis) */}
-        <div className="flex flex-col justify-between pb-5 pr-1 text-right text-[10px] text-slate-500">
+        <div className="flex flex-col justify-between pb-5 pr-1 text-right text-[11px] text-slate-400">
           {yTicks.map((t) => (
             <div key={t}>{t}%</div>
           ))}
@@ -6914,7 +7016,7 @@ function NcdPrimaryTrendPanel() {
             {xLabels.map(({ d, i }) => (
               <span
                 key={i}
-                className="absolute top-[5px] -translate-x-1/2 text-[9px] leading-none text-slate-400"
+                className="absolute top-[5px] -translate-x-1/2 text-[10px] leading-none text-slate-300"
                 style={{ left: `${(i / (count - 1)) * 100}%` }}
               >
                 {d}
@@ -6926,11 +7028,11 @@ function NcdPrimaryTrendPanel() {
               clientX={tooltipState.clientX}
               clientY={tooltipState.clientY}
             >
-              <div className="mb-1 text-[11px] font-medium text-slate-400">
+              <div className="mb-1 text-xs font-medium text-slate-300">
                 {dates[ti]}
               </div>
               {series.map((s) => (
-                <div key={s.label} className="flex items-center gap-2">
+                <div key={s.label} className="flex items-center gap-2 text-[11px]">
                   <span
                     className="h-1.5 w-1.5 rounded-full"
                     style={{ backgroundColor: s.color }}
@@ -6956,6 +7058,7 @@ function NcdLinkedChartPane({
   count,
   externalHoverIndex,
   onHoverChange,
+  expanded = false,
 }: {
   series: Array<{ data: number[]; color: string; label: string; dash: string }>;
   dates: string[];
@@ -6963,6 +7066,7 @@ function NcdLinkedChartPane({
   count: number;
   externalHoverIndex: number | null;
   onHoverChange: (i: number | null) => void;
+  expanded?: boolean;
 }) {
   const allFlat = series.flatMap((s) => s.data);
   const rawMin = Math.min(...allFlat);
@@ -7005,16 +7109,20 @@ function NcdLinkedChartPane({
   const xLabels = dates
     .map((d, i) => ({ d, i }))
     .filter(({ i }) => i % labelStep === 0 || i === count - 1);
+  const legendTextClass = expanded ? "text-[13px]" : "text-[11px]";
+  const axisTextClass = expanded ? "text-xs" : "text-[10px]";
+  const tooltipTitleClass = expanded ? "text-[13px]" : "text-[11px]";
+  const tooltipBodyClass = expanded ? "text-xs" : "text-[10px]";
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-1 overflow-hidden rounded-lg border border-[#1c2f49] bg-[#0d1726] p-2">
-      <div className="flex flex-wrap items-center gap-x-3 text-[11px] text-slate-400">
+      <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-slate-300 ${legendTextClass}`}>
         {series.map((s) => (
           <LegendDot key={s.label} color={s.color} label={s.label} />
         ))}
       </div>
-      <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr] gap-x-1">
-        <div className="flex flex-col justify-between pb-7 pr-1 text-right text-[10px] text-slate-500">
+      <div className={`grid min-h-0 flex-1 ${expanded ? "grid-cols-[3.4rem_1fr] gap-x-2" : "grid-cols-[3.2rem_1fr] gap-x-2"}`}>
+        <div className={`flex flex-col justify-between pb-7 pr-1 text-right text-slate-400 ${axisTextClass}`}>
           {yTicks.map((t) => (
             <div key={t}>{t}%</div>
           ))}
@@ -7084,7 +7192,7 @@ function NcdLinkedChartPane({
             {xLabels.map(({ d, i }) => (
               <span
                 key={i}
-                className="absolute top-[6px] text-[12px] font-medium leading-none text-slate-300"
+                className={`absolute top-[6px] font-medium leading-none text-slate-200 ${expanded ? "text-[14px]" : "text-[12px]"}`}
                 style={{
                   left: `${(i / (count - 1)) * 100}%`,
                   transform:
@@ -7104,11 +7212,11 @@ function NcdLinkedChartPane({
               clientX={tooltipState.clientX}
               clientY={tooltipState.clientY}
             >
-              <div className="mb-1 text-[11px] font-medium text-slate-400">
+              <div className={`mb-1 font-medium text-slate-300 ${tooltipTitleClass}`}>
                 {dates[ti]}
               </div>
               {series.map((s) => (
-                <div key={s.label} className="flex items-center gap-2">
+                <div key={s.label} className={`flex items-center gap-2 ${tooltipBodyClass}`}>
                   <span
                     className="h-1.5 w-1.5 rounded-full"
                     style={{ backgroundColor: s.color }}
@@ -7148,7 +7256,10 @@ function NcdExpandedDualView({ period }: { period: NcdPeriod }) {
       dash: "",
     },
     {
-      data: shiftSeries(ncdPrimaryAAPlsBase6m.slice(-count), off),
+      data: scaleSeriesValues(
+        shiftSeries(ncdPrimaryAAPlsBase6m.slice(-count), off),
+        NCD_AA_PLUS_DISPLAY_FACTOR,
+      ),
       color: chartPalette.emerald,
       label: "AA+",
       dash: "5 3",
@@ -7175,7 +7286,10 @@ function NcdExpandedDualView({ period }: { period: NcdPeriod }) {
       dash: "",
     },
     {
-      data: ncdSecondaryAAPlus6m.slice(-count),
+      data: scaleSeriesValues(
+        ncdSecondaryAAPlus6m.slice(-count),
+        NCD_AA_PLUS_DISPLAY_FACTOR,
+      ),
       color: chartPalette.emerald,
       label: "AA+",
       dash: "5 3",
@@ -7195,7 +7309,7 @@ function NcdExpandedDualView({ period }: { period: NcdPeriod }) {
           <button
             key={tab.id}
             type="button"
-            className={auxTabClass(range === tab.id)}
+            className={`${auxTabClass(range === tab.id)} px-3.5 text-[13px]`}
             onClick={() => setRange(tab.id)}
           >
             {tab.label}
@@ -7203,7 +7317,7 @@ function NcdExpandedDualView({ period }: { period: NcdPeriod }) {
         ))}
       </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="mb-1 text-[11px] font-medium text-slate-400">一级</div>
+        <div className="mb-1 text-[13px] font-semibold text-slate-300">一级</div>
         <div className="min-h-0 flex-1 overflow-hidden">
           <NcdLinkedChartPane
             series={primarySeries}
@@ -7212,12 +7326,13 @@ function NcdExpandedDualView({ period }: { period: NcdPeriod }) {
             count={count}
             externalHoverIndex={hoverIndex}
             onHoverChange={setHoverIndex}
+            expanded
           />
         </div>
       </div>
       <div className="h-px bg-[#1e2f48]" />
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="mb-1 text-[11px] font-medium text-slate-400">二级</div>
+        <div className="mb-1 text-[13px] font-semibold text-slate-300">二级</div>
         <div className="min-h-0 flex-1 overflow-hidden">
           <NcdLinkedChartPane
             series={secondarySeries}
@@ -7226,6 +7341,7 @@ function NcdExpandedDualView({ period }: { period: NcdPeriod }) {
             count={count}
             externalHoverIndex={hoverIndex}
             onHoverChange={setHoverIndex}
+            expanded
           />
         </div>
       </div>
@@ -7240,7 +7356,10 @@ function NcdPrimaryTable() {
     ...g,
     rows: g.rows.map((r) => ({
       ...r,
-      rate: (parseFloat(r.rate) + off).toFixed(3),
+      rate:
+        g.label === "AA+"
+          ? scaleRateString(parseFloat(r.rate) + off + "", NCD_AA_PLUS_DISPLAY_FACTOR)
+          : (parseFloat(r.rate) + off).toFixed(3),
     })),
   }));
   const maxRows = Math.max(...groups.map((g) => g.rows.length));
@@ -7320,6 +7439,22 @@ function NcdPrimaryTable() {
 }
 
 function NcdPrimaryExpandedTable() {
+  const displayGroups = ncdAllPeriodsData.map((group) =>
+    group.label === "AA+"
+      ? {
+          ...group,
+          cells: Object.fromEntries(
+            ncdPrimaryPeriods.map((period) => [
+              period,
+              group.cells[period].map((cell) => ({
+                ...cell,
+                rate: scaleRateString(cell.rate, NCD_AA_PLUS_DISPLAY_FACTOR),
+              })),
+            ]),
+          ) as NcdAllPeriodGroup["cells"],
+        }
+      : group,
+  );
   return (
     <div className="h-full overflow-auto">
       <table className="w-full border-collapse text-xs">
@@ -7350,7 +7485,7 @@ function NcdPrimaryExpandedTable() {
           </tr>
         </thead>
         <tbody>
-          {ncdAllPeriodsData.map((group) => (
+          {displayGroups.map((group) => (
             <tr key={group.label} className="align-top">
               <td className="border-b border-r border-[#1c3050] bg-[#0f1d30] px-2 py-2 text-[11px] font-medium text-slate-400">
                 {group.label}
@@ -7789,6 +7924,7 @@ function StructuredTable({
   compact = false,
   fitToWidth = false,
   columnWidths,
+  noTruncateColumns = [],
   flush = false,
   adaptiveHeight = false,
   scrollY = false,
@@ -7803,6 +7939,7 @@ function StructuredTable({
   compact?: boolean;
   fitToWidth?: boolean;
   columnWidths?: readonly string[];
+  noTruncateColumns?: readonly number[];
   flush?: boolean;
   adaptiveHeight?: boolean;
   scrollY?: boolean;
@@ -7857,12 +7994,18 @@ function StructuredTable({
                 rowIndex % 2 === 0 ? "bg-transparent" : "bg-[#0d1726]/55"
               }
             >
-              {row.map((cell, cellIndex) => (
+              {row.map((cell, cellIndex) => {
+                const shouldTruncate =
+                  fitToWidth &&
+                  buttonColumn !== cellIndex &&
+                  !noTruncateColumns.includes(cellIndex);
+
+                return (
                 <td
                   key={`${row[0]}-${cellIndex}`}
                   className={`border-b border-[#162439] ${compact ? "px-2.5 py-2" : "px-3 py-2.5"} ${
                     cellIndex === 0 ? "text-left" : "text-right"
-                  } ${fitToWidth && buttonColumn !== cellIndex ? "overflow-hidden text-ellipsis whitespace-nowrap" : ""}`}
+                  } ${shouldTruncate ? "overflow-hidden text-ellipsis whitespace-nowrap" : "whitespace-nowrap"}`}
                 >
                   {buttonColumn === cellIndex ? (
                     <button
@@ -7893,7 +8036,8 @@ function StructuredTable({
                     </span>
                   )}
                 </td>
-              ))}
+                );
+              })}
             </tr>
           ))}
         </tbody>
