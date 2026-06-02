@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>晴雨表实时分析 - TDX Mock</title>
+    <link rel="stylesheet" href="./tokens.css" />
+    <style>
+      :root {
+        --mock-page: #0b0d13;
+        --mock-panel: #1b2434;
+        --mock-panel-deep: #171f2f;
+        --mock-header: #2a3040;
+        --mock-grid: rgba(58, 67, 86, 0.46);
+        --mock-axis: #31394b;
+        --mock-text: #c6c2b6;
+        --mock-muted: #9b9da3;
+        --mock-weak: #777b84;
+        --mock-gold: #f4a62a;
+        --mock-gold-soft: #d49c2b;
+        --mock-blue: #2e8fe6;
+        --mock-border: #2f3545;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        min-height: 100%;
+      }
+
+      body {
+        margin: 0;
+        background: var(--mock-page);
+        color: var(--mock-text);
+        font-family: var(--tdx-font-family-base);
+        letter-spacing: 0;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      .terminal-shell {
+        min-height: 100vh;
+        display: grid;
+        place-items: start center;
+        padding: 10px 12px 28px;
+        background:
+          linear-gradient(180deg, rgba(20, 22, 30, 0.96), rgba(11, 13, 19, 0.92) 58px),
+          repeating-linear-gradient(
+            90deg,
+            rgba(214, 165, 65, 0.1) 0 1px,
+            transparent 1px 124px
+          );
+      }
+
+      .market-strip {
+        width: min(680px, calc(100vw - 24px));
+        height: 28px;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        align-items: center;
+        overflow: hidden;
+        border: 1px solid #232735;
+        border-bottom: 0;
+        background: #0d1018;
+        color: #8a805f;
+        font-family: var(--tdx-font-family-number);
+        font-size: 12px;
+      }
+
+      .market-strip span {
+        min-width: 0;
+        overflow: hidden;
+        padding: 0 10px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        border-right: 1px solid #232735;
+      }
+
+      .market-strip b {
+        color: var(--mock-gold-soft);
+        font-weight: 600;
+      }
+
+      .analysis-window {
+        width: min(680px, calc(100vw - 24px));
+        border: 1px solid #151a25;
+        background: var(--mock-panel);
+        box-shadow: var(--tdx-shadow-popup);
+      }
+
+      .window-titlebar {
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #111723;
+        background: var(--mock-header);
+        padding: 0 16px;
+      }
+
+      .window-titlebar h1 {
+        margin: 0;
+        color: #e7e1d3;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 20px;
+      }
+
+      .close-button {
+        width: 24px;
+        height: 24px;
+        display: inline-grid;
+        place-items: center;
+        border: 1px solid transparent;
+        border-radius: var(--tdx-radius-sm);
+        background: transparent;
+        color: #aeb0b7;
+        cursor: pointer;
+        font-size: 28px;
+        line-height: 20px;
+      }
+
+      .close-button:hover {
+        border-color: rgba(244, 166, 42, 0.45);
+        color: var(--mock-gold);
+      }
+
+      .window-body {
+        min-height: 540px;
+        background: var(--mock-panel);
+        padding: 28px 18px 18px;
+      }
+
+      .primary-tabs {
+        display: flex;
+        gap: 18px;
+        border-bottom: 2px solid rgba(244, 166, 42, 0.58);
+        padding-bottom: 13px;
+      }
+
+      .primary-tab {
+        border: 0;
+        background: transparent;
+        color: #d4d1c8;
+        cursor: pointer;
+        padding: 0;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 18px;
+      }
+
+      .primary-tab.is-active {
+        color: var(--mock-gold);
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 0 8px;
+      }
+
+      .button-group {
+        display: inline-flex;
+        gap: 4px;
+      }
+
+      .seg-button {
+        height: 32px;
+        min-width: 42px;
+        border: 1px solid var(--mock-border);
+        border-radius: var(--tdx-radius-md);
+        background: #2a3142;
+        color: #c9c7c0;
+        cursor: pointer;
+        padding: 0 12px;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 30px;
+      }
+
+      .seg-button.is-active {
+        border-color: #db8b17;
+        background: var(--mock-gold);
+        color: #273045;
+      }
+
+      .summary-note {
+        color: #9c9fa8;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 18px;
+        white-space: nowrap;
+      }
+
+      .chart-wrap {
+        position: relative;
+        min-height: 340px;
+        margin-top: 4px;
+      }
+
+      .chart {
+        width: 100%;
+        height: 340px;
+        display: block;
+        overflow: visible;
+      }
+
+      .axis-label {
+        fill: #a8a3a0;
+        font-family: var(--tdx-font-family-number);
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .grid-line {
+        stroke: var(--mock-grid);
+        stroke-width: 1;
+      }
+
+      .axis-line {
+        stroke: var(--mock-axis);
+        stroke-width: 1;
+      }
+
+      .series-line {
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 3;
+        filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.25));
+      }
+
+      .series-line.is-dashed {
+        stroke-dasharray: 7 9;
+      }
+
+      .crosshair {
+        display: none;
+        stroke: rgba(244, 166, 42, 0.55);
+        stroke-dasharray: 3 4;
+        stroke-width: 1;
+      }
+
+      .hover-dot {
+        display: none;
+        stroke: #172033;
+        stroke-width: 2;
+      }
+
+      .chart-tooltip {
+        position: absolute;
+        z-index: 3;
+        display: none;
+        min-width: 150px;
+        pointer-events: none;
+        border: 1px solid rgba(244, 166, 42, 0.45);
+        border-radius: var(--tdx-radius-md);
+        background: rgba(17, 23, 35, 0.96);
+        color: #dcd4c4;
+        padding: 8px 10px;
+        font-size: 12px;
+        line-height: 18px;
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.36);
+      }
+
+      .chart-tooltip strong {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--mock-gold);
+        font-size: 13px;
+      }
+
+      .tooltip-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px 14px;
+        padding: 6px 0 8px;
+      }
+
+      .legend label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #ddd5c6;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 18px;
+      }
+
+      .legend input {
+        width: 15px;
+        height: 15px;
+        margin: 0;
+        accent-color: var(--mock-gold);
+        cursor: pointer;
+      }
+
+      .legend-sample {
+        width: 18px;
+        height: 0;
+        border-top: 3px solid currentColor;
+      }
+
+      .legend-sample.is-dashed {
+        border-top-style: dashed;
+      }
+
+      .source {
+        margin: 5px 0 0;
+        color: #7f838d;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 18px;
+      }
+
+      @media (max-width: 640px) {
+        .terminal-shell {
+          padding: 8px;
+        }
+
+        .market-strip {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .analysis-window {
+          min-width: 0;
+        }
+
+        .window-titlebar {
+          height: 44px;
+          padding: 0 12px;
+        }
+
+        .window-body {
+          padding: 20px 12px 16px;
+        }
+
+        .toolbar {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .summary-note {
+          white-space: normal;
+        }
+
+        .chart-wrap {
+          min-height: 300px;
+        }
+
+        .chart {
+          height: 300px;
+        }
+
+        .axis-label {
+          font-size: 13px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="terminal-shell">
+      <div class="market-strip" aria-hidden="true">
+        <span>R001 <b>1.3700</b></span>
+        <span>R007 <b>1.4000</b></span>
+        <span>GC007 <b>1.3750</b></span>
+        <span>DR007 <b>1.5200</b></span>
+        <span>IBO001 <b>1.3600</b></span>
+      </div>
+
+      <section class="analysis-window" aria-label="晴雨表实时分析">
+        <header class="window-titlebar">
+          <h1>晴雨表实时分析</h1>
+          <button class="close-button" type="button" aria-label="关闭">×</button>
+        </header>
+
+        <div class="window-body">
+          <nav class="primary-tabs" aria-label="数据类型">
+            <button class="primary-tab is-active" type="button">分时数据</button>
+            <button class="primary-tab" type="button">历史数据</button>
+          </nav>
+
+          <div class="toolbar">
+            <div class="button-group" aria-label="期限">
+              <button class="seg-button is-active" type="button">隔夜</button>
+              <button class="seg-button" type="button">7D</button>
+            </div>
+            <div class="button-group" aria-label="指标">
+              <button class="seg-button is-active" type="button">笔数</button>
+              <button class="seg-button" type="button">量</button>
+            </div>
+            <div class="summary-note">当日实时出/收笔数　每15分钟更新</div>
+          </div>
+
+          <div class="chart-wrap" id="chartWrap">
+            <svg
+              class="chart"
+              id="rainChart"
+              viewBox="0 0 620 340"
+              preserveAspectRatio="none"
+              role="img"
+              aria-label="晴雨表出收笔数折线图"
+            >
+              <g id="gridLayer"></g>
+              <g id="seriesLayer"></g>
+              <line class="crosshair" id="crosshair" y1="18" y2="278" />
+              <g id="dotLayer"></g>
+              <rect
+                id="hitArea"
+                x="58"
+                y="18"
+                width="540"
+                height="260"
+                fill="transparent"
+              ></rect>
+            </svg>
+            <div class="chart-tooltip" id="chartTooltip"></div>
+          </div>
+
+          <div class="legend" aria-label="图例">
+            <label style="color: var(--mock-gold)">
+              <input type="checkbox" checked data-series="todayOut" />
+              <span class="legend-sample"></span>
+              今日融出
+            </label>
+            <label style="color: var(--mock-blue)">
+              <input type="checkbox" checked data-series="todayIn" />
+              <span class="legend-sample"></span>
+              今日融入
+            </label>
+            <label style="color: var(--mock-gold)">
+              <input type="checkbox" checked data-series="yesterdayOut" />
+              <span class="legend-sample is-dashed"></span>
+              昨日融出
+            </label>
+            <label style="color: var(--mock-blue)">
+              <input type="checkbox" checked data-series="yesterdayIn" />
+              <span class="legend-sample is-dashed"></span>
+              昨日融入
+            </label>
+          </div>
+
+          <p class="source">
+            数据来源：统计用户当前接收到的私域报价及QTrade报价的所有数据
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const chart = document.getElementById("rainChart");
+      const gridLayer = document.getElementById("gridLayer");
+      const seriesLayer = document.getElementById("seriesLayer");
+      const dotLayer = document.getElementById("dotLayer");
+      const crosshair = document.getElementById("crosshair");
+      const tooltip = document.getElementById("chartTooltip");
+      const hitArea = document.getElementById("hitArea");
+      const chartWrap = document.getElementById("chartWrap");
+
+      const bounds = { left: 58, top: 18, width: 540, height: 260 };
+      const yMax = 250;
+      const labels = [
+        "08:15",
+        "08:30",
+        "08:45",
+        "09:00",
+        "09:15",
+        "09:30",
+        "09:45",
+        "10:00",
+        "10:15",
+        "10:30",
+        "10:45",
+        "11:00",
+        "11:15",
+        "11:30",
+        "11:45",
+        "12:00",
+        "12:15",
+        "12:30",
+        "12:45",
+        "13:00",
+        "13:15",
+        "13:30",
+        "13:45",
+        "14:00",
+        "14:15",
+        "14:30",
+        "14:45",
+        "15:00",
+        "15:15",
+        "15:30",
+        "15:45",
+        "16:00",
+        "16:15",
+        "16:30",
+        "16:45",
+        "17:00",
+        "17:15",
+      ];
+
+      const series = {
+        todayOut: {
+          label: "今日融出",
+          color: "#f4a62a",
+          values: [
+            0, 10, 55, 128, 225, 86, 92, 61, 74, 66, 64, 65, 40, 4, 0, 0, 0,
+            0, 0, 0, 6, 46, 31, 40, 36, 44, 76, 70, 104, 92, 150, 84, 52, 42,
+            18, 2, 0,
+          ],
+        },
+        todayIn: {
+          label: "今日融入",
+          color: "#2e8fe6",
+          values: [
+            0, 3, 6, 40, 48, 38, 55, 32, 24, 26, 23, 28, 18, 2, 0, 0, 0, 0, 0,
+            0, 0, 42, 13, 21, 30, 22, 16, 34, 14, 4, 22, 12, 15, 7, 12, 1, 0,
+          ],
+        },
+        yesterdayOut: {
+          label: "昨日融出",
+          color: "#f4a62a",
+          dashed: true,
+          values: [
+            0, 6, 78, 160, 222, 120, 84, 90, 55, 65, 35, 44, 31, 4, 0, 0, 0, 0,
+            0, 0, 2, 36, 42, 62, 26, 38, 44, 50, 48, 55, 62, 35, 42, 18, 22, 4,
+            0,
+          ],
+        },
+        yesterdayIn: {
+          label: "昨日融入",
+          color: "#2e8fe6",
+          dashed: true,
+          values: [
+            0, 0, 32, 44, 40, 50, 66, 38, 26, 22, 27, 21, 36, 6, 0, 0, 0, 0, 0,
+            0, 1, 33, 17, 28, 36, 28, 42, 48, 35, 26, 18, 14, 27, 12, 17, 2, 0,
+          ],
+        },
+      };
+
+      const visible = {
+        todayOut: true,
+        todayIn: true,
+        yesterdayOut: true,
+        yesterdayIn: true,
+      };
+
+      function point(index, value) {
+        return {
+          x: bounds.left + (index / (labels.length - 1)) * bounds.width,
+          y: bounds.top + ((yMax - value) / yMax) * bounds.height,
+        };
+      }
+
+      function linePath(values) {
+        return values
+          .map((value, index) => {
+            const p = point(index, value);
+            return `${index === 0 ? "M" : "L"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`;
+          })
+          .join(" ");
+      }
+
+      function makeText(text, x, y, className, anchor = "middle") {
+        const node = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        node.textContent = text;
+        node.setAttribute("x", x);
+        node.setAttribute("y", y);
+        node.setAttribute("class", className);
+        node.setAttribute("text-anchor", anchor);
+        return node;
+      }
+
+      function renderGrid() {
+        gridLayer.innerHTML = "";
+        [250, 200, 150, 100, 50, 0].forEach((tick) => {
+          const y = bounds.top + ((yMax - tick) / yMax) * bounds.height;
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("x1", bounds.left);
+          line.setAttribute("x2", bounds.left + bounds.width);
+          line.setAttribute("y1", y);
+          line.setAttribute("y2", y);
+          line.setAttribute("class", tick === 0 ? "axis-line" : "grid-line");
+          gridLayer.appendChild(line);
+          gridLayer.appendChild(makeText(String(tick), 48, y + 5, "axis-label", "end"));
+        });
+
+        const labelIndexes = [0, 4, 8, 12, 16, 20, 24, 28, 32, 36];
+        labelIndexes.forEach((index) => {
+          const x = point(index, 0).x;
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("x1", x);
+          line.setAttribute("x2", x);
+          line.setAttribute("y1", bounds.top);
+          line.setAttribute("y2", bounds.top + bounds.height);
+          line.setAttribute("class", "grid-line");
+          gridLayer.appendChild(line);
+          gridLayer.appendChild(
+            makeText(labels[index], x, bounds.top + bounds.height + 25, "axis-label"),
+          );
+        });
+
+        const axis = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        axis.setAttribute("x1", bounds.left);
+        axis.setAttribute("x2", bounds.left);
+        axis.setAttribute("y1", bounds.top);
+        axis.setAttribute("y2", bounds.top + bounds.height);
+        axis.setAttribute("class", "axis-line");
+        gridLayer.appendChild(axis);
+      }
+
+      function renderSeries() {
+        seriesLayer.innerHTML = "";
+        dotLayer.innerHTML = "";
+        Object.entries(series).forEach(([key, config]) => {
+          if (!visible[key]) return;
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          path.setAttribute("d", linePath(config.values));
+          path.setAttribute("class", `series-line${config.dashed ? " is-dashed" : ""}`);
+          path.setAttribute("stroke", config.color);
+          path.dataset.series = key;
+          seriesLayer.appendChild(path);
+
+          const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          dot.setAttribute("r", "4");
+          dot.setAttribute("class", "hover-dot");
+          dot.setAttribute("fill", config.color);
+          dot.dataset.series = key;
+          dotLayer.appendChild(dot);
+        });
+      }
+
+      function showTooltip(event) {
+        const rect = chart.getBoundingClientRect();
+        const svgX = ((event.clientX - rect.left) / rect.width) * 620;
+        const ratio = Math.min(1, Math.max(0, (svgX - bounds.left) / bounds.width));
+        const index = Math.round(ratio * (labels.length - 1));
+        const x = point(index, 0).x;
+
+        crosshair.style.display = "block";
+        crosshair.setAttribute("x1", x);
+        crosshair.setAttribute("x2", x);
+
+        document.querySelectorAll(".hover-dot").forEach((dot) => {
+          const key = dot.dataset.series;
+          if (!visible[key]) return;
+          const p = point(index, series[key].values[index]);
+          dot.style.display = "block";
+          dot.setAttribute("cx", p.x);
+          dot.setAttribute("cy", p.y);
+        });
+
+        const rows = Object.entries(series)
+          .filter(([key]) => visible[key])
+          .map(
+            ([key, config]) =>
+              `<div class="tooltip-row"><span style="color:${config.color}">${config.label}</span><b>${config.values[index]}</b></div>`,
+          )
+          .join("");
+
+        tooltip.innerHTML = `<strong>${labels[index]}</strong>${rows}`;
+        tooltip.style.display = "block";
+
+        const wrapRect = chartWrap.getBoundingClientRect();
+        const tooltipX = Math.min(
+          wrapRect.width - 158,
+          Math.max(8, event.clientX - wrapRect.left + 12),
+        );
+        const tooltipY = Math.min(
+          wrapRect.height - 118,
+          Math.max(8, event.clientY - wrapRect.top - 22),
+        );
+        tooltip.style.left = `${tooltipX}px`;
+        tooltip.style.top = `${tooltipY}px`;
+      }
+
+      function hideTooltip() {
+        crosshair.style.display = "none";
+        tooltip.style.display = "none";
+        document.querySelectorAll(".hover-dot").forEach((dot) => {
+          dot.style.display = "none";
+        });
+      }
+
+      document.querySelectorAll(".legend input").forEach((input) => {
+        input.addEventListener("change", () => {
+          visible[input.dataset.series] = input.checked;
+          renderSeries();
+        });
+      });
+
+      document.querySelectorAll(".primary-tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".primary-tab").forEach((node) => {
+            node.classList.remove("is-active");
+          });
+          tab.classList.add("is-active");
+        });
+      });
+
+      document.querySelectorAll(".button-group").forEach((group) => {
+        group.querySelectorAll(".seg-button").forEach((button) => {
+          button.addEventListener("click", () => {
+            group.querySelectorAll(".seg-button").forEach((node) => {
+              node.classList.remove("is-active");
+            });
+            button.classList.add("is-active");
+          });
+        });
+      });
+
+      hitArea.addEventListener("mousemove", showTooltip);
+      hitArea.addEventListener("mouseleave", hideTooltip);
+
+      renderGrid();
+      renderSeries();
+    </script>
+  </body>
+</html>
