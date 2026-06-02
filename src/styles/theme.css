@@ -561,6 +561,208 @@ body {
   color: var(--tdx-text-inverse) !important;
 }
 
+.tk-btn--sent {
+  border-color: rgba(214, 165, 65, 0.7) !important;
+  background: rgba(214, 165, 65, 0.16) !important;
+  color: var(--tdx-yellow) !important;
+}
+
+.tk-chat-popup {
+  position: fixed;
+  z-index: 9998;
+  display: flex;
+  flex-direction: column;
+  width: min(600px, calc(100vw - 24px));
+  max-height: calc(100vh - 66px);
+  overflow: hidden;
+  border: 1px solid var(--tdx-border);
+  border-radius: 6px;
+  background: var(--tdx-bg-panel);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.46);
+  color: var(--tdx-text-main);
+}
+
+.tk-chat-popup.is-dragging {
+  cursor: grabbing;
+}
+
+.tk-chat-popup__head {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: move;
+  border-bottom: 1px solid var(--tdx-border);
+  background: var(--tdx-bg-header);
+  padding: 9px 12px;
+}
+
+.tk-chat-popup__head p {
+  margin: 0;
+  color: var(--tdx-text-muted);
+  font-size: 11px;
+  line-height: 14px;
+}
+
+.tk-chat-popup__head h3 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--tdx-text-heading);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 22px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tk-chat-popup__close {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--tdx-border);
+  border-radius: 4px;
+  background: var(--tdx-bg-control);
+  color: var(--tdx-text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.tk-chat-popup__close:hover {
+  border-color: rgba(231, 53, 58, 0.62);
+  background: rgba(231, 53, 58, 0.12);
+  color: var(--tdx-red);
+}
+
+.tk-chat-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--tdx-border);
+  background: rgba(214, 165, 65, 0.08);
+  padding: 8px 12px;
+}
+
+.tk-chat-summary span,
+.tk-chat-summary em {
+  color: var(--tdx-text-muted);
+  font-size: 12px;
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.tk-chat-summary strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--tdx-yellow);
+  font-size: 14px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tk-chat-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  border-bottom: 1px solid var(--tdx-border);
+  background: var(--tdx-border-weak);
+}
+
+.tk-chat-meta span {
+  min-width: 0;
+  overflow: hidden;
+  background: #111827;
+  color: var(--tdx-text-muted);
+  font-size: 11px;
+  line-height: 26px;
+  padding: 0 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tk-chat-messages {
+  min-height: 190px;
+  overflow: auto;
+  background: #0a101c;
+  padding: 12px;
+}
+
+.tk-chat-message {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.tk-chat-message span {
+  max-width: 78%;
+  border: 1px solid var(--tdx-border-weak);
+  border-radius: 6px;
+  background: #121b2c;
+  color: var(--tdx-text-main);
+  font-size: 13px;
+  line-height: 20px;
+  padding: 8px 10px;
+}
+
+.tk-chat-message small {
+  color: var(--tdx-text-muted);
+  font-size: 10px;
+  line-height: 12px;
+}
+
+.tk-chat-message--trader {
+  justify-items: end;
+}
+
+.tk-chat-message--trader span {
+  border-color: rgba(231, 53, 58, 0.44);
+  background: rgba(231, 53, 58, 0.18);
+  color: var(--tdx-text-heading);
+}
+
+.tk-chat-message--system span {
+  border-left: 2px solid var(--tdx-yellow);
+  background: rgba(214, 165, 65, 0.08);
+  color: var(--tdx-text-muted);
+}
+
+.tk-chat-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  border-top: 1px solid var(--tdx-border);
+  background: var(--tdx-bg-header);
+  padding: 10px 12px;
+}
+
+.tk-chat-composer textarea {
+  min-width: 0;
+  resize: none;
+  border: 1px solid var(--tdx-border);
+  border-radius: 4px;
+  background: var(--tdx-bg-control);
+  color: var(--tdx-text-heading);
+  font-size: 12px;
+  line-height: 18px;
+  outline: none;
+  padding: 7px 9px;
+}
+
+.tk-chat-composer textarea:focus {
+  border-color: #d6a541;
+  box-shadow: 0 0 0 1px rgba(214, 165, 65, 0.16);
+}
+
+.tk-chat-composer textarea::placeholder {
+  color: var(--tdx-text-muted);
+}
+
 .tk-chip {
   border: 1px solid var(--tdx-border) !important;
   border-radius: var(--tk-radius-sm) !important;

@@ -1,4 +1,9 @@
 import { Fragment, useEffect, useRef, useState } from "react";
+import {
+  QuoteChatPopup,
+  type QuoteChatAnchor,
+  type QuoteChatContext,
+} from "./components/QuoteChatPopup";
 
 type TrendMode = "intraday" | "history" | "comparison";
 type SentimentTab = "realtime" | "trend";
@@ -2969,6 +2974,9 @@ function MainQuoteBoard() {
     RepoQuoteSection["id"]
   >(repoQuoteSections[0].id);
   const [overrides, setOverrides] = useState<Record<string, QuoteOverride>>({});
+  const [activeChat, setActiveChat] = useState<QuoteChatContext | null>(null);
+  const [sentRowIds, setSentRowIds] = useState<Set<string>>(() => new Set());
+  const sentTimersRef = useRef<number[]>([]);
 
   function applyOverride(row: QuoteDetailRow): QuoteDetailRow {
     const ov = overrides[row.id];
@@ -2988,6 +2996,31 @@ function MainQuoteBoard() {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(QUOTE_BOARD_RATIO_KEY, String(topRatio));
   }, [topRatio]);
+
+  useEffect(() => {
+    return () => {
+      sentTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, []);
+
+  function openQuoteChat(
+    section: RepoQuoteSection,
+    group: QuoteGroup,
+    row: QuoteDetailRow,
+    anchor?: QuoteChatAnchor,
+  ) {
+    setActiveChat(buildQuoteChatContext(section, group, row, anchor));
+    setSentRowIds((current) => new Set(current).add(row.id));
+
+    const timer = window.setTimeout(() => {
+      setSentRowIds((current) => {
+        const next = new Set(current);
+        next.delete(row.id);
+        return next;
+      });
+    }, 1600);
+    sentTimersRef.current.push(timer);
+  }
 
   function startDrag(event: React.MouseEvent<HTMLDivElement>) {
     event.preventDefault();
@@ -3091,6 +3124,8 @@ function MainQuoteBoard() {
                   dragRatio={dragRatio}
                   tenorFilter={tenorFilter}
                   applyOverride={applyOverride}
+                  sentRowIds={sentRowIds}
+                  onOpenChat={openQuoteChat}
                 />
                 {displayLevel === 2 && !isLast ? (
                   <div
@@ -3107,6 +3142,9 @@ function MainQuoteBoard() {
           })}
         </div>
       </section>
+      {activeChat ? (
+        <QuoteChatPopup context={activeChat} onClose={() => setActiveChat(null)} />
+      ) : null}
     </section>
   );
 }
@@ -3135,6 +3173,29 @@ function showRowAmount(id: string): boolean {
   return !BLANK_AMOUNT_IDS.has(id);
 }
 
+function buildQuoteChatContext(
+  section: RepoQuoteSection,
+  group: QuoteGroup,
+  row: QuoteDetailRow,
+  anchor?: QuoteChatAnchor,
+): QuoteChatContext {
+  return {
+    id: `${section.id}:${group.id}:${row.id}`,
+    institution: row.institution,
+    groupName: group.name,
+    sectionTitle: section.title,
+    tenor: row.tenor,
+    amount: showRowAmount(row.id) ? row.amount : "--",
+    rate: row.rate,
+    accountRequirement: normalizeAccountRequirement(row.accountType),
+    collateral: row.collateral,
+    reason: row.reason,
+    updatedAt: row.updatedAt,
+    rank: row.rank,
+    anchor,
+  };
+}
+
 function RepoQuoteSectionBoard({
   section,
   displayLevel,
@@ -3144,6 +3205,8 @@ function RepoQuoteSectionBoard({
   dragRatio,
   tenorFilter,
   applyOverride,
+  sentRowIds,
+  onOpenChat,
 }: {
   section: RepoQuoteSection;
   displayLevel: 1 | 2;
@@ -3153,6 +3216,13 @@ function RepoQuoteSectionBoard({
   dragRatio: number | null;
   tenorFilter: QuoteTenorFilter;
   applyOverride: (row: QuoteDetailRow) => QuoteDetailRow;
+  sentRowIds: Set<string>;
+  onOpenChat: (
+    section: RepoQuoteSection,
+    group: QuoteGroup,
+    row: QuoteDetailRow,
+    anchor?: QuoteChatAnchor,
+  ) => void;
 }) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(() => new Set());
   const matchTenor = (rowTenor: string) =>
@@ -3164,7 +3234,7 @@ function RepoQuoteSectionBoard({
   const getRowKey = (groupId: string, rowId: string) =>
     `${section.id}:${groupId}:${rowId}`;
   const toggleExpandedRow = (
-    event: React.MouseEvent<HTMLButtonElement>,
+    event: React.MouseEvent<HTMLElement>,
     rowKey: string,
   ) => {
     event.stopPropagation();
@@ -3188,12 +3258,28 @@ function RepoQuoteSectionBoard({
     const expandable = isQuoteRankExpandable(row.rank);
     const rowKey = getRowKey(group.id, row.id);
     const expanded = expandable && expandedRows.has(rowKey);
+    const isSent = sentRowIds.has(row.id);
+    const openChatFromCell = (
+      event: React.MouseEvent<HTMLElement>,
+    ) => {
+      event.stopPropagation();
+      onOpenChat(section, group, row, {
+        x: event.clientX,
+        y: event.clientY,
+      });
+    };
+    const cellChatClass = "cursor-pointer";
     return (
       <Fragment key={row.id}>
         <div
           className={`tk-quote-row grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent py-1.5 pl-6 pr-4 text-left text-xs text-slate-200 ${
             withHover ? "transition hover:bg-[#11253d]" : ""
-          }`}
+          } ${expandable ? "cursor-pointer" : ""}`}
+          onClick={
+            expandable ? (event) => toggleExpandedRow(event, rowKey) : undefined
+          }
+          role={expandable ? "button" : undefined}
+          aria-expanded={expandable ? expanded : undefined}
         >
           <div className="flex min-w-0 items-center gap-2">
             {expandable ? (
@@ -3208,38 +3294,64 @@ function RepoQuoteSectionBoard({
               <span className="tk-row-toggle-spacer" aria-hidden="true" />
             )}
             {showRankBadge ? <RankBadge rank={row.rank} /> : null}
-            <span className="tk-text-primary min-w-0 truncate text-slate-100">
+            <span
+              className={`tk-text-primary min-w-0 truncate text-slate-100 ${cellChatClass}`}
+              onClick={openChatFromCell}
+            >
               {row.institution}
             </span>
           </div>
-          <span className="text-right">{row.tenor}</span>
-          <span className="text-right">
+          <span
+            className={`text-right ${cellChatClass}`}
+            onClick={openChatFromCell}
+          >
+            {row.tenor}
+          </span>
+          <span
+            className={`text-right ${cellChatClass}`}
+            onClick={openChatFromCell}
+          >
             {showRowAmount(row.id) ? row.amount : "--"}
           </span>
-          <span className="tk-rate-warning text-right font-semibold text-amber-300">
+          <span
+            className={`tk-rate-warning text-right font-semibold text-amber-300 ${cellChatClass}`}
+            onClick={openChatFromCell}
+          >
             {row.rate}
           </span>
           <span
-            className="truncate pl-3 text-right text-xs text-slate-300"
+            className={`truncate pl-3 text-right text-xs text-slate-300 ${cellChatClass}`}
+            onClick={openChatFromCell}
             title={normalizeAccountRequirement(row.accountType)}
           >
             {normalizeAccountRequirement(row.accountType)}
           </span>
           <span
-            className="truncate pl-3 text-right text-xs text-slate-300"
+            className={`truncate pl-3 text-right text-xs text-slate-300 ${cellChatClass}`}
+            onClick={openChatFromCell}
             title={`${row.collateral} / ${row.reason}`}
           >
             {row.collateral}
           </span>
-          <span className="text-right text-xs tabular-nums text-slate-400">
+          <span
+            className={`text-right text-xs tabular-nums text-slate-400 ${cellChatClass}`}
+            onClick={openChatFromCell}
+          >
             {row.updatedAt}
           </span>
           <span className="flex items-center justify-end gap-1">
             <button
-              className="tk-btn tk-btn--trade tk-btn--compact whitespace-nowrap px-1.5 py-0.5 text-[10px] font-medium"
+              className={`tk-btn tk-btn--trade tk-btn--compact whitespace-nowrap px-1.5 py-0.5 text-[10px] font-medium ${isSent ? "tk-btn--sent" : ""}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                onOpenChat(section, group, row, {
+                  x: event.clientX,
+                  y: event.clientY,
+                });
+              }}
               type="button"
             >
-              发送
+              {isSent ? "已打开" : "发送"}
             </button>
           </span>
         </div>
