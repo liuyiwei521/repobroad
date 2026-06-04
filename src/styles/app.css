@@ -6136,18 +6136,19 @@ textarea:focus-visible,
   overflow: hidden;
 }
 
-.middle-column .matrix-workspace {
+/* 旧 3 行布局（matrix + gutter + barometer）规则仅在非 6 宫格模式下生效 */
+.middle-column:not(.middle-column--six) .matrix-workspace {
   grid-column: 1;
   grid-row: 1;
   min-height: 0;
 }
 
-.middle-column .barometer-row-gutter {
+.middle-column:not(.middle-column--six) .barometer-row-gutter {
   grid-column: 1;
   grid-row: 2;
 }
 
-.middle-column .barometer-slot {
+.middle-column:not(.middle-column--six) .barometer-slot {
   grid-column: 1;
   grid-row: 3;
   width: 100%;
@@ -6168,4 +6169,491 @@ textarea:focus-visible,
 .workspace-grid.is-matrix-mode .market-panel-slot {
   grid-column: 3;
   grid-row: 1;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   Phase 1: 中栏 6 宫格布局（正/逆需求 + 4 张图表）
+   ─────────────────────────────────────────────────────────────────── */
+.middle-column--six {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(3, minmax(200px, 1fr));
+  gap: 8px;
+  overflow: hidden;
+}
+
+.middle-column--six > .panel,
+.middle-column--six > .barometer-panel {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 让 BarometerPanel 在 6 宫格里拿到与 .panel 一致的卡片外观 */
+.middle-column--six > .barometer-panel {
+  background: var(--panel-bg, #14171c);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+}
+
+/* 6 宫格按源码顺序自动排版，禁止子项保留旧的 grid-row/grid-column 锁定 */
+.middle-column--six > * {
+  grid-column: auto !important;
+  grid-row: auto !important;
+}
+
+/* ─ PanelToolbar 共用样式 ─ */
+.panel-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex: 0 0 auto;
+}
+
+.panel-toolbar__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.panel-toolbar__eyebrow {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+  letter-spacing: 0.04em;
+}
+
+.panel-toolbar__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  margin: 0;
+  white-space: nowrap;
+}
+
+.panel-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* ─ SegmentedSelect ─ */
+.segmented-select {
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.segmented-select__btn {
+  background: transparent;
+  border: 0;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.segmented-select__btn:hover {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.segmented-select__btn.is-active {
+  background: #d8453a;
+  color: #fff;
+}
+
+.segmented-select--sm .segmented-select__btn {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+/* ─ SimpleDropdown ─ */
+.simple-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.simple-dropdown__label {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.simple-dropdown__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  min-width: 80px;
+  justify-content: space-between;
+}
+
+.simple-dropdown__trigger:hover {
+  border-color: rgba(216, 69, 58, 0.5);
+}
+
+.simple-dropdown.is-open .simple-dropdown__trigger {
+  border-color: #d8453a;
+}
+
+.simple-dropdown__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 140px;
+  background: #1a1d22;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  z-index: 30;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.simple-dropdown__menu li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+}
+
+.simple-dropdown__menu li:hover {
+  background: rgba(216, 69, 58, 0.15);
+}
+
+.simple-dropdown__menu li.is-active {
+  color: #ff8a34;
+}
+
+.simple-dropdown__check {
+  width: 12px;
+  display: inline-block;
+  color: #ff8a34;
+}
+
+/* ─ Chip & 图表通用 ─ */
+.chart-toolbar__chips {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.chip:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.chip.is-active {
+  background: #d8453a;
+  border-color: #d8453a;
+  color: #fff;
+}
+
+.chart-toolbar__legend {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  white-space: nowrap;
+}
+
+/* ─ 图表占位（Phase 3-5 替换） ─ */
+.chart-panel__body,
+.chart-placeholder {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.015) 0 10px,
+      transparent 10px 20px
+    );
+  padding: 16px;
+}
+
+.chart-placeholder__title {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+/* ─ 个人 & 机构对比图 ─ */
+.indiv-instit-chart__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px 10px;
+  overflow: hidden;
+}
+
+.indiv-instit-chart__filters {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.indiv-instit-chart__filter-label {
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.indiv-instit-chart__chip {
+  border-color: color-mix(in srgb, var(--chip-color) 50%, rgba(255, 255, 255, 0.08));
+}
+
+.indiv-instit-chart__chip.is-active {
+  background: color-mix(in srgb, var(--chip-color) 82%, #101318);
+  border-color: var(--chip-color);
+}
+
+.indiv-instit-chart .trend-chart {
+  flex: 1 1 auto;
+  min-height: 132px;
+  max-height: 190px;
+}
+
+.indiv-instit-chart .chart-legend {
+  gap: 8px 12px;
+  padding: 0;
+  flex: 0 0 auto;
+}
+
+.indiv-instit-chart .chart-legend__item {
+  font-size: 10px;
+}
+
+.indiv-instit-chart__summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.indiv-instit-chart__stat {
+  display: grid;
+  grid-template-columns: minmax(44px, 0.8fr) 1fr 1fr auto;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 4px 7px;
+  border-left: 2px solid var(--stat-color);
+  background: rgba(255, 255, 255, 0.035);
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.indiv-instit-chart__stat-name,
+.indiv-instit-chart__stat b {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.indiv-instit-chart .compare-tab__insight {
+  padding: 6px 9px;
+  font-size: 11px;
+  line-height: 1.45;
+  flex: 0 0 auto;
+}
+
+/* ─ DirectionDemandPanel (正/逆回购需求) ─ */
+.demand-panel {
+  --demand-accent: #02adb0;
+}
+
+.demand-panel__chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--demand-accent);
+  color: var(--demand-accent);
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.demand-panel__chip.is-empty {
+  opacity: 0.45;
+  cursor: default;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.demand-panel__table-wrap {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 8px 12px 4px;
+}
+
+.demand-panel__table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 4px;
+  font-size: 12px;
+  table-layout: fixed;
+}
+
+.demand-panel__th {
+  padding: 0;
+  text-align: left;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.demand-panel__th--axis {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.demand-panel__head-btn,
+.demand-panel__row-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+}
+
+.demand-panel__head-btn small,
+.demand-panel__row-btn small {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+}
+
+.demand-panel__head-btn.is-active,
+.demand-panel__row-btn.is-active {
+  background: rgba(216, 69, 58, 0.18);
+  border-color: var(--demand-accent);
+  color: #fff;
+}
+
+.demand-panel__th--total .demand-panel__head-btn,
+.demand-panel__row-head .demand-panel__row-btn {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.demand-panel__row-head {
+  padding: 0;
+  --row-color: rgba(255, 255, 255, 0.4);
+}
+
+.demand-panel__row-head .demand-panel__row-btn {
+  border-left: 3px solid var(--row-color);
+}
+
+.demand-panel__cell {
+  padding: 0;
+}
+
+.demand-panel__cell-btn {
+  position: relative;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  padding: 6px 8px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+  text-align: left;
+  color: rgba(255, 255, 255, 0.82);
+  overflow: hidden;
+}
+
+.demand-panel__cell-btn strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.demand-panel__cell-btn small {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+}
+
+.demand-panel__cell-btn.is-empty {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.demand-panel__cell-btn.is-active {
+  background: rgba(216, 69, 58, 0.18);
+  border-color: var(--demand-accent);
+  color: #fff;
+}
+
+.demand-panel__progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.demand-panel__progress::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--progress, 0%);
+  background: var(--demand-accent);
+  transition: width 0.2s;
+}
+
+.demand-panel__cell--total .demand-panel__cell-btn {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.demand-panel__legend {
+  margin: 0;
+  padding: 4px 12px 10px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+  text-align: right;
+  flex: 0 0 auto;
 }

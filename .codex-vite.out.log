@@ -1,0 +1,167 @@
+
+> @figma/my-make-file@0.0.1 dev
+> vite --host 127.0.0.1 --port 5180
+
+
+  [32m[1mVITE[22m v6.3.5[39m  [2mready in [0m[1m4346[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5180[22m/[39m
+[2m09:06:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m09:06:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m09:07:09[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m09:07:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m09:08:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m09:08:42[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css[22m
+[2m09:58:57[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m09:59:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m10:00:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m10:00:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m10:01:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css[22m
+[2m10:08:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-2/Default/Extensions/Temp/scoped_dir20884_1873377688/CRX_INSTALL/extension-detection.html[22m
+[2m10:08:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-2/Default/Extensions/Temp/scoped_dir20884_1873377688/CRX_INSTALL/localFileSignInRedirection.html[22m
+[2m10:08:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-2/Default/Extensions/Temp/scoped_dir20884_1873377688/CRX_INSTALL/sessionExpired.html[22m
+[2m10:08:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-2/Default/Extensions/Temp/scoped_dir20884_1873377688/CRX_INSTALL/signInAdobeYolo.html[22m
+[2m10:08:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-2/Default/Extensions/Temp/scoped_dir20884_1873377688/CRX_INSTALL/signInHandler.html[22m
+[2m10:08:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-2/Default/Extensions/Temp/scoped_dir20884_1873377688/CRX_INSTALL/viewer.html[22m
+[2m10:09:33[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-3/Default/Extensions/Temp/scoped_dir27444_1161826553/CRX_INSTALL/extension-detection.html[22m
+[2m10:10:09[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css[22m
+[2m10:11:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-4/Default/Extensions/Temp/scoped_dir27576_463395928/CRX_INSTALL/extension-detection.html[22m
+[2m10:11:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-4/Default/Extensions/Temp/scoped_dir27576_463395928/CRX_INSTALL/localFileSignInRedirection.html[22m
+[2m10:11:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-4/Default/Extensions/Temp/scoped_dir27576_463395928/CRX_INSTALL/sessionExpired.html[22m
+[2m10:11:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-4/Default/Extensions/Temp/scoped_dir27576_463395928/CRX_INSTALL/signInAdobeYolo.html[22m
+[2m10:11:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-4/Default/Extensions/Temp/scoped_dir27576_463395928/CRX_INSTALL/signInHandler.html[22m
+[2m10:11:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-4/Default/Extensions/Temp/scoped_dir27576_463395928/CRX_INSTALL/viewer.html[22m
+[2m10:18:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m10:18:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m10:19:09[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m10:19:19[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m10:19:34[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m10:20:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css[22m
+[2m10:21:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-5/Default/Extensions/Temp/scoped_dir29848_875393465/CRX_INSTALL/extension-detection.html[22m
+[2m10:21:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-5/Default/Extensions/Temp/scoped_dir29848_875393465/CRX_INSTALL/localFileSignInRedirection.html[22m
+[2m10:21:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-5/Default/Extensions/Temp/scoped_dir29848_875393465/CRX_INSTALL/sessionExpired.html[22m
+[2m10:21:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-5/Default/Extensions/Temp/scoped_dir29848_875393465/CRX_INSTALL/signInHandler.html[22m
+[2m10:21:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-5/Default/Extensions/Temp/scoped_dir29848_875393465/CRX_INSTALL/viewer.html[22m
+[2m10:21:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-5/Default/Extensions/Temp/scoped_dir29848_875393465/CRX_INSTALL/signInAdobeYolo.html[22m
+[2m10:23:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m10:24:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m10:25:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m10:25:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m10:26:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m10:26:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m10:27:44[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m10:28:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m10:28:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css[22m
+[2m10:28:45[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css[22m
+[2m10:29:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css[22m
+[2m10:29:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css[22m
+[2m10:29:42[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m10:32:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/extension-detection.html[22m
+[2m10:32:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/localFileSignInRedirection.html[22m
+[2m10:32:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/sessionExpired.html[22m
+[2m10:32:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/signInAdobeYolo.html[22m
+[2m10:32:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/signInHandler.html[22m
+[2m10:32:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/viewer.html[22m
+[2m10:33:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/resources/addWebpage/index.html[22m
+[2m10:33:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/resources/chromeOS/handler.html[22m
+[2m10:33:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/resources/express/expressContextualFTE.html[22m
+[2m10:33:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/resources/express/expressHoverCTA.html[22m
+[2m10:33:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/resources/express/expressSingleClickCTA.html[22m
+[2m10:33:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/resources/express/imageToolsDropdown.html[22m
+[2m10:33:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/resources/toast/toast.html[22m
+[2m10:33:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/resources/outlook/error-toast.html[22m
+[2m10:33:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/resources/SidePanel/ActionableCoachmark.html[22m
+[2m10:33:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/resources/SidePanel/FABIcon.html[22m
+[2m10:33:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/resources/SidePanel/FABViewSettings.html[22m
+[2m10:33:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/resources/SidePanel/index.html[22m
+[2m10:33:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/resources/SidePanel/sidePanelButton.html[22m
+[2m10:33:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/resources/SidePanel/sidePanelUpsellSuccess.html[22m
+[2m10:33:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-7/Default/Extensions/Temp/scoped_dir13188_2015083622/CRX_INSTALL/resources/SidePanel/signInSuccess.html[22m
+[2m10:34:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-8/Default/Extensions/Temp/scoped_dir35396_312925357/CRX_INSTALL/extension-detection.html[22m
+[2m10:34:19[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-8/Default/Extensions/Temp/scoped_dir35396_312925357/CRX_INSTALL/localFileSignInRedirection.html[22m
+[2m10:34:19[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-8/Default/Extensions/Temp/scoped_dir35396_312925357/CRX_INSTALL/sessionExpired.html[22m
+[2m10:34:19[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-8/Default/Extensions/Temp/scoped_dir35396_312925357/CRX_INSTALL/signInAdobeYolo.html[22m
+[2m10:34:19[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-8/Default/Extensions/Temp/scoped_dir35396_312925357/CRX_INSTALL/signInHandler.html[22m
+[2m10:34:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.codex-run/quote-matrix-profile-8/Default/Extensions/Temp/scoped_dir35396_312925357/CRX_INSTALL/viewer.html[22m
+[2m10:43:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css[22m
+[2m10:56:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css[22m
+[2m10:59:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css[22m
+[2m11:04:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m11:07:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m11:09:45[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m11:12:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m11:13:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css[22m
+[2m11:13:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m11:16:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m11:19:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m11:27:33[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m11:28:10[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css[22m
+[2m11:36:47[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m12:08:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m12:15:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/components/QuoteChatPopup.tsx, /src/styles/index.css[22m
+[2m12:15:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/components/QuoteChatPopup.tsx, /src/styles/index.css[22m
+[2m13:03:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m13:03:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m13:15:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtdxtheme/rain-analysis-mock.html[22m
+[2m13:35:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/components/QuoteChatPopup.tsx, /src/styles/index.css[22m
+[2m13:35:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtdxtheme/rain-analysis-mock.html[22m
+[2m13:36:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/trading-workbench-vue/index.html[22m
+[2m13:36:01[22m [36m[1m[vite][22m[39m changed tsconfig file detected: E:/code/repobroad/newworkspace/trading-workbench-vue/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+[2m13:36:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/wireframe.html[22m
+[2m13:36:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2m13:36:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/app/components/LeftPanel.tsx[22m
+[2m13:36:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/app/components/MarketChartPage.tsx[22m
+[2m13:36:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/app/components/LeftPanel.tsx[22m
+[2m13:36:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/app/components/RightPanel.tsx[22m
+[2m13:36:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/app/components/RightPanel.tsx[22m
+[2m13:36:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/app/components/ui/scroll-area.tsx[22m
+[2m13:36:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css[22m
+[2m13:36:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css[22m
+[2m13:48:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32m✨ new dependencies optimized: [33mlucide-react[32m[39m
+[2m13:48:24[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32m✨ optimized dependencies changed. reloading[39m
+[2m13:50:45[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/trading-workbench-vue/dist/index.html[22m
+[2m13:50:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/trading-workbench-vue/dist/index.html[22m
+[2m13:56:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/trading-workbench-vue/dist/index.html[22m
+[2m13:56:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/trading-workbench-vue/dist/index.html[22m
+[2m15:20:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css[22m
+[2m15:21:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/app/components/LeftPanel.tsx[22m
+[2m15:21:33[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/app/components/RightPanel.tsx[22m
+[2m15:21:42[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/app/components/RightPanel.tsx[22m
+[2m15:23:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/app/components/MarketChartPage.tsx[22m
+[2m15:23:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/app/components/MarketChartPage.tsx[22m
+[2m15:24:22[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/app/components/MarketChartPage.tsx[22m
+[2m15:24:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/index.css[22m
+[2m15:25:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/trading-workbench-vue/dist/index.html[22m
+[2m15:25:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/trading-workbench-vue/dist/index.html[22m
+[2m15:30:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/app/components/MarketChartPage.tsx[22m
+[2m15:30:44[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/trading-workbench-vue/dist/index.html[22m
+[2m16:42:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/trading-workbench-vue/dist/index.html[22m
+[2m16:42:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/trading-workbench-vue/dist/index.html[22m
+[2m16:52:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/trading-workbench-vue/dist/index.html[22m
+[2m16:56:22[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/trading-workbench-vue/dist/index.html[22m
+[2m17:07:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/trading-workbench-vue/dist/index.html[22m
+[2m17:33:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/trading-workbench-vue/dist/index.html[22m
+[2m17:46:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/trading-workbench-vue/dist/index.html[22m
+[2m18:09:39[22m [36m[1m[vite][22m[39m [32mvite.config.ts changed, restarting server...[39m
+[2m18:09:49[22m [36m[1m[vite][22m[39m [32mvite.config.ts changed, restarting server...[39m
+[2m18:10:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mindex.html[22m
+[2m18:12:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mindex.html[22m
+[2m18:14:14[22m [36m[1m[vite][22m[39m [32mvite.config.ts changed, restarting server...[39m
+[2m18:14:14[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Re-optimizing dependencies because lockfile has changed
+[2m18:14:15[22m [36m[1m[vite][22m[39m server restarted.
+[2m18:49:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mindex.html[22m
+[2m18:49:40[22m [36m[1m[vite][22m[39m changed tsconfig file detected: E:/code/repobroad/newworkspace/trading-workbench-vue/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+[2m18:49:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/trading-workbench-vue/index.html[22m
+[2m18:49:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/wireframe.html[22m
+[2m18:49:40[22m [36m[1m[vite][22m[39m [32mvite.config.ts changed, restarting server...[39m
+[2m18:49:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtdxtheme/rain-analysis-mock.html[22m
+[2m18:49:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Re-optimizing dependencies because lockfile has changed
+[2m18:49:41[22m [36m[1m[vite][22m[39m server restarted.
+[2m10:42:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mindex.html[22m
+[2m10:42:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/trading-workbench-vue/index.html[22m
+[2m10:42:18[22m [36m[1m[vite][22m[39m changed tsconfig file detected: E:/code/repobroad/newworkspace/trading-workbench-vue/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+[2m10:42:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mtdxtheme/rain-analysis-mock.html[22m
+[2m10:42:18[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mnewworkspace/wireframe.html[22m
+[2m10:42:18[22m [36m[1m[vite][22m[39m [32mvite.config.ts changed, restarting server...[39m
+[2m10:48:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mreact-index.html[22m
+[2m10:49:49[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/index.html[22m

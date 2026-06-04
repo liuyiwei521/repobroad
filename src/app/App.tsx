@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import {
   Activity,
   BadgePercent,
@@ -17,6 +17,7 @@ import {
 
 type TrendMode = "intraday" | "history" | "comparison";
 type SentimentTab = "realtime" | "trend";
+type BaseTrendProduct = "r001" | "r007";
 type OverlayProduct = "none" | "dr007" | "gc007" | "r007";
 type RightLowerTab = "matrix" | "inst" | "bond";
 type HistoryRange = "5d" | "1m" | "6m";
@@ -120,7 +121,7 @@ type ExchangeMarketSplitSection = {
   }[];
 };
 
-type EntryDisplayMode = "icon" | "compact" | "summary" | "wide-preview";
+type EntryDisplayMode = "icon" | "compact" | "narrow-summary" | "summary" | "wide-preview";
 type ModuleEntryId =
   | "big-bank-price"
   | "xrepo"
@@ -157,6 +158,14 @@ type ModuleEntryMetric = {
   trendValues?: readonly number[];
   trendColor?: string;
   trendLabel?: string;
+};
+type NarrowRailSummaryItem = {
+  id: ModuleEntryId;
+  label: string;
+  value: string;
+  tone?: OverviewTone;
+  badge?: string;
+  badgeTone?: "warning" | "danger";
 };
 
 const integratedPreviewEntryIds = new Set<ModuleEntryId>([
@@ -242,6 +251,28 @@ const moduleEntries: readonly ModuleEntryConfig[] = [
     statusText: "日内",
     icon: Activity,
   },
+] as const;
+
+const narrowRailSummaryItems: readonly NarrowRailSummaryItem[] = [
+  { id: "market-sentiment", label: "资金情绪", value: "偏松 62" },
+  { id: "anonymous-trade", label: "成交方向", value: "先补 R014" },
+  { id: "big-bank-price", label: "大行价格", value: "R001 1.58 / 1.66" },
+  {
+    id: "exchange-repo",
+    label: "交易所回购",
+    value: "GC007 1.55",
+    badge: "延迟",
+    badgeTone: "warning",
+  },
+  {
+    id: "xrepo",
+    label: "XREPO",
+    value: "R001 1.58 / 1.66",
+    badge: "双标",
+    badgeTone: "warning",
+  },
+  { id: "ncd", label: "NCD 同业存单", value: "AAA 1M 1.88" },
+  { id: "institution-period", label: "机构分期限统计", value: "R014 最密集" },
 ] as const;
 
 const initialBankRateRows: readonly BankRateRow[] = [
@@ -641,7 +672,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
           },
           {
             id: "reverse-cd-sj-taikang",
-            institution: "泰康资产",
+            institution: "太保资产",
             tenor: "R001",
             amount: "5亿",
             rate: "1.42%",
@@ -1126,6 +1157,14 @@ const overlayProductOptions: Array<{ id: OverlayProduct; label: string }> = [
   { id: "r007", label: "R007" },
 ];
 
+const baseTrendProductOptions: Array<{ id: BaseTrendProduct; label: string }> = [
+  { id: "r001", label: "R001" },
+  { id: "r007", label: "R007" },
+];
+
+const trendProductLabel = (product: BaseTrendProduct) =>
+  baseTrendProductOptions.find((option) => option.id === product)?.label ?? "R001";
+
 const compareProductOptions: Array<{ id: CompareProduct; label: string }> = [
   { id: "none", label: "不对比" },
   { id: "dr001", label: "DR001" },
@@ -1183,6 +1222,12 @@ const intradayOverlaySeriesByProduct: Record<
   r007: randomWalk(2.058, 40, 0.052, 73),
 };
 
+function getIntradayRateSeries(product: BaseTrendProduct) {
+  return product === "r001"
+    ? intradaySeries
+    : intradayOverlaySeriesByProduct.r007;
+}
+
 const intradayTimeLabels = [
   "09:30",
   "10:00",
@@ -1195,9 +1240,9 @@ const intradayTimeLabels = [
 ] as const;
 
 const historyRangeTabs: Array<{ id: HistoryRange; label: string }> = [
-  { id: "5d", label: "近5日" },
-  { id: "1m", label: "近1M" },
-  { id: "6m", label: "近半年" },
+  { id: "5d", label: "5日" },
+  { id: "1m", label: "1M" },
+  { id: "6m", label: "半年" },
 ];
 
 const historicalCloseDatasets: Record<
@@ -2118,6 +2163,7 @@ function App() {
   const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
   const [historyRange, setHistoryRange] = useState<HistoryRange>("5d");
   const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
+  const [baseProduct, setBaseProduct] = useState<BaseTrendProduct>("r001");
   const mainRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -2225,16 +2271,20 @@ function App() {
             <div className="h-full min-h-0">
               <HistoryClosePanel
                 activeRange={historyRange}
+                baseProduct={baseProduct}
                 overlayProduct={overlayProduct}
                 compareProduct={compareProduct}
                 onRangeChange={setHistoryRange}
+                onBaseProductChange={setBaseProduct}
                 onCompareChange={setCompareProduct}
               />
             </div>
           ) : activeFrame.id === "anonymous-trade" ? (
             <div className="h-full min-h-0">
               <IntradayPanel
+                baseProduct={baseProduct}
                 overlayProduct={overlayProduct}
+                onBaseProductChange={setBaseProduct}
                 onOverlayChange={setOverlayProduct}
               />
             </div>
@@ -2309,11 +2359,176 @@ function AdaptiveEntryRail({
   }, []);
 
   const displayMode: EntryDisplayMode =
-    width <= 72
+    width < 80
       ? "icon"
-      : width <= 180
-        ? "compact"
+      : width < 220
+        ? "narrow-summary"
         : width <= 400
+          ? "summary"
+          : "wide-preview";
+  const groupedDisplayMode: EntryDisplayMode =
+    displayMode === "narrow-summary"
+      ? "compact"
+      : displayMode;
+  const groups = Array.from(new Set(entries.map((entry) => entry.group)));
+
+  return (
+    <aside
+      ref={railRef}
+      className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pr-1"
+    >
+      <div className="tk-panel flex min-h-0 flex-1 flex-col overflow-hidden border">
+        <div
+          className={`tk-panel-header border-b ${
+            displayMode === "icon" ? "px-1.5 py-2" : "px-3 py-2.5"
+          }`}
+        >
+          {displayMode === "icon" ? (
+            <div className="tk-muted text-center text-[10px] font-semibold">
+              鍏ュ彛
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <div className="tk-title truncate">
+                  {displayMode === "narrow-summary" ? "数据摘要" : "琛屾儏鍏ュ彛"}
+                </div>
+              </div>
+              {displayMode === "narrow-summary" ? null : (
+                <div className="tk-chip rounded border px-1.5 py-0.5 text-[10px]">
+                  {Math.round(width)}px
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <div
+          className={`min-h-0 flex-1 overflow-y-auto ${
+            displayMode === "icon" ? "p-1.5" : "p-2"
+          }`}
+        >
+          {displayMode === "narrow-summary" ? (
+            <NarrowRailSummary
+              entries={entries}
+              activeId={activeId}
+              onOpen={onOpen}
+            />
+          ) : displayMode === "summary" ? (
+            <RailMarketOverview />
+          ) : null}
+          {displayMode === "compact" ? (
+            <div className="flex min-h-full flex-col justify-evenly gap-2">
+              {entries.map((entry) => (
+                <ModuleEntryItem
+                  key={entry.id}
+                  entry={entry}
+                  active={entry.id === activeId}
+                  displayMode={displayMode}
+                  onOpen={() => onOpen(entry)}
+                />
+              ))}
+            </div>
+          ) : displayMode === "narrow-summary" ? null : (
+            groups.map((group) => (
+              <div
+                key={group}
+                className={displayMode === "icon" ? "space-y-1.5" : "space-y-2"}
+              >
+                {entries
+                  .filter((entry) => entry.group === group)
+                  .map((entry) => (
+                    <ModuleEntryItem
+                      key={entry.id}
+                      entry={entry}
+                      active={entry.id === activeId}
+                      displayMode={groupedDisplayMode}
+                      onOpen={() => onOpen(entry)}
+                    />
+                  ))}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function NarrowRailSummary({
+  entries,
+  activeId,
+  onOpen,
+}: {
+  entries: readonly ModuleEntryConfig[];
+  activeId: ModuleEntryId | null;
+  onOpen: (entry: ModuleEntryConfig) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      {narrowRailSummaryItems.map((item) => {
+        const entry = entries.find((candidate) => candidate.id === item.id);
+        if (!entry) return null;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            aria-label={item.label}
+            onClick={() => onOpen(entry)}
+            className={`group w-full min-w-0 rounded border px-3 py-2.5 text-left transition-colors hover:border-[color:var(--tdx-red)] hover:bg-[rgba(231,53,58,0.12)] ${
+              activeId === item.id
+                ? "tk-selected"
+                : "border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]"
+            }`}
+          >
+            <div className="flex min-w-0 items-start justify-between gap-2">
+              <span className="min-w-0 truncate text-[14px] font-semibold leading-5 text-[color:var(--tdx-text-heading)]">
+                {item.label}
+              </span>
+              {item.badge ? (
+                <span
+                  className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] leading-none ${
+                    item.badgeTone === "danger"
+                      ? "border-[color:rgba(231,53,58,0.45)] bg-[rgba(231,53,58,0.16)] text-[color:var(--tdx-red)]"
+                      : "border-[color:rgba(246,180,84,0.45)] bg-[rgba(246,180,84,0.14)] text-[color:var(--tdx-yellow)]"
+                  }`}
+                >
+                  {item.badge}
+                </span>
+              ) : null}
+            </div>
+            <div
+              className={`mt-1 min-w-0 break-words text-[20px] font-bold leading-6 ${
+                item.tone === "alert"
+                  ? "text-[color:var(--tdx-red)]"
+                  : "text-[color:var(--tdx-yellow)]"
+              }`}
+            >
+              {item.value}
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function AdaptiveEntryRailLegacyUnused({
+  entries,
+  activeId,
+  onOpen,
+}: {
+  entries: readonly ModuleEntryConfig[];
+  activeId: ModuleEntryId | null;
+  onOpen: (entry: ModuleEntryConfig) => void;
+}) {
+  const railRef = useRef<HTMLElement>(null);
+  const width = 0;
+  const displayMode: EntryDisplayMode =
+    false
+      ? "icon"
+      : false
+        ? "compact"
+        : false
           ? "summary"
           : "wide-preview";
   const groups = Array.from(new Set(entries.map((entry) => entry.group)));
@@ -2445,7 +2660,7 @@ function ModuleEntryItem({
           type="button"
           aria-label={entry.title}
           onClick={onOpen}
-          className="group w-full px-2.5 py-2 text-left transition-colors hover:bg-[rgba(231,53,58,0.12)]"
+          className="group w-full px-2.5 py-1.5 text-left transition-colors hover:bg-[rgba(231,53,58,0.12)]"
         >
           <div className="flex min-w-0 items-center gap-2">
             <span
@@ -2460,9 +2675,6 @@ function ModuleEntryItem({
             <span className="min-w-0 flex-1">
               <span className="tk-strong block truncate text-xs font-semibold">
                 {entry.title}
-              </span>
-              <span className="tk-muted mt-0.5 block truncate text-[11px] font-medium">
-                {metric.summary}
               </span>
             </span>
             <span className="tk-chip shrink-0 rounded border px-1.5 py-0.5 text-[10px]">
@@ -2495,7 +2707,7 @@ function ModuleEntryItem({
         } ${
           displayMode === "icon" || displayMode === "compact"
             ? "flex items-center justify-center px-0"
-            : "px-2.5 py-2"
+            : "px-2.5 py-1.5"
         } ${
           displayMode === "compact"
             ? "h-16"
@@ -2525,11 +2737,6 @@ function ModuleEntryItem({
               <span className="tk-strong block truncate text-xs font-semibold">
                 {entry.title}
               </span>
-              {displayMode === "summary" || displayMode === "wide-preview" ? (
-                <span className="tk-muted mt-0.5 block truncate text-[11px] font-medium">
-                  {metric.summary}
-                </span>
-              ) : null}
             </span>
           ) : null}
           {!compact && displayMode !== "wide-preview" ? (
@@ -3041,10 +3248,10 @@ function IntegratedPreviewHeader({
   const Icon = entry.icon;
 
   return (
-    <div className="tk-panel-header border-b px-2.5 py-2">
+    <div className="tk-panel-header border-b px-2.5 py-1.5">
       <div className="flex min-w-0 items-center gap-2">
         <button
-          className="group flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-1 text-left transition-colors hover:bg-[rgba(231,53,58,0.12)]"
+          className="group flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-[rgba(231,53,58,0.12)]"
           onClick={onOpen}
           type="button"
         >
@@ -3054,9 +3261,6 @@ function IntegratedPreviewHeader({
           <span className="min-w-0 flex-1">
             <span className="tk-strong block truncate text-xs font-semibold">
               {entry.title}
-            </span>
-            <span className="tk-muted mt-0.5 block truncate text-[11px] font-medium">
-              {metric.summary}
             </span>
           </span>
         </button>
@@ -3122,7 +3326,7 @@ function ModuleEntryPreview({
 
   if (id === "institution-period") {
     return (
-      <RichPreviewFrame heightClassName="h-[270px]">
+      <RichPreviewFrame heightClassName="h-[340px]">
         <div className="h-full min-h-0 rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
           <CfetsInstPanel />
         </div>
@@ -3152,13 +3356,16 @@ function ModuleEntryPreview({
 function WeightedPriceEntryPreview() {
   const [activeRange, setActiveRange] = useState<HistoryRange>("5d");
   const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
+  const [baseProduct, setBaseProduct] = useState<BaseTrendProduct>("r001");
   return (
     <RichPreviewFrame heightClassName="h-[260px]">
       <HistoryClosePanel
         activeRange={activeRange}
+        baseProduct={baseProduct}
         overlayProduct="none"
         compareProduct={compareProduct}
         onRangeChange={setActiveRange}
+        onBaseProductChange={setBaseProduct}
         onCompareChange={setCompareProduct}
       />
     </RichPreviewFrame>
@@ -3167,10 +3374,13 @@ function WeightedPriceEntryPreview() {
 
 function AnonymousTradeEntryPreview() {
   const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
+  const [baseProduct, setBaseProduct] = useState<BaseTrendProduct>("r001");
   return (
     <RichPreviewFrame heightClassName="h-[235px]">
       <IntradayPanel
+        baseProduct={baseProduct}
         overlayProduct={overlayProduct}
+        onBaseProductChange={setBaseProduct}
         onOverlayChange={setOverlayProduct}
       />
     </RichPreviewFrame>
@@ -3360,7 +3570,7 @@ function PageFrame({
               className="tk-button inline-flex items-center gap-1.5 px-2.5 py-1.5 opacity-60"
               disabled
               type="button"
-              title="刷新能力待接入"
+              title="刷新"
             >
               <RefreshCcw size={13} />
               刷新
@@ -3369,7 +3579,7 @@ function PageFrame({
               className="tk-button inline-flex items-center gap-1.5 px-2.5 py-1.5 opacity-60"
               disabled
               type="button"
-              title="下载能力待接入"
+              title="下载"
             >
               <Download size={13} />
               下载
@@ -4410,10 +4620,12 @@ function ExchangeRepoCard({
   title,
   markets,
   embeddedPreview = false,
+  onOpen,
 }: {
   title: string;
   markets: ExchangeMarketSplitSection["markets"];
   embeddedPreview?: boolean;
+  onOpen?: () => void;
 }) {
   const [activeView, setActiveView] = useState<"core" | "sse" | "szse">("core");
   const filteredMarkets =
@@ -4427,35 +4639,66 @@ function ExchangeRepoCard({
         embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
       }`}
     >
-      <div className="tk-panel-header border-b px-4 py-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="tk-title">
-            {title}
-          </div>
-          <div className="flex items-center gap-2">
-            {[
-              { id: "core", label: "核心" },
-              { id: "sse", label: "上交所" },
-              { id: "szse", label: "深交所" },
-            ].map((tab) => (
+      {embeddedPreview ? (
+        <IntegratedPreviewHeader
+          id="exchange-repo"
+          onOpen={onOpen}
+          actions={
+            <>
+              {[
+                { id: "core", label: "核心" },
+                { id: "sse", label: "上交所" },
+                { id: "szse", label: "深交所" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  className={auxTabClass(tab.id === activeView)}
+                  onClick={() => setActiveView(tab.id as "core" | "sse" | "szse")}
+                  type="button"
+                >
+                  {tab.label}
+                </button>
+              ))}
               <button
-                key={tab.id}
-                className={auxTabClass(tab.id === activeView)}
-                onClick={() => setActiveView(tab.id as "core" | "sse" | "szse")}
+                className="tk-button tk-button-success px-3 py-1"
                 type="button"
               >
-                {tab.label}
+                下载
               </button>
-            ))}
-            <button
-              className="tk-button tk-button-success px-3 py-1"
-              type="button"
-            >
-              下载
-            </button>
+            </>
+          }
+        />
+      ) : (
+        <div className="tk-panel-header border-b px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="tk-title">
+              {title}
+            </div>
+            <div className="flex items-center gap-2">
+              {[
+                { id: "core", label: "核心" },
+                { id: "sse", label: "上交所" },
+                { id: "szse", label: "深交所" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  className={auxTabClass(tab.id === activeView)}
+                  onClick={() => setActiveView(tab.id as "core" | "sse" | "szse")}
+                  type="button"
+                >
+                  {tab.label}
+                </button>
+              ))}
+              <button
+                className="tk-button tk-button-success px-3 py-1"
+                type="button"
+              >
+                下载
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
       <div className={embeddedPreview ? "min-h-0 p-2" : "min-h-0 flex-1 p-2"}>
         {activeView === "core" ? (
           <ExchangeCoreCompactBoard
@@ -4694,6 +4937,51 @@ type QuoteChatContext = {
   sectionTitle: string;
   contactName: string;
 };
+type OpponentQuoteCard = {
+  id: string;
+  name: string;
+  institution: string;
+  waitMinutes: number;
+  status: "unreplied" | "replied";
+  tenor: string;
+  amount: string | null;
+  rate: string;
+  pledge: string | null;
+  account: string | null;
+  tags: readonly string[];
+  core: boolean;
+  special?: boolean;
+};
+
+const opponentNames = [
+  "张经理",
+  "孙经理",
+  "李经理",
+  "罗成",
+  "刘佳",
+  "孙悦",
+  "凯经理",
+  "唐敏",
+  "邓珊",
+  "高远",
+  "潘宁",
+  "周经理",
+] as const;
+
+const opponentInstitutions = [
+  "中信银行",
+  "建设银行",
+  "农业银行",
+  "国泰资产",
+  "邮储银行",
+  "江苏银行",
+  "上海农商",
+  "招商基金",
+  "平安理财",
+  "杭州银行",
+  "上海银行",
+  "华安基金",
+] as const;
 
 const quoteContactNames: Record<string, string> = {
   中信银行: "李经理",
@@ -4709,7 +4997,7 @@ const quoteContactNames: Record<string, string> = {
   阳光资产: "许经理",
   招银理财: "周经理",
   工银理财: "张经理",
-  泰康资产: "陈经理",
+  太保资产: "陈经理",
   交银理财: "赵经理",
   鹏华基金: "林经理",
   平安资产: "何经理",
@@ -4748,37 +5036,437 @@ type DemandRow = {
   color: string;
   cells: Record<DemandTenor, DemandAmount>;
 };
+type DemandMatrix = {
+  rows: DemandRow[];
+  rowTotals: Record<string, DemandAmount>;
+  columnTotals: Record<DemandTenor, DemandAmount>;
+  grandTotal: DemandAmount;
+};
+type BarometerRange = "overnight" | "7d";
+type BarometerMetric = "count" | "volume";
+type BarometerLineStyle = "solid" | "dashed";
+type BarometerPoint = { t: string; value: number };
+type BarometerSeries = {
+  key: string;
+  label: string;
+  color: string;
+  lineStyle: BarometerLineStyle;
+  points: BarometerPoint[];
+};
+type BarometerSlice = {
+  yUnit: string;
+  yLabel: string;
+  series: BarometerSeries[];
+};
 
 const middleMatrixPlaceholders = [
   { title: "正回购需求", tag: "需求矩阵", hint: "本方正回购 · 押券 × 期限", kind: "matrix", direction: "repo" },
   { title: "逆回购需求", tag: "需求矩阵", hint: "本方逆回购 · 押券 × 期限", kind: "matrix", direction: "reverse" },
-  { title: "匿名成交走势时间", tag: "时间分布", hint: "成交时间 × 期限", kind: "chart" },
 ] as const;
 
 const demandTenors: DemandTenor[] = ["R001", "R007"];
 
 const demandRowsByDirection: Record<DemandDirection, DemandRow[]> = {
   repo: [
-    { label: "利率地方", color: "var(--tk-color-chart-blue)", cells: { R001: { need: 40, done: 31 }, R007: { need: 16, done: 13 } } },
-    { label: "存单商金", color: "var(--tk-color-chart-gold)", cells: { R001: { need: 0, done: 0 }, R007: { need: 25, done: 18 } } },
-    { label: "信用", color: "var(--tk-color-chart-purple)", cells: { R001: { need: 9, done: 7 }, R007: { need: 15, done: 15 } } },
+    { label: "利率地方", color: "var(--tk-color-chart-blue)", cells: { R001: { need: 40.6, done: 31.2 }, R007: { need: 16.4, done: 13.1 } } },
+    { label: "存单商金", color: "var(--tk-color-chart-gold)", cells: { R001: { need: 0, done: 0 }, R007: { need: 25.3, done: 18.4 } } },
+    { label: "信用", color: "var(--tk-color-chart-purple)", cells: { R001: { need: 9.2, done: 7.1 }, R007: { need: 15.7, done: 15.7 } } },
   ],
   reverse: [
-    { label: "利率地方", color: "var(--tk-color-chart-blue)", cells: { R001: { need: 29, done: 24 }, R007: { need: 20, done: 15 } } },
-    { label: "存单商金", color: "var(--tk-color-chart-gold)", cells: { R001: { need: 0, done: 0 }, R007: { need: 18, done: 12 } } },
-    { label: "信用", color: "var(--tk-color-chart-purple)", cells: { R001: { need: 6, done: 5 }, R007: { need: 9, done: 7 } } },
+    { label: "利率地方", color: "var(--tk-color-chart-blue)", cells: { R001: { need: 29.4, done: 24.3 }, R007: { need: 20.2, done: 15.5 } } },
+    { label: "存单商金", color: "var(--tk-color-chart-gold)", cells: { R001: { need: 0, done: 0 }, R007: { need: 18.6, done: 12.4 } } },
+    { label: "信用", color: "var(--tk-color-chart-purple)", cells: { R001: { need: 6.3, done: 5.1 }, R007: { need: 9.5, done: 7.2 } } },
   ],
 };
 
+const roundDemandValue = (value: number) => Number(value.toFixed(1));
+
 const addDemand = (items: DemandAmount[]): DemandAmount => ({
-  need: items.reduce((sum, item) => sum + item.need, 0),
-  done: items.reduce((sum, item) => sum + item.done, 0),
+  need: roundDemandValue(items.reduce((sum, item) => sum + item.need, 0)),
+  done: roundDemandValue(items.reduce((sum, item) => sum + item.done, 0)),
 });
 
-const demandGap = (amount: DemandAmount) => Math.max(amount.need - amount.done, 0);
+const buildDemandMatrix = (rows: DemandRow[]): DemandMatrix => {
+  const rowTotals = Object.fromEntries(
+    rows.map((row) => [
+      row.label,
+      addDemand(demandTenors.map((tenor) => row.cells[tenor])),
+    ]),
+  ) as Record<string, DemandAmount>;
+
+  const columnTotals = Object.fromEntries(
+    demandTenors.map((tenor) => [
+      tenor,
+      addDemand(rows.map((row) => row.cells[tenor])),
+    ]),
+  ) as Record<DemandTenor, DemandAmount>;
+
+  return {
+    rows,
+    rowTotals,
+    columnTotals,
+    grandTotal: addDemand(demandTenors.map((tenor) => columnTotals[tenor])),
+  };
+};
+
+const demandGap = (amount: DemandAmount) => Math.max(roundDemandValue(amount.need - amount.done), 0);
 const demandProgress = (amount: DemandAmount) =>
   amount.need > 0 ? Math.min(100, Math.round((amount.done / amount.need) * 100)) : 0;
-const formatDemandAmount = (value: number) => (Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1));
+const formatDemandAmount = (value: number) => value.toFixed(1);
+
+const barometerRangeOptions: Array<{ value: BarometerRange; label: string }> = [
+  { value: "overnight", label: "隔夜" },
+  { value: "7d", label: "7D" },
+];
+
+const barometerMetricOptions: Array<{ value: BarometerMetric; label: string }> = [
+  { value: "count", label: "笔数" },
+  { value: "volume", label: "量" },
+];
+
+const barometerAmSlots = [
+  "08:15",
+  "08:30",
+  "08:45",
+  "09:00",
+  "09:15",
+  "09:30",
+  "09:45",
+  "10:00",
+  "10:15",
+  "10:30",
+  "10:45",
+  "11:00",
+  "11:15",
+];
+const barometerPmSlots = [
+  "13:15",
+  "13:30",
+  "13:45",
+  "14:00",
+  "14:15",
+  "14:30",
+  "14:45",
+  "15:00",
+  "15:15",
+  "15:30",
+  "15:45",
+  "16:00",
+];
+const barometerTimeline = [...barometerAmSlots, ...barometerPmSlots];
+const barometerOutColor = "#ffa028";
+const barometerInColor = "#1872f6";
+
+const barometerGauss = (x: number, mu: number, sigma: number) =>
+  Math.exp(-((x - mu) ** 2) / (2 * sigma * sigma));
+
+function buildBarometerShape(
+  peakAm: number,
+  peakPm: number,
+  amplitudeAm: number,
+  amplitudePm: number,
+  noiseSeed: number,
+): BarometerPoint[] {
+  const amLength = barometerAmSlots.length;
+  return barometerTimeline.map((t, index) => {
+    const isAm = index < amLength;
+    const localIndex = isAm ? index : index - amLength;
+    const base = isAm
+      ? amplitudeAm * barometerGauss(localIndex, peakAm, 1.8)
+      : amplitudePm * barometerGauss(localIndex, peakPm, 2.6);
+    const wobble =
+      Math.sin((index + noiseSeed) * 1.7) * 0.06 +
+      Math.cos(index * 0.9 + noiseSeed) * 0.04;
+    return { t, value: Math.max(0, Math.round(base * (1 + wobble))) };
+  });
+}
+
+const scaleBarometerPoints = (
+  points: BarometerPoint[],
+  factor: number,
+): BarometerPoint[] =>
+  points.map((point) => ({ ...point, value: Math.round(point.value * factor) }));
+
+function buildBarometerSeries(
+  todayOut: BarometerPoint[],
+  todayIn: BarometerPoint[],
+  yesterdayOut: BarometerPoint[],
+  yesterdayIn: BarometerPoint[],
+): BarometerSeries[] {
+  return [
+    {
+      key: "todayOut",
+      label: "今日融出",
+      color: barometerOutColor,
+      lineStyle: "solid",
+      points: todayOut,
+    },
+    {
+      key: "todayIn",
+      label: "今日融入",
+      color: barometerInColor,
+      lineStyle: "solid",
+      points: todayIn,
+    },
+    {
+      key: "yesterdayOut",
+      label: "昨日融出",
+      color: barometerOutColor,
+      lineStyle: "dashed",
+      points: yesterdayOut,
+    },
+    {
+      key: "yesterdayIn",
+      label: "昨日融入",
+      color: barometerInColor,
+      lineStyle: "dashed",
+      points: yesterdayIn,
+    },
+  ];
+}
+
+const barometerTodayOutCount = buildBarometerShape(4, 8, 226, 148, 0);
+const barometerTodayInCount = buildBarometerShape(4, 8, 64, 48, 1.3);
+const barometerYesterdayOutCount = buildBarometerShape(4, 8, 198, 132, 2.1);
+const barometerYesterdayInCount = buildBarometerShape(4, 8, 58, 42, 3.4);
+
+const barometerData: Record<BarometerRange, Record<BarometerMetric, BarometerSlice>> = {
+  overnight: {
+    count: {
+      yUnit: "笔",
+      yLabel: "成交（笔）",
+      series: buildBarometerSeries(
+        barometerTodayOutCount,
+        barometerTodayInCount,
+        barometerYesterdayOutCount,
+        barometerYesterdayInCount,
+      ),
+    },
+    volume: {
+      yUnit: "亿",
+      yLabel: "成交（亿）",
+      series: buildBarometerSeries(
+        scaleBarometerPoints(barometerTodayOutCount, 1.8),
+        scaleBarometerPoints(barometerTodayInCount, 2.4),
+        scaleBarometerPoints(barometerYesterdayOutCount, 1.7),
+        scaleBarometerPoints(barometerYesterdayInCount, 2.3),
+      ),
+    },
+  },
+  "7d": {
+    count: {
+      yUnit: "笔",
+      yLabel: "成交（笔）",
+      series: buildBarometerSeries(
+        scaleBarometerPoints(barometerTodayOutCount, 0.62),
+        scaleBarometerPoints(barometerTodayInCount, 0.78),
+        scaleBarometerPoints(barometerYesterdayOutCount, 0.6),
+        scaleBarometerPoints(barometerYesterdayInCount, 0.74),
+      ),
+    },
+    volume: {
+      yUnit: "亿",
+      yLabel: "成交（亿）",
+      series: buildBarometerSeries(
+        scaleBarometerPoints(barometerTodayOutCount, 1.26),
+        scaleBarometerPoints(barometerTodayInCount, 1.87),
+        scaleBarometerPoints(barometerYesterdayOutCount, 1.02),
+        scaleBarometerPoints(barometerYesterdayInCount, 1.61),
+      ),
+    },
+  },
+};
+
+function BarometerMatrixCard() {
+  const [range, setRange] = useState<BarometerRange>("overnight");
+  const [metric, setMetric] = useState<BarometerMetric>("count");
+  const currentSlice = barometerData[range][metric];
+  const allValues = currentSlice.series.flatMap((series) =>
+    series.points.map((point) => point.value),
+  );
+  const max = Math.max(...allValues, 1);
+  const min = 0;
+  const width = 320;
+  const height = 110;
+  const yTicks = [max, max * 0.66, max * 0.33, 0].map((value) =>
+    Math.round(value),
+  );
+  const visibleTimeLabels = new Set(["08:15", "09:15", "10:15", "11:15", "15:00", "16:00"]);
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(barometerTimeline.length);
+  const tooltipIndex = tooltipState?.index ?? null;
+
+  return (
+    <div className="grid min-h-0 grid-rows-[auto_auto_minmax(0,1fr)_auto] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
+        <div className="tk-matrix-card-title truncate">晴雨表</div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[color:var(--tk-color-border-divider)] px-3 py-2 text-xs">
+        <BarometerSegmentedControl
+          label="期限"
+          options={barometerRangeOptions}
+          value={range}
+          onChange={setRange}
+        />
+        <BarometerSegmentedControl
+          label="口径"
+          options={barometerMetricOptions}
+          value={metric}
+          onChange={setMetric}
+        />
+        <span className="min-w-0 flex-1 text-right text-[11px] text-slate-300">
+          当日成交变化 · 截至 16:00
+        </span>
+      </div>
+
+      <div className="grid min-h-0 grid-cols-[2.7rem_minmax(0,1fr)] px-3 pb-1.5 pt-2">
+        <div className="flex flex-col justify-between pr-2 text-right text-[8px] text-slate-500">
+          <div className="text-[7px] text-slate-500">{currentSlice.yLabel}</div>
+          {yTicks.map((tick) => (
+            <div key={tick}>{tick}</div>
+          ))}
+        </div>
+        <div
+          ref={containerRef}
+          className="relative min-h-0"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
+          {[0, 1, 2, 3].map((index) => (
+            <div
+              key={`barometer-grid-${index}`}
+              className="absolute inset-x-0 border-t border-[color:var(--tk-color-border-divider)] opacity-60"
+              style={{ top: `${(index / 3) * 100}%` }}
+            />
+          ))}
+          <svg
+            className="absolute inset-0 h-full w-full"
+            preserveAspectRatio="none"
+            viewBox={`0 0 ${width} ${height}`}
+          >
+            {currentSlice.series.map((series) => (
+              <path
+                key={series.key}
+                d={buildLinePath(
+                  series.points.map((point) => point.value),
+                  width,
+                  height,
+                  min,
+                  max,
+                )}
+                fill="none"
+                stroke={series.color}
+                strokeDasharray={series.lineStyle === "dashed" ? "7 5" : undefined}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={series.lineStyle === "dashed" ? 1.7 : 2.1}
+              />
+            ))}
+            {tooltipIndex !== null ? (
+              <line
+                x1={(tooltipIndex / (barometerTimeline.length - 1)) * width}
+                x2={(tooltipIndex / (barometerTimeline.length - 1)) * width}
+                y1={0}
+                y2={height}
+                stroke="#94a3b8"
+                strokeDasharray="4 4"
+                strokeOpacity="0.5"
+              />
+            ) : null}
+          </svg>
+          <div className="absolute inset-x-0 bottom-0 flex justify-between text-[7px] text-slate-500">
+            {barometerTimeline.map((label) => (
+              <span key={label} className="translate-y-4">
+                {visibleTimeLabels.has(label) ? label : ""}
+              </span>
+            ))}
+          </div>
+          {tooltipState !== null && tooltipIndex !== null ? (
+            <ChartTooltip
+              clientX={tooltipState.clientX}
+              clientY={tooltipState.clientY}
+            >
+              <div className="mb-1 font-medium text-slate-300">
+                {barometerTimeline[tooltipIndex]}
+              </div>
+              <div className="grid gap-1">
+                {currentSlice.series.map((series) => (
+                  <div key={series.key} className="flex items-center gap-2">
+                    <span
+                      className="h-1.5 w-3"
+                      style={{
+                        borderTop: `2px ${series.lineStyle === "dashed" ? "dashed" : "solid"} ${series.color}`,
+                      }}
+                    />
+                    <span className="text-slate-400">{series.label}</span>
+                    <span className="font-medium text-slate-100">
+                      {series.points[tooltipIndex].value}
+                      {currentSlice.yUnit}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </ChartTooltip>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 pb-2 pt-1 text-xs text-slate-100">
+        {currentSlice.series.map((series) => (
+          <span key={series.key} className="inline-flex items-center gap-1.5 whitespace-nowrap">
+            <svg width="26" height="10" viewBox="0 0 26 10">
+              <line
+                x1="1"
+                y1="5"
+                x2="25"
+                y2="5"
+                stroke={series.color}
+                strokeDasharray={series.lineStyle === "dashed" ? "6 4" : undefined}
+                strokeWidth={series.lineStyle === "dashed" ? 1.7 : 2.2}
+              />
+            </svg>
+            {series.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BarometerSegmentedControl<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: Array<{ value: T; label: string }>;
+  value: T;
+  onChange: (value: T) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-slate-400">{label}</span>
+      <div className="inline-flex overflow-hidden rounded-sm border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)]">
+        {options.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            className={`px-2 py-0.5 text-xs transition ${
+              option.value === value
+                ? "bg-[var(--tdx-red)] text-white"
+                : "text-slate-300 hover:bg-white/5"
+            }`}
+            onClick={() => onChange(option.value)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function MatrixPlaceholderCard({
   title,
@@ -4793,16 +5481,16 @@ function MatrixPlaceholderCard({
 }) {
   return (
     <div className="grid min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
-      <div className="flex items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2.5 py-1.5">
+      <div className="flex items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-0.5">
         <div className="min-w-0">
-          <div className="truncate text-[11px] font-semibold text-slate-100">
+          <div className="tk-matrix-card-title truncate">
             {title}
           </div>
-          <div className="mt-0.5 truncate text-[9px] text-slate-500">
+          <div className="tk-matrix-card-subtitle mt-0.5 truncate">
             {hint}
           </div>
         </div>
-        <span className="shrink-0 rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-1.5 py-0.5 text-[9px] text-slate-400">
+        <span className="tk-matrix-tag shrink-0 rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-1.5 py-0.5 text-slate-400">
           {tag}
         </span>
       </div>
@@ -4815,10 +5503,6 @@ function MatrixPlaceholderCard({
           }}
         />
         <MiniChartSkeleton activeIndex={index} />
-        <div className="absolute inset-x-2 bottom-2 flex items-center justify-between text-[9px] text-slate-500">
-          <span>占位</span>
-          <span>待接入</span>
-        </div>
       </div>
     </div>
   );
@@ -4835,27 +5519,23 @@ function DemandMatrixCard({
   tag: string;
   hint: string;
 }) {
-  const rows = demandRowsByDirection[direction];
+  const matrix = buildDemandMatrix(demandRowsByDirection[direction]);
   const directionAccent =
     direction === "repo" ? "var(--tdx-red)" : "var(--tk-color-brand-cyan)";
-  const grandTotal = addDemand(rows.flatMap((row) => demandTenors.map((tenor) => row.cells[tenor])));
-  const columnTotals = Object.fromEntries(
-    demandTenors.map((tenor) => [tenor, addDemand(rows.map((row) => row.cells[tenor]))])
-  ) as Record<DemandTenor, DemandAmount>;
 
   return (
     <div className="grid min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
       <div className="flex items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2.5 py-1.5">
         <div className="min-w-0">
-          <div className="truncate text-[11px] font-semibold text-slate-100">
+          <div className="tk-matrix-card-title truncate">
             {title}
           </div>
-          <div className="mt-0.5 truncate text-[9px] text-slate-500">
+          <div className="tk-matrix-card-subtitle truncate">
             {hint}
           </div>
         </div>
         <span
-          className="shrink-0 rounded border px-1.5 py-0.5 text-[9px] font-medium"
+          className="tk-matrix-tag shrink-0 rounded border px-1 py-0.5"
           style={{
             borderColor: directionAccent,
             background: direction === "repo" ? "rgba(231,53,58,0.14)" : "rgba(0,207,232,0.12)",
@@ -4866,24 +5546,24 @@ function DemandMatrixCard({
         </span>
       </div>
 
-      <div className="min-h-0 overflow-hidden p-1.5">
-        <div className="grid h-full min-h-0 grid-cols-[4.15rem_repeat(3,minmax(0,1fr))] grid-rows-[2.75rem_repeat(3,minmax(0,1fr))] gap-[3px] text-[8px]">
-          <DemandAxisHeader amount={grandTotal} accent={directionAccent} />
-          <DemandHeaderCell label="合计" amount={grandTotal} accent={directionAccent} />
+      <div className="min-h-0 overflow-hidden p-[1px]">
+        <div className="grid h-full min-h-0 grid-cols-[3.75rem_repeat(3,minmax(0,1fr))] grid-rows-[1.95rem_repeat(3,minmax(0,1fr))] gap-px text-[8px]">
+          <DemandAxisHeader />
+          <DemandHeaderCell label="合计" amount={matrix.grandTotal} accent={directionAccent} />
           {demandTenors.map((tenor) => (
             <DemandHeaderCell
               key={tenor}
               label={tenor}
-              amount={columnTotals[tenor]}
+              amount={matrix.columnTotals[tenor]}
               accent={directionAccent}
             />
           ))}
 
-          {rows.map((row) => {
-            const rowTotal = addDemand(demandTenors.map((tenor) => row.cells[tenor]));
+          {matrix.rows.map((row) => {
+            const rowTotal = matrix.rowTotals[row.label];
             return (
               <Fragment key={row.label}>
-                <DemandRowHeader row={row} amount={rowTotal} />
+                <DemandRowHeader row={row} />
                 <DemandMatrixCell amount={rowTotal} accent={directionAccent} isTotal />
                 {demandTenors.map((tenor) => (
                   <DemandMatrixCell
@@ -4901,11 +5581,10 @@ function DemandMatrixCard({
   );
 }
 
-function DemandAxisHeader({ amount, accent }: { amount: DemandAmount; accent: string }) {
+function DemandAxisHeader() {
   return (
-    <div className="flex min-w-0 flex-col justify-center overflow-hidden rounded-sm border border-[color:var(--tk-color-border-panel)] bg-[rgba(30,41,59,0.78)] px-1.5 text-slate-400">
-      <span className="truncate text-[9px]">押券 / 期限</span>
-      <DemandMiniStats amount={amount} accent={accent} compact />
+    <div className="flex min-w-0 items-center overflow-hidden rounded-sm border border-dashed border-[color:var(--tk-color-border-panel)] bg-transparent px-1 text-slate-500">
+      <span className="text-[8.5px] leading-none">押券 / 期限</span>
     </div>
   );
 }
@@ -4924,30 +5603,25 @@ function DemandHeaderCell({
   const empty = amount.need <= 0;
   return (
     <div
-      className={`relative flex min-w-0 flex-col justify-center overflow-hidden rounded-sm border px-1.5 pb-2 ${
+      className={`flex min-w-0 flex-col justify-center overflow-hidden rounded-sm border px-1 py-[1px] ${
         done
           ? "border-[rgba(148,163,184,0.16)] bg-[rgba(71,85,105,0.22)] text-slate-500"
           : "border-[color:var(--tk-color-border-panel)] bg-[rgba(30,41,59,0.82)] text-slate-300"
       } ${empty ? "opacity-45" : ""}`}
     >
-      <div className="truncate text-[10px] font-semibold">{label}</div>
-      <DemandMiniStats amount={amount} accent={accent} />
-      <DemandProgressBar progress={progress} accent={accent} muted={done || empty} />
+      <div className="text-[10px] font-semibold leading-none">{label}</div>
+      <DemandMiniStats amount={amount} accent={accent} progress={progress} muted={done || empty} />
     </div>
   );
 }
 
-function DemandRowHeader({ row, amount }: { row: DemandRow; amount: DemandAmount }) {
-  const done = amount.need > 0 && demandGap(amount) === 0;
+function DemandRowHeader({ row }: { row: DemandRow }) {
   return (
     <div
-      className={`flex min-w-0 flex-col justify-center overflow-hidden rounded-sm border bg-[rgba(30,41,59,0.74)] px-1.5 ${
-        done ? "border-[rgba(148,163,184,0.16)] opacity-55" : "border-[color:var(--tk-color-border-panel)]"
-      }`}
+      className="flex min-w-0 items-center overflow-hidden rounded-sm border border-[color:var(--tk-color-border-panel)] bg-[rgba(30,41,59,0.74)] px-1 py-[1px]"
       style={{ borderLeft: `2px solid ${row.color}` }}
     >
-      <div className="truncate text-[10px] font-semibold text-slate-200">{row.label}</div>
-      <DemandMiniStats amount={amount} accent={row.color} compact />
+      <div className="text-[10px] font-semibold leading-none text-slate-200">{row.label}</div>
     </div>
   );
 }
@@ -4968,7 +5642,7 @@ function DemandMatrixCell({
   return (
     <button
       type="button"
-      className={`relative min-w-0 overflow-hidden rounded-sm border px-1.5 pb-2 pt-1 text-left transition ${
+      className={`min-w-0 overflow-hidden rounded-sm border px-1 py-[1px] text-left transition ${
         done
           ? "border-[rgba(148,163,184,0.14)] bg-[rgba(71,85,105,0.18)] text-slate-500"
           : isTotal
@@ -4976,57 +5650,91 @@ function DemandMatrixCell({
             : "border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.66)] text-slate-200 hover:border-[color:var(--tk-color-brand-primary-hover)]"
       } ${empty ? "opacity-35" : ""}`}
     >
-      <div className="flex items-start justify-between gap-1">
-        <span className="min-w-0">
-          <span className="mr-0.5 align-baseline text-[8px] text-slate-500">需</span>
-          <span className="align-baseline text-[14px] font-semibold leading-none text-slate-100">
-            {formatDemandAmount(amount.need)}
-          </span>
-        </span>
-        <span className={`shrink-0 text-right ${gap > 0 ? "text-amber-300" : "text-slate-500"}`}>
-          <span className="mr-0.5 text-[8px]">差</span>
-          <span className="text-[12px] font-semibold leading-none">{formatDemandAmount(gap)}</span>
-        </span>
+      <div className="grid h-full min-h-0 content-center grid-rows-[auto_auto] gap-y-[1px]">
+        <div className="flex min-w-0 items-baseline justify-between gap-2">
+          <DemandCellMetric label="需" value={amount.need} tone="primary" />
+          <DemandCellMetric label="差" value={gap} tone={gap > 0 ? "gap" : "muted"} align="right" />
+        </div>
+        <div className="grid min-w-0 grid-cols-[auto_minmax(14px,1fr)_auto] items-center gap-0.5">
+          <DemandCellMetric label="已" value={amount.done} tone="done" />
+          <DemandInlineProgress progress={progress} accent={accent} muted={done || empty} />
+          <span className="text-[9px] text-slate-400">{progress}%</span>
+        </div>
       </div>
-      <div className="mt-1 flex items-baseline justify-between gap-1 text-slate-400">
-        <span>
-          <span className="mr-0.5 text-[8px] text-slate-500">已</span>
-          <span className="text-[11px] font-medium text-slate-300">{formatDemandAmount(amount.done)}</span>
-        </span>
-        <span className="text-[9px]">{progress}%</span>
-      </div>
-      <DemandProgressBar progress={progress} accent={accent} muted={done || empty} />
     </button>
+  );
+}
+
+function DemandCellMetric({
+  label,
+  value,
+  tone,
+  align = "left",
+}: {
+  label: string;
+  value: number;
+  tone: "primary" | "done" | "gap" | "muted";
+  align?: "left" | "right";
+}) {
+  const valueClass =
+    tone === "primary"
+      ? "text-slate-100"
+      : tone === "done"
+        ? "text-slate-300"
+        : tone === "gap"
+          ? "text-amber-300"
+          : "text-slate-500";
+
+  return (
+    <div className={`flex min-w-0 items-baseline gap-0.5 ${align === "right" ? "justify-end text-right" : ""}`}>
+      <span className="shrink-0 text-[8px] text-slate-500">{label}</span>
+      <span className={`truncate text-[13px] font-semibold leading-none ${valueClass}`}>
+        {formatDemandAmount(value)}
+      </span>
+    </div>
   );
 }
 
 function DemandMiniStats({
   amount,
   accent,
+  progress,
+  muted,
   compact = false,
 }: {
   amount: DemandAmount;
   accent: string;
+  progress: number;
+  muted: boolean;
   compact?: boolean;
 }) {
   const gap = demandGap(amount);
   return (
-    <div className={`truncate ${compact ? "text-[8px]" : "text-[9px]"} text-slate-400`}>
-      <span className="text-slate-500">需</span>
-      <span className="font-semibold text-slate-200">{formatDemandAmount(amount.need)}</span>
-      <span className="mx-0.5 text-slate-600">/</span>
-      <span className="text-slate-500">已</span>
-      <span className="font-semibold text-slate-300">{formatDemandAmount(amount.done)}</span>
-      <span className="mx-0.5 text-slate-600">/</span>
-      <span className="text-slate-500">差</span>
-      <span className="font-semibold" style={{ color: gap > 0 ? "var(--tk-color-warning)" : accent }}>
-        {formatDemandAmount(gap)}
-      </span>
+    <div className={`mt-[1px] grid gap-y-0 leading-none text-slate-400 ${compact ? "text-[8px]" : "text-[9px]"}`}>
+      <div className="flex min-w-0 items-baseline justify-between gap-1">
+        <span className="whitespace-nowrap">
+          <span className="text-slate-500">需</span>
+          <span className="ml-0.5 font-semibold text-slate-200">{formatDemandAmount(amount.need)}</span>
+        </span>
+        <span className="whitespace-nowrap">
+          <span className="text-slate-500">差</span>
+          <span className="ml-0.5 font-semibold" style={{ color: gap > 0 ? "var(--tk-color-warning)" : accent }}>
+            {formatDemandAmount(gap)}
+          </span>
+        </span>
+      </div>
+      <div className={`grid min-w-0 items-center gap-1 ${compact ? "grid-cols-[auto_1fr]" : "grid-cols-[auto_minmax(14px,1fr)]"}`}>
+        <span className="whitespace-nowrap">
+          <span className="text-slate-500">已</span>
+          <span className="ml-0.5 font-semibold text-slate-300">{formatDemandAmount(amount.done)}</span>
+        </span>
+        <DemandInlineProgress progress={progress} accent={accent} muted={muted} />
+      </div>
     </div>
   );
 }
 
-function DemandProgressBar({
+function DemandInlineProgress({
   progress,
   accent,
   muted,
@@ -5036,7 +5744,7 @@ function DemandProgressBar({
   muted: boolean;
 }) {
   return (
-    <div className="absolute inset-x-1 bottom-1 h-[2px] overflow-hidden rounded bg-[rgba(148,163,184,0.14)]">
+    <div className="h-[3px] min-w-0 overflow-hidden rounded bg-[rgba(148,163,184,0.14)]">
       <div
         className="h-full rounded transition-[width]"
         style={{
@@ -5105,64 +5813,329 @@ function MiniChartSkeleton({ activeIndex }: { activeIndex: number }) {
   );
 }
 
-const personalInstitutionCompareSeries = [
-  {
-    label: "个人 R001",
-    color: "#2f86ff",
-    dashed: false,
-    values: [1.52, 1.535, 1.535, 1.536, 1.518, 1.505, 1.552, 1.552, 1.518],
-  },
-  {
-    label: "机构 R001",
-    color: "#2f86ff",
-    dashed: true,
-    values: [1.56, 1.56, 1.575, 1.565, 1.552, 1.542, 1.585, 1.585, 1.548],
-  },
-  {
-    label: "个人 R007",
-    color: "#10c6c8",
-    dashed: false,
-    values: [1.70, 1.705, 1.73, 1.725, 1.695, 1.707, 1.718, 1.728, 1.718],
-  },
-  {
-    label: "机构 R007",
-    color: "#10c6c8",
-    dashed: true,
-    values: [1.69, 1.705, 1.75, 1.742, 1.755, 1.72, 1.78, 1.765, 1.725],
-  },
-] as const;
+type PersonalInstitutionMode = "tenor" | "collateral";
+type PersonalInstitutionKey = "R001" | "R007" | "存单商金" | "信用" | "利率地方";
+type PersonalInstitutionCompareItem = {
+  key: PersonalInstitutionKey;
+  label: string;
+  color: string;
+  personal: number[];
+  institutionWeighted: number[];
+  personalCount: number[];
+  institutionCount: number[];
+};
+
+const personalInstitutionLabels = ["08:00", "09:00", "10:00", "11:00", "13:30", "15:00", "16:00"];
+const personalInstitutionAxisLabelIndexes = new Set([0, 1, 3, 4, 5, 6]);
+
+const intradayQuoteHeat = [0.08, 1, 0.46, 0.16, 0.04, 0.22, 0.76];
+const intradayRatePressure = [0.12, 1, 0.52, 0.24, 0.02, 0.28, 0.82];
+const intradayNoise = [-0.006, 0.012, -0.003, -0.008, -0.012, 0.004, 0.010];
+const institutionSpreadShape = [-0.010, 0.030, 0.010, -0.014, -0.020, -0.006, 0.028];
+
+const seededJitter = (seed: number, index: number, amplitude: number) => {
+  const raw = Math.sin(seed * 97.13 + index * 41.77) * 10000;
+  return (raw - Math.floor(raw) - 0.5) * 2 * amplitude;
+};
+
+const keepPeakShape = (value: number, index: number) => {
+  if (index === 1) return Math.max(value, 0.92);
+  if (index === 6) return Math.max(value, 0.68);
+  if (index === 4) return Math.min(value, 0.08);
+  return value;
+};
+
+const buildIntradayRates = (
+  base: number,
+  pressureScale: number,
+  seed: number,
+) =>
+  intradayRatePressure.map((pressure, index) => {
+    const localPressure = keepPeakShape(
+      pressure + seededJitter(seed, index, 0.11) + seededJitter(seed + 19, index, 0.035) * index / 8,
+      index,
+    );
+    const microMove = seededJitter(seed + 37, index, 0.012);
+    return Number((base + localPressure * pressureScale + intradayNoise[index] + microMove).toFixed(3));
+  });
+
+const buildInstitutionWeightedRates = (
+  personal: number[],
+  spreadScale = 1,
+  seed: number,
+) =>
+  personal.map((rate, index) => {
+    const spreadNoise = seededJitter(seed + 53, index, 0.010);
+    const closeWindowPremium = index === 1 || index === 6 ? 0.004 : 0;
+    return Number((rate + institutionSpreadShape[index] * spreadScale + spreadNoise + closeWindowPremium).toFixed(3));
+  });
+
+const buildIntradayCounts = (
+  base: number,
+  peak: number,
+  closeBoost = 0,
+  seed: number,
+) =>
+  intradayQuoteHeat.map((heat, index) => {
+    const localHeat = keepPeakShape(heat + seededJitter(seed + 71, index, 0.14), index);
+    const countNoise = seededJitter(seed + 89, index, Math.max(1.2, peak * 0.06));
+    return Math.max(1, Math.round(base + peak * localHeat + countNoise + (index === 6 ? closeBoost : 0) + (index === 1 ? 2 : 0)));
+  });
+
+const makePersonalInstitutionItem = ({
+  key,
+  label,
+  color,
+  base,
+  pressureScale,
+  spreadScale,
+  personalBaseCount,
+  personalPeakCount,
+  institutionBaseCount,
+  institutionPeakCount,
+  seed,
+}: {
+  key: PersonalInstitutionKey;
+  label: string;
+  color: string;
+  base: number;
+  pressureScale: number;
+  spreadScale: number;
+  personalBaseCount: number;
+  personalPeakCount: number;
+  institutionBaseCount: number;
+  institutionPeakCount: number;
+  seed: number;
+}): PersonalInstitutionCompareItem => {
+  const personal = buildIntradayRates(base, pressureScale, seed);
+  return {
+    key,
+    label,
+    color,
+    personal,
+    institutionWeighted: buildInstitutionWeightedRates(personal, spreadScale, seed),
+    personalCount: buildIntradayCounts(personalBaseCount, personalPeakCount, 2, seed),
+    institutionCount: buildIntradayCounts(institutionBaseCount, institutionPeakCount, 5, seed + 11),
+  };
+};
+
+const personalInstitutionModeOptions: Array<{ key: PersonalInstitutionMode; label: string }> = [
+  { key: "tenor", label: "期限" },
+  { key: "collateral", label: "押券类型" },
+];
+
+const personalInstitutionCompareData: Record<PersonalInstitutionMode, PersonalInstitutionCompareItem[]> = {
+  tenor: [
+    makePersonalInstitutionItem({
+      key: "R001",
+      label: "R001",
+      color: "#2f86ff",
+      base: 1.44,
+      pressureScale: 0.108,
+      spreadScale: 0.82,
+      personalBaseCount: 3,
+      personalPeakCount: 14,
+      institutionBaseCount: 9,
+      institutionPeakCount: 40,
+      seed: 101,
+    }),
+    makePersonalInstitutionItem({
+      key: "R007",
+      label: "R007",
+      color: "#10c6c8",
+      base: 1.61,
+      pressureScale: 0.154,
+      spreadScale: 1.02,
+      personalBaseCount: 2,
+      personalPeakCount: 13,
+      institutionBaseCount: 8,
+      institutionPeakCount: 44,
+      seed: 207,
+    }),
+  ],
+  collateral: [
+    makePersonalInstitutionItem({
+      key: "存单商金",
+      label: "存单商金",
+      color: "#eab308",
+      base: 1.53,
+      pressureScale: 0.135,
+      spreadScale: 1.00,
+      personalBaseCount: 3,
+      personalPeakCount: 11,
+      institutionBaseCount: 8,
+      institutionPeakCount: 34,
+      seed: 313,
+    }),
+    makePersonalInstitutionItem({
+      key: "信用",
+      label: "信用",
+      color: "#a855f7",
+      base: 1.69,
+      pressureScale: 0.176,
+      spreadScale: 1.34,
+      personalBaseCount: 2,
+      personalPeakCount: 8,
+      institutionBaseCount: 5,
+      institutionPeakCount: 25,
+      seed: 419,
+    }),
+    makePersonalInstitutionItem({
+      key: "利率地方",
+      label: "利率地方",
+      color: "#38bdf8",
+      base: 1.43,
+      pressureScale: 0.112,
+      spreadScale: 0.86,
+      personalBaseCount: 4,
+      personalPeakCount: 13,
+      institutionBaseCount: 10,
+      institutionPeakCount: 38,
+      seed: 523,
+    }),
+  ],
+};
 
 function PersonalInstitutionCompareCard() {
-  const labels = ["08:00", "09:30", "10:00", "10:30", "11:00", "13:30", "14:00", "14:30", "16:00"];
-  const values = personalInstitutionCompareSeries.flatMap((series) => series.values);
+  const [mode, setMode] = useState<PersonalInstitutionMode>("tenor");
+  const [activeKeys, setActiveKeys] = useState<PersonalInstitutionKey[]>(["R001", "R007"]);
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const [hoveredLegendKey, setHoveredLegendKey] = useState<PersonalInstitutionKey | null>(null);
+  const [hoveredSeriesKind, setHoveredSeriesKind] = useState<"personal" | "institution" | null>(null);
+  const items = personalInstitutionCompareData[mode];
+  const activeItems = items.filter((item) => activeKeys.includes(item.key));
+  const visibleItems = activeItems.length ? activeItems : [items[0]];
+  const values = visibleItems.flatMap((item) => [...item.personal, ...item.institutionWeighted]);
   const min = Math.min(...values) - 0.03;
   const max = Math.max(...values) + 0.03;
 
+  const handleModeChange = (nextMode: PersonalInstitutionMode) => {
+    setMode(nextMode);
+    setActiveKeys(personalInstitutionCompareData[nextMode].map((item) => item.key));
+  };
+
+  const toggleItem = (key: PersonalInstitutionKey) => {
+    setActiveKeys((current) => {
+      if (current.includes(key)) {
+        return current.length === 1 ? current : current.filter((item) => item !== key);
+      }
+      return [...current, key];
+    });
+  };
+
+  const handleChartMouseMove = (event: ReactMouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+    setHoverIndex(Math.round(ratio * (personalInstitutionLabels.length - 1)));
+  };
+
+  const hoverLeft = hoverIndex == null
+    ? 0
+    : `${(hoverIndex / (personalInstitutionLabels.length - 1)) * 100}%`;
+  const hoverRows = hoverIndex == null
+    ? []
+    : visibleItems.map((item) => {
+      const personal = item.personal[hoverIndex];
+      const institution = item.institutionWeighted[hoverIndex];
+      return {
+        key: item.key,
+        label: item.label,
+        color: item.color,
+        personal,
+        institution,
+        spreadBp: Math.round((institution - personal) * 100),
+      };
+    });
+  const isLegendFiltering = hoveredLegendKey !== null || hoveredSeriesKind !== null;
+  const lineOpacity = (
+    itemKey: PersonalInstitutionKey,
+    kind: "personal" | "institution",
+    baseOpacity: number,
+  ) => {
+    const keyMatches = hoveredLegendKey === null || hoveredLegendKey === itemKey;
+    const kindMatches = hoveredSeriesKind === null || hoveredSeriesKind === kind;
+    return !isLegendFiltering || (keyMatches && kindMatches) ? baseOpacity : 0.18;
+  };
   return (
-    <div className="grid min-h-0 grid-rows-[auto_auto_1fr_auto] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+    <div className="grid min-h-0 grid-rows-[auto_auto_auto_1fr_auto] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
       <div className="flex items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2.5 py-1.5">
-        <div className="truncate text-[11px] font-semibold text-slate-100">
+        <div className="tk-matrix-card-title truncate">
           个人 & 机构
         </div>
-        <div className="flex items-center gap-1 text-[9px] text-slate-400">
-          <span>— 个人</span>
-          <span>┄ 机构</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[9px] text-slate-400">截至 16:00</span>
+          {personalInstitutionModeOptions.map((option) => (
+            <button
+              key={option.key}
+              className={`rounded-sm border px-1.5 py-0.5 text-[9px] font-semibold transition ${
+                mode === option.key
+                  ? "border-[rgba(231,53,58,0.7)] bg-[var(--tdx-red)] text-white"
+                  : "border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.45)] text-slate-400 hover:text-slate-200"
+              }`}
+              onClick={() => handleModeChange(option.key)}
+              type="button"
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
       </div>
       <div className="flex items-center gap-1.5 border-b border-[color:var(--tk-color-border-divider)] px-2 py-1">
-        {["R001", "R007"].map((tenor) => (
-          <span
-            key={tenor}
-            className="rounded-sm bg-[var(--tdx-red)] px-1.5 py-0.5 text-[9px] font-semibold text-white"
-          >
-            {tenor}
-          </span>
-        ))}
-        {["R014", "R021", "R028"].map((tenor) => (
-          <span key={tenor} className="px-1 text-[9px] text-slate-500">
-            {tenor}
-          </span>
-        ))}
+        <span className="text-[9px] text-slate-500">{mode === "tenor" ? "期限" : "押券"}</span>
+        {items.map((item) => {
+          const active = activeKeys.includes(item.key);
+          return (
+            <button
+              key={item.key}
+              className={`rounded-sm border px-1.5 py-0.5 text-[9px] font-semibold transition ${
+                active
+                  ? "text-white"
+                  : "border-transparent bg-transparent text-slate-500 hover:text-slate-300"
+              }`}
+              onClick={() => toggleItem(item.key)}
+              style={active ? { backgroundColor: item.color, borderColor: item.color } : undefined}
+              type="button"
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex min-w-0 items-center gap-1.5 overflow-hidden border-b border-[color:var(--tk-color-border-divider)] px-2 py-0.5 text-[10px] text-slate-400">
+        <span className="shrink-0 text-slate-500">图例</span>
+        <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+          {visibleItems.map((item) => (
+            <button
+              key={item.key}
+              className="flex h-5 w-[4.5rem] min-w-0 shrink-0 items-center gap-1 rounded border border-transparent px-1 transition-colors hover:border-[color:var(--tk-color-border-panel)] hover:bg-[var(--tk-color-surface-dark-muted)] hover:text-slate-100"
+              onMouseEnter={() => setHoveredLegendKey(item.key)}
+              onMouseLeave={() => setHoveredLegendKey(null)}
+              type="button"
+            >
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: item.color }}
+              />
+              <span className="min-w-0 truncate text-slate-300">{item.label}</span>
+            </button>
+          ))}
+        </div>
+        <LegendDot
+          color="var(--tk-color-chart-blue)"
+          label="个人"
+          interactive
+          className="h-5 w-[4.5rem]"
+          onMouseEnter={() => setHoveredSeriesKind("personal")}
+          onMouseLeave={() => setHoveredSeriesKind(null)}
+        />
+        <LegendDot
+          color="var(--tk-color-chart-gold)"
+          label="机构加权"
+          interactive
+          className="h-5 w-[4.5rem]"
+          onMouseEnter={() => setHoveredSeriesKind("institution")}
+          onMouseLeave={() => setHoveredSeriesKind(null)}
+        />
       </div>
       <div className="grid min-h-0 grid-cols-[2.3rem_1fr] px-2 pt-2">
         <div className="flex flex-col justify-between pb-4 pr-1 text-right text-[8px] text-slate-500">
@@ -5170,7 +6143,11 @@ function PersonalInstitutionCompareCard() {
             <div key={tick}>{tick}</div>
           ))}
         </div>
-        <div className="relative min-h-0 overflow-hidden">
+        <div
+          className="relative min-h-0 overflow-hidden"
+          onMouseMove={handleChartMouseMove}
+          onMouseLeave={() => setHoverIndex(null)}
+        >
           {[0, 1, 2, 3].map((index) => (
             <div
               key={index}
@@ -5183,30 +6160,71 @@ function PersonalInstitutionCompareCard() {
             preserveAspectRatio="none"
             viewBox="0 0 120 76"
           >
-            {personalInstitutionCompareSeries.map((series) => (
+            {visibleItems.flatMap((item) => [
               <path
-                key={series.label}
-                d={buildLinePath(series.values, 120, 76, min, max)}
+                key={`${item.key}-personal`}
+                d={buildLinePath(item.personal, 120, 76, min, max)}
                 fill="none"
-                stroke={series.color}
-                strokeDasharray={series.dashed ? "4 3" : undefined}
+                stroke={item.color}
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth="1.5"
-              />
-            ))}
+                strokeWidth="1.7"
+                opacity={lineOpacity(item.key, "personal", 1)}
+              />,
+              <path
+                key={`${item.key}-institution`}
+                d={buildLinePath(item.institutionWeighted, 120, 76, min, max)}
+                fill="none"
+                stroke={item.color}
+                strokeDasharray="4 3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.4"
+                opacity={lineOpacity(item.key, "institution", 0.92)}
+              />,
+            ])}
           </svg>
-          <div className="absolute inset-x-0 bottom-0 grid grid-cols-5 text-[8px] text-slate-500">
-            {labels.filter((_, index) => index % 2 === 0).map((label) => (
+          {hoverIndex != null ? (
+            <>
+              <div
+                className="pointer-events-none absolute top-0 h-[calc(100%-14px)] border-l border-dashed border-slate-400/55"
+                style={{ left: hoverLeft }}
+              />
+              <div
+                className="pointer-events-none absolute top-1 z-10 min-w-[9.5rem] rounded border border-slate-600/80 bg-slate-950/95 px-2 py-1 text-[9px] shadow-lg"
+                style={{
+                  left: hoverIndex > personalInstitutionLabels.length / 2 ? "auto" : `calc(${hoverLeft} + 6px)`,
+                  right: hoverIndex > personalInstitutionLabels.length / 2 ? `calc(${100 - (hoverIndex / (personalInstitutionLabels.length - 1)) * 100}% + 6px)` : "auto",
+                }}
+              >
+                <div className="mb-1 font-semibold text-slate-100">
+                  {personalInstitutionLabels[hoverIndex]}
+                </div>
+                <div className="grid gap-0.5">
+                  {hoverRows.map((row) => (
+                    <div key={row.key} className="grid grid-cols-[auto_1fr_auto] items-center gap-x-1.5 gap-y-0 text-slate-300">
+                      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: row.color }} />
+                      <span className="truncate">{row.label}</span>
+                      <span className="font-semibold" style={{ color: row.color }}>
+                        {row.spreadBp >= 0 ? "+" : ""}{row.spreadBp}BP
+                      </span>
+                      <span />
+                      <span className="text-slate-500">个人 {row.personal.toFixed(3)}</span>
+                      <span className="text-slate-500">机构 {row.institution.toFixed(3)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : null}
+          <div className="absolute inset-x-0 bottom-0 grid grid-cols-7 text-[8px] text-slate-500">
+            {personalInstitutionLabels.map((label, index) => (
               <span key={label} className="text-center">
-                {label}
+                {personalInstitutionAxisLabelIndexes.has(index) ? label : ""}
               </span>
             ))}
           </div>
         </div>
-      </div>
-      <div className="border-t border-[color:var(--tk-color-border-divider)] px-2 py-1 text-[9px] text-slate-400">
-        <span className="text-blue-300">R007</span> 上你的报价均价比机构低 3BP，覆盖面偏窄。
       </div>
     </div>
   );
@@ -5228,9 +6246,6 @@ function MiddleMatrixNoticeBar() {
         </div>
       </div>
       <div className="flex items-center gap-1.5">
-        <span className="rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] px-1.5 py-0.5 text-slate-300">
-          待接入
-        </span>
         <span className="rounded border border-[rgba(231,53,58,0.48)] bg-[rgba(231,53,58,0.16)] px-1.5 py-0.5 text-red-200">
           2 条提醒
         </span>
@@ -5243,6 +6258,7 @@ function MiddleMatrixColumn() {
   const [activeRange, setActiveRange] = useState<HistoryRange>("5d");
   const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
   const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
+  const [baseProduct, setBaseProduct] = useState<BaseTrendProduct>("r001");
 
   return (
     <aside className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden px-1">
@@ -5250,17 +6266,14 @@ function MiddleMatrixColumn() {
         <div className="tk-panel-header border-b px-3 py-2">
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <div className="tk-title truncate text-sm">中间矩阵区</div>
+              <div className="tk-matrix-section-title truncate">中间矩阵区</div>
             </div>
-            <span className="tk-badge shrink-0 px-1.5 py-0.5 text-[10px]">
-              占位
-            </span>
           </div>
         </div>
 
         <MiddleMatrixNoticeBar />
 
-        <div className="grid min-h-0 grid-cols-2 grid-rows-[minmax(188px,1.38fr)_minmax(0,1fr)_minmax(0,1fr)] gap-2 overflow-hidden p-2">
+        <div className="grid min-h-0 grid-cols-2 grid-rows-[minmax(122px,0.86fr)_minmax(0,1fr)_minmax(0,1fr)] gap-1 overflow-hidden p-1.5">
           {middleMatrixPlaceholders.slice(0, 2).map((item, index) => (
             <DemandMatrixCard
               key={item.title}
@@ -5271,24 +6284,23 @@ function MiddleMatrixColumn() {
             />
           ))}
           <PersonalInstitutionCompareCard />
-          <MatrixPlaceholderCard
-            title={middleMatrixPlaceholders[2].title}
-            tag={middleMatrixPlaceholders[2].tag}
-            hint={middleMatrixPlaceholders[2].hint}
-            index={3}
-          />
+          <BarometerMatrixCard />
           <div className="min-h-0 overflow-hidden rounded-md">
             <HistoryClosePanel
               activeRange={activeRange}
+              baseProduct={baseProduct}
               overlayProduct="none"
               compareProduct={compareProduct}
               onRangeChange={setActiveRange}
+              onBaseProductChange={setBaseProduct}
               onCompareChange={setCompareProduct}
             />
           </div>
           <div className="min-h-0 overflow-hidden rounded-md">
             <IntradayPanel
+              baseProduct={baseProduct}
               overlayProduct={overlayProduct}
+              onBaseProductChange={setBaseProduct}
               onOverlayChange={setOverlayProduct}
             />
           </div>
@@ -5539,12 +6551,13 @@ function MainQuoteBoard() {
                   collateralSearch={collateralSearch}
                   applyOverride={applyOverride}
                   onEdit={openEditor}
-                  onSend={(row, groupName) =>
+                  onSend={(row, groupName, contactName) =>
                     setChatContext({
                       row,
                       groupName,
                       sectionTitle: section.title,
-                      contactName: contactNameForInstitution(row.institution),
+                      contactName:
+                        contactName ?? contactNameForInstitution(row.institution),
                     })
                   }
                 />
@@ -5872,6 +6885,239 @@ function showRowAmount(id: string): boolean {
   return !BLANK_AMOUNT_IDS.has(id);
 }
 
+type ExpandStatus = "unreplied" | "replied" | "all";
+
+function hashSeed(text: string) {
+  let hash = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    hash = (hash * 31 + text.charCodeAt(index)) % 2147483647;
+  }
+  return hash;
+}
+
+function opponentCountForGroup(groupName: string) {
+  if (groupName === "信用") return 24;
+  if (groupName === "存单商金") return 12;
+  return 5;
+}
+
+function buildOpponentCards(
+  row: QuoteDetailRow,
+  groupName: string,
+): OpponentQuoteCard[] {
+  const seed = hashSeed(`${row.id}-${groupName}`);
+  const cards: OpponentQuoteCard[] = [];
+  const targetCount = opponentCountForGroup(groupName);
+  const amountPool = ["3亿", "5亿", "8亿", "10亿", "15亿", "20亿"] as const;
+  const rateBase = Number.parseFloat(row.rate.replace("%", ""));
+  const anchorAccount = normalizeAccountRequirement(row.accountType);
+  const anchorPledge = row.collateral?.trim() ? row.collateral : null;
+  const anchorCard: OpponentQuoteCard = {
+    id: `${row.id}-anchor`,
+    name: contactNameForInstitution(row.institution),
+    institution: row.institution,
+    waitMinutes: 1,
+    status: "unreplied",
+    tenor: row.tenor,
+    amount: row.amount && row.amount !== "--" ? row.amount : null,
+    rate: row.rate,
+    pledge: anchorPledge,
+    account: anchorAccount,
+    tags: [
+      `${row.tenor} ${row.rate}`,
+      "核心对手",
+      anchorPledge,
+      anchorAccount,
+    ].filter(Boolean) as string[],
+    core: true,
+  };
+
+  for (let index = 0; index < targetCount - 1; index += 1) {
+    const core = index < 1 || (groupName === "信用" && index % 8 === 0);
+    const hasAmount = index % 3 !== 1;
+    const waitMinutes = 1 + ((seed + index * 3) % 19);
+    const status: OpponentQuoteCard["status"] =
+      index % 5 === 0 ? "replied" : "unreplied";
+    const institution = opponentInstitutions[(seed + index) % opponentInstitutions.length];
+    const name = opponentNames[(seed + index * 2) % opponentNames.length];
+    const accountOptions =
+      groupName === "信用"
+        ? ["自营", "公募", "可专户", "专户出老户", null]
+        : groupName === "存单商金"
+          ? ["自营", "资管户", "可拆", "理财", "非专户"]
+          : ["自营", "不限户", "公募", "可专户", "资管户"];
+    const pledgeOptions =
+      groupName === "信用"
+        ? ["信用", "二永", "AAA", "AA+", "公募", "早还", null]
+        : groupName === "存单商金"
+          ? ["商金", "国股", "存单", "利率商金", "国股商金", "商金老户"]
+          : ["利率", "地方", "国股", "老户", "不限户", "利率地方"];
+    const creditSparse = groupName === "信用" && index % 5 < 2;
+    const account = creditSparse && index % 2 === 0
+      ? null
+      : accountOptions[(seed + index * 5) % accountOptions.length];
+    const pledge =
+      groupName === "信用"
+        ? creditSparse
+          ? null
+          : pledgeOptions[(seed + index * 7) % pledgeOptions.length]
+        : pledgeOptions[(seed + index * 7) % pledgeOptions.length];
+    const tags = [
+      `${row.tenor} ${`${(rateBase + ((index % 4) - 1) * 0.01).toFixed(2)}%`}`,
+      core ? "核心对手" : "活跃对手",
+      pledge,
+      account,
+    ].filter(Boolean) as string[];
+
+    cards.push({
+      id: `${row.id}-opp-${index}`,
+      name,
+      institution,
+      waitMinutes,
+      status,
+      tenor: row.tenor === "R007" ? "1D" : "1D",
+      amount: hasAmount ? amountPool[(seed + index * 11) % amountPool.length] : null,
+      rate: `${(rateBase + ((index % 4) - 1) * 0.01).toFixed(2)}%`,
+      pledge,
+      account,
+      tags,
+      core,
+    });
+  }
+
+  const specials =
+    row.tenor === "R007"
+      ? ([
+          { tenor: "3D", amount: "5亿", rate: `${(rateBase + 0.01).toFixed(2)}%` },
+          { tenor: "6D", amount: null, rate: `${(rateBase + 0.02).toFixed(2)}%` },
+          { tenor: "2-7D", amount: "8亿", rate: `${(rateBase + 0.03).toFixed(2)}%` },
+        ] as const).map((item, index) => ({
+          id: `${row.id}-special-${index}`,
+          name: opponentNames[(seed + 30 + index) % opponentNames.length],
+          institution: opponentInstitutions[(seed + 40 + index) % opponentInstitutions.length],
+          waitMinutes: 2 + index * 2,
+          status: "unreplied" as const,
+          tenor: item.tenor,
+          amount: item.amount,
+          rate: item.rate,
+          pledge: groupName === "信用" ? null : row.collateral || (groupName === "存单商金" ? "商金" : "利率"),
+          account: groupName === "信用" ? null : normalizeAccountRequirement(row.accountType),
+          tags: [`${item.tenor} ${item.rate}`, "核心对手", "特殊期限"],
+          core: true,
+          special: true,
+        }))
+      : [];
+
+  const normalCards = cards.sort((a, b) => {
+    const aScore =
+      (a.core ? 100 : 0) +
+      (a.amount ? 30 : 0) +
+      (a.status === "unreplied" ? 10 : 0) -
+      a.waitMinutes;
+    const bScore =
+      (b.core ? 100 : 0) +
+      (b.amount ? 30 : 0) +
+      (b.status === "unreplied" ? 10 : 0) -
+      b.waitMinutes;
+    return bScore - aScore;
+  });
+
+  return [anchorCard, ...normalCards, ...specials];
+}
+
+function OpponentExpandPanel({
+  row,
+  groupName,
+  cards,
+  status,
+  onStatusChange,
+  onSend,
+}: {
+  row: QuoteDetailRow;
+  groupName: string;
+  cards: readonly OpponentQuoteCard[];
+  status: ExpandStatus;
+  onStatusChange: (status: ExpandStatus) => void;
+  onSend: (contactName: string) => void;
+}) {
+  const visibleCards =
+    status === "all" ? cards : cards.filter((card) => card.status === status || card.special);
+
+  return (
+    <div className="border-b border-[color:var(--tk-color-border-divider)] bg-[rgba(18,19,27,0.98)] px-3 pb-3 pt-2">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider-dark)] pb-2">
+        <div className="flex items-center gap-1.5 text-[11px]">
+          {[
+            { id: "unreplied", label: "未回复" },
+            { id: "replied", label: "已回复" },
+            { id: "all", label: "全部" },
+          ].map((item) => (
+            <button
+              key={item.id}
+              className={miniChipClass(status === item.id)}
+              onClick={() => onStatusChange(item.id as ExpandStatus)}
+              type="button"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <div className="text-xs font-semibold text-slate-200">
+          同期限 {row.tenor}
+        </div>
+      </div>
+
+      <div className="grid min-h-0 grid-cols-3 gap-px overflow-hidden rounded-md border border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-border-divider)]">
+        {visibleCards.map((card) => (
+          <button
+            key={card.id}
+            className={`min-h-[104px] bg-[var(--tk-color-surface-page)] px-3 py-2 text-left transition hover:bg-[rgba(255,255,255,0.04)] ${
+              card.core ? "shadow-[inset_2px_0_0_rgba(16,198,200,0.9)]" : ""
+            }`}
+            onClick={() => onSend(card.name)}
+            type="button"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className="truncate text-[12px] font-semibold text-slate-100">
+                {card.name} · {card.institution}
+              </div>
+              <span className="shrink-0 rounded-full border border-amber-400/40 px-2 py-0.5 text-[10px] text-amber-200">
+                等 {card.waitMinutes}min
+              </span>
+            </div>
+            <div className="mt-1 text-[12px] text-slate-400">
+              {card.amount ? (
+                <span className="text-[18px] font-bold text-slate-50">{card.amount}</span>
+              ) : (
+                <span className="text-slate-500">待报价</span>
+              )}
+            </div>
+            {!card.special ? null : (
+              <div className="mt-1 text-[11px] text-amber-300">{card.rate}</div>
+            )}
+            <div className="mt-2 flex flex-wrap gap-1">
+              {card.tags.map((tag) => (
+                <span
+                  key={`${card.id}-${tag}`}
+                  className={`rounded-sm px-1.5 py-0.5 text-[10px] ${
+                    tag === "核心对手"
+                      ? "bg-emerald-500/15 text-emerald-300"
+                      : tag.startsWith(card.tenor)
+                        ? "bg-red-500/15 text-red-300"
+                        : "bg-white/5 text-slate-400"
+                  }`}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function RepoQuoteSectionBoard({
   section,
   displayLevel,
@@ -5897,8 +7143,11 @@ function RepoQuoteSectionBoard({
   collateralSearch: string;
   applyOverride: (row: QuoteDetailRow) => QuoteDetailRow;
   onEdit: (row: QuoteDetailRow, groupName: string) => void;
-  onSend: (row: QuoteDetailRow, groupName: string) => void;
+  onSend: (row: QuoteDetailRow, groupName: string, contactName?: string) => void;
 }) {
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+  const [expandStatus, setExpandStatus] = useState<ExpandStatus>("unreplied");
+  const rowClickTimerRef = useRef<number | null>(null);
   const matchTenor = (rowTenor: string) =>
     tenorFilter === "all" || rowTenor === tenorFilter;
   const matchRowFilters = (row: QuoteDetailRow) =>
@@ -5909,9 +7158,8 @@ function RepoQuoteSectionBoard({
     ) &&
     fuzzyTextMatch(`${row.collateral} ${row.reason}`, collateralSearch);
   const getVisibleRows = (group: QuoteGroup) => {
-    const logicalRows = applyLogicalQuoteRanks(
-      group.rows.map(applyOverride),
-      section.id,
+    const logicalRows = applyLogicalQuoteAmounts(
+      applyLogicalQuoteRanks(group.rows.map(applyOverride), section.id),
     );
     const rows =
       displayLevel === 1
@@ -5926,6 +7174,109 @@ function RepoQuoteSectionBoard({
   const containerStyle = useDrag
     ? { flex: `${dragRatio} 1 0%`, minHeight: 0 }
     : undefined;
+  const toggleRow = (rowId: string) =>
+    setExpandedRowId((current) => (current === rowId ? null : rowId));
+  const queueRowToggle = (rowId: string) => {
+    if (rowClickTimerRef.current !== null) {
+      window.clearTimeout(rowClickTimerRef.current);
+    }
+    rowClickTimerRef.current = window.setTimeout(() => {
+      toggleRow(rowId);
+      rowClickTimerRef.current = null;
+    }, 180);
+  };
+  const openRowChat = (row: QuoteDetailRow, groupName: string) => {
+    if (rowClickTimerRef.current !== null) {
+      window.clearTimeout(rowClickTimerRef.current);
+      rowClickTimerRef.current = null;
+    }
+    onSend(row, groupName, contactNameForInstitution(row.institution));
+  };
+
+  const renderDetailRow = (row: QuoteDetailRow, groupName: string, dense: boolean) => {
+    const expanded = expandedRowId === row.id;
+    const cards = expanded ? buildOpponentCards(row, groupName) : [];
+    return (
+      <Fragment key={row.id}>
+        <div
+          className={`grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent ${
+            dense ? "py-1.5" : "py-1.5"
+          } cursor-pointer pl-4 pr-4 text-left text-xs text-slate-200 transition hover:bg-[var(--tk-color-surface-selected)]`}
+          onClick={() => queueRowToggle(row.id)}
+          onDoubleClick={() => openRowChat(row, groupName)}
+        >
+          <div className="flex items-center gap-2">
+            <button
+              className="inline-flex h-5 w-5 items-center justify-center rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] text-[10px] text-amber-200"
+              onClick={(event) => {
+                event.stopPropagation();
+                if (rowClickTimerRef.current !== null) {
+                  window.clearTimeout(rowClickTimerRef.current);
+                  rowClickTimerRef.current = null;
+                }
+                toggleRow(row.id);
+              }}
+              type="button"
+              title={expanded ? "收起" : "展开"}
+            >
+              {expanded ? "▾" : "▸"}
+            </button>
+            {row.rank === "最优" || row.rank === "次优" ? <RankBadge rank={row.rank} /> : null}
+            <span className="text-slate-100">{row.institution}</span>
+          </div>
+          <span className="text-right">{row.tenor}</span>
+          <span className="text-right">{showRowAmount(row.id) ? row.amount : "--"}</span>
+          <span className="text-right font-semibold text-amber-300">{row.rate}</span>
+          <span
+            className="truncate pl-3 text-right text-xs text-slate-300"
+            title={normalizeAccountRequirement(row.accountType)}
+          >
+            {normalizeAccountRequirement(row.accountType)}
+          </span>
+          <span
+            className="truncate pl-3 text-right text-xs text-slate-300"
+            title={`${row.collateral} / ${row.reason}`}
+          >
+            {row.collateral}
+          </span>
+          <span className="text-right text-xs tabular-nums text-slate-400">{row.updatedAt}</span>
+          <span className="flex items-center justify-end gap-1">
+            <button
+              className="hidden whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(row, groupName);
+              }}
+              type="button"
+            >
+              修正
+            </button>
+            <button
+              className="whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSend(row, groupName);
+              }}
+              type="button"
+            >
+              发送
+            </button>
+          </span>
+        </div>
+        {expanded ? (
+          <OpponentExpandPanel
+            row={row}
+            groupName={groupName}
+            cards={cards}
+            status={expandStatus}
+            onStatusChange={setExpandStatus}
+            onSend={(contactName) => onSend(row, groupName, contactName)}
+          />
+        ) : null}
+      </Fragment>
+    );
+  };
+
   return (
     <div
       className={`flex min-h-0 flex-col ${
@@ -6001,132 +7352,12 @@ function RepoQuoteSectionBoard({
             </div>
             {displayLevel === 1 ? (
               <div className="divide-y divide-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-page)]">
-                {rows
-                  .map((row) => {
-                    return (
-                      <div
-                        key={row.id}
-                        className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200"
-                      >
-                        <div className="flex items-center gap-2">
-                          <RankBadge rank={row.rank} />
-                          <span className="text-slate-100">
-                            {row.institution}
-                          </span>
-                        </div>
-                        <span className="text-right">{row.tenor}</span>
-                        <span className="text-right">
-                          {showRowAmount(row.id) ? row.amount : "--"}
-                        </span>
-                        <span className="text-right font-semibold text-amber-300">
-                          {row.rate}
-                        </span>
-                        <span
-                          className="truncate pl-3 text-right text-xs text-slate-300"
-                          title={normalizeAccountRequirement(row.accountType)}
-                        >
-                          {normalizeAccountRequirement(row.accountType)}
-                        </span>
-                        <span
-                          className="truncate pl-3 text-right text-xs text-slate-300"
-                          title={`${row.collateral} / ${row.reason}`}
-                        >
-                          {row.collateral}
-                        </span>
-                        <span className="text-right text-xs tabular-nums text-slate-400">
-                          {row.updatedAt}
-                        </span>
-                        <span className="flex items-center justify-end gap-1">
-                          <button
-                            className="hidden whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEdit(row, group.name);
-                            }}
-                            type="button"
-                          >
-                            修正
-                          </button>
-                          <button
-                            className="whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSend(row, group.name);
-                            }}
-                            type="button"
-                          >
-                            发送
-                          </button>
-                        </span>
-                      </div>
-                    );
-                  })}
+                {rows.map((row) => renderDetailRow(row, group.name, false))}
               </div>
             ) : null}
             {displayLevel === 2 ? (
               <div className="divide-y divide-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-page)]">
-                {rows
-                  .map((row) => {
-                    return (
-                      <div
-                        key={row.id}
-                        className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent py-1.5 pl-8 pr-4 text-left text-xs text-slate-200 transition hover:bg-[var(--tk-color-surface-selected)]"
-                      >
-                        <div className="flex items-center gap-2">
-                          {row.rank === "最优" || row.rank === "次优" ? (
-                            <RankBadge rank={row.rank} />
-                          ) : null}
-                          <span className="text-slate-100">
-                            {row.institution}
-                          </span>
-                        </div>
-                        <span className="text-right">{row.tenor}</span>
-                        <span className="text-right">
-                          {showRowAmount(row.id) ? row.amount : "--"}
-                        </span>
-                        <span className="text-right font-semibold text-amber-300">
-                          {row.rate}
-                        </span>
-                        <span
-                          className="truncate pl-3 text-right text-xs text-slate-300"
-                          title={normalizeAccountRequirement(row.accountType)}
-                        >
-                          {normalizeAccountRequirement(row.accountType)}
-                        </span>
-                        <span
-                          className="truncate pl-3 text-right text-xs text-slate-300"
-                          title={`${row.collateral} / ${row.reason}`}
-                        >
-                          {row.collateral}
-                        </span>
-                        <span className="text-right text-xs tabular-nums text-slate-400">
-                          {row.updatedAt}
-                        </span>
-                        <span className="flex items-center justify-end gap-1">
-                          <button
-                            className="hidden whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEdit(row, group.name);
-                            }}
-                            type="button"
-                          >
-                            修正
-                          </button>
-                          <button
-                            className="whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSend(row, group.name);
-                            }}
-                            type="button"
-                          >
-                            发送
-                          </button>
-                        </span>
-                      </div>
-                    );
-                })}
+                {rows.map((row) => renderDetailRow(row, group.name, true))}
               </div>
             ) : null}
           </div>
@@ -6186,9 +7417,15 @@ const rankPriority: Record<QuoteRank, number> = {
 };
 
 function sortRowsByRank(rows: readonly QuoteDetailRow[]): QuoteDetailRow[] {
+  const tenorPriority = new Map(
+    QUOTE_TENOR_OPTIONS.map((tenor, index) => [tenor, index]),
+  );
   return rows
     .map((row, index) => ({ row, index }))
     .sort((a, b) => {
+      const ta = tenorPriority.get(a.row.tenor as (typeof QUOTE_TENOR_OPTIONS)[number]) ?? 999;
+      const tb = tenorPriority.get(b.row.tenor as (typeof QUOTE_TENOR_OPTIONS)[number]) ?? 999;
+      if (ta !== tb) return ta - tb;
       const ra = rankPriority[a.row.rank] ?? 99;
       const rb = rankPriority[b.row.rank] ?? 99;
       if (ra !== rb) return ra - rb;
@@ -6199,6 +7436,47 @@ function sortRowsByRank(rows: readonly QuoteDetailRow[]): QuoteDetailRow[] {
 
 function quoteRateValue(row: QuoteDetailRow) {
   return Number.parseFloat(row.rate.replace("%", ""));
+}
+
+function quoteAmountValue(row: QuoteDetailRow) {
+  return Number.parseFloat(row.amount.replace("亿", ""));
+}
+
+function formatAmountValue(value: number) {
+  const normalized = Number.isInteger(value)
+    ? String(value)
+    : value.toFixed(2).replace(/\.?0+$/, "");
+  return `${normalized}亿`;
+}
+
+function applyLogicalQuoteAmounts(rows: readonly QuoteDetailRow[]): QuoteDetailRow[] {
+  const byTenor = new Map<string, QuoteDetailRow[]>();
+  for (const row of rows) {
+    const list = byTenor.get(row.tenor) ?? [];
+    list.push(row);
+    byTenor.set(row.tenor, list);
+  }
+
+  const adjusted = new Map<string, string>();
+  for (const tenorRows of byTenor.values()) {
+    const best = tenorRows.find((row) => row.rank === "最优");
+    const second = tenorRows.find((row) => row.rank === "次优");
+    if (!best || !second) continue;
+
+    const bestAmount = quoteAmountValue(best);
+    const secondAmount = quoteAmountValue(second);
+    if (!Number.isFinite(bestAmount) || !Number.isFinite(secondAmount)) continue;
+    if (bestAmount < secondAmount) continue;
+
+    const nextBest = Math.max(0.5, Number((secondAmount - 0.5).toFixed(2)));
+    const nextSecond = Number(Math.max(secondAmount, nextBest + 0.5).toFixed(2));
+    adjusted.set(best.id, formatAmountValue(nextBest));
+    adjusted.set(second.id, formatAmountValue(nextSecond));
+  }
+
+  return rows.map((row) =>
+    adjusted.has(row.id) ? { ...row, amount: adjusted.get(row.id)! } : row,
+  );
 }
 
 function applyLogicalQuoteRanks(
@@ -6306,6 +7584,7 @@ function RightSidebar() {
   const [historyRange, setHistoryRange] = useState<HistoryRange>("5d");
   const [rightLowerTab, setRightLowerTab] = useState<RightLowerTab>("inst");
   const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
+  const [baseProduct, setBaseProduct] = useState<BaseTrendProduct>("r001");
 
   return (
     <aside
@@ -6317,16 +7596,20 @@ function RightSidebar() {
       <div className="min-h-0 overflow-hidden">
         <HistoryClosePanel
           activeRange={historyRange}
+          baseProduct={baseProduct}
           overlayProduct={overlayProduct}
           compareProduct={compareProduct}
           onRangeChange={setHistoryRange}
+          onBaseProductChange={setBaseProduct}
           onCompareChange={setCompareProduct}
         />
       </div>
 
       <div className="min-h-0 overflow-hidden">
         <IntradayPanel
+          baseProduct={baseProduct}
           overlayProduct={overlayProduct}
+          onBaseProductChange={setBaseProduct}
           onOverlayChange={setOverlayProduct}
         />
       </div>
@@ -6375,42 +7658,60 @@ function RightLowerPanel({
 }
 
 function IntradayPanel({
+  baseProduct,
   overlayProduct,
+  onBaseProductChange,
   onOverlayChange,
 }: {
+  baseProduct: BaseTrendProduct;
   overlayProduct: OverlayProduct;
+  onBaseProductChange: (product: BaseTrendProduct) => void;
   onOverlayChange: (product: OverlayProduct) => void;
 }) {
+  const productLabel = trendProductLabel(baseProduct);
+  const mainSeries = getIntradayRateSeries(baseProduct);
   const overlaySeries =
     overlayProduct === "none"
       ? null
-      : buildOverlaySeries(intradaySeries, overlayProduct);
+      : buildOverlaySeries(mainSeries, overlayProduct);
   const barValues = overlaySeries
-    ? intradaySeries.map((value, index) =>
+    ? mainSeries.map((value, index) =>
         Number(((value - overlaySeries[index]) * 100).toFixed(1)),
       )
     : null;
-  const min = Math.min(...intradaySeries, ...(overlaySeries ?? [])) - 0.01;
-  const max = Math.max(...intradaySeries, ...(overlaySeries ?? [])) + 0.01;
-  const mainPath = buildLinePath(intradaySeries, 680, 178, min, max);
-  const areaPath = buildAreaPath(intradaySeries, 680, 178, min, max);
+  const pad = 0.01;
+  const min = Math.min(...mainSeries, ...(overlaySeries ?? [])) - pad;
+  const max = Math.max(...mainSeries, ...(overlaySeries ?? [])) + pad;
+  const mainPath = buildLinePath(mainSeries, 680, 178, min, max);
+  const areaPath = buildAreaPath(mainSeries, 680, 178, min, max);
   const overlayPath = overlaySeries
     ? buildLinePath(overlaySeries, 680, 178, min, max)
     : null;
   const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
-    useChartTooltip(intradaySeries.length);
+    useChartTooltip(mainSeries.length);
   const ti = tooltipState?.index ?? null;
 
   return (
     <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
       <div className="flex items-center justify-between gap-3 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
         <div className="flex items-center gap-3">
-          <div className="text-sm font-semibold text-slate-100">
+          <div className="tk-matrix-card-title">
             匿名成交走势图
           </div>
-          <div className="rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-1.5 py-0.5 text-[10px] font-medium text-blue-300">
-            R001
-          </div>
+          <label className="flex items-center gap-1 text-xs text-slate-400">
+            <span>产品</span>
+            <select
+              className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-1.5 py-0.5 text-xs text-slate-200 outline-none"
+              value={baseProduct}
+              onChange={(event) => onBaseProductChange(event.target.value as BaseTrendProduct)}
+            >
+              {baseTrendProductOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <OverlayProductSelect
             value={overlayProduct}
             onChange={onOverlayChange}
@@ -6422,9 +7723,9 @@ function IntradayPanel({
             : "匿名成交利率 / 成交量"}
         </div>
       </div>
-      <div className="grid min-h-0 grid-rows-[1fr_auto] px-3 pb-2 pt-2">
+      <div className="grid min-h-0 grid-rows-[minmax(0,1fr)_1.25rem] px-3 pb-2 pt-2">
         <div className="grid min-h-0 grid-cols-[3rem_1fr]">
-          <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+            <div className="flex flex-col justify-between pb-6 pr-2 text-right text-[10px] text-slate-400">
             {buildAxisLabels(min, max, 4).map((tick) => (
               <div key={tick}>{tick}</div>
             ))}
@@ -6487,8 +7788,8 @@ function IntradayPanel({
                 ) : null}
                 {ti !== null ? (
                   <line
-                    x1={(ti / (intradaySeries.length - 1)) * 680}
-                    x2={(ti / (intradaySeries.length - 1)) * 680}
+                    x1={(ti / (mainSeries.length - 1)) * 680}
+                    x2={(ti / (mainSeries.length - 1)) * 680}
                     y1={0}
                     y2={178}
                     stroke="#5ea3ff"
@@ -6512,9 +7813,9 @@ function IntradayPanel({
                     className="h-1.5 w-1.5 rounded-full"
                     style={{ backgroundColor: chartPalette.blue }}
                   />
-                  <span className="text-slate-400">R001</span>
+                  <span className="text-slate-400">{productLabel}</span>
                   <span className="ml-1 font-semibold text-slate-100">
-                    {intradaySeries[ti].toFixed(3)}%
+                    {mainSeries[ti].toFixed(3)}%
                   </span>
                 </div>
                 {overlaySeries && (
@@ -6545,8 +7846,8 @@ function IntradayPanel({
               </ChartTooltip>
             )}
             <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-300">
-              <LegendDot color={chartPalette.blue} label="加权平均(%)" />
-              {overlayProduct !== "none" ? (
+              <LegendDot color={chartPalette.blue} label={`${productLabel} 加权利率`} />
+              {overlaySeries ? (
                 <LegendDot
                   color={chartPalette.amber}
                   label={overlayProductLabel(overlayProduct)}
@@ -6555,7 +7856,7 @@ function IntradayPanel({
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-[3rem_1fr] pt-2">
+        <div className="grid grid-cols-[3rem_1fr] pt-1">
           <div />
           <div className="grid grid-cols-8 text-[10px] text-slate-400">
             {intradayTimeLabels.map((label) => (
@@ -6572,18 +7873,34 @@ function IntradayPanel({
 
 function HistoryClosePanel({
   activeRange,
+  baseProduct,
   overlayProduct,
   compareProduct,
   onRangeChange,
+  onBaseProductChange,
   onCompareChange,
 }: {
   activeRange: HistoryRange;
+  baseProduct: BaseTrendProduct;
   overlayProduct: OverlayProduct;
   compareProduct: CompareProduct;
   onRangeChange: (range: HistoryRange) => void;
+  onBaseProductChange: (product: BaseTrendProduct) => void;
   onCompareChange: (product: CompareProduct) => void;
 }) {
   const dataset = historicalCloseDatasets[activeRange];
+  const productLabel = trendProductLabel(baseProduct);
+  const baseRateSeries =
+    baseProduct === "r001"
+      ? dataset.close
+      : buildHistoricalSeries(activeRange, "r007");
+  const baseVolumeSeries =
+    baseProduct === "r001"
+      ? dataset.volume
+      : dataset.volume.map((value, index) =>
+          Math.round(value * (0.84 + ((index % 4) * 0.045))),
+        );
+  const mainSeries = baseRateSeries;
   const axisLabels = buildAxisTickLabels(
     dataset.labels,
     activeRange === "5d" ? 5 : activeRange === "1m" ? 7 : 8,
@@ -6597,25 +7914,26 @@ function HistoryClosePanel({
       ? null
       : buildHistoricalSeries(activeRange, compareProduct);
   const spreadValues = compareSeries
-    ? dataset.close.map((value, index) =>
+    ? baseRateSeries.map((value, index) =>
         Number(((value - compareSeries[index]) * 100).toFixed(1)),
       )
     : null;
+  const pad = 0.015;
   const min =
     Math.min(
-      ...dataset.close,
+      ...mainSeries,
       ...(overlaySeries ?? []),
       ...(compareSeries ?? []),
-    ) - 0.015;
+    ) - pad;
   const max =
     Math.max(
-      ...dataset.close,
+      ...mainSeries,
       ...(overlaySeries ?? []),
       ...(compareSeries ?? []),
-    ) + 0.015;
-  const volumeMax = Math.max(...dataset.volume);
-  const mainPath = buildLinePath(dataset.close, 720, 186, min, max);
-  const areaPath = buildAreaPath(dataset.close, 720, 186, min, max);
+    ) + pad;
+  const volumeMax = Math.max(...baseVolumeSeries);
+  const mainPath = buildLinePath(mainSeries, 720, 186, min, max);
+  const areaPath = buildAreaPath(mainSeries, 720, 186, min, max);
   const overlayPath = overlaySeries
     ? buildLinePath(overlaySeries, 720, 186, min, max)
     : null;
@@ -6630,13 +7948,25 @@ function HistoryClosePanel({
     <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
       <div className="flex items-center justify-between gap-3 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
         <div className="flex items-center gap-3">
-          <div className="text-sm font-semibold text-slate-100">
+          <div className="tk-matrix-card-title">
             加权价格走势
           </div>
-          <div className="text-xs text-slate-400">
-            产品：
-            <span className="ml-1 text-slate-200">R001</span>
-          </div>
+          <label className="flex items-center gap-1 text-xs text-slate-400">
+            <span>产品</span>
+            <select
+              className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-1.5 py-0.5 text-xs text-slate-200 outline-none"
+              value={baseProduct}
+              onChange={(e) =>
+                onBaseProductChange(e.target.value as BaseTrendProduct)
+              }
+            >
+              {baseTrendProductOptions.map((opt) => (
+                <option key={opt.id} value={opt.id}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <label className="flex items-center gap-1 text-xs text-slate-400">
             <span>对比</span>
             <select
@@ -6670,7 +8000,7 @@ function HistoryClosePanel({
       <div
         className="grid min-h-0 px-3 pb-2 pt-2"
         style={{
-          gridTemplateRows: "68fr 24fr auto",
+          gridTemplateRows: "minmax(0,68fr) minmax(0,24fr) 1.35rem",
         }}
       >
         <div className="grid min-h-0 grid-cols-[3.25rem_1fr]">
@@ -6736,8 +8066,8 @@ function HistoryClosePanel({
               ) : null}
               {ti !== null ? (
                 <line
-                  x1={(ti / (dataset.close.length - 1)) * 720}
-                  x2={(ti / (dataset.close.length - 1)) * 720}
+                  x1={(ti / (mainSeries.length - 1)) * 720}
+                  x2={(ti / (mainSeries.length - 1)) * 720}
                   y1={0}
                   y2={186}
                   stroke="#5ea3ff"
@@ -6748,14 +8078,14 @@ function HistoryClosePanel({
               ) : null}
             </svg>
             <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-300">
-              <LegendDot color={chartPalette.blue} label="加权价格" />
-              {overlayProduct !== "none" ? (
+              <LegendDot color={chartPalette.blue} label={`${productLabel} 加权利率`} />
+              {overlaySeries ? (
                 <LegendDot
                   color={chartPalette.amber}
                   label={overlayProductLabel(overlayProduct)}
                 />
               ) : null}
-              {compareProduct !== "none" ? (
+              {compareSeries ? (
                 <LegendDot
                   color={chartPalette.violet}
                   label={
@@ -6778,9 +8108,9 @@ function HistoryClosePanel({
                     className="h-1.5 w-1.5 rounded-full"
                     style={{ backgroundColor: chartPalette.blue }}
                   />
-                  <span className="text-slate-400">R001</span>
+                  <span className="text-slate-400">{productLabel}</span>
                   <span className="ml-1 font-semibold text-slate-100">
-                    {dataset.close[ti].toFixed(4)}%
+                    {mainSeries[ti].toFixed(4)}%
                   </span>
                 </div>
                 {overlaySeries && (
@@ -6827,7 +8157,7 @@ function HistoryClosePanel({
                 <div className="mt-1 border-t border-[color:var(--tk-color-border-divider)] pt-1 text-slate-400">
                   成交量{" "}
                   <span className="font-semibold text-slate-100">
-                    {dataset.volume[ti]}亿
+                    {baseVolumeSeries[ti]}亿
                   </span>
                 </div>
               </ChartTooltip>
@@ -6836,7 +8166,7 @@ function HistoryClosePanel({
         </div>
         {compareProduct !== "none" && spreadValues ? (
           <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[color:var(--tk-color-border-divider)] pt-2 pb-1">
-            <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+            <div className="flex flex-col justify-between pb-8 pr-2 text-right text-[10px] text-slate-400">
               {(() => {
                 const dMax = Math.max(...spreadValues, 0);
                 const dMin = Math.min(...spreadValues, 0);
@@ -6851,7 +8181,7 @@ function HistoryClosePanel({
               })()}
             </div>
             <div className="relative min-h-0">
-              <div className="absolute inset-x-0 top-0 flex items-center gap-[4px] bottom-1">
+              <div className="absolute inset-x-0 top-0 bottom-8 flex items-center gap-[4px]">
                 {(() => {
                   const dMax = Math.max(...spreadValues, 0);
                   const dMin = Math.min(...spreadValues, 0);
@@ -6893,7 +8223,7 @@ function HistoryClosePanel({
           </div>
         ) : (
           <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[color:var(--tk-color-border-divider)] pt-2 pb-1">
-            <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+            <div className="flex flex-col justify-between pb-8 pr-2 text-right text-[10px] text-slate-400">
               {buildCompactVolumeTicks(volumeMax).map((tick) => (
                 <div key={tick}>{tick}</div>
               ))}
@@ -6902,8 +8232,8 @@ function HistoryClosePanel({
               <span className="absolute top-0.5 left-0.5 text-[9px] text-slate-500 z-10 pointer-events-none">
                 成交量
               </span>
-              <div className="absolute inset-0 flex items-end gap-[4px]">
-                {dataset.volume.map((value, index) => (
+              <div className="absolute inset-x-0 top-0 bottom-8 flex items-end gap-[4px]">
+                {baseVolumeSeries.map((value, index) => (
                   <div
                     key={`history-vol-${index}`}
                     className="min-w-0 flex-1 rounded-t-[2px]"
@@ -8360,7 +9690,7 @@ function MultiSeriesChart({
         </div>
         <div className="grid grid-cols-[2.8rem_1fr]">
           <div />
-          <div className="relative h-4">
+          <div className="relative h-6 pt-1">
             {xLabels.map((label) => (
               <span
                 key={label}
@@ -8445,7 +9775,7 @@ function MultiSeriesChart({
                 style={{ top: `${(i / 3) * 100}%` }}
               />
             ))}
-            <div className="absolute inset-x-1 bottom-1 top-1 flex items-end gap-[2px]">
+            <div className="absolute inset-x-1 bottom-4 top-1.5 flex items-end gap-[2px]">
               {dates.map((_, di) => {
                 const total = dailyTotals[di];
                 return (
@@ -8484,7 +9814,7 @@ function MultiSeriesChart({
         </div>
         <div className="grid grid-cols-[2.8rem_1fr]">
           <div />
-          <div className="relative h-4">
+          <div className="relative h-6 pt-1">
             {xLabels.map((label) => (
               <span
                 key={label}
@@ -8565,7 +9895,7 @@ function MultiSeriesChart({
             </div>
           )}
           <div className="absolute inset-x-0 top-1/2 border-t border-[color:var(--tk-color-border-divider)]" />
-          <div className="absolute inset-x-1 bottom-1 top-1 flex items-center gap-[2px]">
+          <div className="absolute inset-x-1 bottom-4 top-1.5 flex items-center gap-[2px]">
             {netVals.map((val, di) => {
               const isPos = val >= 0;
               const pct = (Math.abs(val) / absMax) * 47;
@@ -8618,7 +9948,7 @@ function MultiSeriesChart({
       </div>
       <div className="grid grid-cols-[2.8rem_1fr]">
         <div />
-        <div className="relative h-4">
+        <div className="relative h-6 pt-1">
           {xLabels.map((label) => (
             <span
               key={label}
@@ -8682,13 +10012,13 @@ function CfetsInstPanel() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
       {/* 控件行 1：期限 */}
-      <div className="flex flex-wrap items-center gap-1">
-        <span className="mr-1 text-[11px] text-slate-500">期限</span>
+      <div className="flex flex-wrap items-center gap-1 text-xs">
+        <span className="mr-1 text-xs text-slate-500">期限</span>
         {cfetsInstPeriodLabels.map((pt) => (
           <button
             key={pt}
             type="button"
-            className={`rounded-md px-2 py-1 text-[11px] transition-colors ${
+            className={`rounded-md px-2 py-1 text-xs transition-colors ${
               period === pt
                 ? "bg-[var(--tk-color-surface-selected)] font-semibold text-slate-100"
                 : "text-slate-400 hover:text-slate-200"
@@ -8700,8 +10030,8 @@ function CfetsInstPanel() {
         ))}
       </div>
       {/* 控件行 2：指标 单选按钮组 */}
-      <div className="flex flex-wrap items-center gap-1">
-        <span className="mr-1 text-[11px] text-slate-500">指标</span>
+      <div className="flex flex-wrap items-center gap-1 text-xs">
+        <span className="mr-1 text-xs text-slate-500">指标</span>
         {cfetsMetricDefs.map((d) => {
           const active = metricKey === d.key;
           return (
@@ -8709,7 +10039,7 @@ function CfetsInstPanel() {
               key={d.key}
               type="button"
               aria-pressed={active}
-              className={`rounded-md px-2 py-1 text-[11px] transition-colors ${
+              className={`rounded-md px-2 py-1 text-xs transition-colors ${
                 active
                   ? "bg-[var(--tk-color-surface-selected)] font-semibold text-slate-100"
                   : "text-slate-400 hover:text-slate-200"
@@ -8722,7 +10052,7 @@ function CfetsInstPanel() {
         })}
       </div>
       {/* 图例（点击切换显隐） */}
-      <div className="flex flex-wrap gap-3 text-[11px]">
+      <div className="flex flex-wrap gap-3 text-xs">
         {fundStructureLegendItems.map((item, i) => {
           const hidden = hiddenSeries.has(i);
           return (
@@ -8743,7 +10073,7 @@ function CfetsInstPanel() {
       </div>
       {/* 图表 */}
       {metricKey === "netInflow" ? (
-        <div className="min-h-0 flex-1">
+        <div className="min-h-[170px] flex-1">
           <FundStructureBars
             range={range}
             hiddenSeries={hiddenSeries}
@@ -8752,13 +10082,15 @@ function CfetsInstPanel() {
           />
         </div>
       ) : (
-        <MultiSeriesChart
-          block={block}
-          chartType={metricDef.chartType}
-          unit={metricDef.unit}
-          axisLabel={metricDef.axisLabel}
-          hiddenSeries={hiddenSeries}
-        />
+        <div className="min-h-[170px] flex-1">
+          <MultiSeriesChart
+            block={block}
+            chartType={metricDef.chartType}
+            unit={metricDef.unit}
+            axisLabel={metricDef.axisLabel}
+            hiddenSeries={hiddenSeries}
+          />
+        </div>
       )}
     </div>
   );
@@ -10413,14 +11745,36 @@ function ChartTooltip({
   );
 }
 
-function LegendDot({ color, label }: { color: string; label: string }) {
+function LegendDot({
+  color,
+  label,
+  interactive = false,
+  className = "",
+  onMouseEnter,
+  onMouseLeave,
+}: {
+  color: string;
+  label: string;
+  interactive?: boolean;
+  className?: string;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+}) {
   return (
-    <span className="inline-flex items-center gap-1.5">
+    <span
+      className={`inline-flex items-center gap-1.5 rounded border border-transparent px-1 py-0.5 transition-colors ${className} ${
+        interactive
+          ? "cursor-default hover:border-[color:var(--tk-color-border-panel)] hover:bg-[var(--tk-color-surface-dark-muted)] hover:text-slate-100"
+          : ""
+      }`}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
       <span
         className="h-2 w-2 rounded-full"
         style={{ backgroundColor: color }}
       />
-      <span>{label}</span>
+      <span className="min-w-0 truncate">{label}</span>
     </span>
   );
 }

@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "build:react": "vite build --config vite.react.config.ts && node scripts/inline-react-dist.mjs",
+    "dev": "vite",
+    "dev:react": "vite --config vite.react.config.ts"
   },
   "dependencies": {
     "vue": "^3.5.22",

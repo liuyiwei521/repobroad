@@ -1,0 +1,544 @@
+npm warn Unknown user config "home". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+[2m18:55:06[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "react/jsx-dev-runtime" from "src/main.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mE:/code/repobroad/src/main.tsx[39m:6:54
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import { createRoot } from "react-dom/client";
+  3  |  import App from "./app/App.tsx";[39m
+      at TransformPluginContext._formatLog (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42499:41)
+      at TransformPluginContext.error (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42496:16)
+      at normalizeUrl (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40475:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40594:37
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40521:7)
+      at async EnvironmentPluginContainer.transform (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42294:18)
+      at async loadAndTransform (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:35735:27)
+[2m18:55:06[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/main.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mE:/code/repobroad/src/main.tsx[39m:6:54
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import { createRoot } from "react-dom/client";
+  3  |  import App from "./app/App.tsx";[39m
+[2m18:55:06[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/main.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mE:/code/repobroad/src/main.tsx[39m:6:54
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import { createRoot } from "react-dom/client";
+  3  |  import App from "./app/App.tsx";[39m
+[2m18:55:08[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/app/App.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mE:/code/repobroad/src/app/App.tsx[39m:1971:6
+[33m  1  |  import { Fragment, jsxDEV } from "react/jsx-dev-runtime";
+     |                                    ^
+  2  |  import * as RefreshRuntime from "/@react-refresh";
+  3  |  const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;[39m
+[2m18:55:08[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/app/components/QuoteChatPopup.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mE:/code/repobroad/src/app/components/QuoteChatPopup.tsx[39m:227:10
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import * as RefreshRuntime from "/@react-refresh";
+  3  |  const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;[39m
+[2m18:55:15[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/main.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mE:/code/repobroad/src/main.tsx[39m:6:54
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import { createRoot } from "react-dom/client";
+  3  |  import App from "./app/App.tsx";[39m
+[2m18:55:15[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "react/jsx-dev-runtime" from "src/main.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mE:/code/repobroad/src/main.tsx[39m:6:54
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import { createRoot } from "react-dom/client";
+  3  |  import App from "./app/App.tsx";[39m
+      at TransformPluginContext._formatLog (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42499:41)
+      at TransformPluginContext.error (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42496:16)
+      at normalizeUrl (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40475:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40594:37
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40521:7)
+      at async EnvironmentPluginContainer.transform (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42294:18)
+      at async loadAndTransform (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:35735:27)
+      at async viteTransformMiddleware (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:37250:24)
+[2m18:55:16[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/app/App.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mE:/code/repobroad/src/app/App.tsx[39m:1971:6
+[33m  1  |  import { Fragment, jsxDEV } from "react/jsx-dev-runtime";
+     |                                    ^
+  2  |  import * as RefreshRuntime from "/@react-refresh";
+  3  |  const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;[39m
+[2m18:55:16[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/app/App.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mE:/code/repobroad/src/app/App.tsx[39m:1971:6
+[33m  1  |  import { Fragment, jsxDEV } from "react/jsx-dev-runtime";
+     |                                    ^
+  2  |  import * as RefreshRuntime from "/@react-refresh";
+  3  |  const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;[39m
+[2m18:55:16[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/app/components/QuoteChatPopup.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mE:/code/repobroad/src/app/components/QuoteChatPopup.tsx[39m:227:10
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import * as RefreshRuntime from "/@react-refresh";
+  3  |  const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;[39m
+[2m19:03:29[22m [31m[1m[vite][22m[39m [31mInternal server error: E:\code\repobroad\src\app\App.tsx: Unexpected token (7866:16)
+
+[0m [90m 7864 |[31m             [33m>[31m
+ [90m 7865 |[31m               {row[33m.[31mmap((cell[33m,[31m cellIndex) [33m=>[31m (
+[31m[1m>[22m[31m[90m 7866 |[31m                 [36mconst[31m shouldTruncate [33m=[31m
+ [90m      |[31m                 [31m[1m^[22m[31m
+ [90m 7867 |[31m                   fitToWidth [33m&&[31m
+ [90m 7868 |[31m                   buttonColumn [33m!==[31m cellIndex [33m&&[31m
+ [90m 7869 |[31m                   [33m![31mnoTruncateColumns[33m.[31mincludes(cellIndex)[33m;[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/repobroad/src/app/App.tsx[39m:7866:16
+[33m  8060|                {[58, 74, 65, 82, 70].map((height, index) => (
+  8061|                  <div
+  8062|                    key={`${title}-${index}`}
+     |  ^
+  8063|                    className="flex flex-1 items-end gap-1"
+  8064|                  >[39m
+      at constructor (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:365:19)
+      at TypeScriptParserMixin.raise (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:6616:19)
+      at TypeScriptParserMixin.unexpected (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:6636:16)
+      at TypeScriptParserMixin.parseExprAtom (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11459:22)
+      at TypeScriptParserMixin.parseExprAtom (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:4776:20)
+      at TypeScriptParserMixin.parseExprSubscripts (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11098:23)
+      at TypeScriptParserMixin.parseUpdate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9803:20)
+      at E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:39
+      at TypeScriptParserMixin.allowInAnd (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12443:12)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:17)
+      at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12510:17)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11692:28)
+      at TypeScriptParserMixin.parseExprAtom (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11348:23)
+      at TypeScriptParserMixin.parseExprAtom (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:4776:20)
+      at TypeScriptParserMixin.parseExprSubscripts (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11098:23)
+      at TypeScriptParserMixin.parseUpdate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9803:20)
+      at TypeScriptParserMixin.parseFunctionBody (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12110:24)
+      at TypeScriptParserMixin.parseArrowExpression (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12092:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11704:12)
+      at TypeScriptParserMixin.parseExprAtom (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11348:23)
+      at TypeScriptParserMixin.parseExprAtom (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:4776:20)
+      at TypeScriptParserMixin.parseExprSubscripts (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11098:23)
+      at TypeScriptParserMixin.parseUpdate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9803:20)
+      at E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:39
+      at TypeScriptParserMixin.allowInAnd (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12443:12)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:17)
+      at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12510:17)
+      at TypeScriptParserMixin.parseExprListItem (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12192:18)
+      at TypeScriptParserMixin.parseCallExpressionArguments (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11269:22)
+[2m19:29:40[22m [31m[1m[vite][22m[39m [31mInternal server error: E:\code\repobroad\src\app\App.tsx: Unterminated string constant. (3837:42)
+
+[0m [90m 3835 |[31m
+ [90m 3836 |[31m   [36mreturn[31m (
+[31m[1m>[22m[31m[90m 3837 |[31m     sortedRows[33m.[31mfind((row) [33m=>[31m row[33m.[31mrank [33m===[31m [32m"鏈€浼?) ??[31m
+ [90m      |[31m                                           [31m[1m^[22m[31m
+ [90m 3838 |[31m     sortedRows[33m.[31mfind((row) [33m=>[31m row[33m.[31mrank [33m===[31m [32m"娆′紭"[31m) [33m?[31m[33m?[31m
+ [90m 3839 |[31m     parentRow
+ [90m 3840 |[31m   )[33m;[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/repobroad/src/app/App.tsx[39m:3837:42
+[33m  3947|    if (isCoreTemplate || stableChance(`${key}:identity`, 42)) {
+  3948|      tags.push(
+  3949|        isCoreTemplate
+     |    ^
+  3950|          ? "核心对手"
+  3951|          : stablePick(IDENTITY_REPLY_TAGS, `${key}:identity-tag`),[39m
+      at constructor (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:365:19)
+      at TypeScriptParserMixin.raise (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:6616:19)
+      at Object.unterminated (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5681:20)
+      at readStringContents (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5423:16)
+      at TypeScriptParserMixin.readString (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:6515:9)
+      at TypeScriptParserMixin.getTokenFromCode (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:6275:14)
+      at TypeScriptParserMixin.getTokenFromCode (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:4809:11)
+      at TypeScriptParserMixin.getTokenFromCode (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10004:11)
+      at TypeScriptParserMixin.nextToken (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5799:10)
+      at TypeScriptParserMixin.next (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5709:10)
+      at TypeScriptParserMixin.parseExprOp (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10956:14)
+      at TypeScriptParserMixin.parseExprOp (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9323:18)
+      at TypeScriptParserMixin.parseExprOps (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10925:17)
+      at TypeScriptParserMixin.parseMaybeConditional (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9803:20)
+      at TypeScriptParserMixin.parseFunctionBody (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12110:24)
+      at TypeScriptParserMixin.parseArrowExpression (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12092:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11704:12)
+      at TypeScriptParserMixin.parseExprAtom (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11348:23)
+      at TypeScriptParserMixin.parseExprAtom (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:4776:20)
+      at TypeScriptParserMixin.parseExprSubscripts (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11098:23)
+      at TypeScriptParserMixin.parseUpdate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9803:20)
+      at E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:39
+      at TypeScriptParserMixin.allowInAnd (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12443:12)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:17)
+      at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12510:17)
+      at TypeScriptParserMixin.parseExprListItem (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12192:18)
+      at TypeScriptParserMixin.parseCallExpressionArguments (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11269:22)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11203:29)
+      at TypeScriptParserMixin.parseSubscript (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11137:19)
+      at TypeScriptParserMixin.parseSubscript (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9289:18)
+      at TypeScriptParserMixin.parseSubscripts (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11111:19)
+      at TypeScriptParserMixin.parseExprSubscripts (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11102:17)
+      at TypeScriptParserMixin.parseUpdate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9803:20)
+      at E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:39
+[2m19:29:41[22m [31m[1m[vite][22m[39m [31mInternal server error: E:\code\repobroad\src\app\App.tsx: Unterminated string constant. (3837:42)
+
+[0m [90m 3835 |[31m
+ [90m 3836 |[31m   [36mreturn[31m (
+[31m[1m>[22m[31m[90m 3837 |[31m     sortedRows[33m.[31mfind((row) [33m=>[31m row[33m.[31mrank [33m===[31m [32m"鏈€浼?) ??[31m
+ [90m      |[31m                                           [31m[1m^[22m[31m
+ [90m 3838 |[31m     sortedRows[33m.[31mfind((row) [33m=>[31m row[33m.[31mrank [33m===[31m [32m"娆′紭"[31m) [33m?[31m[33m?[31m
+ [90m 3839 |[31m     parentRow
+ [90m 3840 |[31m   )[33m;[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/repobroad/src/app/App.tsx[39m:3837:42
+[33m  3947|    if (isCoreTemplate || stableChance(`${key}:identity`, 42)) {
+  3948|      tags.push(
+  3949|        isCoreTemplate
+     |    ^
+  3950|          ? "核心对手"
+  3951|          : stablePick(IDENTITY_REPLY_TAGS, `${key}:identity-tag`),[39m
+      at constructor (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:365:19)
+      at TypeScriptParserMixin.raise (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:6616:19)
+      at Object.unterminated (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5681:20)
+      at readStringContents (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5423:16)
+      at TypeScriptParserMixin.readString (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:6515:9)
+      at TypeScriptParserMixin.getTokenFromCode (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:6275:14)
+      at TypeScriptParserMixin.getTokenFromCode (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:4809:11)
+      at TypeScriptParserMixin.getTokenFromCode (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10004:11)
+      at TypeScriptParserMixin.nextToken (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5799:10)
+      at TypeScriptParserMixin.next (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5709:10)
+      at TypeScriptParserMixin.parseExprOp (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10956:14)
+      at TypeScriptParserMixin.parseExprOp (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9323:18)
+      at TypeScriptParserMixin.parseExprOps (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10925:17)
+      at TypeScriptParserMixin.parseMaybeConditional (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9803:20)
+      at TypeScriptParserMixin.parseFunctionBody (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12110:24)
+      at TypeScriptParserMixin.parseArrowExpression (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12092:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11704:12)
+      at TypeScriptParserMixin.parseExprAtom (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11348:23)
+      at TypeScriptParserMixin.parseExprAtom (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:4776:20)
+      at TypeScriptParserMixin.parseExprSubscripts (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11098:23)
+      at TypeScriptParserMixin.parseUpdate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9803:20)
+      at E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:39
+      at TypeScriptParserMixin.allowInAnd (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12443:12)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:17)
+      at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12510:17)
+      at TypeScriptParserMixin.parseExprListItem (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12192:18)
+      at TypeScriptParserMixin.parseCallExpressionArguments (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11269:22)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11203:29)
+      at TypeScriptParserMixin.parseSubscript (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11137:19)
+      at TypeScriptParserMixin.parseSubscript (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9289:18)
+      at TypeScriptParserMixin.parseSubscripts (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11111:19)
+      at TypeScriptParserMixin.parseExprSubscripts (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11102:17)
+      at TypeScriptParserMixin.parseUpdate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9803:20)
+      at E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:39
+[2m19:32:15[22m [31m[1m[vite][22m[39m [31mInternal server error: E:\code\repobroad\src\app\App.tsx: Unterminated string constant. (3837:42)
+
+[0m [90m 3835 |[31m
+ [90m 3836 |[31m   [36mreturn[31m (
+[31m[1m>[22m[31m[90m 3837 |[31m     sortedRows[33m.[31mfind((row) [33m=>[31m row[33m.[31mrank [33m===[31m [32m"鏈€浼?) ??[31m
+ [90m      |[31m                                           [31m[1m^[22m[31m
+ [90m 3838 |[31m     sortedRows[33m.[31mfind((row) [33m=>[31m row[33m.[31mrank [33m===[31m [32m"娆′紭"[31m) [33m?[31m[33m?[31m
+ [90m 3839 |[31m     parentRow
+ [90m 3840 |[31m   )[33m;[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/repobroad/src/app/App.tsx[39m:3837:42
+[33m  3946|  
+  3947|    if (isCoreTemplate || stableChance(`${key}:identity`, 42)) {
+  3948|      tags.push(
+     |                ^
+  3949|        isCoreTemplate
+  3950|          ? "核心对手"[39m
+      at constructor (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:365:19)
+      at TypeScriptParserMixin.raise (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:6616:19)
+      at Object.unterminated (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5681:20)
+      at readStringContents (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5423:16)
+      at TypeScriptParserMixin.readString (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:6515:9)
+      at TypeScriptParserMixin.getTokenFromCode (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:6275:14)
+      at TypeScriptParserMixin.getTokenFromCode (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:4809:11)
+      at TypeScriptParserMixin.getTokenFromCode (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10004:11)
+      at TypeScriptParserMixin.nextToken (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5799:10)
+      at TypeScriptParserMixin.next (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5709:10)
+      at TypeScriptParserMixin.parseExprOp (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10956:14)
+      at TypeScriptParserMixin.parseExprOp (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9323:18)
+      at TypeScriptParserMixin.parseExprOps (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10925:17)
+      at TypeScriptParserMixin.parseMaybeConditional (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9803:20)
+      at TypeScriptParserMixin.parseFunctionBody (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12110:24)
+      at TypeScriptParserMixin.parseArrowExpression (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12092:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11704:12)
+      at TypeScriptParserMixin.parseExprAtom (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11348:23)
+      at TypeScriptParserMixin.parseExprAtom (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:4776:20)
+      at TypeScriptParserMixin.parseExprSubscripts (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11098:23)
+      at TypeScriptParserMixin.parseUpdate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9803:20)
+      at E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:39
+      at TypeScriptParserMixin.allowInAnd (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12443:12)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:17)
+      at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12510:17)
+      at TypeScriptParserMixin.parseExprListItem (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12192:18)
+      at TypeScriptParserMixin.parseCallExpressionArguments (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11269:22)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11203:29)
+      at TypeScriptParserMixin.parseSubscript (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11137:19)
+      at TypeScriptParserMixin.parseSubscript (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9289:18)
+      at TypeScriptParserMixin.parseSubscripts (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11111:19)
+      at TypeScriptParserMixin.parseExprSubscripts (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11102:17)
+      at TypeScriptParserMixin.parseUpdate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9803:20)
+      at E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:39
+[2m19:32:15[22m [31m[1m[vite][22m[39m [31mInternal server error: E:\code\repobroad\src\app\App.tsx: Unterminated string constant. (3837:42)
+
+[0m [90m 3835 |[31m
+ [90m 3836 |[31m   [36mreturn[31m (
+[31m[1m>[22m[31m[90m 3837 |[31m     sortedRows[33m.[31mfind((row) [33m=>[31m row[33m.[31mrank [33m===[31m [32m"鏈€浼?) ??[31m
+ [90m      |[31m                                           [31m[1m^[22m[31m
+ [90m 3838 |[31m     sortedRows[33m.[31mfind((row) [33m=>[31m row[33m.[31mrank [33m===[31m [32m"娆′紭"[31m) [33m?[31m[33m?[31m
+ [90m 3839 |[31m     parentRow
+ [90m 3840 |[31m   )[33m;[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/repobroad/src/app/App.tsx[39m:3837:42
+[33m  3946|  
+  3947|    if (isCoreTemplate || stableChance(`${key}:identity`, 42)) {
+  3948|      tags.push(
+     |                ^
+  3949|        isCoreTemplate
+  3950|          ? "核心对手"[39m
+      at constructor (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:365:19)
+      at TypeScriptParserMixin.raise (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:6616:19)
+      at Object.unterminated (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5681:20)
+      at readStringContents (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5423:16)
+      at TypeScriptParserMixin.readString (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:6515:9)
+      at TypeScriptParserMixin.getTokenFromCode (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:6275:14)
+      at TypeScriptParserMixin.getTokenFromCode (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:4809:11)
+      at TypeScriptParserMixin.getTokenFromCode (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10004:11)
+      at TypeScriptParserMixin.nextToken (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5799:10)
+      at TypeScriptParserMixin.next (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5709:10)
+      at TypeScriptParserMixin.parseExprOp (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10956:14)
+      at TypeScriptParserMixin.parseExprOp (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9323:18)
+      at TypeScriptParserMixin.parseExprOps (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10925:17)
+      at TypeScriptParserMixin.parseMaybeConditional (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9803:20)
+      at TypeScriptParserMixin.parseFunctionBody (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12110:24)
+      at TypeScriptParserMixin.parseArrowExpression (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12092:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11704:12)
+      at TypeScriptParserMixin.parseExprAtom (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11348:23)
+      at TypeScriptParserMixin.parseExprAtom (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:4776:20)
+      at TypeScriptParserMixin.parseExprSubscripts (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11098:23)
+      at TypeScriptParserMixin.parseUpdate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9803:20)
+      at E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:39
+      at TypeScriptParserMixin.allowInAnd (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12443:12)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:17)
+      at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12510:17)
+      at TypeScriptParserMixin.parseExprListItem (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12192:18)
+      at TypeScriptParserMixin.parseCallExpressionArguments (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11269:22)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11203:29)
+      at TypeScriptParserMixin.parseSubscript (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11137:19)
+      at TypeScriptParserMixin.parseSubscript (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9289:18)
+      at TypeScriptParserMixin.parseSubscripts (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11111:19)
+      at TypeScriptParserMixin.parseExprSubscripts (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11102:17)
+      at TypeScriptParserMixin.parseUpdate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9803:20)
+      at E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:39
+[2m19:34:38[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: E:\code\repobroad\src\app\App.tsx: Unterminated string constant. (3837:42)
+
+[0m [90m 3835 |[39m
+ [90m 3836 |[39m   [36mreturn[39m (
+[31m[1m>[22m[39m[90m 3837 |[39m     sortedRows[33m.[39mfind((row) [33m=>[39m row[33m.[39mrank [33m===[39m [32m"鏈€浼?) ??[39m
+ [90m      |[39m                                           [31m[1m^[22m[39m
+ [90m 3838 |[39m     sortedRows[33m.[39mfind((row) [33m=>[39m row[33m.[39mrank [33m===[39m [32m"娆′紭"[39m) [33m?[39m[33m?[39m
+ [90m 3839 |[39m     parentRow
+ [90m 3840 |[39m   )[33m;[39m[0m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/repobroad/src/app/App.tsx[39m:3837:42
+[33m  3946|  
+  3947|    if (isCoreTemplate || stableChance(`${key}:identity`, 42)) {
+  3948|      tags.push(
+     |                ^
+  3949|        isCoreTemplate
+  3950|          ? "核心对手"[39m
+[2m19:34:40[22m [31m[1m[vite][22m[39m [31mInternal server error: E:\code\repobroad\src\app\App.tsx: Unterminated string constant. (3837:42)
+
+[0m [90m 3835 |[31m
+ [90m 3836 |[31m   [36mreturn[31m (
+[31m[1m>[22m[31m[90m 3837 |[31m     sortedRows[33m.[31mfind((row) [33m=>[31m row[33m.[31mrank [33m===[31m [32m"鏈€浼?) ??[31m
+ [90m      |[31m                                           [31m[1m^[22m[31m
+ [90m 3838 |[31m     sortedRows[33m.[31mfind((row) [33m=>[31m row[33m.[31mrank [33m===[31m [32m"娆′紭"[31m) [33m?[31m[33m?[31m
+ [90m 3839 |[31m     parentRow
+ [90m 3840 |[31m   )[33m;[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/repobroad/src/app/App.tsx[39m:3837:42
+[33m  3946|  
+  3947|    if (isCoreTemplate || stableChance(`${key}:identity`, 42)) {
+  3948|      tags.push(
+     |                ^
+  3949|        isCoreTemplate
+  3950|          ? "核心对手"[39m
+      at constructor (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:365:19)
+      at TypeScriptParserMixin.raise (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:6616:19)
+      at Object.unterminated (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5681:20)
+      at readStringContents (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5423:16)
+      at TypeScriptParserMixin.readString (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:6515:9)
+      at TypeScriptParserMixin.getTokenFromCode (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:6275:14)
+      at TypeScriptParserMixin.getTokenFromCode (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:4809:11)
+      at TypeScriptParserMixin.getTokenFromCode (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10004:11)
+      at TypeScriptParserMixin.nextToken (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5799:10)
+      at TypeScriptParserMixin.next (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:5709:10)
+      at TypeScriptParserMixin.parseExprOp (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10956:14)
+      at TypeScriptParserMixin.parseExprOp (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9323:18)
+      at TypeScriptParserMixin.parseExprOps (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10925:17)
+      at TypeScriptParserMixin.parseMaybeConditional (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9803:20)
+      at TypeScriptParserMixin.parseFunctionBody (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12110:24)
+      at TypeScriptParserMixin.parseArrowExpression (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12092:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11704:12)
+      at TypeScriptParserMixin.parseExprAtom (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11348:23)
+      at TypeScriptParserMixin.parseExprAtom (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:4776:20)
+      at TypeScriptParserMixin.parseExprSubscripts (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11098:23)
+      at TypeScriptParserMixin.parseUpdate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9803:20)
+      at E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:39
+      at TypeScriptParserMixin.allowInAnd (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12443:12)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:17)
+      at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12510:17)
+      at TypeScriptParserMixin.parseExprListItem (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:12192:18)
+      at TypeScriptParserMixin.parseCallExpressionArguments (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11269:22)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11203:29)
+      at TypeScriptParserMixin.parseSubscript (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11137:19)
+      at TypeScriptParserMixin.parseSubscript (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9289:18)
+      at TypeScriptParserMixin.parseSubscripts (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11111:19)
+      at TypeScriptParserMixin.parseExprSubscripts (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11102:17)
+      at TypeScriptParserMixin.parseUpdate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (E:\code\repobroad\node_modules\@babel\parser\lib\index.js:9803:20)
+      at E:\code\repobroad\node_modules\@babel\parser\lib\index.js:10817:39
+[31mfailed to load config from E:\code\repobroad\vite.config.ts[39m
+[2m10:42:19[22m [31m[1m[vite][22m[39m Cannot find package '@vitejs/plugin-vue' imported from E:\code\repobroad\node_modules\.vite-temp\vite.config.ts.timestamp-1780540939160-3bfb4e9615551.mjs
+[2m10:42:19[22m [31m[1m[vite][22m[39m server restart failed
+[2m10:44:58[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to parse source for import analysis because the content contains invalid JS syntax. Install @vitejs/plugin-vue to handle .vue files.
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mE:/code/repobroad/src/App.vue[39m:529:29
+[33m  527|          @open-card="activeCard = $event"
+  528|          @close-card="activeCard = null"
+  529|          @open-quote-overview="dockTab = 'trend'"
+     |                              ^
+  530|        />
+  531|  [39m
+[2m10:44:58[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [31merror while updating dependencies:
+Error: ENOENT: no such file or directory, open 'E:\code\repobroad\node_modules\react\jsx-dev-runtime.js'
+    at async open (node:internal/fs/promises:640:25)
+    at async Object.readFile (node:internal/fs/promises:1287:14)
+    at async extractExportsData (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:15346:24)
+    at async file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:15092:27
+    at async Promise.all (index 0)
+    at async prepareEsbuildOptimizerRun (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:15089:3)[39m
+[2m10:44:59[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to parse source for import analysis because the content contains invalid JS syntax. Install @vitejs/plugin-vue to handle .vue files.[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mE:/code/repobroad/src/App.vue[39m:529:29
+[33m  527|          @open-card="activeCard = $event"
+  528|          @close-card="activeCard = null"
+  529|          @open-quote-overview="dockTab = 'trend'"
+     |                              ^
+  530|        />
+  531|  [39m
+      at TransformPluginContext._formatLog (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42499:41)
+      at TransformPluginContext.error (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42496:16)
+      at TransformPluginContext.transform (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40426:14)
+      at async EnvironmentPluginContainer.transform (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42294:18)
+      at async loadAndTransform (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:35735:27)
+      at async viteTransformMiddleware (file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:37250:24)

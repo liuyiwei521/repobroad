@@ -1,4 +1,4 @@
-import type { AccountRow, Tenor } from '../data/mockData';
+import type { AccountRow, Direction, Tenor } from '../data/mockData';
 
 export type TaskOverviewFilterScope = 'cell' | 'termLine' | 'row' | 'column' | 'segment' | 'total' | 'all';
 
@@ -9,6 +9,8 @@ export interface TaskOverviewFilter {
   pledgeGroup?: string[];
   pledgeGroupLabel?: string;
   accountType?: string;
+  /** 中栏 6 宫格新增：正/逆回购方向过滤 */
+  direction?: Direction;
   label: string;
 }
 
@@ -232,7 +234,8 @@ export const taskOverviewFilterKey = (filter: TaskOverviewFilter | null | undefi
         filter.term ?? '',
         filter.pledgeRequirement ?? '',
         (filter.pledgeGroup ?? []).join(','),
-        filter.accountType ?? ''
+        filter.accountType ?? '',
+        filter.direction ?? ''
       ].join('|')
     : '';
 
@@ -552,6 +555,103 @@ export const buildTaskCompactMatrix = (accounts: AccountRow[]): TaskCompactMatri
 
   return {
     terms: compactOverviewTerms,
+    rows,
+    termTotals,
+    grandTotal
+  };
+};
+
+// ── 中栏「正回购需求 / 逆回购需求」面板专用矩阵 ───────────────────────
+// 行 = 押券分组 (利率地方 / 存单商金 / 信用)
+// 列 = 期限 (合计 / R001 / R007)
+// 单元 = { total, allocated, pending }
+export const demandPanelTerms: Tenor[] = ['R001', 'R007'];
+const demandPanelTermSet = new Set<Tenor>(demandPanelTerms);
+
+export interface DirectionDemandCell extends TaskOverviewAmount {
+  groupId: string;
+  groupLabel: string;
+  pledgeGroup: string[];
+  term: Tenor;
+}
+
+export interface DirectionDemandRow {
+  group: TaskCompactGroup;
+  total: TaskOverviewAmount;
+  cells: Record<Tenor, DirectionDemandCell>;
+}
+
+export interface DirectionDemandMatrix {
+  direction: Direction;
+  terms: Tenor[];
+  rows: DirectionDemandRow[];
+  termTotals: Record<Tenor, TaskOverviewAmount>;
+  grandTotal: TaskOverviewAmount;
+}
+
+export const buildDirectionDemandMatrix = (
+  accounts: AccountRow[],
+  direction: Direction
+): DirectionDemandMatrix => {
+  const filtered = accounts.filter(
+    (account) => account.direction === direction && demandPanelTermSet.has(account.tenor)
+  );
+
+  const rowTotals = new Map<string, TaskOverviewAmount>(
+    compactGroups.map((group) => [group.id, emptyAmount()])
+  );
+  const cellAmounts = new Map<string, TaskOverviewAmount>();
+  const termTotalsMap = new Map<Tenor, TaskOverviewAmount>(
+    demandPanelTerms.map((term) => [term, emptyAmount()])
+  );
+  const grandTotal = emptyAmount();
+
+  for (const account of filtered) {
+    const pledge = pledgeRequirementOf(account);
+    const group = compactGroupByMember.get(pledge);
+    if (!group) continue;
+
+    const total = roundAmount(account.targetAmount);
+    const allocated = Math.min(roundAmount(account.allocatedAmount), total);
+    const cellKey = `${group.id}__${account.tenor}`;
+
+    addAmount(rowTotals.get(group.id)!, total, allocated);
+    addAmount(termTotalsMap.get(account.tenor)!, total, allocated);
+    addAmount(ensureStringAmount(cellAmounts, cellKey), total, allocated);
+    addAmount(grandTotal, total, allocated);
+  }
+
+  const rows = compactGroups.map<DirectionDemandRow>((group) => {
+    const cells = Object.fromEntries(
+      demandPanelTerms.map((term) => {
+        const amount = cellAmounts.get(`${group.id}__${term}`) ?? emptyAmount();
+        const cell: DirectionDemandCell = {
+          groupId: group.id,
+          groupLabel: group.label,
+          pledgeGroup: group.members,
+          term,
+          total: amount.total,
+          allocated: amount.allocated,
+          pending: amount.pending
+        };
+        return [term, cell];
+      })
+    ) as Record<Tenor, DirectionDemandCell>;
+
+    return {
+      group,
+      total: rowTotals.get(group.id) ?? emptyAmount(),
+      cells
+    };
+  });
+
+  const termTotals = Object.fromEntries(
+    demandPanelTerms.map((term) => [term, termTotalsMap.get(term) ?? emptyAmount()])
+  ) as Record<Tenor, TaskOverviewAmount>;
+
+  return {
+    direction,
+    terms: demandPanelTerms,
     rows,
     termTotals,
     grandTotal

@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import AllocationMatrix from './components/AllocationMatrix.vue';
-import BarometerPanel, { type DockTab } from './components/BarometerPanel.vue';
+import BarometerPanel from './components/BarometerPanel.vue';
 import ChatPopup from './components/ChatPopup.vue';
 import MarketPanel from './components/MarketPanel.vue';
 import ResearchPanel from './components/ResearchPanel.vue';
-import TaskOverviewMatrix from './components/TaskOverviewMatrix.vue';
 import TopBar from './components/TopBar.vue';
+import DirectionDemandPanel from './components/task/DirectionDemandPanel.vue';
+import IndivInstitChart from './components/charts/IndivInstitChart.vue';
+import WeightedPriceChart from './components/charts/WeightedPriceChart.vue';
+import AnonymousFlowChart from './components/charts/AnonymousFlowChart.vue';
 import { taskOverviewFilterKey, type TaskOverviewFilter } from './composables/useTaskOverviewMatrix';
 import {
   accounts as accountSeed,
@@ -50,7 +53,6 @@ const quickAllocationTotals = ref<Record<string, number>>({});
 const selectedAccountId = ref(accounts.value[0]?.id ?? '');
 const selectedQuoteId = ref('');
 const activeCard = ref<ResearchCard | null>(null);
-const dockTab = ref<DockTab>('barometer');
 const matrixExpanded = ref(false);
 const matrixContext = ref<MatrixContext | null>(null);
 const activeOverviewFilter = ref<TaskOverviewFilter | null>(null);
@@ -70,14 +72,11 @@ const matrixRef = ref<{ save: () => void; collapse: () => void } | null>(null);
 // stays at a constant width.
 const workspaceRef = ref<HTMLElement | null>(null);
 const RAIL_WIDTH = 100;
-const matrixWidth = ref(520);
-const MATRIX_MIN = 360;
+const matrixWidth = ref(760);
+const MATRIX_MIN = 540;
 const MATRIX_MAX = 1180;
 const RIGHT_MIN = 460;
 const GUTTER = 8;
-const dockHeight = ref(280);
-const DOCK_MIN = 160;
-const DOCK_MAX = 520;
 const clampWidth = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 const trackWidth = () => {
@@ -95,14 +94,6 @@ const workspaceStyle = computed(() =>
         gridTemplateColumns: `${RAIL_WIDTH}px ${matrixWidth.value}px 8px minmax(0, 1fr)`,
         gridTemplateRows: 'minmax(0, 1fr)',
         gap: '0',
-      }
-);
-
-const middleColumnStyle = computed(() =>
-  matrixExpanded.value
-    ? undefined
-    : {
-        gridTemplateRows: `minmax(0, 1fr) ${GUTTER}px ${dockHeight.value}px`,
       }
 );
 
@@ -133,34 +124,6 @@ const onGutterDown = (event: PointerEvent) => {
   document.body.classList.add('is-col-resizing');
   window.addEventListener('pointermove', onGutterMove);
   window.addEventListener('pointerup', onGutterUp);
-};
-
-// ── Row (dock height) resize ──
-let rowDragging = false;
-let rowDragStartY = 0;
-let rowDragStartDock = 0;
-
-const onRowGutterMove = (event: PointerEvent) => {
-  if (!rowDragging) return;
-  // Moving up increases dock height (gutter is above the dock)
-  const delta = rowDragStartY - event.clientY;
-  dockHeight.value = clampWidth(rowDragStartDock + delta, DOCK_MIN, DOCK_MAX);
-};
-
-const onRowGutterUp = () => {
-  rowDragging = false;
-  document.body.classList.remove('is-row-resizing');
-  window.removeEventListener('pointermove', onRowGutterMove);
-  window.removeEventListener('pointerup', onRowGutterUp);
-};
-
-const onRowGutterDown = (event: PointerEvent) => {
-  rowDragging = true;
-  rowDragStartY = event.clientY;
-  rowDragStartDock = dockHeight.value;
-  document.body.classList.add('is-row-resizing');
-  window.addEventListener('pointermove', onRowGutterMove);
-  window.addEventListener('pointerup', onRowGutterUp);
 };
 
 const selectedAccount = computed(() => accounts.value.find((account) => account.id === selectedAccountId.value));
@@ -526,12 +489,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
         :active-card="activeCard"
         @open-card="activeCard = $event"
         @close-card="activeCard = null"
-        @open-quote-overview="dockTab = 'trend'"
       />
 
-      <div v-if="!matrixExpanded" class="middle-column" :style="middleColumnStyle">
-        <TaskOverviewMatrix
-          class="matrix-workspace"
+      <div v-if="!matrixExpanded" class="middle-column middle-column--six">
+        <DirectionDemandPanel
+          direction="repo"
           :accounts="accounts"
           :pending-allocations="pendingAllocations"
           :active-filter="activeOverviewFilter"
@@ -539,19 +501,24 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
           @open-pending="openPending"
           @open-matrix="openMatrix"
         />
-
-        <div
-          class="panel-gutter barometer-row-gutter"
-          role="separator"
-          aria-orientation="horizontal"
-          aria-label="拖动调整图表面板高度"
-          @pointerdown="onRowGutterDown($event)"
+        <DirectionDemandPanel
+          direction="reverse"
+          :accounts="accounts"
+          :pending-allocations="pendingAllocations"
+          :active-filter="activeOverviewFilter"
+          @select-filter="selectOverviewFilter"
+          @open-pending="openPending"
+          @open-matrix="openMatrix"
         />
-
         <BarometerPanel
           class="barometer-slot"
-          v-model:active-tab="dockTab"
+          fixed-tab="barometer"
+          :hide-tabs="true"
+          title="市场晴雨表"
         />
+        <IndivInstitChart />
+        <WeightedPriceChart />
+        <AnonymousFlowChart />
       </div>
 
       <AllocationMatrix

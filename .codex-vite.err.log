@@ -1,0 +1,24 @@
+npm warn Unknown user config "home". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+[31mfailed to load config from E:\code\repobroad\vite.config.ts[39m
+[2m18:09:39[22m [31m[1m[vite][22m[39m react is not defined
+[2m18:09:39[22m [31m[1m[vite][22m[39m server restart failed
+[31mfailed to load config from E:\code\repobroad\vite.config.ts[39m
+[2m18:09:49[22m [31m[1m[vite][22m[39m Cannot find package '@vitejs/plugin-vue' imported from E:\code\repobroad\node_modules\.vite-temp\vite.config.ts.timestamp-1780394989617-d1b37bb67fc728.mjs
+[2m18:09:49[22m [31m[1m[vite][22m[39m server restart failed
+Failed to resolve dependency: [36mreact[39m, present in client 'optimizeDeps.include'
+Failed to resolve dependency: [36mreact-dom[39m, present in client 'optimizeDeps.include'
+Failed to resolve dependency: [36mreact/jsx-dev-runtime[39m, present in client 'optimizeDeps.include'
+Failed to resolve dependency: [36mreact/jsx-runtime[39m, present in client 'optimizeDeps.include'
+Error: The following dependencies are imported but could not be resolved:
+
+  [36mreact-dom/client[39m [37m[2m(imported by E:/code/repobroad/src/main.tsx)[22m[39m
+  [36mreact/jsx-runtime[39m [37m[2m(imported by E:/code/repobroad/src/app/components/QuoteChatPopup.tsx)[22m[39m
+  [36mreact[39m [37m[2m(imported by E:/code/repobroad/src/app/components/QuoteChatPopup.tsx)[22m[39m
+
+Are they installed?
+    at file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:14849:15
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///E:/code/repobroad/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:46985:28
+[31mfailed to load config from E:\code\repobroad\vite.config.ts[39m
+[2m10:42:19[22m [31m[1m[vite][22m[39m Cannot find package '@vitejs/plugin-vue' imported from E:\code\repobroad\node_modules\.vite-temp\vite.config.ts.timestamp-1780540939164-3ada3f69247a3.mjs
+[2m10:42:19[22m [31m[1m[vite][22m[39m server restart failed

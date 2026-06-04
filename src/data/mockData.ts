@@ -17,6 +17,11 @@ export interface AccountRow {
   breakevenRate: number;
   status: AccountStatus;
   rule: string;
+  /**
+   * 账户该笔需求是逆回购（reverse, 融出）还是正回购（repo, 融入）。
+   * 中栏「正回购需求 / 逆回购需求」两个面板按此字段分流。
+   */
+  direction: Direction;
 }
 
 export interface PendingAllocation {
@@ -189,7 +194,8 @@ export const accounts: AccountRow[] = [
     allocatedAmount: 8.5,
     breakevenRate: 1.53,
     status: 'warning',
-    rule: '限自营，优先低久期'
+    rule: '限自营，优先低久期',
+    direction: 'reverse'
   },
   {
     id: 'acc-zy-014',
@@ -202,7 +208,8 @@ export const accounts: AccountRow[] = [
     allocatedAmount: 8.2,
     breakevenRate: 1.66,
     status: 'normal',
-    rule: '可做质押，R014 优先'
+    rule: '可做质押，R014 优先',
+    direction: 'repo'
   },
   {
     id: 'acc-lc-007',
@@ -215,7 +222,8 @@ export const accounts: AccountRow[] = [
     allocatedAmount: 16,
     breakevenRate: 1.48,
     status: 'done',
-    rule: '已完成，仍可微调'
+    rule: '已完成，仍可微调',
+    direction: 'reverse'
   },
   {
     id: 'acc-lc-014',
@@ -228,7 +236,8 @@ export const accounts: AccountRow[] = [
     allocatedAmount: 9.8,
     breakevenRate: 1.61,
     status: 'normal',
-    rule: '不留趴账，需准入'
+    rule: '不留趴账，需准入',
+    direction: 'reverse'
   },
   {
     id: 'acc-gm-028',
@@ -241,7 +250,8 @@ export const accounts: AccountRow[] = [
     allocatedAmount: 2,
     breakevenRate: 1.72,
     status: 'warning',
-    rule: '开 CD 仅限一级'
+    rule: '开 CD 仅限一级',
+    direction: 'repo'
   },
   {
     id: 'acc-zy-007',
@@ -254,7 +264,8 @@ export const accounts: AccountRow[] = [
     allocatedAmount: 6,
     breakevenRate: 1.55,
     status: 'normal',
-    rule: '日内套利，控制久期'
+    rule: '日内套利，控制久期',
+    direction: 'reverse'
   },
   {
     id: 'acc-zy-021',
@@ -267,7 +278,8 @@ export const accounts: AccountRow[] = [
     allocatedAmount: 8,
     breakevenRate: 1.69,
     status: 'done',
-    rule: '波段持有，已满仓'
+    rule: '波段持有，已满仓',
+    direction: 'repo'
   },
   {
     id: 'acc-lc-001',
@@ -280,7 +292,8 @@ export const accounts: AccountRow[] = [
     allocatedAmount: 12.4,
     breakevenRate: 1.5,
     status: 'normal',
-    rule: '高流动性，隔夜优先'
+    rule: '高流动性，隔夜优先',
+    direction: 'reverse'
   },
   {
     id: 'acc-lc-028',
@@ -293,7 +306,8 @@ export const accounts: AccountRow[] = [
     allocatedAmount: 3,
     breakevenRate: 1.75,
     status: 'warning',
-    rule: '拉久期，需准入'
+    rule: '拉久期，需准入',
+    direction: 'repo'
   },
   {
     id: 'acc-gm-007',
@@ -306,7 +320,8 @@ export const accounts: AccountRow[] = [
     allocatedAmount: 18,
     breakevenRate: 1.46,
     status: 'normal',
-    rule: '货币基金，限一级'
+    rule: '货币基金，限一级',
+    direction: 'reverse'
   },
   {
     id: 'acc-gm-014',
@@ -319,7 +334,8 @@ export const accounts: AccountRow[] = [
     allocatedAmount: 4.5,
     breakevenRate: 1.63,
     status: 'warning',
-    rule: '债基配置，看资金面'
+    rule: '债基配置，看资金面',
+    direction: 'repo'
   },
   {
     id: 'acc-zx-001',
@@ -332,7 +348,8 @@ export const accounts: AccountRow[] = [
     allocatedAmount: 9,
     breakevenRate: 1.52,
     status: 'done',
-    rule: '专户限定，已完成'
+    rule: '专户限定，已完成',
+    direction: 'reverse'
   },
   {
     id: 'acc-nj-014',
@@ -345,7 +362,8 @@ export const accounts: AccountRow[] = [
     allocatedAmount: 5.5,
     breakevenRate: 1.6,
     status: 'normal',
-    rule: '年金户，稳健为主'
+    rule: '年金户，稳健为主',
+    direction: 'reverse'
   }
 ];
 
@@ -437,7 +455,7 @@ export const marketQuotes: MarketQuote[] = [
     id: 'quote-taikang-r001',
     direction: 'reverse',
     group: '存单商金',
-    institution: '泰康资产',
+    institution: '太保资产',
     level: 'level1',
     tenor: 'R001',
     amount: 0,
@@ -1022,7 +1040,7 @@ const baseChats: ChatThread[] = [
   },
   {
     id: 'chat-thk-chen',
-    counterparty: '泰康资产',
+    counterparty: '太保资产',
     status: 'replied',
     latest: 'R001 1.42，可专户',
     time: '10:20',
@@ -1158,7 +1176,7 @@ const mockCounterparties = [
   '江苏银行', '南京银行', '宁波银行', '杭州银行', '上海农商行', '重庆农商行', '广州农商行', '成都农商行',
   '中信证券', '国泰君安', '华泰证券', '招商证券', '广发证券', '东方证券', '中金公司', '中信建投证券',
   '易方达基金', '华夏基金', '南方基金', '嘉实基金', '招商基金', '鹏华基金', '博时基金', '华安基金',
-  '工银理财', '建信理财', '招银理财', '农银理财', '中银理财', '平安理财', '泰康资产', '太保资产',
+  '工银理财', '建信理财', '招银理财', '农银理财', '中银理财', '平安理财', '太保资产', '国寿资产',
   '平安资产', '阳光资产'
 ];
 

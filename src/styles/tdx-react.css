@@ -1,0 +1,240 @@
+/* React workbench adaptation for the TDX terminal theme. */
+:root {
+  --background: var(--tdx-bg-page);
+  --foreground: var(--tdx-text-main);
+  --card: var(--tdx-bg-panel);
+  --card-foreground: var(--tdx-text-main);
+  --popover: var(--tdx-bg-control);
+  --popover-foreground: var(--tdx-text-main);
+  --primary: var(--tdx-red);
+  --primary-foreground: var(--tdx-text-inverse);
+  --secondary: var(--tdx-bg-control);
+  --secondary-foreground: var(--tdx-text-main);
+  --muted: var(--tdx-bg-panel);
+  --muted-foreground: var(--tdx-text-muted);
+  --accent: var(--tdx-bg-row-hover);
+  --accent-foreground: var(--tdx-text-heading);
+  --destructive: var(--tdx-red);
+  --destructive-foreground: var(--tdx-text-inverse);
+  --border: var(--tdx-border);
+  --input-background: var(--tdx-bg-control);
+  --ring: var(--tdx-red);
+  --chart-1: var(--tdx-blue);
+  --chart-2: var(--tdx-green);
+  --chart-3: var(--tdx-purple);
+  --chart-4: var(--tdx-yellow);
+  --chart-5: var(--tdx-red);
+  --radius: var(--tdx-radius-md);
+}
+
+html,
+body,
+#root {
+  background: var(--tdx-bg-page);
+  color: var(--tdx-text-main);
+}
+
+.tk-app-shell {
+  background: var(--tdx-bg-page);
+  color: var(--tdx-text-main);
+}
+
+.tk-topbar {
+  background: var(--tdx-bg-header);
+  border-bottom: 1px solid var(--tdx-border);
+  box-shadow: none;
+}
+
+.tk-panel,
+.tk-modal {
+  background: var(--tdx-bg-panel);
+  border-color: var(--tdx-border);
+  border-radius: var(--tdx-radius-md);
+  box-shadow: none;
+}
+
+.tk-panel-soft,
+.tk-field,
+.tk-table-shell {
+  background: var(--tdx-bg-control);
+  border-color: var(--tdx-border);
+  border-radius: var(--tdx-radius-sm);
+  box-shadow: none;
+}
+
+.tk-panel-header,
+.tk-table thead {
+  background: var(--tdx-bg-header);
+  border-color: var(--tdx-border);
+}
+
+.tk-title,
+.tk-title-lg,
+.tk-strong {
+  color: var(--tdx-text-heading);
+}
+
+.tk-matrix-section-title {
+  color: var(--tdx-text-heading);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 20px;
+}
+
+.tk-matrix-card-title {
+  color: var(--tdx-text-heading);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 16px;
+}
+
+.tk-matrix-card-subtitle {
+  color: var(--tdx-text-muted);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 12px;
+}
+
+.tk-matrix-tag {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 12px;
+}
+
+.tk-muted,
+.tk-table th {
+  color: var(--tdx-text-muted);
+}
+
+.tk-subtle {
+  color: var(--tdx-text-muted);
+}
+
+.tk-number,
+.tk-table td {
+  color: var(--tdx-text-main);
+}
+
+.tk-positive {
+  color: var(--tdx-green);
+}
+
+.tk-negative {
+  color: var(--tdx-red);
+}
+
+.tk-warning {
+  color: var(--tdx-yellow);
+}
+
+.tk-button,
+.tk-chip {
+  background: var(--tdx-bg-control);
+  border-color: var(--tdx-border);
+  border-radius: var(--tdx-radius-sm);
+  color: var(--tdx-text-muted);
+  box-shadow: none;
+}
+
+.tk-button:hover,
+.tk-chip:hover {
+  background: var(--tdx-bg-row-hover);
+  border-color: var(--tdx-red);
+  color: var(--tdx-text-heading);
+}
+
+.tk-button-primary,
+.tk-chip-active,
+.tk-selected {
+  background: color-mix(in srgb, var(--tdx-red-deep) 58%, var(--tdx-bg-control));
+  border-color: var(--tdx-red);
+  color: var(--tdx-text-heading);
+  box-shadow: inset 2px 0 0 var(--tdx-red);
+}
+
+.tk-badge {
+  background: color-mix(in srgb, var(--tdx-yellow) 14%, var(--tdx-bg-control));
+  border-color: color-mix(in srgb, var(--tdx-yellow) 45%, var(--tdx-border));
+  border-radius: var(--tdx-radius-sm);
+  color: var(--tdx-yellow);
+}
+
+.tk-overlay {
+  background: rgba(0, 0, 0, 0.66);
+  backdrop-filter: none;
+}
+
+.tk-table th,
+.tk-table td,
+.tdx-density-table th,
+.tdx-density-table td {
+  height: var(--tdx-line-height-row);
+  line-height: var(--tdx-line-height-row);
+}
+
+.tk-table tbody tr:nth-child(even),
+.tdx-density-table tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--tdx-bg-row-hover) 48%, transparent);
+}
+
+.tk-table tbody tr:hover,
+.tdx-density-table tbody tr:hover {
+  background: var(--tdx-bg-row-hover);
+}
+
+.rounded-lg,
+.rounded-xl,
+.rounded-2xl,
+.rounded-md {
+  border-radius: var(--tdx-radius-md);
+}
+
+.shadow,
+.shadow-lg,
+.shadow-xl,
+.shadow-2xl {
+  box-shadow: none;
+}
+
+.text-blue-100,
+.text-blue-200,
+.text-blue-300,
+.text-sky-200,
+.text-sky-300,
+.text-cyan-200,
+.text-cyan-300 {
+  color: var(--tdx-yellow);
+}
+
+.bg-blue-500\/20,
+.bg-blue-600\/60,
+.bg-sky-500\/20,
+.bg-cyan-500\/20 {
+  background-color: color-mix(in srgb, var(--tdx-red-deep) 56%, transparent);
+}
+
+.border-blue-500\/30,
+.border-sky-500\/30,
+.border-cyan-500\/30 {
+  border-color: color-mix(in srgb, var(--tdx-red) 45%, transparent);
+}
+
+.tdx-terminal-tooltip {
+  background: color-mix(in srgb, var(--tdx-bg-control) 96%, transparent);
+  border: 1px solid var(--tdx-border);
+  border-radius: var(--tdx-radius-sm);
+  color: var(--tdx-text-main);
+  box-shadow: var(--tdx-shadow-popup);
+}
+
+.tdx-terminal-float {
+  background: color-mix(in srgb, var(--tdx-red-deep) 72%, var(--tdx-bg-control));
+  border: 1px solid var(--tdx-red);
+  border-radius: var(--tdx-radius-md);
+  color: var(--tdx-text-heading);
+  box-shadow: none;
+}

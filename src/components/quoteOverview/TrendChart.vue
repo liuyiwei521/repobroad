@@ -6,6 +6,7 @@ const props = defineProps<{
   series: ChartSeries[];
   yUnit: string;
   yLabel: string;
+  timeline?: readonly string[];
 }>();
 
 const PADDING = { top: 32, right: 24, bottom: 36, left: 56 };
@@ -17,8 +18,12 @@ const plotH = HEIGHT - PADDING.top - PADDING.bottom;
 const hoverIndex = ref<number | null>(null);
 const svgRef = ref<SVGSVGElement | null>(null);
 
-const xPositions = TIMELINE.map((_, i) => PADDING.left + (i / (TIMELINE.length - 1)) * plotW);
-const tIndex = new Map(TIMELINE.map((t, i) => [t, i]));
+const chartTimeline = computed(() => (props.timeline?.length ? props.timeline : TIMELINE));
+const xPositions = computed(() => {
+  const slots = Math.max(chartTimeline.value.length - 1, 1);
+  return chartTimeline.value.map((_, i) => PADDING.left + (i / slots) * plotW);
+});
+const tIndex = computed(() => new Map(chartTimeline.value.map((t, i) => [t, i])));
 
 const yRange = computed(() => {
   let min = Infinity;
@@ -56,8 +61,8 @@ const toY = (value: number) => {
 const pathD = (s: ChartSeries) => {
   return s.points
     .map((p, i) => {
-      const xi = tIndex.get(p.t) ?? i;
-      return `${i === 0 ? 'M' : 'L'}${xPositions[xi]},${toY(p.value)}`;
+      const xi = tIndex.value.get(p.t) ?? i;
+      return `${i === 0 ? 'M' : 'L'}${xPositions.value[xi]},${toY(p.value)}`;
     })
     .join('');
 };
@@ -81,14 +86,14 @@ const peaks = computed<PeakInfo[]>(() => {
     for (const p of s.points) {
       if (p.value > best.value) best = p;
     }
-    const xi = tIndex.get(best.t) ?? 0;
+    const xi = tIndex.value.get(best.t) ?? 0;
     result.push({
       seriesKey: s.key,
       label: s.label,
       color: s.color,
       time: best.t,
       value: best.value,
-      x: xPositions[xi],
+      x: xPositions.value[xi],
       y: toY(best.value),
       formattedValue: props.yUnit === '%' ? best.value.toFixed(2) + '%'
         : props.yUnit === 'BP' ? Math.round(best.value) + 'BP'
@@ -114,19 +119,19 @@ const onMouseMove = (event: MouseEvent) => {
   const mx = ((event.clientX - rect.left) / rect.width) * WIDTH;
   let closest = 0;
   let minDist = Infinity;
-  for (let i = 0; i < xPositions.length; i++) {
-    const d = Math.abs(mx - xPositions[i]);
+  for (let i = 0; i < xPositions.value.length; i++) {
+    const d = Math.abs(mx - xPositions.value[i]);
     if (d < minDist) { minDist = d; closest = i; }
   }
-  hoverIndex.value = minDist < plotW / (TIMELINE.length - 1) ? closest : null;
+  hoverIndex.value = minDist < plotW / Math.max(chartTimeline.value.length - 1, 1) ? closest : null;
 };
 
 const tooltipValues = computed(() => {
   if (hoverIndex.value == null) return null;
-  const t = TIMELINE[hoverIndex.value];
+  const t = chartTimeline.value[hoverIndex.value];
   return {
     time: t,
-    x: xPositions[hoverIndex.value],
+    x: xPositions.value[hoverIndex.value],
     items: props.series.map(s => {
       const pt = s.points.find(p => p.t === t);
       return { label: s.label, color: s.color, value: pt?.value, dashed: s.lineStyle === 'dashed' };
@@ -174,7 +179,7 @@ const formatTooltipValue = (value: number | undefined) => {
 
     <!-- X axis labels -->
     <text
-      v-for="(t, i) in TIMELINE" :key="t"
+      v-for="(t, i) in chartTimeline" :key="t"
       :x="xPositions[i]"
       :y="HEIGHT - 8"
       class="trend-chart__tick"
