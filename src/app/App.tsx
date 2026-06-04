@@ -2043,16 +2043,16 @@ function FloatingBall() {
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       style={{ left: pos.x, top: pos.y }}
-      className="fixed z-[30] flex h-16 w-16 cursor-grab select-none items-center justify-center rounded-full bg-blue-600/60 shadow-lg backdrop-blur active:cursor-grabbing"
+      className="tdx-terminal-float fixed z-[30] flex h-14 w-14 cursor-grab select-none items-center justify-center active:cursor-grabbing"
     >
-      <span className="text-xl font-bold text-white">42</span>
+      <span className="tk-number text-lg font-bold">42</span>
     </div>
   );
 }
 
-const DEFAULT_COLUMN_RATIOS: [number, number, number] = [24, 52, 24];
-const COLUMN_RATIOS_KEY = "boardColumnRatios.v2";
-const COLUMN_MIN: [number, number, number] = [4, 42, 0];
+const DEFAULT_COLUMN_RATIOS: [number, number, number] = [16, 34, 50];
+const COLUMN_RATIOS_KEY = "boardColumnRatios.v4";
+const COLUMN_MIN: [number, number, number] = [8, 26, 38];
 
 function clampColumns(
   next: [number, number, number],
@@ -2183,8 +2183,7 @@ function App() {
     setActiveFrame({ id: entry.id, title: entry.title });
   }
 
-  const railWidth = columns[0];
-  const gridTemplate = `${railWidth}% 10px ${100 - railWidth}%`;
+  const gridTemplate = `${columns[0]}% 10px ${columns[1]}% 10px ${columns[2]}%`;
   return (
     <div className="tk-app-shell h-screen w-screen overflow-hidden">
       <div className="flex h-full flex-col">
@@ -2203,6 +2202,8 @@ function App() {
             onOpen={openFrame}
           />
           <ColumnSplitter onMouseDown={(e) => startDragSplitter(e, 0)} />
+          <MiddleMatrixColumn />
+          <ColumnSplitter onMouseDown={(e) => startDragSplitter(e, 1)} />
           <MainQuoteBoard />
         </main>
       </div>
@@ -2264,10 +2265,10 @@ function ColumnSplitter({
       role="separator"
       aria-orientation="vertical"
       onMouseDown={onMouseDown}
-      className="group relative h-full cursor-col-resize bg-transparent transition-colors hover:bg-[rgba(0,96,219,0.2)]"
+      className="group relative h-full cursor-col-resize bg-transparent transition-colors hover:bg-[rgba(231,53,58,0.18)]"
       style={{ width: "100%", minWidth: 6 }}
     >
-      <span className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-[2px] -translate-x-1/2 -translate-y-1/2 rounded bg-[var(--tk-color-border-panel)] group-hover:bg-[var(--tk-color-brand-cyan)]" />
+      <span className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-[2px] -translate-x-1/2 -translate-y-1/2 rounded bg-[var(--tk-color-border-panel)] group-hover:bg-[var(--tdx-red)]" />
     </div>
   );
 }
@@ -2423,13 +2424,13 @@ function ModuleEntryItem({
           type="button"
           aria-label={entry.title}
           onClick={onOpen}
-          className="group w-full px-2.5 py-2 text-left transition-colors hover:bg-[rgba(0,96,219,0.12)]"
+          className="group w-full px-2.5 py-2 text-left transition-colors hover:bg-[rgba(231,53,58,0.12)]"
         >
           <div className="flex min-w-0 items-center gap-2">
             <span
               className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${
                 active
-                  ? "border-[color:var(--tk-color-brand-cyan)] bg-[rgba(0,210,220,0.14)] text-[color:var(--tk-color-text-inverse)]"
+                  ? "border-[color:var(--tdx-red)] bg-[rgba(143,32,38,0.42)] text-[color:var(--tdx-text-heading)]"
                   : "border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] text-[color:var(--tk-color-text-inverse-secondary)]"
               }`}
             >
@@ -2469,7 +2470,7 @@ function ModuleEntryItem({
         className={`group w-full min-w-0 overflow-hidden rounded-lg border text-left transition-colors ${
           active
             ? "tk-selected"
-            : "tk-chip hover:bg-[rgba(0,96,219,0.12)]"
+            : "tk-chip hover:bg-[rgba(231,53,58,0.12)]"
         } ${
           displayMode === "icon" || displayMode === "compact"
             ? "flex items-center justify-center px-0"
@@ -2492,7 +2493,7 @@ function ModuleEntryItem({
           <span
             className={`inline-flex shrink-0 items-center justify-center rounded-md border ${
               active
-                ? "border-[color:var(--tk-color-brand-cyan)] bg-[rgba(0,210,220,0.14)] text-[color:var(--tk-color-text-inverse)]"
+                ? "border-[color:var(--tdx-red)] bg-[rgba(143,32,38,0.42)] text-[color:var(--tdx-text-heading)]"
                 : "border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] text-[color:var(--tk-color-text-inverse-secondary)]"
             } ${displayMode === "icon" ? "h-8 w-8" : displayMode === "compact" ? "h-10 w-10" : "h-7 w-7"}`}
           >
@@ -2663,7 +2664,7 @@ function XrepoSummaryOverview() {
           <div
             key={`${row[0]}-${index}`}
             className={`grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] items-center gap-1 border-b border-[color:var(--tk-color-border-divider-dark)] px-2 py-1 text-[10px] last:border-b-0 ${
-              index === 0 ? "bg-[rgba(0,96,219,0.1)]" : ""
+              index === 0 ? "bg-[rgba(143,32,38,0.24)]" : ""
             }`}
           >
             <span className="tk-strong truncate font-semibold">
@@ -2744,7 +2745,7 @@ function overviewToneClass(tone: OverviewTone) {
   if (tone === "good") return "tk-positive";
   if (tone === "alert") return "tk-negative";
   if (tone === "muted") return "tk-muted";
-  return "text-[color:var(--tk-color-brand-cyan)]";
+  return "text-[color:var(--tdx-yellow)]";
 }
 
 function getModuleEntryData(id: ModuleEntryId): ModuleEntryMetric {
@@ -2974,11 +2975,11 @@ function EntryPreviewPopover({
 
   return (
     <div
-      className="pointer-events-none fixed z-[80] rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[rgba(255,255,255,0.96)] p-3 text-xs text-slate-200 shadow-2xl backdrop-blur"
+      className="tdx-terminal-tooltip pointer-events-none fixed z-[80] p-3 text-xs"
       style={{ left, top, width }}
     >
       <div className="flex items-start gap-2">
-        <Icon className="mt-0.5 shrink-0 text-blue-300" size={16} />
+        <Icon className="tk-warning mt-0.5 shrink-0" size={16} />
         <div className="min-w-0">
           <div className="font-semibold text-slate-50">{entry.title}</div>
           <div className="mt-1 leading-5 text-slate-400">{metric.summary}</div>
@@ -3324,7 +3325,7 @@ function TopBar({
 }) {
   return (
     <header className="tk-topbar border-b px-3 py-2">
-      <div className="grid grid-cols-[minmax(260px,max-content)_minmax(520px,1fr)_auto] items-center gap-3">
+      <div className="grid grid-cols-[minmax(260px,max-content)_1fr_auto] items-center gap-3">
         <div className="flex items-center gap-2">
           <div className="whitespace-nowrap text-[20px] font-semibold tracking-[0] text-[color:var(--tk-color-text-inverse)]">
             资金实时行情看板
@@ -3338,22 +3339,7 @@ function TopBar({
             ⤺ 布局
           </button>
         </div>
-        <div className="relative h-8">
-          <div className="pointer-events-auto absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 whitespace-nowrap text-sm text-slate-400">
-            <FilterLabel>金额</FilterLabel>
-            <RangeFilterField value={topBoardFilters.amountMin} />
-            <span className="text-slate-500">~</span>
-            <RangeFilterField value={topBoardFilters.amountMax} />
-            <span className="text-slate-500">亿</span>
-            <FilterDivider />
-            <FilterLabel>利率</FilterLabel>
-
-            <RangeFilterField value={topBoardFilters.rateMin} />
-            <span className="text-slate-500">~</span>
-            <RangeFilterField value={topBoardFilters.rateMax} />
-            <span className="text-slate-500">%</span>
-          </div>
-        </div>
+        <div />
         <div className="flex items-center justify-end gap-3">
           <InfoChip label="DR007" value="2.15%" tone="alert" />
           <SentimentChipWithPopover />
@@ -4527,9 +4513,435 @@ type QuoteOverride = Partial<
   >
 > & { groupName?: string };
 
+const middleMatrixPlaceholders = [
+  { title: "正回购需求", tag: "需求矩阵", hint: "按账户类型 × 期限", kind: "matrix" },
+  { title: "逆回购需求", tag: "需求矩阵", hint: "按机构类型 × 期限", kind: "matrix" },
+  { title: "匿名成交走势时间", tag: "时间分布", hint: "成交时间 × 期限", kind: "chart" },
+] as const;
+
+function MatrixPlaceholderCard({
+  title,
+  tag,
+  hint,
+  kind,
+  index,
+}: {
+  title: string;
+  tag: string;
+  hint: string;
+  kind: "matrix" | "chart";
+  index: number;
+}) {
+  return (
+    <div className="grid min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="flex items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2.5 py-1.5">
+        <div className="min-w-0">
+          <div className="truncate text-[11px] font-semibold text-slate-100">
+            {title}
+          </div>
+          <div className="mt-0.5 truncate text-[9px] text-slate-500">
+            {hint}
+          </div>
+        </div>
+        <span className="shrink-0 rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-1.5 py-0.5 text-[9px] text-slate-400">
+          {tag}
+        </span>
+      </div>
+      <div className="relative min-h-0 overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-45"
+          style={{
+            background:
+              "repeating-linear-gradient(45deg, rgba(71,85,105,0.18) 0, rgba(71,85,105,0.18) 1px, transparent 1px, transparent 8px)",
+          }}
+        />
+        {kind === "matrix" ? (
+          <MiniMatrixSkeleton activeIndex={index} />
+        ) : (
+          <MiniChartSkeleton activeIndex={index} />
+        )}
+        <div className="absolute inset-x-2 bottom-2 flex items-center justify-between text-[9px] text-slate-500">
+          <span>占位</span>
+          <span>待接入</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MiniMatrixSkeleton({ activeIndex }: { activeIndex: number }) {
+  const rows = ["利率地方", "存单商金", "信用"];
+  const columns = ["合计", "R001", "R007"];
+  return (
+    <div className="absolute inset-2 bottom-5 grid grid-cols-[3.2rem_repeat(3,minmax(0,1fr))] grid-rows-[1.2rem_repeat(3,minmax(0,1fr))] gap-[2px] text-[9px]">
+      <div />
+      {columns.map((column) => (
+        <div
+          key={column}
+          className="flex items-center justify-center rounded-sm bg-[rgba(30,41,59,0.82)] font-semibold text-slate-300"
+        >
+          {column}
+        </div>
+      ))}
+      {rows.map((row, rowIndex) => (
+        <Fragment key={row}>
+          <div className="flex items-center rounded-sm border-l-2 border-[color:var(--tdx-red)] bg-[rgba(30,41,59,0.72)] px-1 font-semibold text-slate-300">
+            <span className="truncate">{row}</span>
+          </div>
+          {columns.map((column, columnIndex) => {
+            const cellIndex = rowIndex * columns.length + columnIndex;
+            const isActive = cellIndex === activeIndex % 9;
+            return (
+              <div
+                key={`${row}-${column}`}
+                className={`relative overflow-hidden rounded-sm border ${
+                  isActive
+                    ? "border-[color:var(--tdx-red)] bg-[rgba(231,53,58,0.18)]"
+                    : "border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.66)]"
+                }`}
+              >
+                <div className="absolute left-1 top-1 text-[9px] font-semibold text-slate-300">
+                  {columnIndex === 0 ? "合计" : column}
+                </div>
+                <div
+                  className={`absolute bottom-1 left-1 right-1 h-[2px] rounded ${
+                    columnIndex === 2 ? "bg-emerald-500" : "bg-[var(--tdx-red)]"
+                  }`}
+                />
+              </div>
+            );
+          })}
+        </Fragment>
+      ))}
+    </div>
+  );
+}
+
+function MiniChartSkeleton({ activeIndex }: { activeIndex: number }) {
+  const stroke =
+    activeIndex % 2 === 0 ? "var(--tk-color-chart-blue)" : "var(--tdx-red)";
+  return (
+    <div className="absolute inset-2 bottom-5 grid min-h-0 grid-rows-[1fr_34%] gap-1">
+      <div className="relative overflow-hidden rounded-sm border border-dashed border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.42)]">
+        <svg
+          className="absolute inset-0 h-full w-full"
+          preserveAspectRatio="none"
+          viewBox="0 0 100 60"
+        >
+          {[15, 30, 45].map((y) => (
+            <line
+              key={y}
+              x1="0"
+              x2="100"
+              y1={y}
+              y2={y}
+              stroke="rgba(100,116,139,0.28)"
+              strokeDasharray="3 3"
+              strokeWidth="0.7"
+            />
+          ))}
+          <path
+            d="M2 48 L18 42 L34 18 L52 28 L70 24 L88 35 L100 22"
+            fill="none"
+            stroke={stroke}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+          />
+          <path
+            d="M2 48 L18 42 L34 18 L52 28 L70 24 L88 35 L100 22 L100 60 L2 60 Z"
+            fill={stroke}
+            opacity="0.12"
+          />
+        </svg>
+      </div>
+      <div className="grid grid-cols-5 gap-1">
+        {[58, 68, 76, 62, 84].map((height, index) => (
+          <div
+            key={`${height}-${index}`}
+            className="relative overflow-hidden rounded-sm bg-[rgba(15,23,42,0.58)]"
+          >
+            <div
+              className={`absolute bottom-0 left-0 right-0 ${
+                index % 3 === 0 ? "bg-[var(--tdx-red)]" : "bg-emerald-500"
+              }`}
+              style={{ height: `${height}%` }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const personalInstitutionCompareSeries = [
+  {
+    label: "个人 R001",
+    color: "#2f86ff",
+    dashed: false,
+    values: [1.52, 1.535, 1.535, 1.536, 1.518, 1.505, 1.552, 1.552, 1.518],
+  },
+  {
+    label: "机构 R001",
+    color: "#2f86ff",
+    dashed: true,
+    values: [1.56, 1.56, 1.575, 1.565, 1.552, 1.542, 1.585, 1.585, 1.548],
+  },
+  {
+    label: "个人 R007",
+    color: "#10c6c8",
+    dashed: false,
+    values: [1.70, 1.705, 1.73, 1.725, 1.695, 1.707, 1.718, 1.728, 1.718],
+  },
+  {
+    label: "机构 R007",
+    color: "#10c6c8",
+    dashed: true,
+    values: [1.69, 1.705, 1.75, 1.742, 1.755, 1.72, 1.78, 1.765, 1.725],
+  },
+] as const;
+
+function PersonalInstitutionCompareCard() {
+  const labels = ["08:00", "09:30", "10:00", "10:30", "11:00", "13:30", "14:00", "14:30", "16:00"];
+  const values = personalInstitutionCompareSeries.flatMap((series) => series.values);
+  const min = Math.min(...values) - 0.03;
+  const max = Math.max(...values) + 0.03;
+
+  return (
+    <div className="grid min-h-0 grid-rows-[auto_auto_1fr_auto] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="flex items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2.5 py-1.5">
+        <div className="truncate text-[11px] font-semibold text-slate-100">
+          个人 & 机构
+        </div>
+        <div className="flex items-center gap-1 text-[9px] text-slate-400">
+          <span>— 个人</span>
+          <span>┄ 机构</span>
+        </div>
+      </div>
+      <div className="flex items-center gap-1.5 border-b border-[color:var(--tk-color-border-divider)] px-2 py-1">
+        {["R001", "R007"].map((tenor) => (
+          <span
+            key={tenor}
+            className="rounded-sm bg-[var(--tdx-red)] px-1.5 py-0.5 text-[9px] font-semibold text-white"
+          >
+            {tenor}
+          </span>
+        ))}
+        {["R014", "R021", "R028"].map((tenor) => (
+          <span key={tenor} className="px-1 text-[9px] text-slate-500">
+            {tenor}
+          </span>
+        ))}
+      </div>
+      <div className="grid min-h-0 grid-cols-[2.3rem_1fr] px-2 pt-2">
+        <div className="flex flex-col justify-between pb-4 pr-1 text-right text-[8px] text-slate-500">
+          {buildAxisLabels(min, max, 4).map((tick) => (
+            <div key={tick}>{tick}</div>
+          ))}
+        </div>
+        <div className="relative min-h-0 overflow-hidden">
+          {[0, 1, 2, 3].map((index) => (
+            <div
+              key={index}
+              className="absolute inset-x-0 border-t border-dashed border-[color:var(--tk-color-border-divider)]"
+              style={{ top: `${(index / 3) * 82}%` }}
+            />
+          ))}
+          <svg
+            className="absolute inset-0 h-[calc(100%-14px)] w-full"
+            preserveAspectRatio="none"
+            viewBox="0 0 120 76"
+          >
+            {personalInstitutionCompareSeries.map((series) => (
+              <path
+                key={series.label}
+                d={buildLinePath(series.values, 120, 76, min, max)}
+                fill="none"
+                stroke={series.color}
+                strokeDasharray={series.dashed ? "4 3" : undefined}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.5"
+              />
+            ))}
+          </svg>
+          <div className="absolute inset-x-0 bottom-0 grid grid-cols-5 text-[8px] text-slate-500">
+            {labels.filter((_, index) => index % 2 === 0).map((label) => (
+              <span key={label} className="text-center">
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="border-t border-[color:var(--tk-color-border-divider)] px-2 py-1 text-[9px] text-slate-400">
+        <span className="text-blue-300">R007</span> 上你的报价均价比机构低 3BP，覆盖面偏窄。
+      </div>
+    </div>
+  );
+}
+
+function MiddleMatrixNoticeBar() {
+  return (
+    <div className="grid shrink-0 grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto] gap-2 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2 text-[10px]">
+      <div className="min-w-0">
+        <div className="tk-muted truncate">提示信息</div>
+        <div className="mt-0.5 truncate font-semibold text-slate-200">
+          R001 活跃度上升，关注正/逆需求缺口
+        </div>
+      </div>
+      <div className="min-w-0">
+        <div className="tk-muted truncate">最新动作</div>
+        <div className="mt-0.5 truncate text-amber-300">
+          加权价格与匿名成交已移入底部矩阵
+        </div>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span className="rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] px-1.5 py-0.5 text-slate-300">
+          待接入
+        </span>
+        <span className="rounded border border-[rgba(231,53,58,0.48)] bg-[rgba(231,53,58,0.16)] px-1.5 py-0.5 text-red-200">
+          2 条提醒
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function MiddleMatrixColumn() {
+  const [activeRange, setActiveRange] = useState<HistoryRange>("5d");
+  const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
+  const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
+
+  return (
+    <aside className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden px-1">
+      <section className="tk-panel grid h-full min-h-0 grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden border">
+        <div className="tk-panel-header border-b px-3 py-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="tk-title truncate text-sm">中间矩阵区</div>
+            </div>
+            <span className="tk-badge shrink-0 px-1.5 py-0.5 text-[10px]">
+              占位
+            </span>
+          </div>
+        </div>
+
+        <MiddleMatrixNoticeBar />
+
+        <div className="grid min-h-0 grid-cols-2 grid-rows-3 gap-2 overflow-hidden p-2">
+          {middleMatrixPlaceholders.slice(0, 2).map((item, index) => (
+            <MatrixPlaceholderCard
+              key={item.title}
+              title={item.title}
+              tag={item.tag}
+              hint={item.hint}
+              kind={item.kind}
+              index={index}
+            />
+          ))}
+          <PersonalInstitutionCompareCard />
+          <MatrixPlaceholderCard
+            title={middleMatrixPlaceholders[2].title}
+            tag={middleMatrixPlaceholders[2].tag}
+            hint={middleMatrixPlaceholders[2].hint}
+            kind={middleMatrixPlaceholders[2].kind}
+            index={3}
+          />
+          <div className="min-h-0 overflow-hidden rounded-md">
+            <HistoryClosePanel
+              activeRange={activeRange}
+              overlayProduct="none"
+              compareProduct={compareProduct}
+              onRangeChange={setActiveRange}
+              onCompareChange={setCompareProduct}
+            />
+          </div>
+          <div className="min-h-0 overflow-hidden rounded-md">
+            <IntradayPanel
+              overlayProduct={overlayProduct}
+              onOverlayChange={setOverlayProduct}
+            />
+          </div>
+        </div>
+      </section>
+    </aside>
+  );
+}
+
+function QuoteBoardFilterControls({
+  accountSearch,
+  collateralSearch,
+  onAccountSearchChange,
+  onCollateralSearchChange,
+}: {
+  accountSearch: string;
+  collateralSearch: string;
+  onAccountSearchChange: (value: string) => void;
+  onCollateralSearchChange: (value: string) => void;
+}) {
+  return (
+    <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 whitespace-nowrap text-[11px] text-slate-400">
+      <FilterLabel>金额</FilterLabel>
+      <CompactFilterField value={topBoardFilters.amountMin} />
+      <span className="text-slate-500">~</span>
+      <CompactFilterField value={topBoardFilters.amountMax} />
+      <span className="text-slate-500">亿</span>
+      <FilterDivider compact />
+      <FilterLabel>利率</FilterLabel>
+      <CompactFilterField value={topBoardFilters.rateMin} />
+      <span className="text-slate-500">~</span>
+      <CompactFilterField value={topBoardFilters.rateMax} />
+      <span className="text-slate-500">%</span>
+      <FilterDivider compact />
+      <FilterLabel>账户要求</FilterLabel>
+      <CompactSearchField
+        value={accountSearch}
+        placeholder="自营 / 专户"
+        onChange={onAccountSearchChange}
+      />
+      <FilterLabel>质押要求</FilterLabel>
+      <CompactSearchField
+        value={collateralSearch}
+        placeholder="利率 / 存单"
+        onChange={onCollateralSearchChange}
+      />
+    </div>
+  );
+}
+
+function CompactFilterField({ value }: { value: string }) {
+  return (
+    <div className="tk-field flex h-6 min-w-[54px] items-center justify-center px-2 text-[11px]">
+      {value}
+    </div>
+  );
+}
+
+function CompactSearchField({
+  value,
+  placeholder,
+  onChange,
+}: {
+  value: string;
+  placeholder: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <input
+      className="tk-field h-6 w-[92px] px-2 text-[11px] text-slate-100 outline-none placeholder:text-slate-600"
+      value={value}
+      placeholder={placeholder}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  );
+}
+
 function MainQuoteBoard() {
   const [displayLevel, setDisplayLevel] = useState<1 | 2>(1);
   const [tenorFilter, setTenorFilter] = useState<QuoteTenorFilter>("all");
+  const [accountSearch, setAccountSearch] = useState("");
+  const [collateralSearch, setCollateralSearch] = useState("");
   const [activeSectionId, setActiveSectionId] = useState<
     RepoQuoteSection["id"]
   >(repoQuoteSections[0].id);
@@ -4616,7 +5028,7 @@ function MainQuoteBoard() {
   return (
     <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pr-1">
       <section className="tk-panel flex min-h-0 flex-1 flex-col overflow-hidden border">
-        <div className="tk-panel-header border-b px-4 py-3">
+        <div className="tk-panel-header border-b px-4 py-2.5">
           <div className="flex flex-nowrap items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
               <div className="tk-title-lg shrink-0 whitespace-nowrap">
@@ -4665,6 +5077,14 @@ function MainQuoteBoard() {
               </button>
             </div>
           </div>
+          <div className="mt-2 border-t border-[color:var(--tk-color-border-divider-dark)] pt-2">
+            <QuoteBoardFilterControls
+              accountSearch={accountSearch}
+              collateralSearch={collateralSearch}
+              onAccountSearchChange={setAccountSearch}
+              onCollateralSearchChange={setCollateralSearch}
+            />
+          </div>
         </div>
         <div ref={bodyRef} className="flex min-h-0 flex-1 flex-col">
           {repoQuoteSections.map((section, index) => {
@@ -4685,6 +5105,8 @@ function MainQuoteBoard() {
                   onActivate={() => setActiveSectionId(section.id)}
                   dragRatio={dragRatio}
                   tenorFilter={tenorFilter}
+                  accountSearch={accountSearch}
+                  collateralSearch={collateralSearch}
                   applyOverride={applyOverride}
                   onEdit={openEditor}
                 />
@@ -4847,6 +5269,8 @@ function RepoQuoteSectionBoard({
   onActivate,
   dragRatio,
   tenorFilter,
+  accountSearch,
+  collateralSearch,
   applyOverride,
   onEdit,
 }: {
@@ -4857,11 +5281,28 @@ function RepoQuoteSectionBoard({
   onActivate: () => void;
   dragRatio: number | null;
   tenorFilter: QuoteTenorFilter;
+  accountSearch: string;
+  collateralSearch: string;
   applyOverride: (row: QuoteDetailRow) => QuoteDetailRow;
   onEdit: (row: QuoteDetailRow, groupName: string) => void;
 }) {
   const matchTenor = (rowTenor: string) =>
     tenorFilter === "all" || rowTenor === tenorFilter;
+  const matchRowFilters = (row: QuoteDetailRow) =>
+    matchTenor(row.tenor) &&
+    fuzzyTextMatch(
+      `${normalizeAccountRequirement(row.accountType)} ${row.accountType}`,
+      accountSearch,
+    ) &&
+    fuzzyTextMatch(`${row.collateral} ${row.reason}`, collateralSearch);
+  const getVisibleRows = (group: QuoteGroup) => {
+    const rows =
+      displayLevel === 1 ? selectLevel1Rows(group) : sortRowsByRank(group.rows);
+    return rows.map(applyOverride).filter(matchRowFilters);
+  };
+  const visibleGroups = section.groups
+    .map((group) => ({ group, rows: getVisibleRows(group) }))
+    .filter(({ rows }) => rows.length > 0);
   const useDrag = displayLevel === 2 && dragRatio != null;
   const containerStyle = useDrag
     ? { flex: `${dragRatio} 1 0%`, minHeight: 0 }
@@ -4920,7 +5361,7 @@ function RepoQuoteSectionBoard({
           <span className="text-right">获取时间</span>
           <span className="text-right">操作</span>
         </div>
-        {section.groups.map((group) => (
+        {visibleGroups.map(({ group, rows }) => (
           <div key={group.id} className="border-b-2 border-[color:var(--tk-color-border-divider)]">
             <div className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-[color:var(--tk-color-brand-cyan)] bg-[var(--tk-color-surface-selected)] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
               <div className="flex items-center gap-3">
@@ -4945,10 +5386,8 @@ function RepoQuoteSectionBoard({
             </div>
             {displayLevel === 1 ? (
               <div className="divide-y divide-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-page)]">
-                {selectLevel1Rows(group)
-                  .filter((row) => matchTenor(row.tenor))
-                  .map((rawRow) => {
-                    const row = applyOverride(rawRow);
+                {rows
+                  .map((row) => {
                     return (
                       <div
                         key={row.id}
@@ -4984,7 +5423,7 @@ function RepoQuoteSectionBoard({
                         </span>
                         <span className="flex items-center justify-end gap-1">
                           <button
-                            className="whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200"
+                            className="hidden whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200"
                             onClick={(e) => {
                               e.stopPropagation();
                               onEdit(row, group.name);
@@ -5007,10 +5446,8 @@ function RepoQuoteSectionBoard({
             ) : null}
             {displayLevel === 2 ? (
               <div className="divide-y divide-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-page)]">
-                {sortRowsByRank(group.rows)
-                  .filter((row) => matchTenor(row.tenor))
-                  .map((rawRow) => {
-                    const row = applyOverride(rawRow);
+                {rows
+                  .map((row) => {
                     return (
                       <div
                         key={row.id}
@@ -5048,7 +5485,7 @@ function RepoQuoteSectionBoard({
                         </span>
                         <span className="flex items-center justify-end gap-1">
                           <button
-                            className="whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200"
+                            className="hidden whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200"
                             onClick={(e) => {
                               e.stopPropagation();
                               onEdit(row, group.name);
@@ -5066,14 +5503,34 @@ function RepoQuoteSectionBoard({
                         </span>
                       </div>
                     );
-                  })}
+                })}
               </div>
             ) : null}
           </div>
         ))}
+        {!visibleGroups.length ? (
+          <div className="grid min-h-[160px] place-items-center border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-page)] text-xs text-slate-500">
+            暂无匹配报价
+          </div>
+        ) : null}
       </div>
     </div>
   );
+}
+
+function fuzzyTextMatch(text: string, query: string) {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return true;
+  const normalizedText = text.toLowerCase();
+  if (normalizedText.includes(normalizedQuery)) return true;
+
+  let textIndex = 0;
+  for (const char of normalizedQuery) {
+    textIndex = normalizedText.indexOf(char, textIndex);
+    if (textIndex === -1) return false;
+    textIndex += 1;
+  }
+  return true;
 }
 
 function normalizeAccountRequirement(accountType: string) {
@@ -9259,7 +9716,7 @@ function ChartTooltip({
 }) {
   return (
     <div
-      className="pointer-events-none fixed z-[200] rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[rgba(255,255,255,0.96)] px-3 py-2 text-xs text-slate-200 shadow-xl backdrop-blur-sm"
+      className="tdx-terminal-tooltip pointer-events-none fixed z-[200] px-3 py-2 text-xs"
       style={{ left: clientX + 14, top: clientY - 10 }}
     >
       {children}
@@ -9817,8 +10274,12 @@ function FilterLabel({ children }: { children: React.ReactNode }) {
   return <span className="tk-muted px-1">{children}</span>;
 }
 
-function FilterDivider() {
-  return <div className="mx-2 h-6 w-px bg-[var(--tk-color-border-divider-dark)]" />;
+function FilterDivider({ compact = false }: { compact?: boolean }) {
+  return (
+    <div
+      className={`${compact ? "mx-1 h-5" : "mx-2 h-6"} w-px bg-[var(--tk-color-border-divider-dark)]`}
+    />
+  );
 }
 
 function RangeFilterField({ value }: { value: string }) {
