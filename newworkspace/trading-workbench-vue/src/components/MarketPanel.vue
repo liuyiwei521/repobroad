@@ -5,7 +5,7 @@ import DirectionSection from './market/DirectionSection.vue';
 import MarketFilterBar from './market/MarketFilterBar.vue';
 import MarketTitleBar from './market/MarketTitleBar.vue';
 import OpponentList from './market/OpponentList.vue';
-import type { DirectionSectionView, OpponentThreadView, QuoteLine } from './market/types';
+import { isCoreOpponentLine, quoteStatusLabel, traderForInstitution, type DirectionSectionView, type OpponentThreadView, type QuoteLine } from './market/types';
 import { useQuoteColumns } from '../composables/useQuoteColumns';
 import { accountTypeOf, type TaskOverviewFilter } from '../composables/useTaskOverviewMatrix';
 
@@ -418,6 +418,10 @@ const quoteForLine = (line: QuoteLine): MarketQuote => ({
   collateralRequirement: line.collateralRequirement,
   collateral: line.collateralRequirement,
   updatedAt: line.updatedAt,
+  traderName: traderForInstitution(line.institution),
+  quoteReason: `${line.tenor} ${quoteStatusLabel(line.status)}`,
+  isCoreOpponent: isCoreOpponentLine(line),
+  isPinnedQuote: isCoreOpponentLine(line),
   rates: { ...line.quote.rates, [line.tenor]: line.rate },
   tenorAmounts: { ...line.quote.tenorAmounts, [line.tenor]: line.amount }
 });

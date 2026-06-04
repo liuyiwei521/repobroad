@@ -83,6 +83,8 @@ const allocatedTotal = computed(() => {
 const difference = computed(() => Number(((quoteAmount.value ?? 0) - allocatedTotal.value).toFixed(2)));
 
 const quoteRate = computed(() => props.quote.rates[props.tenor] ?? props.quote.rate ?? props.chat.chatRate ?? 0);
+const senderName = computed(() => props.quote.traderName ?? props.chat.username ?? props.quote.counterparty);
+const quoteReason = computed(() => props.quote.quoteReason ?? '');
 
 const resetDraft = () => {
   const next: Record<string, number> = {};
@@ -274,6 +276,8 @@ onUnmounted(() => {
     <div class="quote-summary">
       <span>报价摘要</span>
       <strong>{{ quote.counterparty }} · {{ tenor }} · {{ quoteRate.toFixed(2) }}%</strong>
+      <em>发送人：{{ senderName }}</em>
+      <em v-if="quoteReason">{{ quoteReason }}</em>
       <em>{{ quote.amount.toFixed(1) }} 亿 · {{ quote.limit }}</em>
     </div>
 

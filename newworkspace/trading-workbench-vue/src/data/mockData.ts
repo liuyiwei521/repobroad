@@ -104,6 +104,10 @@ export interface MarketQuote {
   tenorAmounts: Partial<Record<Tenor, number>>; // per-tenor available amounts for display
   direction: Direction;
   sent?: boolean;
+  traderName?: string;
+  quoteReason?: string;
+  isCoreOpponent?: boolean;
+  isPinnedQuote?: boolean;
 }
 
 export interface MarketGroupSummary {
@@ -370,7 +374,7 @@ export const marketQuotes: MarketQuote[] = [
     institution: '中信银行',
     level: 'level1',
     tenor: 'R001',
-    amount: 0,
+    amount: 10,
     rate: 1.35,
     accountRequirement: '自营',
     collateralRequirement: '利率',

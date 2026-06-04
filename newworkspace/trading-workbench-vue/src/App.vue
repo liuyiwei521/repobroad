@@ -410,8 +410,34 @@ const applyTrialRate = (rate: number) => {
 
 const openQuote = (quote: MarketQuote, tenor: Tenor) => {
   selectedQuoteId.value = quote.id;
-  const chat = chats.find((item) => item.relatedQuoteId === quote.id) ?? chats[0];
-  activeChat.value = { chat, quote: quoteForTenor(quote, tenor), tenor };
+  const quoteContext = quoteForTenor(quote, tenor);
+  const sender = quoteContext.traderName ?? '张经理';
+  const amountText = quoteContext.amount > 0 ? `${quoteContext.amount.toFixed(quoteContext.amount % 1 === 0 ? 0 : 1)}亿` : '待报价';
+  const messageText = `${sender} · ${quoteContext.counterparty}：${tenor} ${amountText} @ ${quoteContext.rate.toFixed(2)}%，${quoteContext.accountRequirement}，押券 ${quoteContext.collateralRequirement}。`;
+  const chat: ChatThread = {
+    id: `quote-chat-${quote.id}-${tenor}`,
+    counterparty: quoteContext.counterparty,
+    status: 'unreplied',
+    latest: messageText,
+    time: quoteContext.updatedAt,
+    relatedQuoteId: quote.id,
+    username: sender,
+    chatTenor: tenor,
+    chatRate: quoteContext.rate,
+    chatAmount: quoteContext.amount,
+    chatGroup: quoteContext.group,
+    chatLimit: quoteContext.accountRequirement,
+    collateral: quoteContext.collateralRequirement,
+    messages: [
+      {
+        id: `quote-message-${quote.id}-${tenor}`,
+        from: 'counterparty',
+        text: messageText,
+        time: quoteContext.updatedAt
+      }
+    ]
+  };
+  activeChat.value = { chat, quote: quoteContext, tenor };
   lastAction.value = `已打开 ${quote.counterparty} ${tenor} 报价聊天，报价摘要已带入弹窗。`;
 };
 
@@ -448,6 +474,7 @@ const openChat = (chat: ChatThread, anchor?: PopupAnchor) => {
     accountRequirement: chat.chatLimit ?? quote.accountRequirement,
     collateral: chat.collateral ?? quote.collateral,
     collateralRequirement: chat.collateral ?? quote.collateralRequirement,
+    traderName: chat.username,
     rates: { ...quote.rates, [tenor]: chatRate },
     tenorAmounts: { ...quote.tenorAmounts, [tenor]: chatAmount }
   };
