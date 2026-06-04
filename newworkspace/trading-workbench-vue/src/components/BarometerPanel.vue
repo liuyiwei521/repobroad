@@ -12,13 +12,22 @@ import TrendTab from './quoteOverview/TrendTab.vue';
 
 export type DockTab = 'barometer' | 'trend' | 'compare';
 
-const props = defineProps<{ activeTab?: DockTab }>();
+const props = defineProps<{
+  activeTab?: DockTab;
+  fixedTab?: DockTab;
+  hideTabs?: boolean;
+  title?: string;
+}>();
 const emit = defineEmits<{ 'update:activeTab': [tab: DockTab] }>();
 
 const localTab = ref<DockTab>('barometer');
 const activeTab = computed<DockTab>({
-  get: () => props.activeTab ?? localTab.value,
-  set: (v) => { localTab.value = v; emit('update:activeTab', v); },
+  get: () => props.fixedTab ?? props.activeTab ?? localTab.value,
+  set: (v) => {
+    if (props.fixedTab) return;
+    localTab.value = v;
+    emit('update:activeTab', v);
+  },
 });
 
 const dockTabs: Array<{ key: DockTab; label: string }> = [
@@ -50,8 +59,8 @@ const {
 <template>
   <div class="barometer-panel">
     <!-- Header: three tabs -->
-    <div class="barometer-panel__head">
-      <div class="barometer-panel__tabs">
+    <div class="barometer-panel__head" :class="{ 'barometer-panel__head--static': hideTabs }">
+      <div v-if="!hideTabs" class="barometer-panel__tabs">
         <button
           v-for="t in dockTabs"
           :key="t.key"
@@ -61,6 +70,7 @@ const {
           @click="activeTab = t.key"
         >{{ t.label }}</button>
       </div>
+      <h3 v-else class="barometer-panel__title">{{ title ?? dockTabs.find((tab) => tab.key === activeTab)?.label }}</h3>
     </div>
 
     <!-- ── Tab 1: 晴雨表 ── -->

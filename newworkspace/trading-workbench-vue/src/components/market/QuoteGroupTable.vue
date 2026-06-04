@@ -7,8 +7,11 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
-  openLine: [line: QuoteLine];
+  openInstitutionLine: [line: QuoteLine];
+  openPricePreview: [line: QuoteLine];
   sendLine: [line: QuoteLine];
+  openCardLine: [payload: { line: QuoteLine; trader: string }];
+  sendCardLine: [payload: { line: QuoteLine; trader: string }];
 }>();
 </script>
 
@@ -31,8 +34,11 @@ const emit = defineEmits<{
       v-for="line in group.rows"
       :key="line.id"
       :line="line"
-      @open-line="emit('openLine', $event)"
+      @open-institution-line="emit('openInstitutionLine', $event)"
+      @open-price-preview="emit('openPricePreview', $event)"
       @send-line="emit('sendLine', $event)"
+      @open-card-line="emit('openCardLine', $event)"
+      @send-card-line="emit('sendCardLine', $event)"
     />
   </div>
 </template>

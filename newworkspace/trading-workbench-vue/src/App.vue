@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import AllocationMatrix from './components/AllocationMatrix.vue';
-import BarometerPanel, { type DockTab } from './components/BarometerPanel.vue';
+import type { DockTab } from './components/BarometerPanel.vue';
 import ChatPopup from './components/ChatPopup.vue';
 import MarketPanel from './components/MarketPanel.vue';
+import MiddleWorkspace from './components/MiddleWorkspace.vue';
 import ResearchPanel from './components/ResearchPanel.vue';
-import TaskOverviewMatrix from './components/TaskOverviewMatrix.vue';
 import TopBar from './components/TopBar.vue';
 import { taskOverviewFilterKey, type TaskOverviewFilter } from './composables/useTaskOverviewMatrix';
 import {
@@ -441,6 +441,10 @@ const openQuote = (quote: MarketQuote, tenor: Tenor) => {
   lastAction.value = `已打开 ${quote.counterparty} ${tenor} 报价聊天，报价摘要已带入弹窗。`;
 };
 
+const openQuoteByTrader = (quote: MarketQuote, tenor: Tenor, trader: string) => {
+  openQuote({ ...quote, traderName: trader }, tenor);
+};
+
 const sendQuote = (quote: MarketQuote, tenor: Tenor) => {
   const target = quotes.value.find((item) => item.id === quote.id);
   if (target) target.sent = true;
@@ -450,6 +454,10 @@ const sendQuote = (quote: MarketQuote, tenor: Tenor) => {
     const current = quotes.value.find((item) => item.id === quote.id);
     if (current) current.sent = false;
   }, 1600);
+};
+
+const sendQuoteByTrader = (quote: MarketQuote, tenor: Tenor, trader: string) => {
+  sendQuote({ ...quote, traderName: trader }, tenor);
 };
 
 const openChat = (chat: ChatThread, anchor?: PopupAnchor) => {
@@ -614,15 +622,17 @@ onUnmounted(() => {
         @pointerdown="onLeftGutterDown($event)"
       ></div>
 
-      <div v-if="!matrixExpanded" class="middle-column" :style="middleColumnStyle">
-        <TaskOverviewMatrix
-          class="matrix-workspace"
+      <div v-if="!matrixExpanded" class="middle-column">
+        <MiddleWorkspace
           :accounts="accounts"
           :pending-allocations="pendingAllocations"
           :active-filter="activeOverviewFilter"
+          :dock-height="dockHeight"
+          :focus-panel="dockTab"
           @select-filter="selectOverviewFilter"
           @open-pending="openPending"
           @open-matrix="openMatrix"
+          @start-dock-resize="onRowGutterDown($event)"
         />
 
         <div
@@ -633,10 +643,6 @@ onUnmounted(() => {
           @pointerdown="onRowGutterDown($event)"
         />
 
-        <BarometerPanel
-          class="barometer-slot"
-          v-model:active-tab="dockTab"
-        />
       </div>
 
       <AllocationMatrix
@@ -680,6 +686,8 @@ onUnmounted(() => {
         :overview-filter="activeOverviewFilter"
         @open-quote="openQuote"
         @send-quote="sendQuote"
+        @open-quote-by-trader="openQuoteByTrader"
+        @send-quote-by-trader="sendQuoteByTrader"
         @open-chat="openChat"
         @clear-overview-filter="clearOverviewFilter"
       />

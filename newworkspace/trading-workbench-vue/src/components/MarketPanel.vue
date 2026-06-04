@@ -27,11 +27,13 @@ const props = defineProps<{
 const emit = defineEmits<{
   openQuote: [quote: MarketQuote, tenor: Tenor];
   sendQuote: [quote: MarketQuote, tenor: Tenor];
+  openQuoteByTrader: [quote: MarketQuote, tenor: Tenor, trader: string];
+  sendQuoteByTrader: [quote: MarketQuote, tenor: Tenor, trader: string];
   openChat: [chat: ChatThread, anchor?: PopupAnchor];
   clearOverviewFilter: [];
 }>();
 
-const activeView = ref<'opponents' | 'market'>('opponents');
+const activeView = ref<'opponents' | 'market'>('market');
 const activeLevel = ref<QuoteLevel>('level1');
 const activeTenor = ref<Tenor | 'all'>('all');
 const activeDirection = ref<Direction>('reverse');
@@ -46,6 +48,10 @@ const minRate = ref('');
 const maxRate = ref('');
 const accountKeyword = ref('');
 const collateralKeyword = ref('');
+const pricePreview = ref<{
+  source: QuoteLine;
+  items: QuoteLine[];
+} | null>(null);
 
 const directionLabels: Record<Direction, string> = {
   reverse: '逆回购报价',
@@ -426,8 +432,37 @@ const quoteForLine = (line: QuoteLine): MarketQuote => ({
   tenorAmounts: { ...line.quote.tenorAmounts, [line.tenor]: line.amount }
 });
 
-const openLine = (line: QuoteLine) => {
+const buildSamePriceItems = (source: QuoteLine) => {
+  return quoteLines.value
+    .filter((line) =>
+      line.direction === source.direction &&
+      line.group === source.group &&
+      line.tenor === source.tenor &&
+      line.rate === source.rate
+    )
+    .sort((a, b) => Number(b.amount > 0) - Number(a.amount > 0) || b.amount - a.amount || a.institution.localeCompare(b.institution))
+    .slice(0, 12);
+};
+
+const closePricePreview = () => {
+  pricePreview.value = null;
+};
+
+const openInstitutionLine = (line: QuoteLine) => {
+  closePricePreview();
   emit('openQuote', quoteForLine(line), line.tenor);
+};
+
+const openPricePreview = (line: QuoteLine) => {
+  pricePreview.value = {
+    source: line,
+    items: buildSamePriceItems(line)
+  };
+};
+
+const openCardLine = (payload: { line: QuoteLine; trader: string }) => {
+  closePricePreview();
+  emit('openQuoteByTrader', quoteForLine(payload.line), payload.line.tenor, payload.trader);
 };
 
 const openChatItem = (chat: ChatThread, event: MouseEvent) => {
@@ -435,7 +470,18 @@ const openChatItem = (chat: ChatThread, event: MouseEvent) => {
 };
 
 const sendLine = (line: QuoteLine) => {
+  closePricePreview();
   emit('sendQuote', quoteForLine(line), line.tenor);
+};
+
+const sendCardLine = (payload: { line: QuoteLine; trader: string }) => {
+  closePricePreview();
+  emit('sendQuoteByTrader', quoteForLine(payload.line), payload.line.tenor, payload.trader);
+};
+
+const openPreviewItem = (line: QuoteLine) => {
+  closePricePreview();
+  emit('openQuoteByTrader', quoteForLine(line), line.tenor, traderForInstitution(line.institution));
 };
 
 const csvCell = (value: string | number) => {
@@ -544,14 +590,50 @@ const exportQuotes = () => {
             v-for="section in directionSections"
             :key="section.direction"
             :section="section"
-            @open-line="openLine"
+            @open-institution-line="openInstitutionLine"
+            @open-price-preview="openPricePreview"
             @send-line="sendLine"
+            @open-card-line="openCardLine"
+            @send-card-line="sendCardLine"
           />
 
           <div v-if="directionSections.length === 0" class="empty-state market-empty">
             当前筛选条件下暂无报价
           </div>
         </div>
+
+        <aside
+          v-if="pricePreview"
+          class="quote-correction-popover quote-correction-popover--same-price"
+          aria-label="同价机构"
+        >
+          <div class="quote-correction-popover__head">
+            <div>
+              <strong>{{ pricePreview.source.tenor }} · {{ pricePreview.source.rate.toFixed(2) }}%</strong>
+              <p>同价机构</p>
+            </div>
+            <button class="close-button" type="button" @click="closePricePreview">×</button>
+          </div>
+
+          <div class="same-price-list">
+            <button
+              v-for="item in pricePreview.items"
+              :key="item.id"
+              type="button"
+              class="same-price-item"
+              @click="openPreviewItem(item)"
+            >
+              <span class="same-price-item__head">
+                <b>{{ traderForInstitution(item.institution) }} · {{ item.institution }}</b>
+                <em>{{ item.amount > 0 ? `${item.amount.toFixed(item.amount % 1 === 0 ? 0 : 1)}亿` : '待报价' }}</em>
+              </span>
+              <span class="same-price-item__meta">
+                <span>{{ item.accountRequirement }}</span>
+                <span>{{ item.collateralRequirement }}</span>
+              </span>
+            </button>
+          </div>
+        </aside>
       </div>
     </div>
   </section>

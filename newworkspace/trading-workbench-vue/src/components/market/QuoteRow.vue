@@ -2,13 +2,23 @@
 import { computed, ref } from 'vue';
 import { isCoreOpponentLine, quoteStatusLabel, traderForInstitution, type QuoteLine } from './types';
 
+type QuoteRowCard = {
+  id: string;
+  trader: string;
+  isPinned: boolean;
+  isCore: boolean;
+};
+
 const props = defineProps<{
   line: QuoteLine;
 }>();
 
 const emit = defineEmits<{
-  openLine: [line: QuoteLine];
+  openInstitutionLine: [line: QuoteLine];
+  openPricePreview: [line: QuoteLine];
   sendLine: [line: QuoteLine];
+  openCardLine: [payload: { line: QuoteLine; trader: string }];
+  sendCardLine: [payload: { line: QuoteLine; trader: string }];
 }>();
 
 const expanded = ref(false);
@@ -20,11 +30,24 @@ const formatAmount = (amount: number) => amount > 0 ? `${amount.toFixed(amount %
 const cardTraders = computed(() => {
   const primary = traderForInstitution(props.line.institution);
   const fallback = '张经理';
-  const templates = [primary, fallback, '刘经理', '周经理'];
-  return Array.from(new Set(templates)).slice(0, 4);
+  const templates = [
+    primary,
+    fallback,
+    '刘经理',
+    '周经理',
+    '王经理',
+    '孙经理',
+    '李经理',
+    '赵经理',
+    '陈经理',
+    '唐敏',
+    '高远',
+    '罗茂'
+  ];
+  return Array.from(new Set(templates)).slice(0, 12);
 });
 
-const rowCards = computed(() => cardTraders.value.map((trader, index) => ({
+const rowCards = computed<QuoteRowCard[]>(() => cardTraders.value.map((trader, index) => ({
   id: `${props.line.id}-${trader}-${index}`,
   trader,
   isPinned: index === 0,
@@ -59,11 +82,17 @@ const rowCards = computed(() => cardTraders.value.map((trader, index) => ({
           {{ expanded ? '收起' : '展开' }}
         </button>
         <i class="quote-tag" :class="`is-${line.status}`">{{ statusLabel(line.status) }}</i>
-        <b>{{ line.institution }}</b>
+        <button
+          class="quote-counterparty-button"
+          type="button"
+          @click.stop="emit('openInstitutionLine', line)"
+        >
+          {{ line.institution }}
+        </button>
       </span>
       <span class="number">{{ line.tenor }}</span>
       <span class="number">{{ line.amount > 0 ? `${line.amount.toFixed(line.amount % 1 === 0 ? 0 : 1)}亿` : '--' }}</span>
-      <button class="quote-rate" type="button" @click.stop="emit('openLine', line)">
+      <button class="quote-rate" type="button" @click.stop="emit('openPricePreview', line)">
         {{ line.rate.toFixed(2) }}%
       </button>
       <span>{{ line.accountRequirement }}</span>
@@ -86,9 +115,9 @@ const rowCards = computed(() => cardTraders.value.map((trader, index) => ({
           'is-core': card.isCore,
           'is-sent': line.isSent
         }"
-        @click="emit('openLine', line)"
-        @keydown.enter.prevent="emit('openLine', line)"
-        @keydown.space.prevent="emit('openLine', line)"
+        @click="emit('openCardLine', { line, trader: card.trader })"
+        @keydown.enter.prevent="emit('openCardLine', { line, trader: card.trader })"
+        @keydown.space.prevent="emit('openCardLine', { line, trader: card.trader })"
       >
         <span class="quote-expand-card__head">
           <b>{{ card.trader }} · {{ line.institution }}</b>
@@ -107,7 +136,7 @@ const rowCards = computed(() => cardTraders.value.map((trader, index) => ({
         </span>
         <span class="quote-expand-card__foot">
           <small>{{ line.updatedAt }}</small>
-          <button type="button" @click.stop="emit('sendLine', line)">发送</button>
+          <button type="button" @click.stop="emit('sendCardLine', { line, trader: card.trader })">发送</button>
         </span>
       </div>
     </div>

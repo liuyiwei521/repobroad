@@ -8,8 +8,11 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
-  openLine: [line: QuoteLine];
+  openInstitutionLine: [line: QuoteLine];
+  openPricePreview: [line: QuoteLine];
   sendLine: [line: QuoteLine];
+  openCardLine: [payload: { line: QuoteLine; trader: string }];
+  sendCardLine: [payload: { line: QuoteLine; trader: string }];
 }>();
 
 const { startResize } = useQuoteColumns();
@@ -46,8 +49,11 @@ const headers = ['分组 / 机构', '期限', '金额(总量)', '利率(均价)'
         v-for="group in section.groups"
         :key="group.key"
         :group="group"
-        @open-line="emit('openLine', $event)"
+        @open-institution-line="emit('openInstitutionLine', $event)"
+        @open-price-preview="emit('openPricePreview', $event)"
         @send-line="emit('sendLine', $event)"
+        @open-card-line="emit('openCardLine', $event)"
+        @send-card-line="emit('sendCardLine', $event)"
       />
     </div>
   </section>
