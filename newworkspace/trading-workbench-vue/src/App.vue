@@ -69,34 +69,48 @@ const matrixRef = ref<{ save: () => void; collapse: () => void } | null>(null);
 // space on the right. Only the matrix↔market boundary is draggable; the rail
 // stays at a constant width.
 const workspaceRef = ref<HTMLElement | null>(null);
-const RAIL_WIDTH = 100;
+const leftWidth = ref(160);
 const matrixWidth = ref(520);
+const LEFT_MIN = 96;
+const LEFT_MAX = 360;
 const MATRIX_MIN = 360;
 const MATRIX_MAX = 1180;
 const RIGHT_MIN = 460;
 const GUTTER = 8;
+const COLUMN_GUTTERS = 2;
 const dockHeight = ref(280);
 const DOCK_MIN = 160;
 const DOCK_MAX = 520;
-const clampWidth = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+const clampWidth = (value: number, min: number, max: number) => {
+  const safeMax = Math.max(min, max);
+  return Math.min(Math.max(value, min), safeMax);
+};
 
 const trackWidth = () => {
   const el = workspaceRef.value;
   if (!el) return Infinity;
   const styles = getComputedStyle(el);
   const padX = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
-  return el.clientWidth - padX - GUTTER;
+  return el.clientWidth - padX;
 };
+
+const usableColumnWidth = () => trackWidth() - GUTTER * COLUMN_GUTTERS;
 
 const workspaceStyle = computed(() =>
   matrixExpanded.value
     ? undefined
     : {
-        gridTemplateColumns: `${RAIL_WIDTH}px ${matrixWidth.value}px 8px minmax(0, 1fr)`,
+        gridTemplateColumns: `${leftWidth.value}px ${GUTTER}px ${matrixWidth.value}px ${GUTTER}px minmax(${RIGHT_MIN}px, 1fr)`,
         gridTemplateRows: 'minmax(0, 1fr)',
         gap: '0',
       }
 );
+
+const leftPanelMode = computed(() => {
+  if (leftWidth.value < 132) return 'compact';
+  if (leftWidth.value < 240) return 'summary';
+  return 'full';
+});
 
 const middleColumnStyle = computed(() =>
   matrixExpanded.value
@@ -107,6 +121,33 @@ const middleColumnStyle = computed(() =>
 );
 
 // ── Column (matrix width) resize ──
+let leftDragging = false;
+let leftDragStartX = 0;
+let leftDragStartWidth = 0;
+
+const onLeftGutterMove = (event: PointerEvent) => {
+  if (!leftDragging) return;
+  const delta = event.clientX - leftDragStartX;
+  const maxLeft = Math.min(LEFT_MAX, usableColumnWidth() - matrixWidth.value - RIGHT_MIN);
+  leftWidth.value = clampWidth(leftDragStartWidth + delta, LEFT_MIN, maxLeft);
+};
+
+const onLeftGutterUp = () => {
+  leftDragging = false;
+  document.body.classList.remove('is-col-resizing');
+  window.removeEventListener('pointermove', onLeftGutterMove);
+  window.removeEventListener('pointerup', onLeftGutterUp);
+};
+
+const onLeftGutterDown = (event: PointerEvent) => {
+  leftDragging = true;
+  leftDragStartX = event.clientX;
+  leftDragStartWidth = leftWidth.value;
+  document.body.classList.add('is-col-resizing');
+  window.addEventListener('pointermove', onLeftGutterMove);
+  window.addEventListener('pointerup', onLeftGutterUp);
+};
+
 let dragging = false;
 let dragStartX = 0;
 let dragStartMatrix = 0;
@@ -114,8 +155,7 @@ let dragStartMatrix = 0;
 const onGutterMove = (event: PointerEvent) => {
   if (!dragging) return;
   const delta = event.clientX - dragStartX;
-  const available = trackWidth();
-  const maxMatrix = Math.min(MATRIX_MAX, available - RAIL_WIDTH - RIGHT_MIN);
+  const maxMatrix = Math.min(MATRIX_MAX, usableColumnWidth() - leftWidth.value - RIGHT_MIN);
   matrixWidth.value = clampWidth(dragStartMatrix + delta, MATRIX_MIN, maxMatrix);
 };
 
@@ -512,7 +552,15 @@ const onKeydown = (event: KeyboardEvent) => {
 };
 
 onMounted(() => window.addEventListener('keydown', onKeydown));
-onUnmounted(() => window.removeEventListener('keydown', onKeydown));
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown);
+  window.removeEventListener('pointermove', onLeftGutterMove);
+  window.removeEventListener('pointerup', onLeftGutterUp);
+  window.removeEventListener('pointermove', onGutterMove);
+  window.removeEventListener('pointerup', onGutterUp);
+  window.removeEventListener('pointermove', onRowGutterMove);
+  window.removeEventListener('pointerup', onRowGutterUp);
+});
 </script>
 
 <template>
@@ -521,13 +569,23 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 
     <div ref="workspaceRef" class="workspace-grid" :class="{ 'is-matrix-mode': matrixExpanded }" :style="workspaceStyle">
       <ResearchPanel
-        class="left-column research-panel--compact"
+        :class="['left-column', `research-panel--${leftPanelMode}`]"
         :cards="researchCards"
         :active-card="activeCard"
         @open-card="activeCard = $event"
         @close-card="activeCard = null"
         @open-quote-overview="dockTab = 'trend'"
       />
+
+      <div
+        v-if="!matrixExpanded"
+        class="workspace-gutter workspace-gutter--left"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="拖动调整左侧宽度"
+        title="拖动调整左侧宽度"
+        @pointerdown="onLeftGutterDown($event)"
+      ></div>
 
       <div v-if="!matrixExpanded" class="middle-column" :style="middleColumnStyle">
         <TaskOverviewMatrix

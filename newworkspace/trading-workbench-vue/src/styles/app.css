@@ -1421,6 +1421,72 @@ table.task-overview-table--term td:nth-child(n + 3) {
   background: var(--tk-color-text-tertiary);
 }
 
+.research-panel.research-panel--summary,
+.research-panel.research-panel--full {
+  overflow: hidden;
+}
+
+.research-panel.research-panel--summary .research-rail,
+.research-panel.research-panel--full .research-rail {
+  display: none;
+}
+
+.research-panel.research-panel--summary .panel__head,
+.research-panel.research-panel--full .panel__head {
+  display: flex;
+}
+
+.research-panel.research-panel--summary .research-grid,
+.research-panel.research-panel--full .research-grid {
+  display: grid;
+}
+
+.research-panel.research-panel--summary .panel__head {
+  min-height: 40px;
+  padding: var(--tk-space-xs) var(--tk-space-sm);
+}
+
+.research-panel.research-panel--summary .panel__head .eyebrow,
+.research-panel.research-panel--summary .panel__meta,
+.research-panel.research-panel--summary .research-card__group,
+.research-panel.research-panel--summary .research-card small {
+  display: none;
+}
+
+.research-panel.research-panel--summary .panel__head h2 {
+  font-size: var(--tk-font-size-sm);
+  line-height: var(--tk-line-height-normal);
+}
+
+.research-panel.research-panel--summary .research-grid {
+  gap: 6px;
+  padding: 6px;
+}
+
+.research-panel.research-panel--summary .research-card {
+  min-height: 64px;
+  gap: 2px;
+  padding: 7px 8px;
+}
+
+.research-panel.research-panel--summary .research-card strong {
+  min-width: 0;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.research-panel.research-panel--summary .research-card b {
+  min-width: 0;
+  font-size: 16px;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .research-card {
   min-height: 104px;
   display: grid;
@@ -2849,12 +2915,12 @@ body.is-col-resizing .matrix-col-resizer::before {
     overflow: visible;
   }
 
-  .research-panel .panel__head,
-  .research-grid {
+  .research-panel.research-panel--compact .panel__head,
+  .research-panel.research-panel--compact .research-grid {
     display: none;
   }
 
-  .research-rail {
+  .research-panel.research-panel--compact .research-rail {
     height: 100%;
     display: grid;
     grid-template-rows: auto repeat(7, minmax(44px, auto)) 1fr;
@@ -2864,8 +2930,8 @@ body.is-col-resizing .matrix-col-resizer::before {
     border-right: 1px solid var(--tk-color-border-default);
   }
 
-  .research-rail__toggle,
-  .research-rail__item {
+  .research-panel.research-panel--compact .research-rail__toggle,
+  .research-panel.research-panel--compact .research-rail__item {
     width: 100%;
     min-width: 0;
     border: 1px solid var(--tk-color-border-default);
@@ -2874,7 +2940,7 @@ body.is-col-resizing .matrix-col-resizer::before {
     background: var(--tk-color-surface-subtle);
   }
 
-  .research-rail__toggle {
+  .research-panel.research-panel--compact .research-rail__toggle {
     min-height: 58px;
     display: grid;
     place-items: center;
@@ -2883,14 +2949,14 @@ body.is-col-resizing .matrix-col-resizer::before {
     color: var(--tk-color-brand-primary);
   }
 
-  .research-rail__toggle strong {
+  .research-panel.research-panel--compact .research-rail__toggle strong {
     writing-mode: vertical-rl;
     letter-spacing: 0;
     font-size: var(--tk-font-size-xs);
     font-weight: var(--tk-font-weight-medium);
   }
 
-  .research-rail__toggle span {
+  .research-panel.research-panel--compact .research-rail__toggle span {
     min-width: 18px;
     height: 18px;
     display: inline-grid;
@@ -2902,15 +2968,15 @@ body.is-col-resizing .matrix-col-resizer::before {
     font-size: 10px;
   }
 
-  .research-rail__toggle:hover,
-  .research-rail__toggle.is-open,
-  .research-rail__item:hover,
-  .research-rail__item.is-active {
+  .research-panel.research-panel--compact .research-rail__toggle:hover,
+  .research-panel.research-panel--compact .research-rail__toggle.is-open,
+  .research-panel.research-panel--compact .research-rail__item:hover,
+  .research-panel.research-panel--compact .research-rail__item.is-active {
     border-color: var(--tk-color-brand-cyan);
     background: rgba(0, 210, 220, 0.12);
   }
 
-  .research-rail__item {
+  .research-panel.research-panel--compact .research-rail__item {
     position: relative;
     min-height: 44px;
     display: grid;
@@ -2918,7 +2984,7 @@ body.is-col-resizing .matrix-col-resizer::before {
     padding: 0;
   }
 
-  .research-rail__item span {
+  .research-panel.research-panel--compact .research-rail__item span {
     width: 28px;
     height: 28px;
     display: inline-grid;
@@ -2930,19 +2996,19 @@ body.is-col-resizing .matrix-col-resizer::before {
     font-weight: var(--tk-font-weight-medium);
   }
 
-  .research-rail__item.is-delayed span {
+  .research-panel.research-panel--compact .research-rail__item.is-delayed span {
     color: var(--tk-color-warning);
   }
 
-  .research-rail__item.is-error span {
+  .research-panel.research-panel--compact .research-rail__item.is-error span {
     color: var(--tk-color-danger);
   }
 
-  .research-rail__item.is-empty span {
+  .research-panel.research-panel--compact .research-rail__item.is-empty span {
     color: var(--tk-color-text-tertiary);
   }
 
-  .research-rail__item i {
+  .research-panel.research-panel--compact .research-rail__item i {
     position: absolute;
     top: 7px;
     right: 7px;
@@ -2952,11 +3018,11 @@ body.is-col-resizing .matrix-col-resizer::before {
     border-radius: 50%;
   }
 
-  .research-rail__item.is-error i {
+  .research-panel.research-panel--compact .research-rail__item.is-error i {
     background: var(--tk-color-danger);
   }
 
-  .research-rail__item.is-empty i {
+  .research-panel.research-panel--compact .research-rail__item.is-empty i {
     background: var(--tk-color-text-tertiary);
   }
 
@@ -6127,7 +6193,7 @@ textarea:focus-visible,
 }
 
 .middle-column {
-  grid-column: 2;
+  grid-column: 3;
   grid-row: 1;
   min-width: 0;
   min-height: 0;
@@ -6154,7 +6220,7 @@ textarea:focus-visible,
 }
 
 .market-panel-slot {
-  grid-column: 4;
+  grid-column: 5;
   grid-row: 1;
   min-width: 0;
   min-height: 0;
