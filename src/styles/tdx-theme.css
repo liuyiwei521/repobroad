@@ -1,0 +1,168 @@
+:root {
+  --tdx-bg-page: #0d0d13;
+  --tdx-bg-panel: #15151d;
+  --tdx-bg-header: #292835;
+  --tdx-bg-control: #20202b;
+  --tdx-bg-control-hover: #2a2935;
+  --tdx-bg-row-hover: #1d1c27;
+
+  --tdx-border: #2f2e3a;
+  --tdx-border-weak: #24232d;
+  --tdx-border-active: #e7353a;
+  --tdx-scrollbar-track: #101018;
+  --tdx-scrollbar-thumb: #3a3845;
+  --tdx-scrollbar-thumb-hover: #54515f;
+
+  --tdx-text-main: #d8c8ab;
+  --tdx-text-muted: #8f8d99;
+  --tdx-text-heading: #f1e6cf;
+  --tdx-text-inverse: #fff6e8;
+  --tdx-text-disabled: rgba(143, 141, 153, 0.48);
+
+  --tdx-red: #e7353a;
+  --tdx-red-hover: #ff494e;
+  --tdx-red-deep: #8f2026;
+  --tdx-green: #00a85a;
+  --tdx-yellow: #d6a541;
+  --tdx-blue: #3b79b7;
+  --tdx-purple: #7a4aa1;
+  --tdx-orange: #c76a25;
+
+  --tdx-font-family-base: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --tdx-font-family-number: "DIN Alternate", "Helvetica Neue", Arial, sans-serif;
+
+  --tdx-font-size-xs: 12px;
+  --tdx-font-size-sm: 13px;
+  --tdx-font-size-md: 14px;
+  --tdx-font-size-lg: 16px;
+
+  --tdx-line-height-tight: 16px;
+  --tdx-line-height-row: 28px;
+  --tdx-line-height-header: 30px;
+
+  --tdx-radius-none: 0;
+  --tdx-radius-xs: 1px;
+  --tdx-radius-sm: 2px;
+  --tdx-radius-md: 4px;
+  --tdx-radius-pill: 999px;
+
+  --tdx-space-xxs: 2px;
+  --tdx-space-xs: 4px;
+  --tdx-space-sm: 8px;
+  --tdx-space-md: 12px;
+  --tdx-space-lg: 16px;
+  --tdx-space-xl: 20px;
+  --tdx-space-xxl: 24px;
+
+  --tdx-shadow-popup: 0 8px 20px rgba(0, 0, 0, 0.32);
+
+  --tk-color-brand-primary: var(--tdx-red);
+  --tk-color-brand-primary-pressed: var(--tdx-red-deep);
+  --tk-color-brand-primary-hover: var(--tdx-red-hover);
+  --tk-color-brand-primary-deep: var(--tdx-red);
+  --tk-color-brand-cyan: var(--tdx-yellow);
+
+  --tk-color-success: var(--tdx-green);
+  --tk-color-warning: var(--tdx-yellow);
+  --tk-color-warning-strong: #e6c75b;
+  --tk-color-danger: var(--tdx-red);
+  --tk-color-danger-deep: var(--tdx-red-deep);
+  --tk-color-neutral: #73717d;
+
+  --tk-color-text-primary: var(--tdx-text-main);
+  --tk-color-text-heading: var(--tdx-text-heading);
+  --tk-color-text-secondary: var(--tdx-text-muted);
+  --tk-color-text-tertiary: #6f6d78;
+  --tk-color-text-inverse: var(--tdx-text-inverse);
+  --tk-color-text-inverse-secondary: var(--tdx-text-main);
+  --tk-color-text-disabled: var(--tdx-text-disabled);
+
+  --tk-color-surface-page: var(--tdx-bg-page);
+  --tk-color-surface-subtle: var(--tdx-bg-panel);
+  --tk-color-surface-panel: var(--tdx-bg-header);
+  --tk-color-surface-selected: #351b22;
+  --tk-color-surface-selected-strong: var(--tdx-red-deep);
+  --tk-color-surface-dark: var(--tdx-bg-header);
+  --tk-color-surface-dark-deep: var(--tdx-bg-page);
+  --tk-color-surface-dark-soft: var(--tdx-bg-control);
+  --tk-color-surface-dark-muted: var(--tdx-bg-row-hover);
+
+  --tk-color-border-default: var(--tdx-border);
+  --tk-color-border-strong: #454350;
+  --tk-color-border-divider: var(--tdx-border-weak);
+  --tk-color-border-dark: var(--tdx-border);
+  --tk-color-border-panel: rgba(47, 46, 58, 0.9);
+  --tk-color-border-divider-dark: rgba(47, 46, 58, 0.72);
+
+  --tk-color-chart-blue: var(--tdx-blue);
+  --tk-color-chart-purple: var(--tdx-purple);
+  --tk-color-chart-violet: #8e5ab6;
+  --tk-color-chart-indigo: #5664a8;
+  --tk-color-chart-gold: var(--tdx-yellow);
+  --tk-color-chart-teal: var(--tdx-green);
+
+  --tk-color-overlay-mask: rgba(0, 0, 0, 0.62);
+  --tk-color-overlay-mask-light: rgba(0, 0, 0, 0.36);
+  --tk-color-overlay-shadow: rgba(0, 0, 0, 0.32);
+  --tk-color-success-surface: rgba(0, 168, 90, 0.12);
+  --tk-color-warning-surface: rgba(214, 165, 65, 0.14);
+  --tk-color-danger-surface: rgba(231, 53, 58, 0.14);
+
+  --tk-font-family-base: var(--tdx-font-family-base);
+  --tk-font-family-number: var(--tdx-font-family-number);
+  --tk-font-size-xs: var(--tdx-font-size-xs);
+  --tk-font-size-sm: var(--tdx-font-size-sm);
+  --tk-font-size-md: var(--tdx-font-size-md);
+  --tk-font-size-lg: var(--tdx-font-size-lg);
+  --tk-line-height-tight: 12px;
+  --tk-line-height-compact: 14px;
+  --tk-line-height-normal: 16px;
+  --tk-line-height-relaxed: 20px;
+  --tk-line-height-loose: 28px;
+  --tk-font-weight-regular: 400;
+  --tk-font-weight-medium: 500;
+
+  --tk-radius-none: var(--tdx-radius-none);
+  --tk-radius-xs: var(--tdx-radius-xs);
+  --tk-radius-sm: var(--tdx-radius-sm);
+  --tk-radius-md: var(--tdx-radius-md);
+  --tk-radius-pill: var(--tdx-radius-pill);
+
+  --tk-space-xxs: var(--tdx-space-xxs);
+  --tk-space-xs: var(--tdx-space-xs);
+  --tk-space-sm: var(--tdx-space-sm);
+  --tk-space-md: var(--tdx-space-md);
+  --tk-space-lg: var(--tdx-space-lg);
+  --tk-space-xl: var(--tdx-space-xl);
+  --tk-space-xxl: var(--tdx-space-xxl);
+
+  --tk-shadow-popup: var(--tdx-shadow-popup);
+  --tk-shadow-screen: none;
+  --tk-shadow-panel: none;
+
+  --tk-modal-width: 642px;
+  --tk-modal-header-height: 30px;
+  --tk-tab-height: 22px;
+  --tk-switch-width: 29px;
+  --tk-switch-height: 14px;
+  --tk-section-accent-width: 2px;
+  --tk-section-accent-height: 12px;
+}
+
+body {
+  font-family: var(--tdx-font-family-base);
+  color: var(--tdx-text-main);
+  background: var(--tdx-bg-page);
+}
+
+.tk-theme-dark {
+  --tk-color-text-primary: var(--tdx-text-main);
+  --tk-color-text-heading: var(--tdx-text-heading);
+  --tk-color-text-secondary: var(--tdx-text-muted);
+  --tk-color-text-tertiary: #6f6d78;
+  --tk-color-surface-page: var(--tdx-bg-page);
+  --tk-color-surface-panel: var(--tdx-bg-header);
+  --tk-color-surface-subtle: var(--tdx-bg-panel);
+  --tk-color-border-default: var(--tdx-border);
+  --tk-color-border-divider: var(--tdx-border-weak);
+}

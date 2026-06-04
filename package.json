@@ -8,6 +8,7 @@
     "dev": "vite"
   },
   "dependencies": {
+    "vue": "^3.5.22",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
     "@mui/icons-material": "7.3.5",
@@ -66,9 +67,12 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
+    "@vitejs/plugin-vue": "^6.0.1",
     "@vitejs/plugin-react": "4.7.0",
     "tailwindcss": "4.1.12",
-    "vite": "6.3.5"
+    "typescript": "^5.8.3",
+    "vite": "6.3.5",
+    "vue-tsc": "^3.1.1"
   },
   "peerDependencies": {
     "react": "18.3.1",

@@ -11,6 +11,23 @@ interface PeriodData {
   '28+': number;
 }
 
+const marketChartTheme = {
+  grid: 'color-mix(in srgb, var(--tk-color-border-dark) 18%, transparent)',
+  axis: 'var(--tk-color-text-tertiary)',
+  tooltipBg: 'color-mix(in srgb, var(--tk-color-surface-dark-deep) 94%, transparent)',
+  tooltipBorder: 'color-mix(in srgb, var(--tk-color-border-dark) 40%, transparent)',
+  tooltipText: 'var(--tk-color-text-inverse-secondary)',
+} as const;
+
+const marketTooltipStyle = {
+  fontSize: 10,
+  backgroundColor: marketChartTheme.tooltipBg,
+  border: `1px solid ${marketChartTheme.tooltipBorder}`,
+  borderRadius: 2,
+  color: marketChartTheme.tooltipText,
+  padding: 6,
+};
+
 export function RightPanel() {
   const [xrepoData, setXrepoData] = useState<PeriodData[]>([]);
   const [qtradeData, setQtradeData] = useState<PeriodData[]>([]);
@@ -148,15 +165,15 @@ export function RightPanel() {
   }, []);
 
   const periodColors = {
-    '1': '#10b981',
-    '7': '#3b82f6',
-    '14': '#8b5cf6',
-    '21': '#f59e0b',
-    '28+': '#ef4444',
+    '1': 'var(--tk-color-success)',
+    '7': 'var(--tk-color-chart-blue)',
+    '14': 'var(--tk-color-chart-purple)',
+    '21': 'var(--tk-color-warning)',
+    '28+': 'var(--tk-color-danger)',
   };
 
   return (
-    <div className="p-2 space-y-2 text-xs h-full overflow-y-auto">
+    <div className="tdx-dark-board p-2 space-y-2 text-xs h-full overflow-y-auto">
       {/* XRepo行情趋势图 */}
       <TrendChart
         title="XRepo行情"
@@ -198,40 +215,36 @@ function TrendChart({ title, data, periodColors }: TrendChartProps) {
   const periods = ['1', '7', '14', '21', '28+'];
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+    <div className="tdx-dark-panel">
       {/* 标题 */}
-      <div className="bg-gray-50 px-2 py-1.5 border-b border-gray-200 flex items-center gap-1.5">
-        <TrendingUp size={12} className="text-blue-600" />
-        <h3 className="font-semibold text-gray-900 text-xs">{title}</h3>
+      <div className="tdx-dark-panel__head">
+        <TrendingUp size={12} style={{ color: 'var(--tk-color-brand-cyan)' }} />
+        <h3 className="font-semibold text-xs">{title}</h3>
       </div>
 
       {/* 图表区域 */}
-      <div className="p-2" style={{ height: '180px' }}>
+      <div className="tdx-dark-panel__body p-2" style={{ height: '180px' }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <CartesianGrid strokeDasharray="3 3" stroke={marketChartTheme.grid} />
             <XAxis
               dataKey="time"
-              tick={{ fontSize: 9, fill: '#6b7280' }}
-              stroke="#9ca3af"
+              tick={{ fontSize: 9, fill: marketChartTheme.axis }}
+              stroke={marketChartTheme.axis}
               interval="preserveEnd"
               tickCount={4}
             />
             <YAxis
-              tick={{ fontSize: 9, fill: '#6b7280' }}
-              stroke="#9ca3af"
+              tick={{ fontSize: 9, fill: marketChartTheme.axis }}
+              stroke={marketChartTheme.axis}
               domain={['auto', 'auto']}
               tickFormatter={(value) => `${value.toFixed(1)}%`}
               width={35}
             />
             <Tooltip
-              contentStyle={{
-                fontSize: 10,
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                border: '1px solid #e5e7eb',
-                borderRadius: 4,
-                padding: 6,
-              }}
+              contentStyle={marketTooltipStyle}
+              labelStyle={{ color: 'var(--tk-color-text-inverse)' }}
+              itemStyle={{ color: 'var(--tk-color-text-inverse-secondary)' }}
               formatter={(value: number) => `${value.toFixed(2)}%`}
             />
             {periods.map((period) => (
@@ -260,7 +273,7 @@ function TrendChart({ title, data, periodColors }: TrendChartProps) {
                 className="w-3 h-0.5"
                 style={{ backgroundColor: periodColors[period] }}
               />
-              <span className="text-gray-700" style={{ fontSize: '10px' }}>
+              <span className="tdx-muted" style={{ fontSize: '10px' }}>
                 {period}
               </span>
               {latestValue && (

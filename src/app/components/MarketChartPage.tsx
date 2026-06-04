@@ -10,10 +10,22 @@ const PERIOD_LABELS: Record<string, string> = {
   '1': '001', '7': '007', '14': '014', '21': '021', '28+': '028+',
 };
 
+const chartTheme = {
+  page: 'var(--tk-color-surface-dark-deep)',
+  border: 'color-mix(in srgb, var(--tk-color-border-dark) 34%, transparent)',
+  borderSoft: 'color-mix(in srgb, var(--tk-color-border-dark) 20%, transparent)',
+  text: 'var(--tk-color-text-inverse-secondary)',
+  heading: 'var(--tk-color-text-inverse)',
+  muted: 'var(--tk-color-text-tertiary)',
+  success: 'var(--tk-color-success)',
+  danger: 'var(--tk-color-danger)',
+  warning: 'var(--tk-color-warning)',
+} as const;
+
 const INST_TYPES = [
-  { id: 'xrepo',   label: '大行匿名', baseColor: '#ffffff' },
-  { id: 'qtrade',  label: '指定机构', baseColor: '#60a5fa' },
-  { id: 'nonbank', label: '非银',     baseColor: '#fbbf24' },
+  { id: 'xrepo',   label: '大行匿名', baseColor: chartTheme.heading, activeText: chartTheme.page },
+  { id: 'qtrade',  label: '指定机构', baseColor: 'var(--tk-color-chart-blue)', activeText: chartTheme.heading },
+  { id: 'nonbank', label: '非银',     baseColor: chartTheme.warning, activeText: chartTheme.page },
 ];
 
 const BASE_RATES: Record<string, Record<string, number>> = {
@@ -27,9 +39,27 @@ const PERIOD_DASH: Record<string, string> = {
 };
 
 const PALETTE: Record<string, string[]> = {
-  xrepo:   ['#ffffff', '#cccccc', '#aaaaaa', '#888888', '#666666'],
-  qtrade:  ['#bfdbfe', '#93c5fd', '#60a5fa', '#3b82f6', '#2563eb'],
-  nonbank: ['#fef08a', '#fde047', '#fbbf24', '#f59e0b', '#d97706'],
+  xrepo: [
+    chartTheme.heading,
+    'color-mix(in srgb, var(--tk-color-text-inverse) 82%, transparent)',
+    'color-mix(in srgb, var(--tk-color-text-inverse) 68%, transparent)',
+    'color-mix(in srgb, var(--tk-color-text-inverse) 52%, transparent)',
+    'color-mix(in srgb, var(--tk-color-text-inverse) 38%, transparent)',
+  ],
+  qtrade: [
+    'color-mix(in srgb, var(--tk-color-chart-blue) 42%, var(--tk-color-text-inverse))',
+    'color-mix(in srgb, var(--tk-color-chart-blue) 58%, var(--tk-color-text-inverse))',
+    'var(--tk-color-chart-blue)',
+    'var(--tk-color-brand-primary-hover)',
+    'var(--tk-color-brand-primary)',
+  ],
+  nonbank: [
+    'color-mix(in srgb, var(--tk-color-warning) 42%, var(--tk-color-text-inverse))',
+    'color-mix(in srgb, var(--tk-color-warning) 62%, var(--tk-color-text-inverse))',
+    'var(--tk-color-warning)',
+    'var(--tk-color-warning-strong)',
+    'color-mix(in srgb, var(--tk-color-warning) 78%, var(--tk-color-danger))',
+  ],
 };
 
 const TIME_RANGES = [
@@ -213,26 +243,21 @@ export function MarketChartPage({ onClose }: Props) {
 
   const CustomVolBar = (props: any) => {
     const { x, y, width, height, index } = props;
-    const color = dataWithMA[index]?.volUp ? '#16a34a' : '#dc2626';
+    const color = dataWithMA[index]?.volUp ? chartTheme.success : chartTheme.danger;
     return <rect x={x} y={y} width={width} height={height} fill={color} opacity={0.75} />;
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: '#0d0d0d', color: '#e5e7eb' }}>
+    <div className="tdx-dark-board fixed inset-0 z-50 flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: '#222', background: '#111' }}>
+      <div className="tdx-dark-filterbar justify-between">
         <div className="flex items-center gap-4">
-          <h2 className="text-sm font-bold text-white">行情走势图</h2>
+          <h2 className="text-sm font-bold" style={{ color: chartTheme.heading }}>行情走势图</h2>
           {/* Time range */}
           <div className="flex gap-1">
             {TIME_RANGES.map(r => (
               <button key={r.label} onClick={() => setTimeRange(r)}
-                className="px-2.5 py-0.5 text-xs rounded transition-colors"
-                style={{
-                  background: timeRange.label === r.label ? '#2563eb' : '#1f1f1f',
-                  color: timeRange.label === r.label ? '#fff' : '#9ca3af',
-                  border: '1px solid ' + (timeRange.label === r.label ? '#3b82f6' : '#333'),
-                }}>
+                className={timeRange.label === r.label ? 'tdx-dark-chip-active' : 'tdx-dark-chip'}>
                 {r.label}
               </button>
             ))}
@@ -241,36 +266,30 @@ export function MarketChartPage({ onClose }: Props) {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowLegend(v => !v)}
-            className="text-xs px-2 py-0.5 rounded"
-            style={{ background: '#1f1f1f', color: '#9ca3af', border: '1px solid #333' }}
+            className="tdx-dark-chip"
           >
             {showLegend ? '隐藏图例' : '显示图例'}
           </button>
-          <button onClick={onClose} className="p-1 rounded hover:bg-gray-800 text-gray-400 hover:text-white">
+          <button onClick={onClose} className="tdx-dark-chip h-7 w-7 p-0" aria-label="关闭行情走势图">
             <X size={16} />
           </button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2 border-b" style={{ borderColor: '#222', background: '#111' }}>
+      <div className="tdx-dark-filterbar">
         {/* Institution */}
         <div className="flex items-center gap-1.5">
-          <span className="text-xs" style={{ color: '#6b7280' }}>机构类型：</span>
+          <span className="text-xs" style={{ color: chartTheme.muted }}>机构类型：</span>
           <button onClick={toggleAllInsts}
-            className="px-2 py-0.5 text-xs rounded border"
-            style={{
-              background: selectedInsts.size === INST_TYPES.length ? '#374151' : 'transparent',
-              borderColor: selectedInsts.size === INST_TYPES.length ? '#6b7280' : '#374151',
-              color: selectedInsts.size === INST_TYPES.length ? '#e5e7eb' : '#6b7280',
-            }}>全选</button>
+            className={selectedInsts.size === INST_TYPES.length ? 'tdx-dark-chip-active' : 'tdx-dark-chip'}>全选</button>
           {INST_TYPES.map(inst => (
             <button key={inst.id} onClick={() => toggleInst(inst.id)}
-              className="px-2 py-0.5 text-xs rounded border transition-all"
+              className="tdx-dark-chip"
               style={{
                 background: selectedInsts.has(inst.id) ? inst.baseColor : 'transparent',
-                borderColor: selectedInsts.has(inst.id) ? inst.baseColor : '#374151',
-                color: selectedInsts.has(inst.id) ? '#000' : '#6b7280',
+                borderColor: selectedInsts.has(inst.id) ? inst.baseColor : chartTheme.border,
+                color: selectedInsts.has(inst.id) ? inst.activeText : chartTheme.muted,
                 fontWeight: selectedInsts.has(inst.id) ? 600 : 400,
               }}>
               {inst.label}
@@ -279,27 +298,17 @@ export function MarketChartPage({ onClose }: Props) {
         </div>
         {/* Period */}
         <div className="flex items-center gap-1.5">
-          <span className="text-xs" style={{ color: '#6b7280' }}>期限：</span>
+          <span className="text-xs" style={{ color: chartTheme.muted }}>期限：</span>
           <button onClick={toggleAllPeriods}
-            className="px-2 py-0.5 text-xs rounded border"
-            style={{
-              background: selectedPeriods.size === PERIODS.length ? '#374151' : 'transparent',
-              borderColor: selectedPeriods.size === PERIODS.length ? '#6b7280' : '#374151',
-              color: selectedPeriods.size === PERIODS.length ? '#e5e7eb' : '#6b7280',
-            }}>全选</button>
+            className={selectedPeriods.size === PERIODS.length ? 'tdx-dark-chip-active' : 'tdx-dark-chip'}>全选</button>
           {PERIODS.map(p => (
             <button key={p} onClick={() => togglePeriod(p)}
-              className="px-2 py-0.5 text-xs rounded border transition-all"
-              style={{
-                background: selectedPeriods.has(p) ? '#1d4ed8' : 'transparent',
-                borderColor: selectedPeriods.has(p) ? '#3b82f6' : '#374151',
-                color: selectedPeriods.has(p) ? '#fff' : '#6b7280',
-              }}>
+              className={selectedPeriods.has(p) ? 'tdx-dark-chip-active' : 'tdx-dark-chip'}>
               {PERIOD_LABELS[p]}
             </button>
           ))}
         </div>
-        <span className="text-xs ml-auto" style={{ color: '#4b5563' }}>
+        <span className="text-xs ml-auto" style={{ color: chartTheme.muted }}>
           粒度 {timeRange.granularityMin}min · {dataWithMA.length} 点
         </span>
       </div>
@@ -310,17 +319,17 @@ export function MarketChartPage({ onClose }: Props) {
         <div className="flex-1 min-h-0">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={dataWithMA} margin={{ top: 8, right: 65, left: 10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="1 4" stroke="#1e1e1e" vertical={false} />
+              <CartesianGrid strokeDasharray="1 4" stroke={chartTheme.borderSoft} vertical={false} />
               <XAxis
                 dataKey="timeLabel"
-                tick={{ fill: '#4b5563', fontSize: 10 }}
+                tick={{ fill: chartTheme.muted, fontSize: 10 }}
                 interval={xInterval}
-                axisLine={{ stroke: '#2a2a2a' }}
+                axisLine={{ stroke: chartTheme.border }}
                 tickLine={false}
               />
               <YAxis
                 domain={yDomain}
-                tick={{ fill: '#4b5563', fontSize: 10 }}
+                tick={{ fill: chartTheme.muted, fontSize: 10 }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={v => v.toFixed(3)}
@@ -330,7 +339,7 @@ export function MarketChartPage({ onClose }: Props) {
                 yAxisId="right"
                 orientation="right"
                 domain={yDomain}
-                tick={{ fill: '#4b5563', fontSize: 10 }}
+                tick={{ fill: chartTheme.muted, fontSize: 10 }}
                 axisLine={false}
                 tickLine={false}
                 width={62}
@@ -341,14 +350,19 @@ export function MarketChartPage({ onClose }: Props) {
                 }}
               />
               <Tooltip
-                contentStyle={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 4, fontSize: 11 }}
-                labelStyle={{ color: '#9ca3af' }}
-                itemStyle={{ color: '#d1d5db' }}
+                contentStyle={{
+                  background: 'color-mix(in srgb, var(--tk-color-surface-dark-deep) 94%, transparent)',
+                  border: `1px solid ${chartTheme.border}`,
+                  borderRadius: 2,
+                  fontSize: 11,
+                }}
+                labelStyle={{ color: chartTheme.text }}
+                itemStyle={{ color: chartTheme.text }}
                 formatter={(v: number, name: string) => [`${v?.toFixed(4)}%`, name]}
               />
               {showLegend && (
                 <Legend
-                  wrapperStyle={{ fontSize: 10, color: '#9ca3af', paddingTop: 4 }}
+                  wrapperStyle={{ fontSize: 10, color: chartTheme.muted, paddingTop: 4 }}
                   iconType="line"
                 />
               )}
@@ -369,7 +383,7 @@ export function MarketChartPage({ onClose }: Props) {
                 <Line
                   type="monotone"
                   dataKey="__ma"
-                  stroke="#d97706"
+                  stroke={chartTheme.warning}
                   strokeWidth={1.5}
                   dot={false}
                   name="MA20"
@@ -385,10 +399,10 @@ export function MarketChartPage({ onClose }: Props) {
         <div style={{ height: 90 }}>
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={dataWithMA} margin={{ top: 0, right: 65, left: 10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="1 4" stroke="#161616" vertical={false} />
-              <XAxis dataKey="timeLabel" tick={false} axisLine={{ stroke: '#2a2a2a' }} tickLine={false} />
+              <CartesianGrid strokeDasharray="1 4" stroke={chartTheme.borderSoft} vertical={false} />
+              <XAxis dataKey="timeLabel" tick={false} axisLine={{ stroke: chartTheme.border }} tickLine={false} />
               <YAxis
-                tick={{ fill: '#4b5563', fontSize: 9 }}
+                tick={{ fill: chartTheme.muted, fontSize: 9 }}
                 axisLine={false}
                 tickLine={false}
                 width={52}
@@ -396,8 +410,13 @@ export function MarketChartPage({ onClose }: Props) {
               />
               <YAxis yAxisId="right" orientation="right" width={62} tick={false} axisLine={false} tickLine={false} />
               <Tooltip
-                contentStyle={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 4, fontSize: 10 }}
-                labelStyle={{ color: '#9ca3af' }}
+                contentStyle={{
+                  background: 'color-mix(in srgb, var(--tk-color-surface-dark-deep) 94%, transparent)',
+                  border: `1px solid ${chartTheme.border}`,
+                  borderRadius: 2,
+                  fontSize: 10,
+                }}
+                labelStyle={{ color: chartTheme.text }}
                 formatter={(v: number) => [`${v}亿`, '成交量']}
               />
               <Bar dataKey="volume" shape={<CustomVolBar />} isAnimationActive={false} name="成交量" />
