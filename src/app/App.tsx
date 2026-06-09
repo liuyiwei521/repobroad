@@ -238,7 +238,7 @@ const moduleEntries: readonly ModuleEntryConfig[] = [
   {
     id: "weighted-price",
     group: "底部趋势",
-    title: "加权价格走势",
+    title: "历史成交趋势",
     description: "R001 历史走势、成交量和对比品种",
     statusText: "R001",
     icon: LineChartIcon,
@@ -246,7 +246,7 @@ const moduleEntries: readonly ModuleEntryConfig[] = [
   {
     id: "anonymous-trade",
     group: "底部趋势",
-    title: "匿名成交走势",
+    title: "匿名成交走势图",
     description: "日内成交走势与叠加品种",
     statusText: "日内",
     icon: Activity,
@@ -713,7 +713,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             tenor: "R007",
             amount: "4亿",
             rate: "1.45%",
-            collateral: "信用",
+            collateral: "AAA",
             rank: "最优",
             reason: "这是 R007 最优",
             accountType: "公募基金",
@@ -752,7 +752,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             tenor: "R014",
             amount: "3亿",
             rate: "1.45%",
-            collateral: "信用",
+            collateral: "AAA",
             rank: "最优",
             reason: "这是 R014 最优",
             accountType: "公募基金",
@@ -765,7 +765,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             tenor: "R007",
             amount: "5亿",
             rate: "1.46%",
-            collateral: "信用",
+            collateral: "AA+",
             rank: "次优",
             reason: "R007 次优",
             accountType: "券商自营",
@@ -791,7 +791,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             tenor: "R001",
             amount: "4亿",
             rate: "1.46%",
-            collateral: "信用",
+            collateral: "AA+",
             rank: "报价",
             reason: "R001 一般报价",
             accountType: "城商行自营",
@@ -804,7 +804,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             tenor: "R007",
             amount: "3亿",
             rate: "1.48%",
-            collateral: "信用",
+            collateral: "AA+",
             rank: "报价",
             reason: "R007 一般报价",
             accountType: "券商自营",
@@ -817,7 +817,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             tenor: "R014",
             amount: "2亿",
             rate: "1.49%",
-            collateral: "信用",
+            collateral: "AAA",
             rank: "报价",
             reason: "R014 一般报价",
             accountType: "公募基金",
@@ -1038,7 +1038,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             tenor: "R001",
             amount: "5亿",
             rate: "1.60%",
-            collateral: "信用",
+            collateral: "AA+",
             rank: "最优",
             reason: "这是 R001 最优",
             accountType: "券商自营",
@@ -1077,7 +1077,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             tenor: "R001",
             amount: "3亿",
             rate: "1.61%",
-            collateral: "信用",
+            collateral: "AAA",
             rank: "次优",
             reason: "R001 次优",
             accountType: "公募基金",
@@ -1116,7 +1116,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             tenor: "R001",
             amount: "2亿",
             rate: "1.62%",
-            collateral: "信用",
+            collateral: "AA+",
             rank: "报价",
             reason: "R001 一般报价",
             accountType: "券商自营",
@@ -1129,7 +1129,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
             tenor: "R007",
             amount: "3亿",
             rate: "1.65%",
-            collateral: "信用",
+            collateral: "AA+",
             rank: "报价",
             reason: "R007 一般报价",
             accountType: "券商自营",
@@ -1207,7 +1207,10 @@ const trendAxisLabels = [
 const trendPriceTicks = [2.107, 2.028, 1.948, 1.868] as const;
 const trendVolumeTicks = ["2k", "1k", "900", "450", "0"] as const;
 
-const intradaySeries = randomWalk(1.979, 40, 0.055, 13);
+const clampRateAboveOne = (series: number[]) =>
+  series.map((v) => Number(Math.max(1.02, v).toFixed(4)));
+
+const intradaySeries = clampRateAboveOne(randomWalk(1.979, 40, 0.055, 13));
 const intradayVolumeSeries = randomWalk(200, 40, 90, 14).map((v) =>
   Math.round(v),
 );
@@ -1217,9 +1220,9 @@ const intradayOverlaySeriesByProduct: Record<
   Exclude<OverlayProduct, "none">,
   number[]
 > = {
-  dr007: randomWalk(2.012, 40, 0.04, 71),
-  gc007: randomWalk(1.852, 40, 0.062, 72),
-  r007: randomWalk(2.058, 40, 0.052, 73),
+  dr007: clampRateAboveOne(randomWalk(2.012, 40, 0.04, 71)),
+  gc007: clampRateAboveOne(randomWalk(1.852, 40, 0.062, 72)),
+  r007: clampRateAboveOne(randomWalk(2.058, 40, 0.052, 73)),
 };
 
 function getIntradayRateSeries(product: BaseTrendProduct) {
@@ -2385,13 +2388,13 @@ function AdaptiveEntryRail({
         >
           {displayMode === "icon" ? (
             <div className="tk-muted text-center text-[10px] font-semibold">
-              鍏ュ彛
+              入口
             </div>
           ) : (
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <div className="tk-title truncate">
-                  {displayMode === "narrow-summary" ? "数据摘要" : "琛屾儏鍏ュ彛"}
+                  行情摘要
                 </div>
               </div>
               {displayMode === "narrow-summary" ? null : (
@@ -3623,7 +3626,9 @@ function TopBar({
             ⤺ 布局
           </button>
         </div>
-        <div />
+        <div className="min-w-0">
+          <MiddleMatrixNoticeBar variant="inline" />
+        </div>
         <div className="flex items-center justify-end gap-3">
           <InfoChip label="DR007" value="2.15%" tone="alert" />
           <SentimentChipWithPopover />
@@ -5298,8 +5303,9 @@ function BarometerMatrixCard() {
 
   return (
     <div className="grid min-h-0 grid-rows-[auto_auto_minmax(0,1fr)_auto] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
-      <div className="border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
-        <div className="tk-matrix-card-title truncate">晴雨表</div>
+      <div className="flex items-baseline justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
+        <div className="tk-matrix-card-title shrink-0 whitespace-nowrap">个人QT行情</div>
+        <span className="shrink-0 whitespace-nowrap text-[10px] text-slate-400">今日 vs 昨日</span>
       </div>
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[color:var(--tk-color-border-divider)] px-3 py-2 text-xs">
@@ -5856,7 +5862,8 @@ const buildIntradayRates = (
       index,
     );
     const microMove = seededJitter(seed + 37, index, 0.012);
-    return Number((base + localPressure * pressureScale + intradayNoise[index] + microMove).toFixed(3));
+    const value = base + localPressure * pressureScale + intradayNoise[index] + microMove;
+    return Number(Math.max(1.02, value).toFixed(3));
   });
 
 const buildInstitutionWeightedRates = (
@@ -5865,9 +5872,10 @@ const buildInstitutionWeightedRates = (
   seed: number,
 ) =>
   personal.map((rate, index) => {
-    const spreadNoise = seededJitter(seed + 53, index, 0.010);
+    const baseSpread = Math.abs(institutionSpreadShape[index]) * spreadScale;
+    const spreadNoise = Math.abs(seededJitter(seed + 53, index, 0.010));
     const closeWindowPremium = index === 1 || index === 6 ? 0.004 : 0;
-    return Number((rate + institutionSpreadShape[index] * spreadScale + spreadNoise + closeWindowPremium).toFixed(3));
+    return Number((rate + baseSpread + spreadNoise + closeWindowPremium).toFixed(3));
   });
 
 const buildIntradayCounts = (
@@ -6058,9 +6066,10 @@ function PersonalInstitutionCompareCard() {
   };
   return (
     <div className="grid min-h-0 grid-rows-[auto_auto_auto_1fr_auto] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
-      <div className="flex items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2.5 py-1.5">
-        <div className="tk-matrix-card-title truncate">
-          个人 & 机构
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2.5 py-1.5">
+        <div className="flex shrink-0 items-baseline gap-1.5">
+          <span className="tk-matrix-card-title shrink-0 whitespace-nowrap">个人 & 机构</span>
+          <span className="shrink-0 whitespace-nowrap text-[9px] text-slate-500">实线=个人 / 虚线=机构</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="text-[9px] text-slate-400">截至 16:00</span>
@@ -6230,7 +6239,20 @@ function PersonalInstitutionCompareCard() {
   );
 }
 
-function MiddleMatrixNoticeBar() {
+const TRADING_NOTICE_TEXT = "交易提示：央行逆回购净投放，预计今日整体市场宽松";
+
+function MiddleMatrixNoticeBar({ variant = "stacked" }: { variant?: "stacked" | "inline" }) {
+  if (variant === "inline") {
+    return (
+      <div className="tk-marquee group relative flex min-w-0 items-center overflow-hidden">
+        <div className="tk-marquee__track flex shrink-0 items-center gap-12 whitespace-nowrap text-[13px] font-semibold text-[color:var(--tdx-red,#e7353a)]">
+          <span>{TRADING_NOTICE_TEXT}</span>
+          <span aria-hidden="true">{TRADING_NOTICE_TEXT}</span>
+          <span aria-hidden="true">{TRADING_NOTICE_TEXT}</span>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="grid shrink-0 grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto] gap-2 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2 text-[10px]">
       <div className="min-w-0">
@@ -6262,16 +6284,14 @@ function MiddleMatrixColumn() {
 
   return (
     <aside className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden px-1">
-      <section className="tk-panel grid h-full min-h-0 grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden border">
+      <section className="tk-panel grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden border">
         <div className="tk-panel-header border-b px-3 py-2">
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <div className="tk-matrix-section-title truncate">中间矩阵区</div>
+              <div className="tk-matrix-section-title truncate">行情矩阵区</div>
             </div>
           </div>
         </div>
-
-        <MiddleMatrixNoticeBar />
 
         <div className="grid min-h-0 grid-cols-2 grid-rows-[minmax(122px,0.86fr)_minmax(0,1fr)_minmax(0,1fr)] gap-1 overflow-hidden p-1.5">
           {middleMatrixPlaceholders.slice(0, 2).map((item, index) => (
@@ -7229,9 +7249,9 @@ function RepoQuoteSectionBoard({
           <span className="text-right font-semibold text-amber-300">{row.rate}</span>
           <span
             className="truncate pl-3 text-right text-xs text-slate-300"
-            title={normalizeAccountRequirement(row.accountType)}
+            title={shouldShowAccountRequirement(row.id) ? normalizeAccountRequirement(row.accountType) : ""}
           >
-            {normalizeAccountRequirement(row.accountType)}
+            {shouldShowAccountRequirement(row.id) ? normalizeAccountRequirement(row.accountType) : ""}
           </span>
           <span
             className="truncate pl-3 text-right text-xs text-slate-300"
@@ -7385,6 +7405,14 @@ function fuzzyTextMatch(text: string, query: string) {
     textIndex += 1;
   }
   return true;
+}
+
+function shouldShowAccountRequirement(rowId: string) {
+  let hash = 0;
+  for (let i = 0; i < rowId.length; i++) {
+    hash = (hash * 31 + rowId.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash) % 5 === 0;
 }
 
 function normalizeAccountRequirement(accountType: string) {
@@ -7693,34 +7721,29 @@ function IntradayPanel({
 
   return (
     <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
-      <div className="flex items-center justify-between gap-3 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
-        <div className="flex items-center gap-3">
-          <div className="tk-matrix-card-title">
-            匿名成交走势图
-          </div>
-          <label className="flex items-center gap-1 text-xs text-slate-400">
-            <span>产品</span>
-            <select
-              className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-1.5 py-0.5 text-xs text-slate-200 outline-none"
-              value={baseProduct}
-              onChange={(event) => onBaseProductChange(event.target.value as BaseTrendProduct)}
-            >
-              {baseTrendProductOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
+        <div className="tk-matrix-card-title shrink-0 whitespace-nowrap">
+          匿名成交走势图
+        </div>
+        <label className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-400">
+          <span>产品</span>
+          <select
+            className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-1.5 py-0.5 text-xs text-slate-200 outline-none"
+            value={baseProduct}
+            onChange={(event) => onBaseProductChange(event.target.value as BaseTrendProduct)}
+          >
+            {baseTrendProductOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="shrink-0">
           <OverlayProductSelect
             value={overlayProduct}
             onChange={onOverlayChange}
           />
-        </div>
-        <div className="text-xs text-slate-400">
-          {overlayProduct !== "none"
-            ? "匿名成交利率 / 利差(bp)"
-            : "匿名成交利率 / 成交量"}
         </div>
       </div>
       <div className="grid min-h-0 grid-rows-[minmax(0,1fr)_1.25rem] px-3 pb-2 pt-2">
@@ -7946,45 +7969,43 @@ function HistoryClosePanel({
 
   return (
     <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
-      <div className="flex items-center justify-between gap-3 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
-        <div className="flex items-center gap-3">
-          <div className="tk-matrix-card-title">
-            加权价格走势
-          </div>
-          <label className="flex items-center gap-1 text-xs text-slate-400">
-            <span>产品</span>
-            <select
-              className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-1.5 py-0.5 text-xs text-slate-200 outline-none"
-              value={baseProduct}
-              onChange={(e) =>
-                onBaseProductChange(e.target.value as BaseTrendProduct)
-              }
-            >
-              {baseTrendProductOptions.map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex items-center gap-1 text-xs text-slate-400">
-            <span>对比</span>
-            <select
-              className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-1.5 py-0.5 text-xs text-slate-200 outline-none"
-              value={compareProduct}
-              onChange={(e) =>
-                onCompareChange(e.target.value as CompareProduct)
-              }
-            >
-              {compareProductOptions.map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
+        <div className="tk-matrix-card-title shrink-0 whitespace-nowrap">
+          历史成交趋势
         </div>
-        <div className="flex items-center gap-2">
+        <label className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-400">
+          <span>产品</span>
+          <select
+            className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-1.5 py-0.5 text-xs text-slate-200 outline-none"
+            value={baseProduct}
+            onChange={(e) =>
+              onBaseProductChange(e.target.value as BaseTrendProduct)
+            }
+          >
+            {baseTrendProductOptions.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-400">
+          <span>对比</span>
+          <select
+            className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-1.5 py-0.5 text-xs text-slate-200 outline-none"
+            value={compareProduct}
+            onChange={(e) =>
+              onCompareChange(e.target.value as CompareProduct)
+            }
+          >
+            {compareProductOptions.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="flex shrink-0 items-center gap-2">
           {historyRangeTabs.map((tab) => (
             <button
               key={tab.id}
@@ -8166,7 +8187,7 @@ function HistoryClosePanel({
         </div>
         {compareProduct !== "none" && spreadValues ? (
           <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[color:var(--tk-color-border-divider)] pt-2 pb-1">
-            <div className="flex flex-col justify-between pb-8 pr-2 text-right text-[10px] text-slate-400">
+            <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
               {(() => {
                 const dMax = Math.max(...spreadValues, 0);
                 const dMin = Math.min(...spreadValues, 0);
@@ -8181,7 +8202,7 @@ function HistoryClosePanel({
               })()}
             </div>
             <div className="relative min-h-0">
-              <div className="absolute inset-x-0 top-0 bottom-8 flex items-center gap-[4px]">
+              <div className="absolute inset-0 flex items-center gap-[4px]">
                 {(() => {
                   const dMax = Math.max(...spreadValues, 0);
                   const dMin = Math.min(...spreadValues, 0);
@@ -8223,7 +8244,7 @@ function HistoryClosePanel({
           </div>
         ) : (
           <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[color:var(--tk-color-border-divider)] pt-2 pb-1">
-            <div className="flex flex-col justify-between pb-8 pr-2 text-right text-[10px] text-slate-400">
+            <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
               {buildCompactVolumeTicks(volumeMax).map((tick) => (
                 <div key={tick}>{tick}</div>
               ))}
@@ -8232,7 +8253,7 @@ function HistoryClosePanel({
               <span className="absolute top-0.5 left-0.5 text-[9px] text-slate-500 z-10 pointer-events-none">
                 成交量
               </span>
-              <div className="absolute inset-x-0 top-0 bottom-8 flex items-end gap-[4px]">
+              <div className="absolute inset-0 flex items-end gap-[4px]">
                 {baseVolumeSeries.map((value, index) => (
                   <div
                     key={`history-vol-${index}`}

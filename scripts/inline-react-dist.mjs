@@ -23,10 +23,14 @@ async function inlineStyles(source) {
 
 async function inlineScripts(source) {
   const scriptPattern = /<script\s+type="module"[^>]*src="([^"]+)"[^>]*><\/script>\s*/g;
-  return replaceAsync(source, scriptPattern, async (_match, src) => {
+  const scripts = [];
+  const htmlWithoutScripts = await replaceAsync(source, scriptPattern, async (_match, src) => {
     const js = await readFile(assetPath(src), 'utf8');
-    return `<script>\n${js.replaceAll('</script', '<\\/script')}\n</script>\n`;
+    scripts.push(`<script>\n${js.replaceAll('</script', '<\\/script')}\n</script>`);
+    return '';
   });
+
+  return htmlWithoutScripts.replace('</body>', `${scripts.join('\n')}\n  </body>`);
 }
 
 function assetPath(pathname) {

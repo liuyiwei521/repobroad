@@ -12,6 +12,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "newworkspace/trading-workbench-vue", "--port", "5715"],
       "port": 5715
+    },
+    {
+      "name": "dev-react",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "vite.react.config.ts", "--port", "5716"],
+      "port": 5716
     }
   ]
 }

@@ -238,3 +238,28 @@ body,
   color: var(--tdx-text-heading);
   box-shadow: none;
 }
+
+@keyframes tk-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-33.3333%); }
+}
+
+.tk-marquee {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+}
+
+.tk-marquee__track {
+  animation: tk-marquee 28s linear infinite;
+  will-change: transform;
+}
+
+.tk-marquee:hover .tk-marquee__track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tk-marquee__track {
+    animation: none;
+  }
+}
