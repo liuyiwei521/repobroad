@@ -1,4 +1,5 @@
-import { Fragment, useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import {
   Activity,
   BadgePercent,
@@ -4250,6 +4251,11 @@ function MiniInstitutionSeriesPreview({
   const [hiddenKeys, setHiddenKeys] = useState<ReadonlySet<string>>(
     () => new Set<string>(),
   );
+  const [tooltipState, setTooltipState] = useState<{
+    index: number;
+    clientX: number;
+    clientY: number;
+  } | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
   const [chartSize, setChartSize] = useState({ width: 260, height: 120 });
   const visibleSeries = series.filter((item) => !hiddenKeys.has(item.key));
@@ -4274,6 +4280,29 @@ function MiniInstitutionSeriesPreview({
   const plotHeight = Math.max(20, height - plotTop - plotBottom);
   const yAxisLabels = buildAxisLabels(min, max, 4);
   const pointCount = plottedSeries[0]?.values.length ?? 1;
+  const tooltipIndex = tooltipState?.index ?? null;
+  const tooltipX =
+    tooltipIndex === null
+      ? null
+      : showAsStackedBars
+        ? plotLeft + ((tooltipIndex + 0.5) / Math.max(pointCount, 1)) * plotWidth
+        : plotLeft + (tooltipIndex / Math.max(pointCount - 1, 1)) * plotWidth;
+  const tooltipTotal =
+    tooltipIndex === null
+      ? 0
+      : showAsStackedBars
+        ? dailyTotals[tooltipIndex] ?? 0
+        : plottedSeries.reduce((sum, item) => sum + Math.max(0, item.values[tooltipIndex] ?? 0), 0);
+  const tooltipRows =
+    tooltipIndex === null
+      ? []
+      : plottedSeries
+          .map((item) => ({
+            ...item,
+            value: item.values[tooltipIndex] ?? 0,
+          }))
+          .filter((item) => item.value > 0)
+          .sort((a, b) => b.value - a.value);
   const xLabelIndexes = [0, Math.floor(pointCount / 2), Math.max(pointCount - 1, 0)];
   useEffect(() => {
     const node = chartRef.current;
@@ -4315,6 +4344,18 @@ function MiniInstitutionSeriesPreview({
       .join(" ");
   }
 
+  function handlePreviewMouseMove(event: React.MouseEvent<HTMLDivElement>) {
+    const rect = chartRef.current?.getBoundingClientRect();
+    if (!rect || rect.width === 0 || pointCount <= 0) return;
+    const viewX = ((event.clientX - rect.left) / rect.width) * width;
+    const clampedX = Math.max(plotLeft, Math.min(plotLeft + plotWidth, viewX));
+    const ratio = (clampedX - plotLeft) / Math.max(plotWidth, 1);
+    const index = showAsStackedBars
+      ? Math.min(pointCount - 1, Math.max(0, Math.floor(ratio * pointCount)))
+      : Math.min(pointCount - 1, Math.max(0, Math.round(ratio * (pointCount - 1))));
+    setTooltipState({ index, clientX: event.clientX, clientY: event.clientY });
+  }
+
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
       <div className="mb-1 flex items-center justify-between gap-2 text-[10px]">
@@ -4346,7 +4387,12 @@ function MiniInstitutionSeriesPreview({
         })}
       </div>
       <div className="min-h-0 flex-1">
-        <div ref={chartRef} className="h-full min-h-0 min-w-0">
+        <div
+          ref={chartRef}
+          className="relative h-full min-h-0 min-w-0 cursor-crosshair"
+          onMouseLeave={() => setTooltipState(null)}
+          onMouseMove={handlePreviewMouseMove}
+        >
         <svg
           className="block h-full w-full"
           viewBox={`0 0 ${width} ${height}`}
@@ -4461,7 +4507,52 @@ function MiniInstitutionSeriesPreview({
               ),
             )
           )}
+          {tooltipX !== null ? (
+            <line
+              x1={tooltipX}
+              x2={tooltipX}
+              y1={plotTop}
+              y2={plotTop + plotHeight}
+              stroke="var(--tk-color-brand-primary)"
+              strokeDasharray="4 4"
+              strokeOpacity="0.78"
+              strokeWidth="0.8"
+            />
+          ) : null}
         </svg>
+        {tooltipState !== null && tooltipIndex !== null ? (
+          <ChartTooltip
+            clientX={tooltipState.clientX}
+            clientY={tooltipState.clientY}
+          >
+            <div className="mb-1 font-semibold text-slate-200">
+              {xLabels?.[tooltipIndex] ?? `#${tooltipIndex + 1}`}
+            </div>
+            <div className="mb-1 flex items-center justify-between gap-5 border-b border-[color:var(--tk-color-border-divider-dark)] pb-1 text-[11px]">
+              <span className="text-slate-400">合计</span>
+              <span className="font-mono font-semibold text-slate-100">
+                {formatMiniChartValue(tooltipTotal, unit)}
+              </span>
+            </div>
+            <div className="grid gap-1">
+              {tooltipRows.slice(0, 8).map((item) => (
+                <div key={item.key} className="flex items-center gap-2">
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-slate-400">{item.label}</span>
+                  <span className="ml-auto pl-3 font-mono font-semibold text-slate-100">
+                    {formatMiniChartValue(item.value, unit)}
+                  </span>
+                </div>
+              ))}
+              {tooltipRows.length > 8 ? (
+                <div className="text-slate-500">其余 {tooltipRows.length - 8} 项略</div>
+              ) : null}
+            </div>
+          </ChartTooltip>
+        ) : null}
         </div>
       </div>
       <div className="mt-1 truncate text-[10px] text-slate-500">{footnote}</div>
@@ -5724,8 +5815,6 @@ function XrepoInlineHistoryChart({
         <div
           ref={containerRef}
           className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[color:var(--tk-color-border-panel)]"
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
         >
           {[0, 1, 2, 3].map((index) => (
             <div
@@ -5821,6 +5910,10 @@ function XrepoInlineHistoryChart({
               ) : null,
             )}
           </div>
+          <ChartHoverLayer
+            onMouseLeave={handleMouseLeave}
+            onMouseMove={handleMouseMove}
+          />
           {tooltipState && tooltipIndex !== null ? (
             <ChartTooltip
               clientX={tooltipState.clientX}
@@ -6675,6 +6768,7 @@ function ExchangeRepoCard({
   onOpen?: () => void;
   tenorFilter?: QuoteTenorFilter;
 }) {
+  void tenorFilter;
   const [activeView, setActiveView] = useState<"core" | "sse" | "szse">("core");
   const filteredMarkets =
     activeView === "core"
@@ -6682,7 +6776,7 @@ function ExchangeRepoCard({
       : markets.filter((market) => market.id === activeView);
   const displayedMarkets = filteredMarkets.map((market) => ({
     ...market,
-    rows: filterRowsByQuoteTenor(market.rows, tenorFilter, [1]),
+    rows: exchangeRepoOneMonthRows(market),
   }));
 
   return (
@@ -6781,6 +6875,36 @@ function ExchangeRepoCard({
   );
 }
 
+const exchangeRepoOneMonthMarketRows: Record<
+  "sse" | "szse",
+  readonly (readonly string[])[]
+> = {
+  sse: [
+    ["1\u5929", "GC001", "1.3700", "-1.00"],
+    ["7\u5929", "GC007", "1.3750", "-1.00"],
+    ["14\u5929", "GC014", "1.3920", "-0.50"],
+    ["21\u5929", "GC021", "1.4180", "0.00"],
+    ["1M", "GC028", "1.4460", "0.50"],
+  ],
+  szse: [
+    ["1\u5929", "R-001", "1.3900", "-1.50"],
+    ["7\u5929", "R-007", "1.4000", "-0.50"],
+    ["14\u5929", "R-014", "1.4230", "0.00"],
+    ["21\u5929", "R-021", "1.4520", "0.50"],
+    ["1M", "R-028", "1.4850", "1.00"],
+  ],
+};
+
+function exchangeRepoOneMonthRows(
+  market: ExchangeMarketSplitSection["markets"][number],
+) {
+  const marketRows =
+    market.id === "sse" || market.id === "szse"
+      ? exchangeRepoOneMonthMarketRows[market.id]
+      : market.rows;
+  return marketRows.slice(0, 5);
+}
+
 function ExchangeCoreCompactBoard({
   markets,
   embeddedPreview = false,
@@ -6788,12 +6912,12 @@ function ExchangeCoreCompactBoard({
   markets: ExchangeMarketSplitSection["markets"];
   embeddedPreview?: boolean;
 }) {
-  const combinedRows = markets.flatMap((market) => market.rows);
+  const coreRows = markets.flatMap((market) => market.rows.slice(0, 2));
   return (
     <div className={embeddedPreview ? "min-h-0" : "h-full min-h-0"}>
       <ExchangeCoreCompactBlock
-        rows={combinedRows}
-        rowCount={combinedRows.length}
+        rows={coreRows}
+        rowCount={4}
         embeddedPreview={embeddedPreview}
       />
     </div>
@@ -13273,7 +13397,13 @@ function CfetsDenseChart({
   const yTicks = Array.from({ length: 6 }, (_, index) =>
     yMax - ((yMax - yMin) * index) / 5,
   );
-  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+  const {
+    tooltipState,
+    containerRef,
+    getIndexFromEvent,
+    handleMouseMove,
+    handleMouseLeave,
+  } =
     useChartTooltip(data.dates.length);
   const tooltipIndex = tooltipState?.index ?? null;
 
@@ -13284,6 +13414,31 @@ function CfetsDenseChart({
       else next.add(key);
       return next;
     });
+  }
+
+  function openDetailAtIndex(dateIndex: number) {
+    const date = data.dates[dateIndex];
+    if (!date) return;
+    const total = dailyTotals[dateIndex] || 0;
+    const leader =
+      visibleSeries
+        .slice()
+        .sort(
+          (a, b) =>
+            (b.values[dateIndex] ?? 0) - (a.values[dateIndex] ?? 0),
+        )[0] ?? visibleSeries[0];
+    onDetail({
+      date,
+      label: leader?.label ?? "-",
+      value: total,
+    });
+  }
+
+  function handleChartClick(event: React.MouseEvent<HTMLDivElement>) {
+    if (chartKind !== "bar") return;
+    const dateIndex = getIndexFromEvent(event);
+    if (dateIndex === null) return;
+    openDetailAtIndex(dateIndex);
   }
 
   const dailyTotals = data.dates.map((_, index) =>
@@ -13346,8 +13501,6 @@ function CfetsDenseChart({
         <div
           ref={containerRef}
           className="relative min-h-0 cursor-crosshair overflow-hidden"
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
         >
           {[0, 1, 2, 3, 4, 5].map((index) => (
             <div
@@ -13366,20 +13519,7 @@ function CfetsDenseChart({
                     className="flex h-full min-w-0 flex-1 cursor-pointer flex-col justify-end overflow-hidden"
                     style={{ height: `${(total / maxTotal) * 100}%` }}
                     type="button"
-                    onClick={() => {
-                      const leader =
-                        visibleSeries
-                          .slice()
-                          .sort(
-                            (a, b) =>
-                              (b.values[dateIndex] ?? 0) - (a.values[dateIndex] ?? 0),
-                          )[0] ?? visibleSeries[0];
-                      onDetail({
-                        date,
-                        label: leader?.label ?? "-",
-                        value: total,
-                      });
-                    }}
+                    onClick={() => openDetailAtIndex(dateIndex)}
                   >
                     {visibleSeries.map((series) => {
                       const value = series.values[dateIndex] ?? 0;
@@ -13437,6 +13577,11 @@ function CfetsDenseChart({
               ) : null,
             )}
           </div>
+          <ChartHoverLayer
+            onClick={handleChartClick}
+            onMouseLeave={handleMouseLeave}
+            onMouseMove={handleMouseMove}
+          />
           {tooltipIndex !== null && tooltipState ? (
             <ChartTooltip
               clientX={tooltipState.clientX}
@@ -15097,14 +15242,20 @@ function useChartTooltip(dataLength: number) {
   } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+  function getIndexFromEvent(e: React.MouseEvent<HTMLDivElement>) {
     const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect || rect.width === 0) return;
+    if (!rect || rect.width === 0 || dataLength <= 0) return null;
     const x = e.clientX - rect.left;
-    const index = Math.max(
+    if (dataLength === 1) return 0;
+    return Math.max(
       0,
       Math.min(dataLength - 1, Math.round((x / rect.width) * (dataLength - 1))),
     );
+  }
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const index = getIndexFromEvent(e);
+    if (index === null) return;
     setState({ index, clientX: e.clientX, clientY: e.clientY });
   }
 
@@ -15115,9 +15266,29 @@ function useChartTooltip(dataLength: number) {
   return {
     tooltipState: state,
     containerRef,
+    getIndexFromEvent,
     handleMouseMove,
     handleMouseLeave,
   };
+}
+
+function ChartHoverLayer({
+  onMouseMove,
+  onMouseLeave,
+  onClick,
+}: {
+  onMouseMove: (event: React.MouseEvent<HTMLDivElement>) => void;
+  onMouseLeave: () => void;
+  onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+}) {
+  return (
+    <div
+      className="absolute inset-0 z-20 cursor-crosshair"
+      onClick={onClick}
+      onMouseLeave={onMouseLeave}
+      onMouseMove={onMouseMove}
+    />
+  );
 }
 
 function ChartTooltip({
@@ -15129,13 +15300,44 @@ function ChartTooltip({
   clientY: number;
   children: React.ReactNode;
 }) {
-  return (
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState(() => ({
+    left: clientX + 14,
+    top: clientY - 10,
+  }));
+
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    const tooltip = tooltipRef.current;
+    const width = tooltip?.offsetWidth ?? 220;
+    const height = tooltip?.offsetHeight ?? 120;
+    const padding = 8;
+    let left = clientX + 14;
+    let top = clientY - 10;
+
+    if (left + width + padding > window.innerWidth) {
+      left = clientX - width - 14;
+    }
+    if (top + height + padding > window.innerHeight) {
+      top = clientY - height - 14;
+    }
+
+    left = Math.max(padding, Math.min(left, window.innerWidth - width - padding));
+    top = Math.max(padding, Math.min(top, window.innerHeight - height - padding));
+    setPosition({ left, top });
+  }, [clientX, clientY, children]);
+
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div
+      ref={tooltipRef}
       className="tdx-terminal-tooltip pointer-events-none fixed z-[200] px-3 py-2 text-xs"
-      style={{ left: clientX + 14, top: clientY - 10 }}
+      style={{ left: position.left, top: position.top }}
     >
       {children}
-    </div>
+    </div>,
+    document.body,
   );
 }
 
