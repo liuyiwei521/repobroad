@@ -3,11 +3,15 @@ import {
   Activity,
   BadgePercent,
   Banknote,
+  ChevronDown,
+  ChevronUp,
   Download,
   Gauge,
+  GripHorizontal,
   Landmark,
   LineChart as LineChartIcon,
   Network,
+  Pin,
   RefreshCcw,
   Repeat,
   SlidersHorizontal,
@@ -268,22 +272,22 @@ const initialBankRateRows: readonly BankRateRow[] = [
     tenor: "ON",
     nonBankRate: "1.95%",
     refNonBankRate: "1.96%",
-    deltaNonBankBp: "-1",
+    deltaNonBankBp: "",
     bankRate: "2.00%",
-    refBankRate: "2.02%",
-    deltaBp: "-2",
+    refBankRate: "",
+    deltaBp: "",
     updatedAt: "10:53:27",
     hasQuote: true,
   },
   {
     institution: "工商银行",
     tenor: "7D",
-    nonBankRate: "2.05%",
+    nonBankRate: "",
     refNonBankRate: "2.04%",
-    deltaNonBankBp: "+1",
+    deltaNonBankBp: "",
     bankRate: "2.10%",
     refBankRate: "2.12%",
-    deltaBp: "-2",
+    deltaBp: "",
     updatedAt: "10:53:27",
     hasQuote: true,
   },
@@ -291,11 +295,11 @@ const initialBankRateRows: readonly BankRateRow[] = [
     institution: "建设银行",
     tenor: "ON",
     nonBankRate: "1.94%",
-    refNonBankRate: "1.95%",
-    deltaNonBankBp: "-1",
-    bankRate: "1.99%",
+    refNonBankRate: "",
+    deltaNonBankBp: "",
+    bankRate: "",
     refBankRate: "2.00%",
-    deltaBp: "-1",
+    deltaBp: "",
     updatedAt: "10:53:27",
     hasQuote: true,
   },
@@ -314,12 +318,12 @@ const initialBankRateRows: readonly BankRateRow[] = [
   {
     institution: "农业银行",
     tenor: "ON",
-    nonBankRate: "1.96%",
+    nonBankRate: "",
     refNonBankRate: "1.96%",
-    deltaNonBankBp: "0",
+    deltaNonBankBp: "",
     bankRate: "2.01%",
     refBankRate: "2.00%",
-    deltaBp: "+1",
+    deltaBp: "",
     updatedAt: "10:53:27",
     hasQuote: true,
   },
@@ -338,26 +342,26 @@ const initialBankRateRows: readonly BankRateRow[] = [
   {
     institution: "中国银行",
     tenor: "ON",
-    nonBankRate: "1.95%",
+    nonBankRate: "",
     refNonBankRate: "1.94%",
-    deltaNonBankBp: "+1",
-    bankRate: "2.00%",
+    deltaNonBankBp: "",
+    bankRate: "",
     refBankRate: "2.00%",
-    deltaBp: "0",
-    updatedAt: "10:53:27",
-    hasQuote: true,
+    deltaBp: "",
+    updatedAt: "",
+    hasQuote: false,
   },
   {
     institution: "中国银行",
     tenor: "7D",
-    nonBankRate: "2.06%",
+    nonBankRate: "",
     refNonBankRate: "2.05%",
-    deltaNonBankBp: "+1",
-    bankRate: "2.11%",
+    deltaNonBankBp: "",
+    bankRate: "",
     refBankRate: "2.11%",
-    deltaBp: "0",
-    updatedAt: "10:53:27",
-    hasQuote: true,
+    deltaBp: "",
+    updatedAt: "",
+    hasQuote: false,
   },
 ] as const;
 
@@ -371,17 +375,14 @@ const leftSections: readonly (
     columns: [
       "机构",
       "期限",
-      "非银利率",
-      "涨跌",
-      "银行利率",
-      "涨跌",
+      "非银利率(涨跌)",
+      "银行利率(涨跌)",
       "利差",
     ],
     rows: [],
     greenColumns: [2],
-    redColumns: [4],
-    deltaColumns: [3, 5],
-    scrollable: false,
+    redColumns: [3],
+    scrollable: true,
   },
   {
     layout: "table",
@@ -411,7 +412,7 @@ const leftSections: readonly (
     emphasisColumns: [1, 4],
     fitToWidth: true,
     columnWidths: ["24%", "19%", "19%", "19%", "19%"],
-    scrollable: false,
+    scrollable: true,
   },
   {
     layout: "exchange-split",
@@ -424,9 +425,6 @@ const leftSections: readonly (
         rows: [
           ["1天", "GC001", "1.3700", "-1.00"],
           ["7天", "GC007", "1.3750", "-1.00"],
-          ["14天", "GC014", "1.3820", "-0.80"],
-          ["21天", "GC021", "1.3890", "-0.70"],
-          ["28天", "GC028", "1.3960", "-0.70"],
         ],
         greenColumns: [2],
         deltaColumns: [3],
@@ -438,9 +436,6 @@ const leftSections: readonly (
         rows: [
           ["1天", "R-001", "1.3900", "-1.50"],
           ["7天", "R-007", "1.4000", "-0.50"],
-          ["14天", "R-014", "1.4050", "-0.50"],
-          ["21天", "R-021", "1.4030", "-0.60"],
-          ["28天", "R-028", "1.4000", "-1.00"],
         ],
         greenColumns: [2],
         deltaColumns: [3],
@@ -1441,11 +1436,16 @@ const compactAuxChartLabels = [
   "5/10",
 ] as const;
 const ncdTableRows = [
+  ["14D", "2.01%", "+1", "1.99%", "10:53:27"],
   ["1M", "2.03%", "+2", "2.01%", "10:53:27"],
+  ["2M", "2.05%", "+1", "2.03%", "10:53:27"],
   ["3M", "2.07%", "+1", "2.05%", "10:53:27"],
   ["6M", "2.11%", "+1", "2.08%", "10:53:27"],
   ["9M", "2.14%", "0", "2.11%", "10:53:27"],
   ["1Y", "2.13%", "-1", "2.10%", "10:53:27"],
+  ["18M", "2.16%", "-1", "2.13%", "10:53:27"],
+  ["2Y", "2.18%", "-2", "2.15%", "10:53:27"],
+  ["3Y", "2.22%", "-2", "2.18%", "10:53:27"],
 ] as const;
 
 type NcdPeriod = "1M" | "3M" | "6M" | "9M" | "1Y";
@@ -2092,9 +2092,9 @@ function FloatingBall() {
   );
 }
 
-const DEFAULT_COLUMN_RATIOS: [number, number, number] = [16, 34, 50];
-const COLUMN_RATIOS_KEY = "boardColumnRatios.v4";
-const COLUMN_MIN: [number, number, number] = [8, 26, 38];
+const DEFAULT_COLUMN_RATIOS: [number, number, number] = [14, 42, 44];
+const COLUMN_RATIOS_KEY = "boardColumnRatios.v5";
+const COLUMN_MIN: [number, number, number] = [8, 32, 32];
 
 function clampColumns(
   next: [number, number, number],
@@ -2154,6 +2154,8 @@ function App() {
   const [historyRange, setHistoryRange] = useState<HistoryRange>("5d");
   const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
   const [baseProduct, setBaseProduct] = useState<BaseTrendProduct>("r001");
+  const [quoteTenorFilter, setQuoteTenorFilter] =
+    useState<QuoteTenorFilter>("all");
   const mainRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -2243,11 +2245,15 @@ function App() {
             activeId={activeFrame?.id ?? null}
             entries={leftRailEntries}
             onOpen={openFrame}
+            tenorFilter="all"
           />
           <ColumnSplitter onMouseDown={(e) => startDragSplitter(e, 0)} />
           <MiddleMatrixColumn />
           <ColumnSplitter onMouseDown={(e) => startDragSplitter(e, 1)} />
-          <MainQuoteBoard />
+          <MainQuoteBoard
+            tenorFilter={quoteTenorFilter}
+            onTenorFilterChange={setQuoteTenorFilter}
+          />
         </main>
       </div>
       {activeFrame ? (
@@ -2256,7 +2262,9 @@ function App() {
           onClose={() => setActiveFrame(null)}
         >
           {activeFrame.id === "big-bank-price" ? (
-            <BigBankPriceFrame initialBank={activeFrame.bank} />
+            <BigBankPriceFrame
+              initialBank={activeFrame.bank}
+            />
           ) : activeFrame.id === "weighted-price" ? (
             <div className="h-full min-h-0">
               <HistoryClosePanel
@@ -2286,11 +2294,14 @@ function App() {
               />
             </div>
           ) : activeFrame.id === "xrepo" ? (
-            <XrepoFrame initialContract={activeFrame.contract} />
+            <XrepoFrame
+              initialContract={activeFrame.contract}
+              tenorFilter={quoteTenorFilter}
+            />
           ) : activeFrame.id === "exchange-repo" ? (
-            <ExchangeRepoFrame />
+            <ExchangeRepoFrame tenorFilter={quoteTenorFilter} />
           ) : activeFrame.id === "ncd" ? (
-            <LeftNcdCard />
+            <LeftNcdCard tenorFilter={quoteTenorFilter} />
           ) : activeFrame.id === "global-filter" ? (
             <GlobalFilterFrame />
           ) : activeFrame.id === "market-sentiment" ? (
@@ -2314,6 +2325,8 @@ function ColumnSplitter({
     <div
       role="separator"
       aria-orientation="vertical"
+      aria-label="拖动调整列宽"
+      title="拖动调整列宽"
       onMouseDown={onMouseDown}
       className="group relative h-full cursor-col-resize bg-transparent transition-colors hover:bg-[rgba(231,53,58,0.18)]"
       style={{ width: "100%", minWidth: 6 }}
@@ -2327,10 +2340,12 @@ function AdaptiveEntryRail({
   entries,
   activeId,
   onOpen,
+  tenorFilter,
 }: {
   entries: readonly ModuleEntryConfig[];
   activeId: ModuleEntryId | null;
   onOpen: (entry: ModuleEntryConfig, options?: FrameOpenOptions) => void;
+  tenorFilter: QuoteTenorFilter;
 }) {
   const railRef = useRef<HTMLElement>(null);
   const [width, setWidth] = useState(0);
@@ -2421,27 +2436,231 @@ function AdaptiveEntryRail({
                       entry={entry}
                       active={entry.id === activeId}
                       displayMode={groupedDisplayMode}
+                      tenorFilter={tenorFilter}
                       onOpen={(options) => onOpen(entry, options)}
                     />
                   ))}
               </div>
             ))
           ) : (
-            <div className="grid h-full min-h-0 grid-rows-[repeat(4,minmax(0,1fr))] gap-2">
-              {entries.map((entry) => (
-                <ModuleEntryItem
-                  key={entry.id}
-                  entry={entry}
-                  active={entry.id === activeId}
-                  displayMode={displayMode}
-                  onOpen={(options) => onOpen(entry, options)}
-                />
-              ))}
-            </div>
+            <ResizableEntryStack
+              entries={entries}
+              activeId={activeId}
+              displayMode={displayMode}
+              tenorFilter={tenorFilter}
+              onOpen={onOpen}
+            />
           )}
         </div>
       </div>
     </aside>
+  );
+}
+
+const LEFT_ENTRY_HEIGHTS_KEY = "leftEntryHeights.v1";
+const MIN_LEFT_ENTRY_HEIGHT = 12;
+
+function normalizeEntryHeights(values: readonly number[], count: number) {
+  const fallback = Array.from({ length: count }, () => 100 / count);
+  if (
+    values.length !== count ||
+    values.some((value) => !Number.isFinite(value) || value <= 0)
+  ) {
+    return fallback;
+  }
+  const total = values.reduce((sum, value) => sum + value, 0);
+  if (total <= 0) return fallback;
+  return values.map((value) => (value / total) * 100);
+}
+
+function ResizableEntryStack({
+  entries,
+  activeId,
+  displayMode,
+  tenorFilter,
+  onOpen,
+}: {
+  entries: readonly ModuleEntryConfig[];
+  activeId: ModuleEntryId | null;
+  displayMode: EntryDisplayMode;
+  tenorFilter: QuoteTenorFilter;
+  onOpen: (entry: ModuleEntryConfig, options?: FrameOpenOptions) => void;
+}) {
+  const stackRef = useRef<HTMLDivElement>(null);
+  const [collapsedIds, setCollapsedIds] = useState<ReadonlySet<ModuleEntryId>>(
+    () => new Set(),
+  );
+  const [heights, setHeights] = useState<number[]>(() => {
+    if (typeof window === "undefined") {
+      return normalizeEntryHeights([], entries.length);
+    }
+    try {
+      const raw = window.localStorage.getItem(LEFT_ENTRY_HEIGHTS_KEY);
+      return normalizeEntryHeights(raw ? JSON.parse(raw) : [], entries.length);
+    } catch {
+      return normalizeEntryHeights([], entries.length);
+    }
+  });
+
+  useEffect(() => {
+    setHeights((current) => normalizeEntryHeights(current, entries.length));
+  }, [entries.length]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(LEFT_ENTRY_HEIGHTS_KEY, JSON.stringify(heights));
+    } catch {
+      /* ignore */
+    }
+  }, [heights]);
+
+  function startResize(event: React.MouseEvent<HTMLDivElement>, index: number) {
+    event.preventDefault();
+    const stack = stackRef.current;
+    if (!stack) return;
+    const startY = event.clientY;
+    const startHeights = [...heights];
+    const totalHeight = stack.getBoundingClientRect().height;
+    if (totalHeight <= 0) return;
+
+    function onMove(ev: MouseEvent) {
+      const delta = ((ev.clientY - startY) / totalHeight) * 100;
+      const before = startHeights[index] + delta;
+      const after = startHeights[index + 1] - delta;
+      if (before < MIN_LEFT_ENTRY_HEIGHT || after < MIN_LEFT_ENTRY_HEIGHT) {
+        return;
+      }
+      const next = [...startHeights];
+      next[index] = before;
+      next[index + 1] = after;
+      setHeights(normalizeEntryHeights(next, entries.length));
+    }
+
+    function onUp() {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    }
+
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "row-resize";
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }
+
+  function toggleCollapsed(id: ModuleEntryId) {
+    setCollapsedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  return (
+    <div ref={stackRef} className="flex h-full min-h-0 flex-col overflow-y-auto pr-1">
+      {entries.map((entry, index) => {
+        const collapsed = collapsedIds.has(entry.id);
+        const Icon = entry.icon;
+
+        return (
+        <Fragment key={entry.id}>
+          <div
+            className={`group/entry relative min-h-0 ${collapsed ? "rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]" : ""}`}
+            style={{
+              flex: collapsed
+                ? "0 0 38px"
+                : `0 0 ${heights[index] ?? 100 / entries.length}%`,
+            }}
+          >
+            {collapsed ? (
+              <button
+                className="flex h-full w-full min-w-0 items-center gap-2 px-2.5 text-left text-xs text-slate-300 hover:text-slate-100"
+                type="button"
+                aria-expanded={false}
+                onClick={() => toggleCollapsed(entry.id)}
+              >
+                <Icon size={14} className="shrink-0 text-[color:var(--tk-color-text-inverse-secondary)]" />
+                <span className="min-w-0 flex-1 truncate font-semibold">{entry.title}</span>
+                <ChevronDown size={14} className="shrink-0 text-slate-500" />
+              </button>
+            ) : (
+              <>
+                <div className="absolute right-1.5 top-1.5 z-30 opacity-70 transition-opacity group-hover/entry:opacity-100">
+                  <button
+                    className="inline-flex h-5 w-5 items-center justify-center rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] text-slate-400 hover:text-slate-100"
+                    type="button"
+                    aria-expanded={true}
+                    aria-label={`折叠${entry.title}`}
+                    title="折叠"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      toggleCollapsed(entry.id);
+                    }}
+                  >
+                    <ChevronUp size={13} />
+                  </button>
+                </div>
+                <ModuleEntryItem
+                  entry={entry}
+                  active={entry.id === activeId}
+                  displayMode={displayMode}
+                  tenorFilter={tenorFilter}
+                  onOpen={(options) => onOpen(entry, options)}
+                />
+              </>
+            )}
+          </div>
+          {index < entries.length - 1 ? (
+            <div
+              role="separator"
+              aria-orientation="horizontal"
+              aria-label="调整左侧组件高度"
+              title="拖动调整高度"
+              className="group relative my-0.5 h-2 shrink-0 cursor-row-resize rounded bg-transparent transition-colors hover:bg-[rgba(231,53,58,0.18)]"
+              onMouseDown={(event) => startResize(event, index)}
+            >
+              <GripHorizontal className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-slate-600 group-hover:text-red-200" size={18} />
+            </div>
+          ) : null}
+        </Fragment>
+        );
+      })}
+    </div>
+  );
+}
+
+function RailTenorFilter({
+  compact,
+  value,
+  onChange,
+}: {
+  compact?: boolean;
+  value: QuoteTenorFilter;
+  onChange: (tenor: QuoteTenorFilter) => void;
+}) {
+  const options: readonly QuoteTenorFilter[] = ["all", ...QUOTE_TENOR_OPTIONS];
+
+  return (
+    <div
+      className={`mt-2 flex min-w-0 gap-1 ${
+        compact ? "flex-wrap" : "flex-nowrap overflow-x-auto"
+      }`}
+      aria-label="左侧期限筛选"
+    >
+      {options.map((tenor) => (
+        <button
+          key={tenor}
+          className={miniChipClass(value === tenor)}
+          onClick={() => onChange(tenor)}
+          type="button"
+          title={tenor === "all" ? "全部期限" : tenor}
+        >
+          {tenor === "all" ? "全部" : tenor}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -2454,14 +2673,96 @@ function NarrowRailSummary({
   activeId: ModuleEntryId | null;
   onOpen: (entry: ModuleEntryConfig, options?: FrameOpenOptions) => void;
 }) {
+  const items = narrowRailSummaryItems
+    .map((item) => ({
+      item,
+      entry: entries.find((candidate) => candidate.id === item.id),
+    }))
+    .filter((pair): pair is { item: NarrowRailSummaryItem; entry: ModuleEntryConfig } =>
+      Boolean(pair.entry),
+    );
+  const stackRef = useRef<HTMLDivElement>(null);
   const [institutionPeriod, setInstitutionPeriod] = useState<CfetsInstPeriod>("R001");
-  const [institutionMetric, setInstitutionMetric] = useState<CfetsMetricKey>("buyBalance");
+  const [institutionMetric, setInstitutionMetric] = useState<CfetsMetricKey>("buyAmt");
+  const [inlineXrepoContract, setInlineXrepoContract] = useState<string | null>(null);
+  const [collapsedIds, setCollapsedIds] = useState<ReadonlySet<ModuleEntryId>>(
+    () => new Set(),
+  );
+  const [heights, setHeights] = useState<number[]>(() => {
+    if (typeof window === "undefined") {
+      return normalizeEntryHeights([], items.length);
+    }
+    try {
+      const raw = window.localStorage.getItem("leftNarrowEntryHeights.v1");
+      return normalizeEntryHeights(raw ? JSON.parse(raw) : [], items.length);
+    } catch {
+      return normalizeEntryHeights([], items.length);
+    }
+  });
+
+  useEffect(() => {
+    setHeights((current) => normalizeEntryHeights(current, items.length));
+  }, [items.length]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("leftNarrowEntryHeights.v1", JSON.stringify(heights));
+    } catch {
+      /* ignore */
+    }
+  }, [heights]);
+
+  function startResize(event: React.MouseEvent<HTMLDivElement>, index: number) {
+    event.preventDefault();
+    const stack = stackRef.current;
+    if (!stack) return;
+    const startY = event.clientY;
+    const startHeights = [...heights];
+    const totalHeight = stack.getBoundingClientRect().height;
+    if (totalHeight <= 0) return;
+
+    function onMove(ev: MouseEvent) {
+      const delta = ((ev.clientY - startY) / totalHeight) * 100;
+      const before = startHeights[index] + delta;
+      const after = startHeights[index + 1] - delta;
+      if (before < MIN_LEFT_ENTRY_HEIGHT || after < MIN_LEFT_ENTRY_HEIGHT) {
+        return;
+      }
+      const next = [...startHeights];
+      next[index] = before;
+      next[index + 1] = after;
+      setHeights(normalizeEntryHeights(next, items.length));
+    }
+
+    function onUp() {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    }
+
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "row-resize";
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }
+
+  function toggleCollapsed(id: ModuleEntryId) {
+    setCollapsedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   return (
-    <div className="grid h-full min-h-0 grid-rows-[repeat(4,minmax(0,1fr))] gap-2">
-      {narrowRailSummaryItems.map((item) => {
-        const entry = entries.find((candidate) => candidate.id === item.id);
-        if (!entry) return null;
+    <div ref={stackRef} className="flex h-full min-h-0 flex-col overflow-y-auto pr-1">
+      {items.map(({ item, entry }, index) => {
         const isInstitution = item.id === "institution-period";
+        const isXrepo = item.id === "xrepo";
+        const collapsed = collapsedIds.has(item.id);
+        const Icon = entry.icon;
         const institutionMetricDef = cfetsMetricDefs.find(
           (metric) => metric.key === institutionMetric,
         );
@@ -2503,14 +2804,45 @@ function NarrowRailSummary({
           </>
         );
 
-        if (isInstitution) {
+        let content: ReactNode;
+
+        if (isXrepo) {
+          if (inlineXrepoContract) {
+            content = (
+              <div
+                className={`h-full min-h-0 w-full min-w-0 overflow-hidden rounded border transition-colors ${
+                  activeId === item.id
+                    ? "tk-selected"
+                    : "border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]"
+                }`}
+              >
+                <XrepoHistoryBack
+                  compact
+                  contractName={inlineXrepoContract}
+                  onBack={() => setInlineXrepoContract(null)}
+                />
+              </div>
+            );
+          } else {
+            content = (
+              <button
+                type="button"
+                aria-label={item.label}
+                onClick={() => setInlineXrepoContract("R001")}
+                className={`${cardClassName} h-full`}
+              >
+                {summary}
+              </button>
+            );
+          }
+        } else if (isInstitution) {
           const openInstitutionFrame = () =>
             onOpen(entry, {
               cfetsPeriod: institutionPeriod,
               cfetsMetric: institutionMetric,
             });
-          return (
-            <div key={item.id} className={cardClassName}>
+          content = (
+            <div className={`${cardClassName} h-full`}>
               <button
                 type="button"
                 aria-label={item.label}
@@ -2552,18 +2884,74 @@ function NarrowRailSummary({
               </div>
             </div>
           );
+        } else {
+          content = (
+            <button
+              type="button"
+              aria-label={item.label}
+              onClick={() => onOpen(entry)}
+              className={`${cardClassName} h-full`}
+            >
+              {summary}
+            </button>
+          );
         }
 
         return (
-          <button
-            key={item.id}
-            type="button"
-            aria-label={item.label}
-            onClick={() => onOpen(entry)}
-            className={cardClassName}
-          >
-            {summary}
-          </button>
+          <Fragment key={item.id}>
+            <div
+              className={`group/entry relative min-h-0 ${collapsed ? "rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]" : ""}`}
+              style={{
+                flex: collapsed
+                  ? "0 0 38px"
+                  : `0 0 ${heights[index] ?? 100 / items.length}%`,
+              }}
+            >
+              {collapsed ? (
+                <button
+                  className="flex h-full w-full min-w-0 items-center gap-2 px-2.5 text-left text-xs text-slate-300 hover:text-slate-100"
+                  type="button"
+                  aria-expanded={false}
+                  onClick={() => toggleCollapsed(item.id)}
+                >
+                  <Icon size={14} className="shrink-0 text-[color:var(--tk-color-text-inverse-secondary)]" />
+                  <span className="min-w-0 flex-1 truncate font-semibold">{item.label}</span>
+                  <ChevronDown size={14} className="shrink-0 text-slate-500" />
+                </button>
+              ) : (
+                <>
+                  <div className="absolute right-1.5 top-1.5 z-30 opacity-70 transition-opacity group-hover/entry:opacity-100">
+                    <button
+                      className="inline-flex h-5 w-5 items-center justify-center rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] text-slate-400 hover:text-slate-100"
+                      type="button"
+                      aria-expanded={true}
+                      aria-label={`折叠${item.label}`}
+                      title="折叠"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        toggleCollapsed(item.id);
+                      }}
+                    >
+                      <ChevronUp size={13} />
+                    </button>
+                  </div>
+                  {content}
+                </>
+              )}
+            </div>
+            {index < items.length - 1 ? (
+              <div
+                role="separator"
+                aria-orientation="horizontal"
+                aria-label="调整左侧组件高度"
+                title="拖动调整高度"
+                className="group relative my-0.5 h-2 shrink-0 cursor-row-resize rounded bg-transparent transition-colors hover:bg-[rgba(231,53,58,0.18)]"
+                onMouseDown={(event) => startResize(event, index)}
+              >
+                <GripHorizontal className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-slate-600 group-hover:text-red-200" size={18} />
+              </div>
+            ) : null}
+          </Fragment>
         );
       })}
     </div>
@@ -2667,15 +3055,17 @@ function ModuleEntryItem({
   entry,
   active,
   displayMode,
+  tenorFilter = "all",
   onOpen,
 }: {
   entry: ModuleEntryConfig;
   active: boolean;
   displayMode: EntryDisplayMode;
+  tenorFilter?: QuoteTenorFilter;
   onOpen: (options?: FrameOpenOptions) => void;
 }) {
   const Icon = entry.icon;
-  const metric = getModuleEntryData(entry.id);
+  const metric = getModuleEntryData(entry.id, tenorFilter);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
 
@@ -2700,7 +3090,11 @@ function ModuleEntryItem({
               : "tk-chip"
           }`}
         >
-          <ModuleEntryPreview id={entry.id} onOpen={onOpen} />
+          <ModuleEntryPreview
+            id={entry.id}
+            tenorFilter={tenorFilter}
+            onOpen={onOpen}
+          />
         </div>
       );
     }
@@ -2741,7 +3135,7 @@ function ModuleEntryItem({
           </div>
         </button>
         <div className="flex-1 min-h-0 border-t border-[color:var(--tk-color-border-divider)] p-2">
-          <ModuleEntryPreview id={entry.id} />
+          <ModuleEntryPreview id={entry.id} tenorFilter={tenorFilter} />
         </div>
       </div>
     );
@@ -2804,16 +3198,24 @@ function ModuleEntryItem({
           ) : null}
         </div>
         {displayMode === "summary" ? (
-          <ModuleSummaryOverview id={entry.id} metric={metric} />
+          <ModuleSummaryOverview
+            id={entry.id}
+            metric={metric}
+            tenorFilter={tenorFilter}
+          />
         ) : null}
         {displayMode === "wide-preview" ? (
           <div className="mt-2 border-t border-[color:var(--tk-color-border-divider-dark)] pt-2">
-            <ModuleEntryPreview id={entry.id} />
+            <ModuleEntryPreview id={entry.id} tenorFilter={tenorFilter} />
           </div>
         ) : null}
       </button>
       {anchorRect ? (
-        <EntryPreviewPopover anchorRect={anchorRect} entry={entry} />
+        <EntryPreviewPopover
+          anchorRect={anchorRect}
+          entry={entry}
+          tenorFilter={tenorFilter}
+        />
       ) : null}
     </>
   );
@@ -2867,11 +3269,13 @@ function OverviewStat({
 function ModuleSummaryOverview({
   id,
   metric,
+  tenorFilter,
 }: {
   id: ModuleEntryId;
   metric: ModuleEntryMetric;
+  tenorFilter: QuoteTenorFilter;
 }) {
-  if (id === "xrepo") return <XrepoSummaryOverview />;
+  if (id === "xrepo") return <XrepoSummaryOverview tenorFilter={tenorFilter} />;
 
   return (
     <div className="mt-2 space-y-2 border-t border-[color:var(--tk-color-border-divider-dark)] pt-2">
@@ -2929,12 +3333,16 @@ function ModuleSummaryOverview({
   );
 }
 
-function XrepoSummaryOverview() {
+function XrepoSummaryOverview({
+  tenorFilter,
+}: {
+  tenorFilter: QuoteTenorFilter;
+}) {
   const section = leftSections.find(
     (item): item is SummaryTableSection =>
       item.layout === "table" && item.title === "XREPO",
   );
-  const rows = xrepoR001Rows(section?.rows ?? []).slice(0, 5);
+  const rows = filterRowsByQuoteTenor(section?.rows ?? [], tenorFilter, [0]).slice(0, 5);
 
   return (
     <div className="mt-2 border-t border-[color:var(--tk-color-border-divider-dark)] pt-2">
@@ -2946,7 +3354,7 @@ function XrepoSummaryOverview() {
           <span className="truncate text-right">逆利率</span>
           <span className="truncate text-right">逆量</span>
         </div>
-        {rows.map((row, index) => (
+        {rows.length ? rows.map((row, index) => (
           <div
             key={`${row[0]}-${index}`}
             className={`grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] items-center gap-1 border-b border-[color:var(--tk-color-border-divider-dark)] px-2 py-1 text-[10px] last:border-b-0 ${
@@ -2969,7 +3377,11 @@ function XrepoSummaryOverview() {
               {row[4]}
             </span>
           </div>
-        ))}
+        )) : (
+          <div className="px-2 py-3 text-center text-[10px] text-slate-500">
+            当前期限暂无报价
+          </div>
+        )}
       </div>
     </div>
   );
@@ -3034,29 +3446,74 @@ function overviewToneClass(tone: OverviewTone) {
   return "text-[color:var(--tdx-yellow)]";
 }
 
-function getModuleEntryData(id: ModuleEntryId): ModuleEntryMetric {
+function quoteTenorSuffix(tenor: QuoteTenorFilter) {
+  return tenor === "all" ? null : tenor.replace(/^R/, "");
+}
+
+function quoteTenorToBankTenor(tenor: QuoteTenorFilter): BankTenor | null {
+  if (tenor === "R001") return "ON";
+  if (tenor === "R007") return "7D";
+  return null;
+}
+
+function quoteTenorToNcdPeriod(tenor: QuoteTenorFilter): NcdPeriod {
+  if (tenor === "R007") return "3M";
+  if (tenor === "R014") return "6M";
+  if (tenor === "R021") return "9M";
+  if (tenor === "R028") return "1Y";
+  return "1M";
+}
+
+function textMatchesQuoteTenor(text: string, tenor: QuoteTenorFilter) {
+  const suffix = quoteTenorSuffix(tenor);
+  if (!suffix) return true;
+  const normalized = text.replace(/[-_\s]/g, "").toUpperCase();
+  return normalized.includes(suffix);
+}
+
+function filterRowsByQuoteTenor<T extends readonly string[]>(
+  rows: readonly T[],
+  tenor: QuoteTenorFilter,
+  columns: readonly number[],
+) {
+  if (tenor === "all") return [...rows];
+  return rows.filter((row) =>
+    columns.some((column) => textMatchesQuoteTenor(row[column] ?? "", tenor)),
+  );
+}
+
+function getModuleEntryData(
+  id: ModuleEntryId,
+  tenorFilter: QuoteTenorFilter = "all",
+): ModuleEntryMetric {
   if (id === "big-bank-price") {
-    const on = initialBankRateRows.find(
-      (row) => row.institution === "工商银行" && row.tenor === "ON",
+    const rows = initialBankRateRows.filter(
+      (row) => row.institution === "工商银行",
     );
-    const seven = initialBankRateRows.find(
-      (row) => row.institution === "工商银行" && row.tenor === "7D",
-    );
+    const on = rows.find((row) => row.tenor === "ON");
+    const seven = rows.find((row) => row.tenor === "7D");
     return {
       summary: `ON 非银 ${on?.nonBankRate ?? "-"} / 银行 ${on?.bankRate ?? "-"} · 7D ${seven?.nonBankRate ?? "-"}`,
       badge: on?.updatedAt.slice(0, 5) ?? "实时",
-      rows: [
-        ["工商 ON", `非银 ${on?.nonBankRate ?? "-"} / 银行 ${on?.bankRate ?? "-"}`],
-        ["工商 7D", `非银 ${seven?.nonBankRate ?? "-"} / 银行 ${seven?.bankRate ?? "-"}`],
+      rows: rows.length ? rows.map((row) => [
+        `工商 ${BANK_TENOR_LABEL[row.tenor]}`,
+        `非银 ${row.nonBankRate || "-"} / 银行 ${row.bankRate || "-"}`,
+      ]) : [
+        ["大行", "暂无数据"],
       ],
-      chips: [
-        { label: "ON", value: on?.nonBankRate ?? "-", tone: "good" },
-        { label: "7D", value: seven?.nonBankRate ?? "-", tone: "good" },
-        { label: "银行", value: on?.bankRate ?? "-", tone: "alert" },
+      chips: rows.length ? rows.map((row) => ({
+        label: BANK_TENOR_LABEL[row.tenor],
+        value: row.nonBankRate || "-",
+        tone: "good" as const,
+      })).slice(0, 3) : [
+        { label: "大行", value: "暂无", tone: "muted" as const },
       ],
-      detailRows: [
-        ["工商 ON", on?.nonBankRate ?? "-", `银行 ${on?.bankRate ?? "-"}`],
-        ["工商 7D", seven?.nonBankRate ?? "-", `银行 ${seven?.bankRate ?? "-"}`],
+      detailRows: rows.length ? rows.map((row) => [
+        `工商 ${BANK_TENOR_LABEL[row.tenor]}`,
+        row.nonBankRate || "-",
+        `银行 ${row.bankRate || "-"}`,
+      ]) : [
+        ["大行", "暂无数据"],
       ],
     };
   }
@@ -3066,70 +3523,114 @@ function getModuleEntryData(id: ModuleEntryId): ModuleEntryMetric {
       (item): item is SummaryTableSection =>
         item.layout === "table" && item.title === "XREPO",
     );
-    const r001Rows = xrepoR001Rows(section?.rows ?? []);
-    const r001 = r001Rows[0];
-    const mini = r001Rows.find((row) => row[0]?.includes("mini"));
+    const rows = filterRowsByQuoteTenor(section?.rows ?? [], tenorFilter, [0]);
+    const first = rows[0];
+    const mini = rows.find((row) => row[0]?.includes("mini"));
+    const label = tenorFilter === "all" ? first?.[0] ?? "XREPO" : tenorFilter;
     return {
-      summary: r001
-        ? `R001 正 ${r001[1]}@${r001[2]} · 逆 ${r001[4]}@${r001[3]}`
-        : "R001 相关报价待更新",
-      badge: "R001",
-      rows: [
-        ["R001", r001 ? `正 ${r001[1]}@${r001[2]} / 逆 ${r001[4]}@${r001[3]}` : "-"],
-        ["R001-mini", mini ? `正 ${mini[1]}@${mini[2]} / 逆 ${mini[4]}@${mini[3]}` : "-"],
+      summary: first
+        ? `${label} 正 ${first[1]}@${first[2]} · 逆 ${first[4]}@${first[3]}`
+        : `${label} 相关报价待更新`,
+      badge: label,
+      rows: rows.length ? [
+        [label, first ? `正 ${first[1]}@${first[2]} / 逆 ${first[4]}@${first[3]}` : "-"],
+        [mini?.[0] ?? `${label}-mini`, mini ? `正 ${mini[1]}@${mini[2]} / 逆 ${mini[4]}@${mini[3]}` : "-"],
+      ] : [
+        [label, "暂无报价"],
       ],
       chips: [
-        { label: "正利率", value: r001?.[2] ?? "-", tone: "alert" },
-        { label: "逆利率", value: r001?.[3] ?? "-", tone: "good" },
-        { label: "逆量", value: r001?.[4] ?? "-", tone: "neutral" },
+        { label: "正利率", value: first?.[2] ?? "-", tone: "alert" },
+        { label: "逆利率", value: first?.[3] ?? "-", tone: "good" },
+        { label: "逆量", value: first?.[4] ?? "-", tone: "neutral" },
       ],
-      detailRows: [
-        ["R001", r001 ? `正 ${r001[1]} / 逆 ${r001[4]}` : "-", r001 ? `${r001[2]} / ${r001[3]}` : undefined],
-        ["R001-mini", mini ? `正 ${mini[1]} / 逆 ${mini[4]}` : "-", mini ? `${mini[2]} / ${mini[3]}` : undefined],
+      detailRows: rows.length ? [
+        [label, first ? `正 ${first[1]} / 逆 ${first[4]}` : "-", first ? `${first[2]} / ${first[3]}` : undefined],
+        [mini?.[0] ?? `${label}-mini`, mini ? `正 ${mini[1]} / 逆 ${mini[4]}` : "-", mini ? `${mini[2]} / ${mini[3]}` : undefined],
+      ] : [
+        [label, "暂无报价"],
       ],
     };
   }
 
   if (id === "exchange-repo") {
+    const section = leftSections.find(
+      (item): item is ExchangeMarketSplitSection => item.layout === "exchange-split",
+    );
+    const rows = filterRowsByQuoteTenor(
+      section?.markets.flatMap((market) => market.rows) ?? [],
+      tenorFilter,
+      [1],
+    );
+    const first = rows[0];
+    const second = rows[1];
+    const label = tenorFilter === "all" ? "双市" : tenorFilter;
     return {
-      summary: "GC001 1.3700(-1.00bp) · R-001 1.3900(-1.50bp)",
-      badge: "双市",
-      rows: [
-        ["上交所 GC001", "1.3700 / -1.00bp"],
-        ["深交所 R-001", "1.3900 / -1.50bp"],
+      summary: first
+        ? `${first[1]} ${first[2]}(${first[3]}bp)${second ? ` · ${second[1]} ${second[2]}(${second[3]}bp)` : ""}`
+        : `${label} 暂无交易所行情`,
+      badge: label,
+      rows: rows.length ? rows.slice(0, 3).map((row) => [
+        row[1],
+        `${row[2]} / ${row[3]}bp`,
+      ]) : [
+        [label, "暂无数据"],
       ],
-      chips: [
-        { label: "GC001", value: "1.3700", tone: "good" },
-        { label: "R-001", value: "1.3900", tone: "good" },
-        { label: "变动", value: "-1.00bp", tone: "good" },
+      chips: rows.length ? rows.slice(0, 3).map((row) => ({
+        label: row[1],
+        value: row[2],
+        tone: "good" as const,
+      })) : [
+        { label, value: "暂无", tone: "muted" as const },
       ],
-      detailRows: [
-        ["上交所", "GC001 1.3700", "-1.00bp"],
-        ["深交所", "R-001 1.3900", "-1.50bp"],
+      detailRows: rows.length ? rows.slice(0, 2).map((row) => [
+        row[1].startsWith("GC") ? "上交所" : "深交所",
+        `${row[1]} ${row[2]}`,
+        `${row[3]}bp`,
+      ]) : [
+        [label, "暂无数据"],
       ],
     };
   }
 
   if (id === "ncd") {
+    const ncdPeriod = quoteTenorToNcdPeriod(tenorFilter);
+    const periodIndex = ncdPrimaryPeriods.indexOf(ncdPeriod as NcdPeriod);
     const oneMonth = ncdTrendSeries.at(-1) ?? 0;
     const threeMonth = ncdThreeMonthSeries.at(-1) ?? 0;
     const oneYear = ncdOneYearSeries.at(-1) ?? 0;
+    const mappedValue =
+      ncdPeriod === "1M"
+        ? oneMonth
+        : ncdPeriod === "3M"
+          ? threeMonth
+          : ncdPeriod === "1Y"
+            ? oneYear
+            : oneMonth + Math.max(periodIndex, 0) * 0.025;
     return {
-      summary: `1M ${oneMonth.toFixed(3)}% · 3M ${threeMonth.toFixed(3)}% · 1Y ${oneYear.toFixed(3)}%`,
-      badge: "近14日",
-      rows: [
+      summary:
+        tenorFilter === "all"
+          ? `1M ${oneMonth.toFixed(3)}% · 3M ${threeMonth.toFixed(3)}% · 1Y ${oneYear.toFixed(3)}%`
+          : `${tenorFilter} 映射 ${ncdPeriod} ${mappedValue.toFixed(3)}%`,
+      badge: tenorFilter === "all" ? "近14日" : ncdPeriod,
+      rows: tenorFilter === "all" ? [
         ["1M", `${oneMonth.toFixed(3)}%`],
         ["3M", `${threeMonth.toFixed(3)}%`],
         ["1Y", `${oneYear.toFixed(3)}%`],
+      ] : [
+        [ncdPeriod, `${mappedValue.toFixed(3)}%`],
+        ["映射筛选", tenorFilter],
       ],
-      chips: [
+      chips: tenorFilter === "all" ? [
         { label: "1M", value: `${oneMonth.toFixed(3)}%`, tone: "neutral" },
         { label: "3M", value: `${threeMonth.toFixed(3)}%`, tone: "neutral" },
         { label: "1Y", value: `${oneYear.toFixed(3)}%`, tone: "neutral" },
+      ] : [
+        { label: ncdPeriod, value: `${mappedValue.toFixed(3)}%`, tone: "neutral" },
+        { label: "口径", value: "一级", tone: "muted" },
       ],
       trendValues: ncdTrendSeries,
       trendColor: chartPalette.amber,
-      trendLabel: "一级 1M",
+      trendLabel: `一级 ${ncdPeriod}`,
     };
   }
 
@@ -3243,12 +3744,14 @@ function getModuleEntryData(id: ModuleEntryId): ModuleEntryMetric {
 function EntryPreviewPopover({
   anchorRect,
   entry,
+  tenorFilter = "all",
 }: {
   anchorRect: DOMRect;
   entry: ModuleEntryConfig;
+  tenorFilter?: QuoteTenorFilter;
 }) {
   const Icon = entry.icon;
-  const metric = getModuleEntryData(entry.id);
+  const metric = getModuleEntryData(entry.id, tenorFilter);
   const width = 260;
   const gap = 8;
   const canOpenRight = anchorRect.right + gap + width <= window.innerWidth - 8;
@@ -3296,13 +3799,15 @@ function IntegratedPreviewHeader({
   id,
   onOpen,
   actions,
+  tenorFilter = "all",
 }: {
   id: ModuleEntryId;
   onOpen?: (options?: FrameOpenOptions) => void;
   actions?: ReactNode;
+  tenorFilter?: QuoteTenorFilter;
 }) {
   const entry = moduleEntries.find((item) => item.id === id);
-  const metric = getModuleEntryData(id);
+  const metric = getModuleEntryData(id, tenorFilter);
   if (!entry) return null;
   const Icon = entry.icon;
 
@@ -3338,15 +3843,20 @@ function IntegratedPreviewHeader({
 
 function ModuleEntryPreview({
   id,
+  tenorFilter = "all",
   onOpen,
 }: {
   id: ModuleEntryId;
+  tenorFilter?: QuoteTenorFilter;
   onOpen?: (options?: FrameOpenOptions) => void;
 }) {
   if (id === "big-bank-price") {
     return (
       <RichPreviewFrame autoHeight>
-        <BigBankPriceFrame embeddedPreview onOpen={onOpen} />
+        <BigBankPriceFrame
+          embeddedPreview
+          onOpen={onOpen}
+        />
       </RichPreviewFrame>
     );
   }
@@ -3354,7 +3864,11 @@ function ModuleEntryPreview({
   if (id === "xrepo") {
     return (
       <RichPreviewFrame autoHeight>
-        <XrepoFrame embeddedPreview onOpen={onOpen} />
+        <XrepoFrame
+          embeddedPreview
+          tenorFilter={tenorFilter}
+          onOpen={onOpen}
+        />
       </RichPreviewFrame>
     );
   }
@@ -3362,7 +3876,11 @@ function ModuleEntryPreview({
   if (id === "exchange-repo") {
     return (
       <RichPreviewFrame autoHeight>
-        <ExchangeRepoFrame embeddedPreview onOpen={onOpen} />
+        <ExchangeRepoFrame
+          embeddedPreview
+          tenorFilter={tenorFilter}
+          onOpen={onOpen}
+        />
       </RichPreviewFrame>
     );
   }
@@ -3370,7 +3888,11 @@ function ModuleEntryPreview({
   if (id === "ncd") {
     return (
       <RichPreviewFrame autoHeight>
-        <LeftNcdCard embeddedPreview onOpen={onOpen} />
+        <LeftNcdCard
+          embeddedPreview
+          tenorFilter={tenorFilter}
+          onOpen={onOpen}
+        />
       </RichPreviewFrame>
     );
   }
@@ -3450,7 +3972,7 @@ function InstitutionPeriodEntryPreview({
   onOpen?: (options?: FrameOpenOptions) => void;
 }) {
   const [period, setPeriod] = useState<CfetsInstPeriod>("R001");
-  const [metricKey, setMetricKey] = useState<CfetsMetricKey>("buyBalance");
+  const [metricKey, setMetricKey] = useState<CfetsMetricKey>("buyAmt");
   const metric = cfetsMetricDefs.find((item) => item.key === metricKey);
   const openWithCurrentFilters = () =>
     onOpen?.({ cfetsPeriod: period, cfetsMetric: metricKey });
@@ -3636,6 +4158,268 @@ function MiniSparklinePreview({
   );
 }
 
+function MiniInstitutionSeriesPreview({
+  label,
+  series,
+  xLabels,
+  chartType,
+  unit,
+  footnote,
+}: {
+  label: string;
+  series: Array<{ key: string; label: string; color: string; values: readonly number[] }>;
+  xLabels?: readonly string[];
+  chartType: "line" | "stackedBar" | "divergeBar";
+  unit: string;
+  footnote: string;
+}) {
+  const [hiddenKeys, setHiddenKeys] = useState<ReadonlySet<string>>(
+    () => new Set<string>(),
+  );
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [chartSize, setChartSize] = useState({ width: 260, height: 120 });
+  const visibleSeries = series.filter((item) => !hiddenKeys.has(item.key));
+  const plottedSeries = visibleSeries.length ? visibleSeries : series;
+  const showAsStackedBars = chartType !== "line";
+  const dailyTotals = (plottedSeries[0]?.values ?? []).map((_, index) =>
+    plottedSeries.reduce((sum, item) => sum + Math.max(0, item.values[index] ?? 0), 0),
+  );
+  const allValues = showAsStackedBars
+    ? dailyTotals.filter((value) => value > 0)
+    : plottedSeries.flatMap((item) => item.values).filter((value) => value > 0);
+  const min = showAsStackedBars ? 0 : allValues.length ? Math.min(...allValues) : 0;
+  const max = allValues.length ? Math.max(...allValues) : 1;
+  const range = max - min || 1;
+  const width = Math.max(220, Math.round(chartSize.width));
+  const height = Math.max(120, Math.round(chartSize.height));
+  const plotLeft = unit === "%" ? 40 : 36;
+  const plotRight = 8;
+  const plotTop = 8;
+  const plotBottom = 22;
+  const plotWidth = width - plotLeft - plotRight;
+  const plotHeight = height - plotTop - plotBottom;
+  const yAxisLabels = buildAxisLabels(min, max, 4);
+  const pointCount = plottedSeries[0]?.values.length ?? 1;
+  const xLabelIndexes = [0, Math.floor(pointCount / 2), Math.max(pointCount - 1, 0)];
+  const latestIndex = Math.max(pointCount - 1, 0);
+  const topSeries = plottedSeries
+    .map((item) => ({
+      ...item,
+      latest: Math.max(0, item.values[latestIndex] ?? 0),
+    }))
+    .filter((item) => item.latest > 0)
+    .sort((a, b) => b.latest - a.latest)
+    .slice(0, 3);
+
+  useEffect(() => {
+    const node = chartRef.current;
+    if (!node || typeof ResizeObserver === "undefined") return;
+    const updateSize = () => {
+      const rect = node.getBoundingClientRect();
+      setChartSize((current) => {
+        const next = {
+          width: Math.max(220, Math.round(rect.width)),
+          height: Math.max(120, Math.round(rect.height)),
+        };
+        return current.width === next.width && current.height === next.height
+          ? current
+          : next;
+      });
+    };
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  function toggleSeries(key: string) {
+    setHiddenKeys((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  function buildPreviewPath(values: readonly number[]) {
+    return values
+      .map((value, index) => {
+        const x = plotLeft + (index / Math.max(values.length - 1, 1)) * plotWidth;
+        const y = plotTop + plotHeight - ((value - min) / range) * plotHeight;
+        return `${index === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
+      })
+      .join(" ");
+  }
+
+  return (
+    <div className="flex h-full min-w-0 flex-col overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
+      <div className="mb-1 flex items-center justify-between gap-2 text-[10px]">
+        <span className="truncate font-semibold text-slate-300">{label}</span>
+        <span className="shrink-0 font-mono text-slate-500">
+          {visibleSeries.length}/{series.length}
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-x-2 gap-y-1 pb-1 text-[9px]">
+        {series.map((item) => {
+          const hidden = hiddenKeys.has(item.key);
+          return (
+            <button
+              key={item.key}
+              className={`inline-flex items-center gap-1 whitespace-nowrap transition-opacity ${
+                hidden ? "opacity-35" : "opacity-100"
+              }`}
+              type="button"
+              title={hidden ? `显示${item.label}` : `隐藏${item.label}`}
+              onClick={() => toggleSeries(item.key)}
+            >
+              <span
+                className="h-1.5 w-3 rounded-sm"
+                style={{ backgroundColor: item.color }}
+              />
+              <span className="text-slate-400">{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_5.6rem] gap-2">
+        <div ref={chartRef} className="min-h-0">
+        <svg
+          className="h-full w-full overflow-visible"
+          viewBox={`0 0 ${width} ${height}`}
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <line
+            x1={plotLeft}
+            x2={plotLeft}
+            y1={plotTop}
+            y2={plotTop + plotHeight}
+            stroke="#263855"
+            strokeWidth="0.7"
+          />
+          <line
+            x1={plotLeft}
+            x2={plotLeft + plotWidth}
+            y1={plotTop + plotHeight}
+            y2={plotTop + plotHeight}
+            stroke="#263855"
+            strokeWidth="0.7"
+          />
+          {yAxisLabels.map((label, index) => {
+            const y = plotTop + (index / Math.max(yAxisLabels.length - 1, 1)) * plotHeight;
+            return (
+              <Fragment key={label}>
+                <line
+                  x1={plotLeft}
+                  x2={plotLeft + plotWidth}
+                  y1={y}
+                  y2={y}
+                  stroke="#1d3250"
+                  strokeWidth="0.5"
+                  opacity="0.65"
+                />
+                <text
+                  x={plotLeft - 5}
+                  y={y + 3}
+                  textAnchor="end"
+                  fontSize="8"
+                  fill="#64748b"
+                >
+                  {formatMiniChartValue(Number(label), unit)}
+                </text>
+              </Fragment>
+            );
+          })}
+          {xLabelIndexes.map((index) => {
+            const x = plotLeft + (index / Math.max(pointCount - 1, 1)) * plotWidth;
+            const axisLabel =
+              xLabels?.[index] ??
+              (index === 0 ? "起点" : index === xLabelIndexes[xLabelIndexes.length - 1] ? "最新" : "中段");
+            return (
+              <text
+                key={index}
+                x={x}
+                y={height - 5}
+                textAnchor={index === 0 ? "start" : index === xLabelIndexes[xLabelIndexes.length - 1] ? "end" : "middle"}
+                fontSize="8"
+                fill="#64748b"
+              >
+                {axisLabel}
+              </text>
+            );
+          })}
+          {showAsStackedBars ? (
+            <g>
+              {dailyTotals.map((total, dateIndex) => {
+                let stackY = plotTop + plotHeight;
+                const x =
+                  plotLeft + (dateIndex / Math.max(pointCount - 1, 1)) * plotWidth;
+                const barWidth = Math.max(4, Math.min(11, plotWidth / pointCount - 2));
+                return (
+                  <g key={dateIndex}>
+                    {plottedSeries.map((item) => {
+                      const value = Math.max(0, item.values[dateIndex] ?? 0);
+                      if (value <= 0 || total <= 0) return null;
+                      const segmentHeight = (value / max) * plotHeight;
+                      stackY -= segmentHeight;
+                      return (
+                        <rect
+                          key={item.key}
+                          x={x - barWidth / 2}
+                          y={stackY}
+                          width={barWidth}
+                          height={Math.max(0.6, segmentHeight)}
+                          fill={item.color}
+                          opacity="0.86"
+                          rx="0.9"
+                        />
+                      );
+                    })}
+                  </g>
+                );
+              })}
+            </g>
+          ) : (
+            series.map((item) =>
+              hiddenKeys.has(item.key) ? null : (
+                <path
+                  key={item.key}
+                  d={buildPreviewPath(item.values)}
+                  fill="none"
+                  stroke={item.color}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.7"
+                  opacity="0.92"
+                />
+              ),
+            )
+          )}
+        </svg>
+        </div>
+        <div className="flex min-h-0 flex-col justify-center gap-1 rounded border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.42)] px-2 py-1">
+          <div className="truncate text-[9px] text-slate-500">最新排行</div>
+          {topSeries.map((item) => (
+            <div key={item.key} className="grid grid-cols-[0.45rem_1fr] items-center gap-1">
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: item.color }}
+              />
+              <div className="min-w-0">
+                <div className="truncate text-[9px] text-slate-400">{item.label}</div>
+                <div className="truncate font-mono text-[10px] font-semibold text-slate-200">
+                  {formatMiniChartValue(item.latest, unit)}
+                  {unit === "%" ? "%" : unit}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mt-1 truncate text-[10px] text-slate-500">{footnote}</div>
+    </div>
+  );
+}
+
 function MiniMetricPreview({
   rows,
 }: {
@@ -3742,9 +4526,12 @@ function TopBar({
   currentTime: Date;
   onResetColumns: () => void;
 }) {
+  const [noticeEditorOpen, setNoticeEditorOpen] = useState(false);
+  const [tradingNotice, setTradingNotice] = useState(DEFAULT_TRADING_NOTICE_TEXT);
+
   return (
     <header className="tk-topbar border-b px-3 py-2">
-      <div className="grid grid-cols-[minmax(260px,max-content)_1fr_auto] items-center gap-3">
+      <div className="grid grid-cols-[minmax(230px,320px)_minmax(320px,1fr)_auto] items-center gap-3">
         <div className="flex items-center gap-2">
           <div className="whitespace-nowrap text-[20px] font-semibold tracking-[0] text-[color:var(--tk-color-text-inverse)]">
             资金实时行情看板
@@ -3759,14 +4546,38 @@ function TopBar({
           </button>
         </div>
         <div className="min-w-0">
-          <MiddleMatrixNoticeBar variant="inline" />
+          <MiddleMatrixNoticeBar
+            variant="inline"
+            noticeText={tradingNotice}
+            onOpenEditor={() => setNoticeEditorOpen(true)}
+          />
         </div>
         <div className="flex items-center justify-end gap-3">
-          <InfoChip label="DR007" value="2.15%" tone="alert" />
+          <TopToolMetricChip
+            label="DR007"
+            value="2.15%"
+            tone="alert"
+            title="DR007"
+            subtitle="银行间 7D 存款类机构质押式回购利率"
+            metrics={[
+              { label: "最新", value: "2.15%", tone: "alert" },
+              { label: "较昨日", value: "+1.0bp", tone: "alert" },
+              { label: "更新时间", value: "10:53:27" },
+            ]}
+          />
           <SentimentChipWithPopover />
-          <StatusBadge>平衡</StatusBadge>
+          <StatusBadgeWithPopover statusText={DEFAULT_TRADING_STATUS_TEXT} />
         </div>
       </div>
+      <TradingNoticeEditorModal
+        open={noticeEditorOpen}
+        value={tradingNotice}
+        onClose={() => setNoticeEditorOpen(false)}
+        onSave={(nextNotice) => {
+          setTradingNotice(nextNotice);
+          setNoticeEditorOpen(false);
+        }}
+      />
     </header>
   );
 }
@@ -3803,11 +4614,30 @@ function formatBpValue(value: number): string {
   return `${rounded > 0 ? "+" : ""}${text}bp`;
 }
 
+function formatDeltaValue(value: number): string {
+  const rounded = Math.round(value * 10) / 10;
+  const text = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+  return `${rounded > 0 ? "+" : ""}${text}`;
+}
+
+function rateDeltaValue(rate: string, refRate: string): string | null {
+  const current = parseRatePercent(rate);
+  const reference = parseRatePercent(refRate);
+  if (current === null || reference === null) return null;
+  return formatDeltaValue((current - reference) * 100);
+}
+
 function bankRateSpread(row: BankRateRow): string {
   const nonBankRate = parseRatePercent(row.nonBankRate);
   const bankRate = parseRatePercent(row.bankRate);
-  if (nonBankRate === null || bankRate === null) return "-";
+  if (nonBankRate === null || bankRate === null) return "--";
   return formatBpValue((bankRate - nonBankRate) * 100);
+}
+
+function rateWithDelta(rate: string, refRate: string): string {
+  const current = parseRatePercent(rate);
+  if (current === null) return "--";
+  return `${rate.trim()}(${rateDeltaValue(rate, refRate) ?? "--"})`;
 }
 
 function buildBankHistorySeries(bank: string) {
@@ -4079,14 +4909,14 @@ function BigBankPriceFrame({
   const [isBankEditorOpen, setIsBankEditorOpen] = useState(false);
 
   const rows = bankRateRows
-    .filter((row) => row.hasQuote && whitelist.includes(row.institution))
+    .filter(
+      (row) => whitelist.includes(row.institution),
+    )
     .map((row) => [
       row.institution,
       BANK_TENOR_LABEL[row.tenor],
-      row.nonBankRate,
-      row.deltaNonBankBp,
-      row.bankRate,
-      row.deltaBp,
+      rateWithDelta(row.nonBankRate, row.refNonBankRate),
+      rateWithDelta(row.bankRate, row.refBankRate),
       bankRateSpread(row),
     ]);
   function buildDraft(): BankRateRow[] {
@@ -4121,20 +4951,10 @@ function BigBankPriceFrame({
         if (rowIndex !== index) return row;
         const updated: BankRateRow = { ...row, [field]: value };
         if (field === "bankRate") {
-          const cur = parseFloat(value.replace("%", ""));
-          const ref = parseFloat(row.refBankRate.replace("%", ""));
-          if (!isNaN(cur) && !isNaN(ref)) {
-            const bp = Math.round((cur - ref) * 100 * 10) / 10;
-            updated.deltaBp = bp > 0 ? `+${bp}` : String(bp);
-          }
+          updated.deltaBp = rateDeltaValue(value, row.refBankRate) ?? "";
         }
         if (field === "nonBankRate") {
-          const cur = parseFloat(value.replace("%", ""));
-          const ref = parseFloat(row.refNonBankRate.replace("%", ""));
-          if (!isNaN(cur) && !isNaN(ref)) {
-            const bp = Math.round((cur - ref) * 100 * 10) / 10;
-            updated.deltaNonBankBp = bp > 0 ? `+${bp}` : String(bp);
-          }
+          updated.deltaNonBankBp = rateDeltaValue(value, row.refNonBankRate) ?? "";
         }
         return updated;
       }),
@@ -4248,16 +5068,14 @@ function BigBankPriceFrame({
               columns={[
                 "机构",
                 "期限",
-                "非银利率",
-                "涨跌",
-                "银行利率",
-                "涨跌",
+                "非银利率(涨跌)",
+                "银行利率(涨跌)",
                 "利差",
               ]}
               rows={rows}
               greenColumns={[2]}
-              redColumns={[4]}
-              deltaColumns={[3, 5]}
+              redColumns={[3]}
+              nowrapHeader
               fitToWidth
               flush
               adaptiveHeight={embeddedPreview}
@@ -4284,33 +5102,35 @@ function XrepoFrame({
   embeddedPreview = false,
   onOpen,
   initialContract,
+  tenorFilter = "all",
 }: {
   embeddedPreview?: boolean;
   onOpen?: () => void;
   initialContract?: string;
+  tenorFilter?: QuoteTenorFilter;
 }) {
   const [flippedContract, setFlippedContract] = useState<string | null>(initialContract ?? null);
-  const [historyRange, setHistoryRange] = useState<HistoryRange>("5d");
-  const [baseProduct, setBaseProduct] = useState<BaseTrendProduct>("r001");
-  const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
   const section = leftSections.find(
     (item): item is SummaryTableSection =>
       item.layout === "table" && item.title === "XREPO",
   );
   if (!section) return <ReservedModuleFrame />;
-  const rows = xrepoR001Rows(section.rows);
+  const rows = filterRowsByQuoteTenor(section.rows, tenorFilter, [0]);
+  const openInlineHistory = (contractName = rows[0]?.[0] ?? (tenorFilter === "all" ? "R001" : tenorFilter)) =>
+    setFlippedContract(contractName);
 
   return (
     <section
       className={`tk-panel flex min-h-0 flex-col border ${
-        embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
+        embeddedPreview ? "h-[270px] overflow-hidden" : "h-full overflow-hidden"
       }`}
     >
       {embeddedPreview ? (
-        <IntegratedPreviewHeader
-          id="xrepo"
-          onOpen={onOpen}
-          actions={
+          <IntegratedPreviewHeader
+            id="xrepo"
+            onOpen={() => openInlineHistory()}
+            tenorFilter={tenorFilter}
+            actions={
             <button
               className="tk-button tk-button-success px-3 py-1"
               type="button"
@@ -4337,16 +5157,11 @@ function XrepoFrame({
           </div>
         </div>
       )}
-      <div className={embeddedPreview ? "min-h-0" : "min-h-0 flex-1"}>
-        {flippedContract && !embeddedPreview ? (
+      <div className="min-h-0 flex-1">
+        {flippedContract ? (
           <XrepoHistoryBack
             contractName={flippedContract}
-            activeRange={historyRange}
-            baseProduct={baseProduct}
-            compareProduct={compareProduct}
-            onRangeChange={setHistoryRange}
-            onBaseProductChange={setBaseProduct}
-            onCompareChange={setCompareProduct}
+            compact={embeddedPreview}
             onBack={() => setFlippedContract(null)}
           />
         ) : (
@@ -4362,7 +5177,7 @@ function XrepoFrame({
             flush
             adaptiveHeight={embeddedPreview}
             scrollY={!embeddedPreview}
-            onRowClick={embeddedPreview ? undefined : (row) => setFlippedContract(row[0] ?? null)}
+            onRowClick={(row) => openInlineHistory(row[0] ?? "R001")}
           />
         )}
       </div>
@@ -4372,39 +5187,36 @@ function XrepoFrame({
 
 function XrepoHistoryBack({
   contractName,
-  activeRange,
-  baseProduct,
-  compareProduct,
-  onRangeChange,
-  onBaseProductChange,
-  onCompareChange,
+  compact = false,
   onBack,
 }: {
   contractName: string;
-  activeRange: HistoryRange;
-  baseProduct: BaseTrendProduct;
-  compareProduct: CompareProduct;
-  onRangeChange: (range: HistoryRange) => void;
-  onBaseProductChange: (product: BaseTrendProduct) => void;
-  onCompareChange: (product: CompareProduct) => void;
+  compact?: boolean;
   onBack: () => void;
 }) {
   return (
     <div
-      className="grid h-full min-h-0 grid-rows-[auto_1fr] gap-2 overflow-hidden p-3"
+      className={`grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden ${
+        compact ? "" : "gap-2 p-3"
+      }`}
       onClick={onBack}
     >
-      <div className="flex items-center justify-between gap-3">
+      <div
+        className={`flex items-center justify-between gap-3 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] ${
+          compact ? "px-2 py-0.5" : "rounded-md px-3 py-1"
+        }`}
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-slate-100">
-            历史成交走势 - {contractName}
+          <div className={`${compact ? "text-xs" : "text-sm"} font-semibold text-slate-100`}>
+            历史成交走势对比 - {contractName}
           </div>
-          <div className="mt-0.5 text-xs text-slate-500">
-            默认参数来自正面点击行；点击空白区域或返回按钮翻回
+          <div className="mt-0.5 text-[10px] text-slate-500">
+            当前合约 / 品种对比 / 价差柱
           </div>
         </div>
         <button
-          className="tk-button px-3 py-1 text-xs"
+          className={`tk-button ${compact ? "px-1.5 py-0.5 text-[10px]" : "px-2.5 py-0.5 text-xs"}`}
           onClick={(event) => {
             event.stopPropagation();
             onBack();
@@ -4414,16 +5226,312 @@ function XrepoHistoryBack({
           返回
         </button>
       </div>
-      <div className="min-h-0 overflow-hidden rounded-md" onClick={(event) => event.stopPropagation()}>
-        <HistoryClosePanel
-          activeRange={activeRange}
-          baseProduct={baseProduct}
-          overlayProduct="none"
-          compareProduct={compareProduct}
-          onRangeChange={onRangeChange}
-          onBaseProductChange={onBaseProductChange}
-          onCompareChange={onCompareChange}
-        />
+      <div
+        className={`h-full min-h-0 overflow-hidden ${compact ? "" : "rounded-md"}`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <XrepoInlineHistoryChart contractName={contractName} compact={compact} />
+      </div>
+    </div>
+  );
+}
+
+const xrepoHistoryRangeCounts: Record<HistoryRange, number> = {
+  "5d": 5,
+  "1m": 22,
+  "6m": 78,
+};
+
+const xrepoCompareAnchors: Record<SpreadProduct, number> = {
+  dr001: 1.26,
+  dr007: 1.31,
+  gc007: 1.36,
+  r007: 1.39,
+};
+
+function xrepoHistoryPointCount(range: HistoryRange, compact: boolean) {
+  const count = xrepoHistoryRangeCounts[range];
+  return compact && range === "6m" ? 36 : count;
+}
+
+function xrepoCompareLabel(compareProduct: CompareProduct) {
+  return (
+    compareProductOptions.find((option) => option.id === compareProduct)
+      ?.label ?? "不对比"
+  );
+}
+
+function buildXrepoHistoryComparison(
+  contractName: string,
+  count: number,
+  compareProduct: CompareProduct,
+  range: HistoryRange,
+) {
+  const seed = contractName
+    .split("")
+    .reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  const labels = generateTradingDates(TODAY_STR, count);
+  const rangeSeed = range === "5d" ? 11 : range === "1m" ? 29 : 61;
+  const anchor = contractName.includes("mini")
+    ? 1.38
+    : 1.34 + (seed % 8) * 0.006;
+  const current = randomWalk(anchor, count, 0.014, seed + rangeSeed);
+  const compare =
+    compareProduct === "none"
+      ? null
+      : randomWalk(
+          xrepoCompareAnchors[compareProduct] + (seed % 3) * 0.004,
+          count,
+          0.012,
+          seed + rangeSeed + compareProduct.length * 17,
+        ).map((value, index) =>
+          Number(
+            (value + Math.sin((index + seed) * 0.55) * 0.006).toFixed(4),
+          ),
+        );
+  const spread = compare
+    ? current.map((value, index) =>
+        Number(((value - compare[index]) * 100).toFixed(1)),
+      )
+    : null;
+  const volume = randomWalk(contractName.includes("mini") ? 72 : 680, count, contractName.includes("mini") ? 18 : 145, seed + 9)
+    .map((value) => Math.max(8, Math.round(value)));
+  return { labels, current, compare, spread, volume };
+}
+
+function XrepoInlineHistoryChart({
+  contractName,
+  compact = false,
+}: {
+  contractName: string;
+  compact?: boolean;
+}) {
+  const [compareProduct, setCompareProduct] =
+    useState<CompareProduct>("dr007");
+  const [range, setRange] = useState<HistoryRange>("1m");
+  const pointCount = xrepoHistoryPointCount(range, compact);
+  const [data, setData] = useState(() =>
+    buildXrepoHistoryComparison(contractName, pointCount, compareProduct, range),
+  );
+  useEffect(() => {
+    setData(buildXrepoHistoryComparison(contractName, pointCount, compareProduct, range));
+  }, [contractName, pointCount, compareProduct, range]);
+  const compareLabel = xrepoCompareLabel(compareProduct);
+  const rateValues = data.compare
+    ? [...data.current, ...data.compare]
+    : data.current;
+  const minRate = Math.max(0, Math.min(...rateValues) - 0.035);
+  const maxRate = Math.max(...rateValues) + 0.035;
+  const maxVolume = Math.max(...data.volume, 1);
+  const maxSpread = Math.max(
+    ...(data.spread ?? [0]).map((value) => Math.abs(value)),
+    1,
+  );
+  const width = 520;
+  const height = 138;
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(data.labels.length);
+  const tooltipIndex = tooltipState?.index ?? null;
+  const tickStep = Math.max(1, Math.ceil(data.labels.length / (compact ? 5 : 7)));
+
+  return (
+    <div
+      className="relative h-full min-h-0 bg-[var(--tk-color-surface-dark-deep)]"
+      data-xrepo-history-chart
+    >
+      <div
+        className="absolute left-2 right-2 top-1 z-20 flex items-start justify-between gap-2 text-[10px]"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="pointer-events-none flex min-w-0 flex-wrap items-center gap-2 rounded bg-[rgba(15,23,42,0.72)] px-2 py-0.5 text-slate-400">
+          <LegendDot color={chartPalette.blue} label={contractName} />
+          {data.compare ? (
+            <LegendDot color={chartPalette.violet} label={compareLabel} />
+          ) : null}
+          <LegendDot
+            color={data.spread ? chartPalette.green : "rgba(94,163,255,0.32)"}
+            label={data.spread ? "价差" : "成交量"}
+          />
+        </div>
+        <div className="flex shrink-0 items-center gap-1 rounded bg-[rgba(15,23,42,0.76)] px-1.5 py-0.5">
+          <label className="flex items-center gap-1 whitespace-nowrap text-slate-400">
+            <span>对比</span>
+            <select
+              className="h-5 rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-1 text-[10px] text-slate-100 outline-none"
+              value={compareProduct}
+              onChange={(event) =>
+                setCompareProduct(event.target.value as CompareProduct)
+              }
+            >
+              {compareProductOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="flex items-center gap-0.5">
+            {historyRangeTabs.map((tab) => (
+              <button
+                key={tab.id}
+                className={miniChipClass(tab.id === range)}
+                onClick={() => setRange(tab.id)}
+                type="button"
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="grid h-[95%] min-h-0 grid-cols-[2.5rem_1fr] px-2 pb-1 pt-1">
+        <div className="flex flex-col justify-between pb-5 pt-5 pr-1 text-right text-[9px] text-slate-500">
+          {buildAxisLabels(minRate, maxRate, 4).map((tick) => (
+            <div key={tick}>{tick}</div>
+          ))}
+        </div>
+        <div
+          ref={containerRef}
+          className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[color:var(--tk-color-border-panel)]"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
+          {[0, 1, 2, 3].map((index) => (
+            <div
+              key={index}
+              className="absolute inset-x-0 border-t border-[color:var(--tk-color-border-divider)] opacity-70"
+              style={{ top: `${(index / 3) * 82}%` }}
+            />
+          ))}
+          {data.spread ? (
+            <div className="absolute inset-x-1 bottom-5 top-[58%] flex items-stretch gap-[2px]">
+              <div className="pointer-events-none absolute left-0 right-0 top-1/2 border-t border-dashed border-[color:var(--tk-color-border-divider)]" />
+              {data.spread.map((value, index) => {
+                const barHeight = Math.max(
+                  4,
+                  (Math.abs(value) / maxSpread) * 48,
+                );
+                return (
+                  <div
+                    key={`${data.labels[index]}-spread`}
+                    className="relative min-w-0 flex-1"
+                  >
+                    <div
+                      className={`absolute left-0 right-0 rounded-sm ${
+                        value >= 0
+                          ? "bg-[rgba(248,113,113,0.72)]"
+                          : "bg-[rgba(16,185,129,0.72)]"
+                      }`}
+                      style={{
+                        height: `${barHeight}%`,
+                        ...(value >= 0
+                          ? { bottom: "50%" }
+                          : { top: "50%" }),
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="absolute inset-x-1 bottom-5 top-1 flex items-end gap-[2px]">
+              {data.volume.map((value, index) => (
+                <div
+                  key={`${data.labels[index]}-volume`}
+                  className="min-w-0 flex-1 rounded-t-[2px] bg-[rgba(94,163,255,0.28)]"
+                  style={{ height: `${(value / maxVolume) * 52}%` }}
+                />
+              ))}
+            </div>
+          )}
+          <svg
+            className="absolute inset-x-1 bottom-5 top-1 h-[calc(100%-1.5rem)] w-[calc(100%-0.5rem)]"
+            preserveAspectRatio="none"
+            viewBox={`0 0 ${width} ${height}`}
+          >
+            {data.compare ? (
+              <path
+                d={buildLinePath(data.compare, width, height, minRate, maxRate)}
+                fill="none"
+                stroke={chartPalette.violet}
+                strokeDasharray="6 5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+              />
+            ) : null}
+            <path
+              d={buildLinePath(data.current, width, height, minRate, maxRate)}
+              fill="none"
+              stroke={chartPalette.blue}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.3"
+            />
+          </svg>
+          {tooltipIndex !== null ? (
+            <div
+              className="pointer-events-none absolute bottom-5 top-1 w-px bg-[var(--tk-color-brand-primary)]"
+              style={{
+                left: `${(tooltipIndex / (data.labels.length - 1)) * 100}%`,
+              }}
+            />
+          ) : null}
+          <div className="absolute inset-x-0 bottom-0 h-4">
+            {data.labels.map((label, index) =>
+              index % tickStep === 0 || index === data.labels.length - 1 ? (
+                <span
+                  key={label}
+                  className="absolute top-0 -translate-x-1/2 text-[8px] text-slate-500"
+                  style={{ left: `${(index / (data.labels.length - 1)) * 100}%` }}
+                >
+                  {label}
+                </span>
+              ) : null,
+            )}
+          </div>
+          {tooltipState && tooltipIndex !== null ? (
+            <ChartTooltip
+              clientX={tooltipState.clientX}
+              clientY={tooltipState.clientY}
+            >
+              <div className="mb-1 font-semibold text-slate-200">
+                {data.labels[tooltipIndex]}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: chartPalette.blue }} />
+                <span className="text-slate-400">当前</span>
+                <span className="font-semibold text-slate-100">
+                  {data.current[tooltipIndex].toFixed(4)}%
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {data.compare ? (
+                  <>
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: chartPalette.violet }} />
+                    <span className="text-slate-400">{compareLabel}</span>
+                    <span className="font-semibold text-slate-100">
+                      {data.compare[tooltipIndex].toFixed(4)}%
+                    </span>
+                  </>
+                ) : null}
+              </div>
+              {data.spread ? (
+                <div className="text-slate-400">
+                  价差 <span className="font-semibold text-slate-100">{data.spread[tooltipIndex]}bp</span>
+                </div>
+              ) : (
+                <div className="text-slate-400">
+                  成交量 <span className="font-semibold text-slate-100">{data.volume[tooltipIndex]}亿</span>
+                </div>
+              )}
+            </ChartTooltip>
+          ) : null}
+        </div>
+      </div>
+      <div className="pointer-events-none absolute bottom-1 left-2 right-2 z-10 flex items-center justify-between rounded bg-[rgba(15,23,42,0.66)] px-2 py-0.5 text-[10px] text-slate-500">
+        <span>点击返回 XRepo 表格</span>
+        <span>{range === "5d" ? "近5日" : range === "1m" ? "近1M" : "近半年"} / {compareLabel}</span>
       </div>
     </div>
   );
@@ -4432,9 +5540,11 @@ function XrepoHistoryBack({
 function ExchangeRepoFrame({
   embeddedPreview = false,
   onOpen,
+  tenorFilter = "all",
 }: {
   embeddedPreview?: boolean;
   onOpen?: () => void;
+  tenorFilter?: QuoteTenorFilter;
 }) {
   const section = leftSections.find(
     (item): item is ExchangeMarketSplitSection =>
@@ -4447,6 +5557,7 @@ function ExchangeRepoFrame({
       title={section.title}
       markets={section.markets}
       embeddedPreview={embeddedPreview}
+      tenorFilter={tenorFilter}
       onOpen={onOpen}
     />
   );
@@ -4489,9 +5600,20 @@ function MarketSentimentFrame() {
           DR007 / 资金情绪
         </div>
         <div className="mt-4 space-y-3">
-          <InfoChip label="DR007" value="2.15%" tone="alert" />
-          <InfoChip label="资金情绪" value="51 / 47 / 50 / 49" tone="neutral" />
-          <StatusBadge>平衡</StatusBadge>
+          <TopToolMetricChip
+            label="DR007"
+            value="2.15%"
+            tone="alert"
+            title="DR007"
+            subtitle="银行间 7D 存款类机构质押式回购利率"
+            metrics={[
+              { label: "最新", value: "2.15%", tone: "alert" },
+              { label: "较昨日", value: "+1.0bp", tone: "alert" },
+              { label: "更新时间", value: "10:53:27" },
+            ]}
+          />
+          <SentimentChipWithPopover />
+          <StatusBadgeWithPopover statusText="平衡" />
         </div>
       </div>
       <div className="tk-panel-soft min-h-0 min-w-0 rounded border border-[color:var(--tk-color-border-panel)] p-3">
@@ -4543,15 +5665,13 @@ function LeftSummaryPanel() {
             ...section,
             rows: bankRateRows
               .filter(
-                (row) => row.hasQuote && whitelist.includes(row.institution),
+                (row) => whitelist.includes(row.institution),
               )
               .map((row) => [
                 row.institution,
                 BANK_TENOR_LABEL[row.tenor],
-                row.nonBankRate,
-                row.deltaNonBankBp,
-                row.bankRate,
-                row.deltaBp,
+                rateWithDelta(row.nonBankRate, row.refNonBankRate),
+                rateWithDelta(row.bankRate, row.refBankRate),
                 bankRateSpread(row),
               ]),
           }
@@ -4594,20 +5714,10 @@ function LeftSummaryPanel() {
         if (rowIndex !== index) return row;
         const updated: BankRateRow = { ...row, [field]: value };
         if (field === "bankRate") {
-          const cur = parseFloat(value.replace("%", ""));
-          const ref = parseFloat(row.refBankRate.replace("%", ""));
-          if (!isNaN(cur) && !isNaN(ref)) {
-            const bp = Math.round((cur - ref) * 100 * 10) / 10;
-            updated.deltaBp = bp > 0 ? `+${bp}` : String(bp);
-          }
+          updated.deltaBp = rateDeltaValue(value, row.refBankRate) ?? "";
         }
         if (field === "nonBankRate") {
-          const cur = parseFloat(value.replace("%", ""));
-          const ref = parseFloat(row.refNonBankRate.replace("%", ""));
-          if (!isNaN(cur) && !isNaN(ref)) {
-            const bp = Math.round((cur - ref) * 100 * 10) / 10;
-            updated.deltaNonBankBp = bp > 0 ? `+${bp}` : String(bp);
-          }
+          updated.deltaNonBankBp = rateDeltaValue(value, row.refNonBankRate) ?? "";
         }
         return updated;
       }),
@@ -4663,9 +5773,9 @@ function LeftSummaryPanel() {
                 key={section.title}
                 className={section.scrollable ? "min-h-0 flex-1" : "shrink-0"}
               >
-                <div className={`tk-flip-card ${flippedBigBankName ? "is-flipped" : ""}`}>
-                  <div className="tk-flip-card__inner">
-                    <div className="tk-flip-card__face">
+                <div className={`tk-flip-card h-full min-h-0 ${flippedBigBankName ? "is-flipped" : ""}`}>
+                  <div className="tk-flip-card__inner h-full min-h-0">
+                    <div className="tk-flip-card__face h-full min-h-0">
                       <PanelCard
                         title={section.title}
                         bodyClassName="min-h-0 flex-1"
@@ -4699,6 +5809,7 @@ function LeftSummaryPanel() {
                           buttonColumn={section.buttonColumn}
                           fitToWidth={section.fitToWidth}
                           columnWidths={section.columnWidths}
+                          nowrapHeader
                           compact
                           flush
                           adaptiveHeight={!section.scrollable}
@@ -4707,7 +5818,7 @@ function LeftSummaryPanel() {
                         />
                       </PanelCard>
                     </div>
-                    <div className="tk-flip-card__face tk-flip-card__face--back">
+                    <div className="tk-flip-card__face tk-flip-card__face--back h-full min-h-0">
                       <PanelCard
                         title="大行定价走势"
                         subtitle={flippedBigBankName ? `${flippedBigBankName} 多日历史` : undefined}
@@ -4778,6 +5889,7 @@ function LeftSummaryPanel() {
                 buttonColumn={section.buttonColumn}
                 fitToWidth={section.fitToWidth}
                 columnWidths={section.columnWidths}
+                nowrapHeader={isBigBankPrice}
                 compact
                 flush
                 adaptiveHeight={!section.scrollable}
@@ -4974,13 +6086,16 @@ function ModalInput({
 function LeftNcdCard({
   embeddedPreview = false,
   onOpen,
+  tenorFilter = "all",
 }: {
   embeddedPreview?: boolean;
   onOpen?: () => void;
+  tenorFilter?: QuoteTenorFilter;
 }) {
   const [market, setMarket] = useState<"primary" | "secondary">("primary");
   const [mode, setMode] = useState<"trend" | "table">("trend");
   const [expanded, setExpanded] = useState(false);
+  const filteredPeriod = quoteTenorToNcdPeriod(tenorFilter);
 
   const header = (onClose?: () => void) => (
     <div className="flex items-center gap-2">
@@ -5060,9 +6175,9 @@ function LeftNcdCard({
   const body =
     market === "primary" ? (
       mode === "trend" ? (
-        <NcdPrimaryTrendPanel />
+        <NcdPrimaryTrendPanel period={filteredPeriod} />
       ) : (
-        <NcdPrimaryTable />
+        <NcdPrimaryTable initialPeriod={filteredPeriod} />
       )
     ) : mode === "trend" ? (
       <NcdTrendPanel compact />
@@ -5094,6 +6209,7 @@ function LeftNcdCard({
           <IntegratedPreviewHeader
             id="ncd"
             onOpen={onOpen}
+            tenorFilter={tenorFilter}
             actions={
               <div className="flex items-center gap-1">
                 <button
@@ -5187,7 +6303,7 @@ function LeftNcdCard({
               {market === "primary" && mode === "table" ? (
                 <NcdPrimaryExpandedTable />
               ) : market === "primary" && mode === "trend" ? (
-                <NcdExpandedDualView period="1M" />
+                <NcdExpandedDualView period={filteredPeriod} />
               ) : (
                 body
               )}
@@ -5204,17 +6320,23 @@ function ExchangeRepoCard({
   markets,
   embeddedPreview = false,
   onOpen,
+  tenorFilter = "all",
 }: {
   title: string;
   markets: ExchangeMarketSplitSection["markets"];
   embeddedPreview?: boolean;
   onOpen?: () => void;
+  tenorFilter?: QuoteTenorFilter;
 }) {
   const [activeView, setActiveView] = useState<"core" | "sse" | "szse">("core");
   const filteredMarkets =
     activeView === "core"
       ? markets
       : markets.filter((market) => market.id === activeView);
+  const displayedMarkets = filteredMarkets.map((market) => ({
+    ...market,
+    rows: filterRowsByQuoteTenor(market.rows, tenorFilter, [1]),
+  }));
 
   return (
     <section
@@ -5223,10 +6345,11 @@ function ExchangeRepoCard({
       }`}
     >
       {embeddedPreview ? (
-        <IntegratedPreviewHeader
-          id="exchange-repo"
-          onOpen={onOpen}
-          actions={
+          <IntegratedPreviewHeader
+            id="exchange-repo"
+            onOpen={onOpen}
+            tenorFilter={tenorFilter}
+            actions={
             <>
               {[
                 { id: "core", label: "核心" },
@@ -5285,7 +6408,7 @@ function ExchangeRepoCard({
       <div className={embeddedPreview ? "min-h-0 p-2" : "min-h-0 flex-1 p-2"}>
         {activeView === "core" ? (
           <ExchangeCoreCompactBoard
-            markets={markets}
+            markets={displayedMarkets}
             embeddedPreview={embeddedPreview}
           />
         ) : (
@@ -5296,7 +6419,7 @@ function ExchangeRepoCard({
                 : "grid h-full min-h-0 grid-cols-1"
             }
           >
-            {filteredMarkets.map((market) => (
+            {displayedMarkets.map((market) => (
               <ExchangeMarketTable
                 key={`${activeView}-${market.id}`}
                 market={market}
@@ -5318,12 +6441,12 @@ function ExchangeCoreCompactBoard({
   markets: ExchangeMarketSplitSection["markets"];
   embeddedPreview?: boolean;
 }) {
-  const combinedRows = markets.flatMap((market) => market.rows.slice(0, 2));
+  const combinedRows = markets.flatMap((market) => market.rows);
   return (
     <div className={embeddedPreview ? "min-h-0" : "h-full min-h-0"}>
       <ExchangeCoreCompactBlock
         rows={combinedRows}
-        rowCount={5}
+        rowCount={combinedRows.length}
         embeddedPreview={embeddedPreview}
       />
     </div>
@@ -5520,6 +6643,14 @@ type QuoteChatContext = {
   sectionTitle: string;
   contactName: string;
 };
+type PinnedQuote = {
+  key: string;
+  sectionId: RepoQuoteSection["id"];
+  groupName: string;
+  row: QuoteDetailRow;
+  institution: string;
+  tenor: string;
+};
 type OpponentQuoteCard = {
   id: string;
   name: string;
@@ -5535,6 +6666,28 @@ type OpponentQuoteCard = {
   core: boolean;
   special?: boolean;
 };
+
+const pinnedQuoteKey = (
+  sectionId: RepoQuoteSection["id"],
+  groupName: string,
+  institution: string,
+  tenor: string,
+) => `${sectionId}:${groupName}:${institution}:${tenor}`;
+
+function pinnedQuoteFromRow(
+  row: QuoteDetailRow,
+  groupName: string,
+  section: RepoQuoteSection,
+): PinnedQuote {
+  return {
+    key: pinnedQuoteKey(section.id, groupName, row.institution, row.tenor),
+    sectionId: section.id,
+    groupName,
+    row,
+    institution: row.institution,
+    tenor: row.tenor,
+  };
+}
 
 const opponentNames = [
   "张经理",
@@ -5718,6 +6871,101 @@ const qtInstitutionOptions = [
 ] as const;
 type QtInstitutionType = (typeof qtInstitutionOptions)[number]["value"];
 
+type BarometerInstitutionProfile = {
+  factor: number;
+  amPeakShift: number;
+  pmPeakShift: number;
+  amPeakScale: number;
+  pmPeakScale: number;
+  amWidth: number;
+  pmWidth: number;
+  valleyFloor: number;
+  drift: number;
+  wobble: number;
+  seed: number;
+};
+
+const qtInstitutionProfiles: Record<QtInstitutionType, BarometerInstitutionProfile> = {
+  all: {
+    factor: 1,
+    amPeakShift: 0,
+    pmPeakShift: 0,
+    amPeakScale: 1,
+    pmPeakScale: 1,
+    amWidth: 1.8,
+    pmWidth: 2.6,
+    valleyFloor: 0,
+    drift: 0,
+    wobble: 1,
+    seed: 0,
+  },
+  "large-bank": {
+    factor: 1.12,
+    amPeakShift: -0.25,
+    pmPeakShift: -0.15,
+    amPeakScale: 1.08,
+    pmPeakScale: 0.88,
+    amWidth: 1.65,
+    pmWidth: 2.35,
+    valleyFloor: 0.018,
+    drift: -0.018,
+    wobble: 0.92,
+    seed: 3.7,
+  },
+  "joint-bank": {
+    factor: 0.96,
+    amPeakShift: 0.18,
+    pmPeakShift: 0.35,
+    amPeakScale: 0.92,
+    pmPeakScale: 1.04,
+    amWidth: 1.95,
+    pmWidth: 2.9,
+    valleyFloor: 0.026,
+    drift: 0.012,
+    wobble: 1.1,
+    seed: 7.4,
+  },
+  "city-bank": {
+    factor: 0.82,
+    amPeakShift: 0.55,
+    pmPeakShift: 0.1,
+    amPeakScale: 0.82,
+    pmPeakScale: 1.18,
+    amWidth: 2.15,
+    pmWidth: 2.45,
+    valleyFloor: 0.04,
+    drift: 0.026,
+    wobble: 1.22,
+    seed: 11.1,
+  },
+  broker: {
+    factor: 0.74,
+    amPeakShift: -0.45,
+    pmPeakShift: 0.45,
+    amPeakScale: 1.22,
+    pmPeakScale: 1.06,
+    amWidth: 1.45,
+    pmWidth: 2.2,
+    valleyFloor: 0.012,
+    drift: 0.018,
+    wobble: 1.34,
+    seed: 15.8,
+  },
+  fund: {
+    factor: 0.68,
+    amPeakShift: 0.35,
+    pmPeakShift: 0.65,
+    amPeakScale: 0.72,
+    pmPeakScale: 1.28,
+    amWidth: 1.9,
+    pmWidth: 2.65,
+    valleyFloor: 0.034,
+    drift: 0.038,
+    wobble: 1.18,
+    seed: 22.6,
+  },
+};
+
 const barometerAmSlots = [
   "08:15",
   "08:30",
@@ -5780,6 +7028,51 @@ const scaleBarometerPoints = (
   factor: number,
 ): BarometerPoint[] =>
   points.map((point) => ({ ...point, value: Math.round(point.value * factor) }));
+
+const barometerSeriesSeed = (key: string) =>
+  key.split("").reduce((sum, char, index) => sum + char.charCodeAt(0) * (index + 1), 0) / 97;
+
+function buildInstitutionBarometerPoints(
+  points: BarometerPoint[],
+  profile: BarometerInstitutionProfile,
+  seriesKey: string,
+): BarometerPoint[] {
+  if (profile.seed === 0) return scaleBarometerPoints(points, profile.factor);
+
+  const amLength = barometerAmSlots.length;
+  const amPoints = points.slice(0, amLength);
+  const pmPoints = points.slice(amLength);
+  const amMax = Math.max(...amPoints.map((point) => point.value), 1);
+  const pmMax = Math.max(...pmPoints.map((point) => point.value), 1);
+  const seed = profile.seed + barometerSeriesSeed(seriesKey);
+  const isReverse = seriesKey.toLowerCase().includes("in");
+  const isYesterday = seriesKey.toLowerCase().includes("yesterday");
+  const directionShift = isReverse ? 0.18 : -0.08;
+  const yesterdayShift = isYesterday ? -0.14 : 0;
+  const amPeak = 4 + profile.amPeakShift + directionShift + yesterdayShift;
+  const pmPeak = 8 + profile.pmPeakShift - directionShift * 0.7 + yesterdayShift;
+
+  return points.map((point, index) => {
+    const isAm = index < amLength;
+    const localIndex = isAm ? index : index - amLength;
+    const peak = isAm ? amPeak : pmPeak;
+    const width = isAm ? profile.amWidth : profile.pmWidth;
+    const maxValue = isAm ? amMax : pmMax;
+    const peakScale = isAm ? profile.amPeakScale : profile.pmPeakScale;
+    const amplitude = maxValue * profile.factor * peakScale;
+    const base = amplitude * barometerGauss(localIndex, peak, width);
+    const floor = amplitude * profile.valleyFloor;
+    const drift = 1 + profile.drift * (index / Math.max(points.length - 1, 1) - 0.5);
+    const wobble =
+      Math.sin((index + seed) * 1.53) * 0.055 * profile.wobble +
+      Math.cos(index * 0.82 + seed * 0.7) * 0.035 * profile.wobble;
+    const value = (base + floor) * drift * (1 + wobble);
+    return {
+      ...point,
+      value: Math.max(0, Math.round(value)),
+    };
+  });
+}
 
 function buildBarometerSeries(
   todayOut: BarometerPoint[],
@@ -5875,14 +7168,17 @@ function BarometerMatrixCard() {
   const [range, setRange] = useState<BarometerRange>("overnight");
   const [metric, setMetric] = useState<BarometerMetric>("count");
   const [institutionType, setInstitutionType] = useState<QtInstitutionType>("all");
-  const institutionFactor =
-    qtInstitutionOptions.find((option) => option.value === institutionType)?.factor ?? 1;
+  const institutionProfile = qtInstitutionProfiles[institutionType] ?? qtInstitutionProfiles.all;
   const rawSlice = barometerData[range][metric];
   const currentSlice: BarometerSlice = {
     ...rawSlice,
     series: rawSlice.series.map((series) => ({
       ...series,
-      points: scaleBarometerPoints(series.points, institutionFactor),
+      points: buildInstitutionBarometerPoints(
+        series.points,
+        institutionProfile,
+        series.key,
+      ),
     })),
   };
   const allValues = currentSlice.series.flatMap((series) =>
@@ -5935,7 +7231,7 @@ function BarometerMatrixCard() {
         />
       </div>
 
-      <div className="grid min-h-0 grid-cols-[2.7rem_minmax(0,1fr)] px-3 pb-1.5 pt-2">
+      <div className="grid min-h-0 grid-cols-[2.7rem_minmax(0,1fr)] grid-rows-[minmax(0,1fr)_1rem] px-3 pb-1 pt-2">
         <div className="flex flex-col justify-between pr-2 text-right text-[8px] text-slate-500">
           <div className="text-[7px] text-slate-500">{currentSlice.yLabel}</div>
           {yTicks.map((tick) => (
@@ -5990,13 +7286,6 @@ function BarometerMatrixCard() {
               />
             ) : null}
           </svg>
-          <div className="absolute inset-x-0 bottom-0 flex justify-between text-[7px] text-slate-500">
-            {barometerTimeline.map((label) => (
-              <span key={label} className="translate-y-4">
-                {visibleTimeLabels.has(label) ? label : ""}
-              </span>
-            ))}
-          </div>
           {tooltipState !== null && tooltipIndex !== null ? (
             <ChartTooltip
               clientX={tooltipState.clientX}
@@ -6025,6 +7314,13 @@ function BarometerMatrixCard() {
             </ChartTooltip>
           ) : null}
         </div>
+        <div className="col-start-2 row-start-2 flex items-end justify-between text-[7px] leading-none text-slate-500">
+          {barometerTimeline.map((label) => (
+            <span key={label}>
+              {visibleTimeLabels.has(label) ? label : ""}
+            </span>
+          ))}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 pb-2 pt-1 text-xs text-slate-100">
@@ -6051,28 +7347,21 @@ function BarometerMatrixCard() {
 
 function InstitutionPeriodMatrixCard() {
   const [period, setPeriod] = useState<CfetsInstPeriod>("R001");
-  const [metricKey, setMetricKey] = useState<CfetsMetricKey>("buyBalance");
+  const [metricKey, setMetricKey] = useState<CfetsMetricKey>("buyAmt");
   const [open, setOpen] = useState(false);
   const metric = cfetsMetricDefs.find((item) => item.key === metricKey);
-  const seriesPreview = cfetsInstTrend[period]?.buyBalance?.["14d"]?.series?.[0] ?? [];
+  const previewBlock = cfetsInstTrend[period]?.[metricKey]?.["14d"];
+  const previewSeries = fundStructureLegendItems.map((item, index) => ({
+    key: item.label,
+    label: item.label,
+    color: item.color,
+    values: previewBlock?.series?.[index] ?? [],
+  }));
 
   return (
     <>
-      <div className="grid min-h-0 grid-rows-[auto_auto_minmax(0,1fr)_auto] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
-        <div className="flex items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
-          <div className="min-w-0">
-            <div className="tk-matrix-card-title truncate">机构分期限统计</div>
-            <div className="tk-matrix-card-subtitle truncate">中间压缩统计 · 大图弹窗</div>
-          </div>
-          <button
-            className="tk-button px-2 py-1 text-[10px]"
-            onClick={() => setOpen(true)}
-            type="button"
-          >
-            打开大图
-          </button>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 border-b border-[color:var(--tk-color-border-divider)] px-3 py-2 text-xs">
+      <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+        <div className="flex flex-wrap items-center gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2 text-xs">
           <label className="flex items-center gap-1.5 text-slate-400">
             期限
             <select
@@ -6101,25 +7390,29 @@ function InstitutionPeriodMatrixCard() {
               ))}
             </select>
           </label>
+          <button
+            className="tk-button ml-auto px-2 py-1 text-[10px]"
+            onClick={() => setOpen(true)}
+            type="button"
+          >
+            打开大图
+          </button>
         </div>
         <div className="min-h-0 p-3">
-          <MiniSparklinePreview
+          <MiniInstitutionSeriesPreview
             label={`${period} ${metric?.label ?? ""}`}
-            values={seriesPreview.length ? seriesPreview : [1.2, 1.4, 1.3, 1.6, 1.5]}
-            color={chartPalette.blue}
-            footnote="点击打开完整机构分期限统计大图"
+            series={previewSeries}
+            xLabels={previewBlock?.dates}
+            chartType={metric?.chartType ?? "line"}
+            unit={metric?.unit ?? ""}
+            footnote="图例可点击筛选 · 点击打开完整大图"
           />
-        </div>
-        <div className="grid grid-cols-3 gap-1 border-t border-[color:var(--tk-color-border-divider)] p-2">
-          <InfoPill label="方向" value="正/逆" />
-          <InfoPill label="图形" value="柱状/折线" />
-          <InfoPill label="明细" value="下拉展开" />
         </div>
       </div>
       {open ? (
         <PageFrame title="机构分期限统计大图" onClose={() => setOpen(false)}>
           <div className="tk-panel h-full min-h-0 border p-3">
-            <CfetsInstPanel />
+            <CfetsInstPanel initialPeriod={period} initialMetric={metricKey} />
           </div>
         </PageFrame>
       ) : null}
@@ -6208,7 +7501,7 @@ function CombinedDemandMatrixCard() {
   const reverseTotal = reverseMatrix.grandTotal;
 
   return (
-    <div className="grid min-h-0 grid-rows-[auto_1fr_auto] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+    <div className="grid min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
       <div className="flex items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2.5 py-1.5">
         <div className="min-w-0">
           <div className="tk-matrix-card-title truncate">正/逆回购需求</div>
@@ -6249,9 +7542,6 @@ function CombinedDemandMatrixCard() {
           ))}
           <DemandCompactCell amount={reverseTotal} strong accent="var(--tk-color-brand-cyan)" />
         </div>
-      </div>
-      <div className="border-t border-[color:var(--tk-color-border-divider)] px-2 py-1 text-[9px] text-slate-500">
-        单元格 = 需求量 / 已完成量
       </div>
     </div>
   );
@@ -7032,18 +8322,41 @@ function PersonalInstitutionCompareCard() {
   );
 }
 
-const TRADING_NOTICE_TEXT = "交易提示：央行逆回购净投放，预计今日整体市场宽松";
+const DEFAULT_TRADING_STATUS_TEXT = "市场宽松";
+const DEFAULT_TRADING_NOTICE_TEXT = "交易提示：央行逆回购净投放，预计今日整体市场宽松";
+const AI_TRADING_NOTICE_TEXT =
+  "AI提示：央行逆回购净投放带动资金面偏宽松，建议关注R001/R007边际变化及尾盘跨期需求。";
 
-function MiddleMatrixNoticeBar({ variant = "stacked" }: { variant?: "stacked" | "inline" }) {
+function MiddleMatrixNoticeBar({
+  variant = "stacked",
+  statusText = DEFAULT_TRADING_STATUS_TEXT,
+  noticeText = DEFAULT_TRADING_NOTICE_TEXT,
+  onOpenEditor,
+}: {
+  variant?: "stacked" | "inline";
+  statusText?: string;
+  noticeText?: string;
+  onOpenEditor?: () => void;
+}) {
   if (variant === "inline") {
     return (
-      <div className="tk-marquee group relative flex min-w-0 items-center overflow-hidden">
-        <div className="tk-marquee__track flex shrink-0 items-center gap-12 whitespace-nowrap text-[13px] font-semibold text-[color:var(--tdx-red,#e7353a)]">
-          <span>{TRADING_NOTICE_TEXT}</span>
-          <span aria-hidden="true">{TRADING_NOTICE_TEXT}</span>
-          <span aria-hidden="true">{TRADING_NOTICE_TEXT}</span>
+      <button
+        className="group grid w-full min-w-0 cursor-pointer grid-cols-[auto_minmax(0,1fr)] items-center gap-10 overflow-hidden text-left outline-none"
+        onClick={onOpenEditor}
+        type="button"
+        title="编辑交易提醒"
+      >
+        <span className="shrink-0 whitespace-nowrap text-[13px] font-semibold text-[color:var(--tdx-red,#e7353a)]">
+          {statusText}
+        </span>
+        <div className="tk-marquee relative flex min-w-0 items-center overflow-hidden">
+          <div className="tk-marquee__track flex shrink-0 items-center gap-12 whitespace-nowrap text-[13px] font-semibold text-[color:var(--tdx-red,#e7353a)]">
+            <span>{noticeText}</span>
+            <span aria-hidden="true">{noticeText}</span>
+            <span aria-hidden="true">{noticeText}</span>
+          </div>
         </div>
-      </div>
+      </button>
     );
   }
   return (
@@ -7069,11 +8382,113 @@ function MiddleMatrixNoticeBar({ variant = "stacked" }: { variant?: "stacked" | 
   );
 }
 
+function TradingNoticeEditorModal({
+  open,
+  value,
+  onClose,
+  onSave,
+}: {
+  open: boolean;
+  value: string;
+  onClose: () => void;
+  onSave: (value: string) => void;
+}) {
+  const [draft, setDraft] = useState(value);
+
+  useEffect(() => {
+    if (open) setDraft(value);
+  }, [open, value]);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    onSave(draft.trim() || DEFAULT_TRADING_NOTICE_TEXT);
+  }
+
+  function applyAiNotice() {
+    setDraft((current) => {
+      const text = current.trim();
+      if (!text) return AI_TRADING_NOTICE_TEXT;
+      if (text.includes("AI提示")) return text;
+      return `${text}\n${AI_TRADING_NOTICE_TEXT}`;
+    });
+  }
+
+  return (
+    <div
+      className="tk-overlay fixed inset-0 z-50 flex items-center justify-center px-4"
+      onMouseDown={onClose}
+    >
+      <form
+        className="tk-modal w-full max-w-xl overflow-hidden border"
+        onMouseDown={(event) => event.stopPropagation()}
+        onSubmit={submit}
+      >
+        <div className="tk-panel-header flex items-center justify-between gap-3 border-b px-5 py-4">
+          <div className="min-w-0">
+            <div className="tk-title-lg truncate">编辑交易提醒</div>
+          </div>
+          <button
+            className="tk-button inline-flex h-8 w-8 items-center justify-center"
+            onClick={onClose}
+            title="关闭"
+            type="button"
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <div className="px-5 py-4">
+          <label className="grid gap-1.5 text-xs text-slate-400">
+            <textarea
+              className="tk-field min-h-28 resize-none px-3 py-2 text-sm leading-6 text-slate-100 outline-none focus:border-[color:var(--tk-color-brand-primary-hover)]"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+            />
+          </label>
+        </div>
+        <div className="flex items-center justify-between gap-2 border-t border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-deep)] px-5 py-4">
+          <button
+            className="tk-button px-3 py-1.5"
+            onClick={applyAiNotice}
+            type="button"
+          >
+            AI提示
+          </button>
+          <div className="flex items-center gap-2">
+            <button
+              className="tk-button px-3 py-1.5"
+              onClick={onClose}
+              type="button"
+            >
+              取消
+            </button>
+            <button
+              className="tk-button tk-button-primary px-4 py-1.5"
+              type="submit"
+            >
+              保存
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 function MiddleMatrixColumn() {
-  const [activeRange, setActiveRange] = useState<HistoryRange>("5d");
-  const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
   const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
   const [baseProduct, setBaseProduct] = useState<BaseTrendProduct>("r001");
+  const [bottomTab, setBottomTab] = useState<"intraday" | "institution">("intraday");
 
   return (
     <aside className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden px-1">
@@ -7081,37 +8496,51 @@ function MiddleMatrixColumn() {
         <div className="tk-panel-header border-b px-3 py-2">
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <div className="tk-matrix-section-title truncate">行情矩阵区</div>
+              <div className="tk-matrix-section-title truncate">任务矩阵区</div>
             </div>
           </div>
         </div>
 
-        <div className="grid min-h-0 grid-cols-2 grid-rows-[minmax(122px,0.86fr)_minmax(0,1fr)_minmax(0,1fr)] gap-1 overflow-hidden p-1.5">
+        <div className="grid min-h-0 grid-rows-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.25fr)] gap-1.5 overflow-hidden p-1.5">
           <CombinedDemandMatrixCard />
           <BarometerMatrixCard />
-          <InstitutionPeriodMatrixCard />
-          <div className="min-h-0 overflow-hidden rounded-md">
-            <IntradayPanel
-              baseProduct={baseProduct}
-              overlayProduct={overlayProduct}
-              onBaseProductChange={setBaseProduct}
-              onOverlayChange={setOverlayProduct}
-            />
+          <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+            <div className="flex items-center border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
+              <div className="flex items-center gap-1" role="tablist" aria-label="走势与机构统计">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={bottomTab === "intraday"}
+                  className={auxTabClass(bottomTab === "intraday")}
+                  onClick={() => setBottomTab("intraday")}
+                >
+                  匿名成交走势
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={bottomTab === "institution"}
+                  className={auxTabClass(bottomTab === "institution")}
+                  onClick={() => setBottomTab("institution")}
+                >
+                  机构分期限统计
+                </button>
+              </div>
+            </div>
+            <div className="min-h-0 overflow-hidden p-1.5">
+              <div className={bottomTab === "intraday" ? "h-full min-h-0" : "hidden"}>
+                <IntradayPanel
+                  baseProduct={baseProduct}
+                  overlayProduct={overlayProduct}
+                  onBaseProductChange={setBaseProduct}
+                  onOverlayChange={setOverlayProduct}
+                />
+              </div>
+              <div className={bottomTab === "institution" ? "h-full min-h-0" : "hidden"}>
+                <InstitutionPeriodMatrixCard />
+              </div>
+            </div>
           </div>
-          <div className="min-h-0 overflow-hidden rounded-md">
-            <MatrixPlaceholderCard
-              title="历史成交走势"
-              tag="XRepo背面"
-              hint="点击 XRepo 行后在背面展示对应合约历史"
-              index={4}
-            />
-          </div>
-          <MatrixPlaceholderCard
-            title="删除模块空位"
-            tag="预留"
-            hint="今日预览 / DR007资金情绪 / 个人&机构"
-            index={5}
-          />
         </div>
       </section>
     </aside>
@@ -7186,9 +8615,14 @@ function CompactSearchField({
   );
 }
 
-function MainQuoteBoard() {
+function MainQuoteBoard({
+  tenorFilter,
+  onTenorFilterChange,
+}: {
+  tenorFilter: QuoteTenorFilter;
+  onTenorFilterChange: (tenor: QuoteTenorFilter) => void;
+}) {
   const [displayLevel, setDisplayLevel] = useState<1 | 2>(1);
-  const [tenorFilter, setTenorFilter] = useState<QuoteTenorFilter>("all");
   const [accountSearch, setAccountSearch] = useState("");
   const [collateralSearch, setCollateralSearch] = useState("");
   const [activeSectionId, setActiveSectionId] = useState<
@@ -7198,10 +8632,21 @@ function MainQuoteBoard() {
   const [editingRow, setEditingRow] = useState<QuoteDetailRow | null>(null);
   const [editingDraft, setEditingDraft] = useState<QuoteOverride>({});
   const [chatContext, setChatContext] = useState<QuoteChatContext | null>(null);
+  const [pinnedQuotes, setPinnedQuotes] = useState<PinnedQuote[]>([]);
+  const pinnedKeys = new Set(pinnedQuotes.map((item) => item.key));
 
   function applyOverride(row: QuoteDetailRow): QuoteDetailRow {
     const ov = overrides[row.id];
     return ov ? { ...row, ...ov } : row;
+  }
+
+  function togglePinnedQuote(item: PinnedQuote) {
+    setPinnedQuotes((current) => {
+      if (current.some((quote) => quote.key === item.key)) {
+        return current.filter((quote) => quote.key !== item.key);
+      }
+      return [item, ...current];
+    });
   }
 
   function openEditor(row: QuoteDetailRow, groupName: string) {
@@ -7287,7 +8732,7 @@ function MainQuoteBoard() {
               <div className="tk-muted flex flex-nowrap items-center gap-0.5 text-xs">
                 <button
                   className={miniChipClass(tenorFilter === "all")}
-                  onClick={() => setTenorFilter("all")}
+                  onClick={() => onTenorFilterChange("all")}
                   type="button"
                 >
                   全部
@@ -7296,7 +8741,7 @@ function MainQuoteBoard() {
                   <button
                     key={t}
                     className={miniChipClass(tenorFilter === t)}
-                    onClick={() => setTenorFilter(t)}
+                    onClick={() => onTenorFilterChange(t)}
                     type="button"
                   >
                     {t}
@@ -7336,7 +8781,12 @@ function MainQuoteBoard() {
             />
           </div>
         </div>
-        <div ref={bodyRef} className="flex min-h-0 flex-1 flex-col">
+        <div
+          ref={bodyRef}
+          className={`flex min-h-0 flex-1 flex-col ${
+            displayLevel === 1 ? "overflow-y-auto" : "overflow-hidden"
+          }`}
+        >
           {repoQuoteSections.map((section, index) => {
             const isLast = index === repoQuoteSections.length - 1;
             const dragRatio =
@@ -7358,7 +8808,10 @@ function MainQuoteBoard() {
                   accountSearch={accountSearch}
                   collateralSearch={collateralSearch}
                   applyOverride={applyOverride}
+                  pinnedQuotes={pinnedQuotes}
+                  pinnedKeys={pinnedKeys}
                   onEdit={openEditor}
+                  onTogglePin={togglePinnedQuote}
                   onSend={(row, groupName, contactName) =>
                     setChatContext({
                       row,
@@ -7836,16 +9289,22 @@ function buildOpponentCards(
 function OpponentExpandPanel({
   row,
   groupName,
+  section,
   cards,
   status,
   onStatusChange,
+  pinnedKeys,
+  onTogglePin,
   onSend,
 }: {
   row: QuoteDetailRow;
   groupName: string;
+  section: RepoQuoteSection;
   cards: readonly OpponentQuoteCard[];
   status: ExpandStatus;
   onStatusChange: (status: ExpandStatus) => void;
+  pinnedKeys: ReadonlySet<string>;
+  onTogglePin: (item: PinnedQuote) => void;
   onSend: (contactName: string) => void;
 }) {
   const visibleCards =
@@ -7876,51 +9335,80 @@ function OpponentExpandPanel({
       </div>
 
       <div className="grid min-h-0 grid-cols-3 gap-px overflow-hidden rounded-md border border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-border-divider)]">
-        {visibleCards.map((card) => (
-          <button
-            key={card.id}
-            className={`min-h-[104px] bg-[var(--tk-color-surface-page)] px-3 py-2 text-left transition hover:bg-[rgba(255,255,255,0.04)] ${
-              card.core ? "shadow-[inset_2px_0_0_rgba(16,198,200,0.9)]" : ""
-            }`}
-            onClick={() => onSend(card.name)}
-            type="button"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <div className="truncate text-[12px] font-semibold text-slate-100">
-                {card.name} · {card.institution}
-              </div>
-              <span className="shrink-0 rounded-full border border-amber-400/40 px-2 py-0.5 text-[10px] text-amber-200">
-                等 {card.waitMinutes}min
-              </span>
-            </div>
-            <div className="mt-1 text-[12px] text-slate-400">
-              {card.amount ? (
-                <span className="text-[18px] font-bold text-slate-50">{card.amount}</span>
-              ) : (
-                <span className="text-slate-500">待报价</span>
-              )}
-            </div>
-            {!card.special ? null : (
-              <div className="mt-1 text-[11px] text-amber-300">{card.rate}</div>
-            )}
-            <div className="mt-2 flex flex-wrap gap-1">
-              {card.tags.map((tag) => (
+        {visibleCards.map((card) => {
+          const parentPin = pinnedQuoteFromRow(row, groupName, section);
+          const pinned = pinnedKeys.has(parentPin.key);
+          return (
+            <button
+              key={card.id}
+              className={`min-h-[104px] bg-[var(--tk-color-surface-page)] px-3 py-2 text-left transition hover:bg-[rgba(255,255,255,0.04)] ${
+                card.core ? "shadow-[inset_2px_0_0_rgba(16,198,200,0.9)]" : ""
+              } ${pinned ? "ring-1 ring-amber-400/60" : ""}`}
+              onClick={() => onSend(card.name)}
+              type="button"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="truncate text-[12px] font-semibold text-slate-100">
+                  {card.name} · {card.institution}
+                </div>
                 <span
-                  key={`${card.id}-${tag}`}
-                  className={`rounded-sm px-1.5 py-0.5 text-[10px] ${
-                    tag === "核心对手"
-                      ? "bg-emerald-500/15 text-emerald-300"
-                      : tag.startsWith(card.tenor)
-                        ? "bg-red-500/15 text-red-300"
-                        : "bg-white/5 text-slate-400"
+                  className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border transition ${
+                    pinned
+                      ? "border-amber-400/60 bg-amber-400/20 text-amber-200"
+                      : "border-[color:var(--tk-color-border-panel)] bg-white/5 text-slate-500 hover:text-amber-200"
                   }`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onTogglePin(parentPin);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter" && event.key !== " ") return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onTogglePin(parentPin);
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  title={pinned ? "取消固定" : "固定行情"}
                 >
-                  {tag}
+                  <Pin size={12} fill={pinned ? "currentColor" : "none"} />
                 </span>
-              ))}
-            </div>
-          </button>
-        ))}
+                <span className="shrink-0 rounded-full border border-amber-400/40 px-2 py-0.5 text-[10px] text-amber-200">
+                  等 {card.waitMinutes}min
+                </span>
+              </div>
+              <div className="mt-1 text-[12px] text-slate-400">
+                {card.amount ? (
+                  <span className="text-[18px] font-bold text-slate-50">{card.amount}</span>
+                ) : (
+                  <span className="text-slate-500">待报价</span>
+                )}
+              </div>
+              <span className="ml-2 text-[12px] font-semibold text-amber-300">
+                {card.rate}
+              </span>
+              {!card.special ? null : (
+                <div className="mt-1 text-[11px] text-amber-300">{card.rate}</div>
+              )}
+              <div className="mt-2 flex flex-wrap gap-1">
+                {card.tags.map((tag) => (
+                  <span
+                    key={`${card.id}-${tag}`}
+                    className={`rounded-sm px-1.5 py-0.5 text-[10px] ${
+                      tag === "核心对手"
+                        ? "bg-emerald-500/15 text-emerald-300"
+                        : tag.startsWith(card.tenor)
+                          ? "bg-red-500/15 text-red-300"
+                          : "bg-white/5 text-slate-400"
+                    }`}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -7937,7 +9425,10 @@ function RepoQuoteSectionBoard({
   accountSearch,
   collateralSearch,
   applyOverride,
+  pinnedQuotes,
+  pinnedKeys,
   onEdit,
+  onTogglePin,
   onSend,
 }: {
   section: RepoQuoteSection;
@@ -7950,7 +9441,10 @@ function RepoQuoteSectionBoard({
   accountSearch: string;
   collateralSearch: string;
   applyOverride: (row: QuoteDetailRow) => QuoteDetailRow;
+  pinnedQuotes: readonly PinnedQuote[];
+  pinnedKeys: ReadonlySet<string>;
   onEdit: (row: QuoteDetailRow, groupName: string) => void;
+  onTogglePin: (item: PinnedQuote) => void;
   onSend: (row: QuoteDetailRow, groupName: string, contactName?: string) => void;
 }) {
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
@@ -7978,6 +9472,9 @@ function RepoQuoteSectionBoard({
   const visibleGroups = section.groups
     .map((group) => ({ group, rows: getVisibleRows(group) }))
     .filter(({ rows }) => rows.length > 0);
+  const pinnedSectionQuotes = pinnedQuotes
+    .filter((item) => item.sectionId === section.id)
+    .map((item) => ({ ...item, row: applyOverride(item.row) }));
   const useDrag = displayLevel === 2 && dragRatio != null;
   const containerStyle = useDrag
     ? { flex: `${dragRatio} 1 0%`, minHeight: 0 }
@@ -8001,11 +9498,18 @@ function RepoQuoteSectionBoard({
     onSend(row, groupName, contactNameForInstitution(row.institution));
   };
 
-  const renderDetailRow = (row: QuoteDetailRow, groupName: string, dense: boolean) => {
+  const renderDetailRow = (
+    row: QuoteDetailRow,
+    groupName: string,
+    dense: boolean,
+    keyPrefix = "",
+  ) => {
     const expanded = expandedRowId === row.id;
     const cards = expanded ? buildOpponentCards(row, groupName) : [];
+    const rowPin = pinnedQuoteFromRow(row, groupName, section);
+    const rowPinned = pinnedKeys.has(rowPin.key);
     return (
-      <Fragment key={row.id}>
+      <Fragment key={`${keyPrefix}${row.id}`}>
         <div
           className={`grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent ${
             dense ? "py-1.5" : "py-1.5"
@@ -8060,6 +9564,21 @@ function RepoQuoteSectionBoard({
               修正
             </button>
             <button
+              className={`inline-flex h-6 w-6 items-center justify-center rounded border transition ${
+                rowPinned
+                  ? "border-amber-400/60 bg-amber-400/20 text-amber-200"
+                  : "border-[color:var(--tk-color-border-panel)] bg-white/5 text-slate-500 hover:text-amber-200"
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onTogglePin(rowPin);
+              }}
+              title={rowPinned ? "取消固定" : "固定行情"}
+              type="button"
+            >
+              <Pin size={12} fill={rowPinned ? "currentColor" : "none"} />
+            </button>
+            <button
               className="whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
               onClick={(e) => {
                 e.stopPropagation();
@@ -8075,9 +9594,12 @@ function RepoQuoteSectionBoard({
           <OpponentExpandPanel
             row={row}
             groupName={groupName}
+            section={section}
             cards={cards}
             status={expandStatus}
             onStatusChange={setExpandStatus}
+            pinnedKeys={pinnedKeys}
+            onTogglePin={onTogglePin}
             onSend={(contactName) => onSend(row, groupName, contactName)}
           />
         ) : null}
@@ -8090,13 +9612,13 @@ function RepoQuoteSectionBoard({
       className={`flex min-h-0 flex-col ${
         useDrag
           ? ""
-          : displayLevel === 2
+          : displayLevel === 1
+            ? "flex-none"
+            : displayLevel === 2
             ? isActive
               ? "min-h-0 flex-[7]"
               : "min-h-0 flex-[3]"
-            : isActive
-              ? "flex-none"
-              : "min-h-0 flex-1"
+            : ""
       } ${withTopBorder ? "border-t border-[color:var(--tk-color-border-divider)]" : ""}`}
       style={containerStyle}
       onFocus={onActivate}
@@ -8122,11 +9644,7 @@ function RepoQuoteSectionBoard({
       </div>
       <div
         className={`min-h-0 ${
-          displayLevel === 2
-            ? "flex-1 overflow-y-auto"
-            : isActive
-              ? "overflow-hidden"
-              : "flex-1 overflow-y-auto"
+          displayLevel === 2 ? "flex-1 overflow-y-auto" : "overflow-visible"
         }`}
       >
         <div className="grid grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] border-y border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
@@ -8139,6 +9657,39 @@ function RepoQuoteSectionBoard({
           <span className="text-right">获取时间</span>
           <span className="text-right">操作</span>
         </div>
+        {pinnedSectionQuotes.length ? (
+          <div className="border-b-2 border-[rgba(234,179,8,0.35)]">
+            <div className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-amber-400 bg-[rgba(234,179,8,0.08)] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(234,179,8,0.18)]">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex items-center gap-1 rounded-md border border-amber-400/60 bg-amber-400/15 px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-amber-200">
+                  固定
+                </span>
+                <div className="text-xs font-semibold text-slate-50">
+                  固定报价
+                </div>
+              </div>
+              <span aria-hidden="true" />
+              <span aria-hidden="true" />
+              <span aria-hidden="true" />
+              <span aria-hidden="true" />
+              <span aria-hidden="true" />
+              <span className="text-right text-[11px] text-amber-200">
+                {pinnedSectionQuotes.length} 条
+              </span>
+              <span />
+            </div>
+            <div className="divide-y divide-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-page)]">
+              {pinnedSectionQuotes.map((item) =>
+                renderDetailRow(
+                  item.row,
+                  item.groupName,
+                  displayLevel === 2,
+                  `pinned-${item.key}-`,
+                ),
+              )}
+            </div>
+          </div>
+        ) : null}
         {visibleGroups.map(({ group, rows }) => (
           <div key={group.id} className="border-b-2 border-[color:var(--tk-color-border-divider)]">
             <div className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-[color:var(--tk-color-brand-cyan)] bg-[var(--tk-color-surface-selected)] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
@@ -8170,7 +9721,7 @@ function RepoQuoteSectionBoard({
             ) : null}
           </div>
         ))}
-        {!visibleGroups.length ? (
+        {!visibleGroups.length && !pinnedSectionQuotes.length ? (
           <div className="grid min-h-[160px] place-items-center border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-page)] text-xs text-slate-500">
             暂无匹配报价
           </div>
@@ -9815,6 +11366,7 @@ const cfetsInstitutionOptions = [
   { label: "其他产品类", sourceIndex: 2, factor: 0.48, color: "#da62b2" },
   { label: "其他", sourceIndex: 2, factor: 0.36, color: "#a1a1aa" },
 ] as const;
+const cfetsDefaultInstitutionIndexes = [0, 2, 6, 7, 8, 10, 12] as const;
 
 const INST_ONLY_METRIC_KEYS = new Set<CfetsMetricKey>([
   "netInflow",
@@ -10912,6 +12464,10 @@ function cfetsMetricIsRate(metricMode: CfetsInstMetricMode) {
   return metricMode === "weightedRate";
 }
 
+function cfetsDefaultChartKindForMetricMode(metricMode: CfetsInstMetricMode): CfetsChartKind {
+  return cfetsMetricIsRate(metricMode) ? "line" : "bar";
+}
+
 function cfetsValueScale(metricMode: CfetsInstMetricMode) {
   return metricMode === "weightedRate" ? 1 : 0.01;
 }
@@ -10923,6 +12479,14 @@ function cfetsCrossMonthFactor(period: CfetsInstPeriod) {
 function formatCfetsDenseValue(value: number, metricMode: CfetsInstMetricMode) {
   if (metricMode === "weightedRate") return `${value.toFixed(3)}%`;
   if (Math.abs(value) >= 1000) return `${Math.round(value).toLocaleString()}亿`;
+  return `${value.toFixed(value >= 100 ? 0 : 1)}亿`;
+}
+
+function formatCfetsAxisTick(value: number, metricMode: CfetsInstMetricMode) {
+  if (metricMode === "weightedRate") return `${value.toFixed(2)}%`;
+  const abs = Math.abs(value);
+  if (abs >= 10000) return `${(value / 10000).toFixed(1)}万亿`;
+  if (abs >= 1000) return `${Math.round(value).toLocaleString()}亿`;
   return `${value.toFixed(value >= 100 ? 0 : 1)}亿`;
 }
 
@@ -11008,7 +12572,7 @@ function buildCfetsDenseSeries({
 // ─── 机构面板 ───────────────────────────────────────────────
 function CfetsInstPanel({
   initialPeriod = "R001",
-  initialMetric = "buyRate",
+  initialMetric = "buyAmt",
 }: {
   initialPeriod?: CfetsInstPeriod;
   initialMetric?: CfetsMetricKey;
@@ -11021,13 +12585,15 @@ function CfetsInstPanel({
       ? "reverse"
       : "repo",
   );
-  const [chartKind, setChartKind] = useState<CfetsChartKind>("bar");
-  const [dimension, setDimension] = useState<CfetsDimension>("period");
+  const [chartKind, setChartKind] = useState<CfetsChartKind>(() =>
+    cfetsDefaultChartKindForMetricMode(cfetsModeFromMetricKey(initialMetric)),
+  );
+  const [dimension, setDimension] = useState<CfetsDimension>("institution");
   const [selectedPeriods, setSelectedPeriods] = useState<CfetsInstPeriod[]>(
-    () => [...cfetsInstPeriodLabels],
+    () => [initialPeriod],
   );
   const [selectedInstitutions, setSelectedInstitutions] = useState<number[]>(
-    () => cfetsInstitutionOptions.map((_, index) => index),
+    () => [...cfetsDefaultInstitutionIndexes],
   );
   const [selectedSupplyTags, setSelectedSupplyTags] = useState<string[]>([
     "利率债",
@@ -11085,7 +12651,10 @@ function CfetsInstPanel({
               checked={metricMode === option.key}
               label={option.label}
               name="cfets-metric-mode"
-              onChange={() => setMetricMode(option.key)}
+              onChange={() => {
+                setMetricMode(option.key);
+                setChartKind(cfetsDefaultChartKindForMetricMode(option.key));
+              }}
             />
           ))}
         </DenseOptionRow>
@@ -11366,6 +12935,16 @@ function CfetsDenseChart({
     visibleSeries.reduce((sum, series) => sum + (series.values[index] ?? 0), 0),
   );
   const maxTotal = Math.max(...dailyTotals, 1);
+  const tooltipRows =
+    tooltipIndex === null
+      ? []
+      : visibleSeries
+          .map((series) => ({
+            ...series,
+            value: series.values[tooltipIndex] ?? 0,
+          }))
+          .filter((series) => series.value > 0)
+          .sort((a, b) => b.value - a.value);
 
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_auto_minmax(0,1fr)_auto] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
@@ -11402,12 +12981,12 @@ function CfetsDenseChart({
           );
         })}
       </div>
-      <div className="grid min-h-0 grid-cols-[3.8rem_1fr] px-3 pb-1">
+      <div className="grid min-h-0 grid-cols-[4.8rem_1fr] px-3 pb-1">
         <div className="flex flex-col justify-between pb-7 pt-1 text-right text-[11px] text-slate-500">
           {yTicks.map((tick) => (
-            <div key={tick}>{isRate ? tick.toFixed(2) : Math.round(tick).toLocaleString()}</div>
+            <div key={tick}>{formatCfetsAxisTick(tick, metricMode)}</div>
           ))}
-          <div>0</div>
+          <div>{formatCfetsAxisTick(0, metricMode)}</div>
         </div>
         <div
           ref={containerRef}
@@ -11511,7 +13090,15 @@ function CfetsDenseChart({
               <div className="mb-1 font-semibold text-slate-200">
                 {data.dates[tooltipIndex]}
               </div>
-              {visibleSeries.slice(0, 12).map((series) => (
+              {chartKind === "bar" ? (
+                <div className="mb-1 flex items-center justify-between gap-6 border-b border-[color:var(--tk-color-border-divider-dark)] pb-1 text-[11px]">
+                  <span className="text-slate-400">合计</span>
+                  <span className="font-mono font-semibold text-slate-100">
+                    {formatCfetsDenseValue(dailyTotals[tooltipIndex] ?? 0, metricMode)}
+                  </span>
+                </div>
+              ) : null}
+              {tooltipRows.slice(0, 12).map((series) => (
                 <div key={series.key} className="flex items-center gap-2 py-0.5">
                   <span
                     className="h-2 w-2 rounded-full"
@@ -11519,12 +13106,12 @@ function CfetsDenseChart({
                   />
                   <span className="text-slate-400">{series.label}</span>
                   <span className="ml-auto pl-4 font-mono font-semibold text-slate-100">
-                    {formatCfetsDenseValue(series.values[tooltipIndex] ?? 0, metricMode)}
+                    {formatCfetsDenseValue(series.value, metricMode)}
                   </span>
                 </div>
               ))}
-              {visibleSeries.length > 12 ? (
-                <div className="mt-1 text-slate-500">其余 {visibleSeries.length - 12} 项略</div>
+              {tooltipRows.length > 12 ? (
+                <div className="mt-1 text-slate-500">其余 {tooltipRows.length - 12} 项略</div>
               ) : null}
             </ChartTooltip>
           ) : null}
@@ -11767,9 +13354,9 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function NcdPrimaryTrendPanel() {
+function NcdPrimaryTrendPanel({ period = "1M" }: { period?: NcdPeriod }) {
   const [range, setRange] = useState<NcdTrendRange>("14d");
-  const off = NCD_PERIOD_OFFSET["1M"];
+  const off = NCD_PERIOD_OFFSET[period];
   const count = NCD_TREND_COUNTS[range];
 
   const gov = shiftSeries(ncdPrimaryGovBase6m.slice(-count), off);
@@ -12229,8 +13816,11 @@ function NcdExpandedDualView({ period }: { period: NcdPeriod }) {
   );
 }
 
-function NcdPrimaryTable() {
-  const [period, setPeriod] = useState<NcdPeriod>("1M");
+function NcdPrimaryTable({ initialPeriod = "1M" }: { initialPeriod?: NcdPeriod }) {
+  const [period, setPeriod] = useState<NcdPeriod>(initialPeriod);
+  useEffect(() => {
+    setPeriod(initialPeriod);
+  }, [initialPeriod]);
   const off = NCD_PERIOD_OFFSET[period];
   const groups: NcdPrimaryGroup[] = ncdPrimary1MGroups.map((g) => ({
     ...g,
@@ -12785,6 +14375,7 @@ function StructuredTable({
   compact = false,
   fitToWidth = false,
   columnWidths,
+  nowrapHeader = false,
   flush = false,
   adaptiveHeight = false,
   scrollY = false,
@@ -12800,6 +14391,7 @@ function StructuredTable({
   compact?: boolean;
   fitToWidth?: boolean;
   columnWidths?: readonly string[];
+  nowrapHeader?: boolean;
   flush?: boolean;
   adaptiveHeight?: boolean;
   scrollY?: boolean;
@@ -12836,7 +14428,7 @@ function StructuredTable({
                   index === 0 ? "text-left" : "text-right"
                 } ${compact ? "px-2 py-1.5" : "px-3 py-2.5"} ${
                   fitToWidth
-                    ? columnWidths
+                    ? columnWidths || nowrapHeader
                       ? "whitespace-nowrap leading-tight"
                       : "whitespace-normal break-all leading-tight"
                     : ""
@@ -12859,7 +14451,7 @@ function StructuredTable({
               {row.map((cell, cellIndex) => (
                 <td
                   key={`${row[0]}-${cellIndex}`}
-                  className={`border-b ${compact ? "px-2.5 py-2" : "px-3 py-2.5"} ${
+                  className={`border-b ${compact ? "px-2 py-1.5" : "px-3 py-2.5"} ${
                     cellIndex === 0 ? "text-left" : "text-right"
                   } ${fitToWidth && buttonColumn !== cellIndex ? "overflow-hidden text-ellipsis whitespace-nowrap" : ""}`}
                 >
@@ -13377,6 +14969,17 @@ function buildAxisLabels(min: number, max: number, count: number) {
   });
 }
 
+function formatMiniChartValue(value: number, unit = "") {
+  if (!Number.isFinite(value)) return "-";
+  if (unit === "%") return value.toFixed(3);
+  const abs = Math.abs(value);
+  if (abs >= 10000) return `${(value / 10000).toFixed(1)}万`;
+  if (abs >= 1000) return Math.round(value).toString();
+  if (abs >= 100) return Math.round(value).toString();
+  if (abs >= 10) return value.toFixed(0);
+  return value.toFixed(1);
+}
+
 function valueToY(value: number, height: number, min: number, max: number) {
   return height - ((value - min) / (max - min)) * height;
 }
@@ -13493,6 +15096,7 @@ function SentimentPopoverPanel({
 }) {
   const [tab, setTab] = useState<SentimentTab>("trend");
   const data = tab === "trend" ? sentimentTrendData : sentimentRealtimeData;
+  const latestPoint = data[data.length - 1];
   const VW = 380;
   const VH = 120;
 
@@ -13564,6 +15168,25 @@ function SentimentPopoverPanel({
       <div className="flex gap-4 px-3 pb-1 pt-2 text-[11px] text-slate-400">
         {sentimentSeriesConfig.map(({ key, label, color }) => (
           <LegendDot key={key} color={color} label={label} />
+        ))}
+      </div>
+      <div className="grid grid-cols-4 gap-1.5 px-3 pb-2">
+        {sentimentSeriesConfig.map(({ key, label, color }) => (
+          <div
+            key={key}
+            className="rounded border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.46)] px-2 py-1.5"
+          >
+            <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: color }}
+              />
+              <span className="truncate">{label}</span>
+            </div>
+            <div className="mt-0.5 font-mono text-[13px] font-semibold text-slate-100">
+              {latestPoint?.[key] ?? "-"}
+            </div>
+          </div>
         ))}
       </div>
 
@@ -13683,6 +15306,149 @@ function SentimentPopoverPanel({
           ))}
         </ChartTooltip>
       )}
+    </div>
+  );
+}
+
+type TopToolMetric = {
+  label: string;
+  value: string;
+  tone?: "neutral" | "good" | "alert";
+};
+
+function TopToolMetricChip({
+  label,
+  value,
+  tone,
+  title,
+  subtitle,
+  metrics,
+}: {
+  label: string;
+  value: string;
+  tone: "neutral" | "good" | "alert";
+  title: string;
+  subtitle?: string;
+  metrics: TopToolMetric[];
+}) {
+  const {
+    visible,
+    anchorRect,
+    anchorRef,
+    scheduleShow,
+    scheduleHide,
+    cancelHide,
+  } = useHoverPopover();
+
+  return (
+    <div
+      ref={anchorRef}
+      className="inline-flex"
+      onMouseEnter={scheduleShow}
+      onMouseLeave={scheduleHide}
+    >
+      <InfoChip label={label} value={value} tone={tone} />
+      {visible && anchorRect ? (
+        <TopToolValuePopover
+          anchorRect={anchorRect}
+          metrics={metrics}
+          subtitle={subtitle}
+          title={title}
+          onEnter={cancelHide}
+          onLeave={scheduleHide}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function StatusBadgeWithPopover({ statusText }: { statusText: string }) {
+  const {
+    visible,
+    anchorRect,
+    anchorRef,
+    scheduleShow,
+    scheduleHide,
+    cancelHide,
+  } = useHoverPopover();
+
+  return (
+    <div
+      ref={anchorRef}
+      className="inline-flex"
+      onMouseEnter={scheduleShow}
+      onMouseLeave={scheduleHide}
+    >
+      <StatusBadge>{statusText}</StatusBadge>
+      {visible && anchorRect ? (
+        <TopToolValuePopover
+          anchorRect={anchorRect}
+          title={statusText}
+          subtitle="综合央行投放、DR007、匿名成交与资金情绪判断"
+          metrics={[
+            { label: "DR007", value: "2.15%", tone: "alert" },
+            { label: "资金情绪", value: "51", tone: "neutral" },
+            { label: "R001", value: "1.58 / 1.66", tone: "good" },
+            { label: "更新时间", value: "10:53:27" },
+          ]}
+          onEnter={cancelHide}
+          onLeave={scheduleHide}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function TopToolValuePopover({
+  anchorRect,
+  title,
+  subtitle,
+  metrics,
+  onEnter,
+  onLeave,
+}: {
+  anchorRect: DOMRect;
+  title: string;
+  subtitle?: string;
+  metrics: TopToolMetric[];
+  onEnter: () => void;
+  onLeave: () => void;
+}) {
+  const panelWidth = 284;
+  const left = Math.max(
+    8,
+    Math.min(anchorRect.left, window.innerWidth - panelWidth - 8),
+  );
+  const top = anchorRect.bottom + 8;
+
+  return (
+    <div
+      className="tdx-terminal-tooltip fixed z-[320] p-3 text-xs"
+      style={{ left, top, width: panelWidth }}
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+    >
+      <div className="font-semibold text-slate-50">{title}</div>
+      {subtitle ? (
+        <div className="mt-1 leading-5 text-slate-500">{subtitle}</div>
+      ) : null}
+      <div className="mt-2 grid gap-1.5">
+        {metrics.map((metric) => (
+          <div
+            key={`${metric.label}-${metric.value}`}
+            className="flex items-center justify-between gap-3 rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-2 py-1.5"
+          >
+            <span className="truncate text-slate-500">{metric.label}</span>
+            <span
+              className={`shrink-0 font-mono font-semibold ${overviewToneClass(
+                metric.tone ?? "neutral",
+              )}`}
+            >
+              {metric.value}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -13815,6 +15581,7 @@ function cellClassName(
   emphasisColumns: readonly number[],
 ) {
   if (columnIndex === 0) return "tk-strong font-semibold";
+  if (value.trim() === "--") return "tk-muted font-medium";
   if (deltaColumns.includes(columnIndex)) {
     if (value.startsWith("-")) return "tk-positive font-semibold";
     if (value.startsWith("+")) return "tk-negative font-semibold";

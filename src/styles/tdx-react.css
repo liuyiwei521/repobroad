@@ -258,7 +258,38 @@ body,
   animation-play-state: paused;
 }
 
+.tk-flip-card {
+  perspective: 1200px;
+}
+
+.tk-flip-card__inner {
+  display: grid;
+  min-height: 0;
+  transform-style: preserve-3d;
+  transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tk-flip-card.is-flipped .tk-flip-card__inner {
+  transform: rotateY(180deg);
+}
+
+.tk-flip-card__face {
+  grid-area: 1 / 1;
+  min-width: 0;
+  min-height: 0;
+  backface-visibility: hidden;
+  transform: rotateY(0deg);
+}
+
+.tk-flip-card__face--back {
+  transform: rotateY(180deg);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .tk-flip-card__inner {
+    transition: none;
+  }
+
   .tk-marquee__track {
     animation: none;
   }
