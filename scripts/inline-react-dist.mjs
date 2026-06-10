@@ -30,7 +30,10 @@ async function inlineScripts(source) {
     return '';
   });
 
-  return htmlWithoutScripts.replace('</body>', `${scripts.join('\n')}\n  </body>`);
+  return htmlWithoutScripts.replace(
+    '</body>',
+    () => `${scripts.join('\n')}\n  </body>`,
+  );
 }
 
 function assetPath(pathname) {

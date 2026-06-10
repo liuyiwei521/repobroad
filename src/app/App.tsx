@@ -5482,28 +5482,35 @@ function XrepoFrame({
         </div>
       )}
       <div className="min-h-0 flex-1">
-        {flippedContract ? (
-          <XrepoHistoryBack
-            contractName={flippedContract}
-            compact={embeddedPreview}
-            onBack={() => setFlippedContract(null)}
-          />
-        ) : (
-          <StructuredTable
-            columns={section.columns}
-            rows={rows}
-            greenColumns={section.greenColumns}
-            redColumns={section.redColumns}
-            emphasisColumns={section.emphasisColumns}
-            buttonColumn={section.buttonColumn}
-            fitToWidth
-            columnWidths={section.columnWidths}
-            compact={embeddedPreview}
-            flush
-            scrollY
-            onRowClick={(row) => openInlineHistory(row[0] ?? "R001")}
-          />
-        )}
+        <div className={`tk-flip-card h-full min-h-0 ${flippedContract ? "is-flipped" : ""}`}>
+          <div className="tk-flip-card__inner h-full min-h-0">
+            <div className="tk-flip-card__face h-full min-h-0">
+              <StructuredTable
+                columns={section.columns}
+                rows={rows}
+                greenColumns={section.greenColumns}
+                redColumns={section.redColumns}
+                emphasisColumns={section.emphasisColumns}
+                buttonColumn={section.buttonColumn}
+                fitToWidth
+                columnWidths={section.columnWidths}
+                compact={embeddedPreview}
+                flush
+                scrollY
+                onRowClick={(row) => openInlineHistory(row[0] ?? "R001")}
+              />
+            </div>
+            <div className="tk-flip-card__face tk-flip-card__face--back h-full min-h-0">
+              <XrepoHistoryBack
+                contractName={
+                  flippedContract ?? rows[0]?.[0] ?? (tenorFilter === "all" ? "R001" : tenorFilter)
+                }
+                compact={embeddedPreview}
+                onBack={() => setFlippedContract(null)}
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -9018,17 +9025,25 @@ function MainQuoteBoard({
   }
   const [topRatio, setTopRatio] = useState<number>(() => {
     if (typeof window === "undefined") return DEFAULT_LEVEL2_TOP_RATIO;
-    const saved = window.localStorage.getItem(QUOTE_BOARD_RATIO_KEY);
-    const parsed = saved == null ? NaN : parseFloat(saved);
-    return Number.isFinite(parsed)
-      ? clampRatio(parsed)
-      : DEFAULT_LEVEL2_TOP_RATIO;
+    try {
+      const saved = window.localStorage.getItem(QUOTE_BOARD_RATIO_KEY);
+      const parsed = saved == null ? NaN : parseFloat(saved);
+      return Number.isFinite(parsed)
+        ? clampRatio(parsed)
+        : DEFAULT_LEVEL2_TOP_RATIO;
+    } catch {
+      return DEFAULT_LEVEL2_TOP_RATIO;
+    }
   });
   const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    window.localStorage.setItem(QUOTE_BOARD_RATIO_KEY, String(topRatio));
+    try {
+      window.localStorage.setItem(QUOTE_BOARD_RATIO_KEY, String(topRatio));
+    } catch {
+      /* ignore */
+    }
   }, [topRatio]);
 
   function startDrag(event: React.MouseEvent<HTMLDivElement>) {
