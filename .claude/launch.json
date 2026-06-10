@@ -16,8 +16,8 @@
     {
       "name": "dev-react",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "vite.react.config.ts", "--port", "5716"],
-      "port": 5716
+      "runtimeArgs": ["vite", "--config", "vite.react.config.ts", "--port", "5717"],
+      "port": 5717
     }
   ]
 }

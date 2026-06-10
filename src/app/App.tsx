@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import {
   Activity,
   BadgePercent,
@@ -2457,20 +2457,85 @@ function AdaptiveEntryRail({
   );
 }
 
-const LEFT_ENTRY_HEIGHTS_KEY = "leftEntryHeights.v1";
-const MIN_LEFT_ENTRY_HEIGHT = 12;
+const LEFT_ENTRY_DELTA_KEY = "leftEntryDelta.v3";
+const LEFT_ENTRY_COLLAPSED_PX = 38;
 
-function normalizeEntryHeights(values: readonly number[], count: number) {
-  const fallback = Array.from({ length: count }, () => 100 / count);
-  if (
-    values.length !== count ||
-    values.some((value) => !Number.isFinite(value) || value <= 0)
-  ) {
-    return fallback;
+const NATURAL_MIN_BY_MODE: Record<EntryDisplayMode, number> = {
+  icon: 44,
+  compact: 64,
+  "narrow-summary": 110,
+  summary: 96,
+  "wide-preview": 240,
+};
+
+const NATURAL_MIN_OVERRIDES: Partial<
+  Record<ModuleEntryId, Partial<Record<EntryDisplayMode, number>>>
+> = {
+  ncd: { "wide-preview": 310, summary: 110, "narrow-summary": 130 },
+  xrepo: { "narrow-summary": 130 },
+  "institution-period": { "wide-preview": 260 },
+};
+
+function getNaturalMinHeight(id: ModuleEntryId, mode: EntryDisplayMode) {
+  return NATURAL_MIN_OVERRIDES[id]?.[mode] ?? NATURAL_MIN_BY_MODE[mode];
+}
+
+function parseEntryDeltas(raw: string | null): Record<string, number> {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object") return {};
+    const result: Record<string, number> = {};
+    for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+      if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
+        result[key] = Math.round(value);
+      }
+    }
+    return result;
+  } catch {
+    return {};
   }
-  const total = values.reduce((sum, value) => sum + value, 0);
-  if (total <= 0) return fallback;
-  return values.map((value) => (value / total) * 100);
+}
+
+function loadEntryDeltas(): Record<string, number> {
+  if (typeof window === "undefined") return {};
+  try {
+    return parseEntryDeltas(window.localStorage.getItem(LEFT_ENTRY_DELTA_KEY));
+  } catch {
+    return {};
+  }
+}
+
+function persistEntryDeltas(deltas: Record<string, number>) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LEFT_ENTRY_DELTA_KEY, JSON.stringify(deltas));
+  } catch {
+    /* ignore */
+  }
+}
+
+type EntryRuntimeState = { flipped?: boolean };
+
+const FLIPPED_MIN_OVERRIDES: Partial<
+  Record<ModuleEntryId, Partial<Record<EntryDisplayMode, number>>>
+> = {
+  "big-bank-price": { "wide-preview": 540, summary: 280, "narrow-summary": 240 },
+  xrepo: { "wide-preview": 360, summary: 260, "narrow-summary": 220 },
+};
+
+function slotHeight(
+  id: ModuleEntryId,
+  mode: EntryDisplayMode,
+  deltas: Record<string, number>,
+  runtime: Record<string, EntryRuntimeState> = {},
+) {
+  let base = getNaturalMinHeight(id, mode);
+  if (runtime[id]?.flipped) {
+    const override = FLIPPED_MIN_OVERRIDES[id]?.[mode];
+    if (override !== undefined) base = Math.max(base, override);
+  }
+  return base + Math.max(0, deltas[id] ?? 0);
 }
 
 function ResizableEntryStack({
@@ -2490,50 +2555,35 @@ function ResizableEntryStack({
   const [collapsedIds, setCollapsedIds] = useState<ReadonlySet<ModuleEntryId>>(
     () => new Set(),
   );
-  const [heights, setHeights] = useState<number[]>(() => {
-    if (typeof window === "undefined") {
-      return normalizeEntryHeights([], entries.length);
-    }
-    try {
-      const raw = window.localStorage.getItem(LEFT_ENTRY_HEIGHTS_KEY);
-      return normalizeEntryHeights(raw ? JSON.parse(raw) : [], entries.length);
-    } catch {
-      return normalizeEntryHeights([], entries.length);
-    }
-  });
+  const [deltas, setDeltas] = useState<Record<string, number>>(() => loadEntryDeltas());
+  const [runtime, setRuntime] = useState<Record<string, EntryRuntimeState>>({});
+
+  const handleFlipChange = useCallback(
+    (id: ModuleEntryId) => (flipped: boolean) => {
+      setRuntime((current) => {
+        if ((current[id]?.flipped ?? false) === flipped) return current;
+        return { ...current, [id]: { ...current[id], flipped } };
+      });
+    },
+    [],
+  );
 
   useEffect(() => {
-    setHeights((current) => normalizeEntryHeights(current, entries.length));
-  }, [entries.length]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(LEFT_ENTRY_HEIGHTS_KEY, JSON.stringify(heights));
-    } catch {
-      /* ignore */
-    }
-  }, [heights]);
+    persistEntryDeltas(deltas);
+  }, [deltas]);
 
   function startResize(event: React.MouseEvent<HTMLDivElement>, index: number) {
     event.preventDefault();
-    const stack = stackRef.current;
-    if (!stack) return;
+    const id = entries[index].id;
     const startY = event.clientY;
-    const startHeights = [...heights];
-    const totalHeight = stack.getBoundingClientRect().height;
-    if (totalHeight <= 0) return;
+    const startDelta = Math.max(0, deltas[id] ?? 0);
 
     function onMove(ev: MouseEvent) {
-      const delta = ((ev.clientY - startY) / totalHeight) * 100;
-      const before = startHeights[index] + delta;
-      const after = startHeights[index + 1] - delta;
-      if (before < MIN_LEFT_ENTRY_HEIGHT || after < MIN_LEFT_ENTRY_HEIGHT) {
-        return;
-      }
-      const next = [...startHeights];
-      next[index] = before;
-      next[index + 1] = after;
-      setHeights(normalizeEntryHeights(next, entries.length));
+      const dragPx = ev.clientY - startY;
+      const next = Math.max(0, Math.round(startDelta + dragPx));
+      setDeltas((current) =>
+        current[id] === next ? current : { ...current, [id]: next },
+      );
     }
 
     function onUp() {
@@ -2547,6 +2597,15 @@ function ResizableEntryStack({
     document.body.style.cursor = "row-resize";
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
+  }
+
+  function resetDelta(id: ModuleEntryId) {
+    setDeltas((current) => {
+      if (!(id in current)) return current;
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
   }
 
   function toggleCollapsed(id: ModuleEntryId) {
@@ -2563,15 +2622,17 @@ function ResizableEntryStack({
       {entries.map((entry, index) => {
         const collapsed = collapsedIds.has(entry.id);
         const Icon = entry.icon;
+        const minH = collapsed
+          ? LEFT_ENTRY_COLLAPSED_PX
+          : slotHeight(entry.id, displayMode, deltas, runtime);
 
         return (
         <Fragment key={entry.id}>
           <div
-            className={`group/entry relative min-h-0 ${collapsed ? "rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]" : ""}`}
+            className={`group/entry relative ${collapsed ? "overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]" : ""}`}
             style={{
-              flex: collapsed
-                ? "0 0 38px"
-                : `0 0 ${heights[index] ?? 100 / entries.length}%`,
+              flex: "0 0 auto",
+              minHeight: minH,
             }}
           >
             {collapsed ? (
@@ -2608,6 +2669,7 @@ function ResizableEntryStack({
                   displayMode={displayMode}
                   tenorFilter={tenorFilter}
                   onOpen={(options) => onOpen(entry, options)}
+                  onFlippedChange={handleFlipChange(entry.id)}
                 />
               </>
             )}
@@ -2617,9 +2679,10 @@ function ResizableEntryStack({
               role="separator"
               aria-orientation="horizontal"
               aria-label="调整左侧组件高度"
-              title="拖动调整高度"
+              title="拖动调整高度，双击恢复自适应"
               className="group relative my-0.5 h-2 shrink-0 cursor-row-resize rounded bg-transparent transition-colors hover:bg-[rgba(231,53,58,0.18)]"
               onMouseDown={(event) => startResize(event, index)}
+              onDoubleClick={() => resetDelta(entry.id)}
             >
               <GripHorizontal className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-slate-600 group-hover:text-red-200" size={18} />
             </div>
@@ -2688,50 +2751,33 @@ function NarrowRailSummary({
   const [collapsedIds, setCollapsedIds] = useState<ReadonlySet<ModuleEntryId>>(
     () => new Set(),
   );
-  const [heights, setHeights] = useState<number[]>(() => {
-    if (typeof window === "undefined") {
-      return normalizeEntryHeights([], items.length);
-    }
-    try {
-      const raw = window.localStorage.getItem("leftNarrowEntryHeights.v1");
-      return normalizeEntryHeights(raw ? JSON.parse(raw) : [], items.length);
-    } catch {
-      return normalizeEntryHeights([], items.length);
-    }
-  });
+  const [deltas, setDeltas] = useState<Record<string, number>>(() => loadEntryDeltas());
+  const [runtime, setRuntime] = useState<Record<string, EntryRuntimeState>>({});
 
   useEffect(() => {
-    setHeights((current) => normalizeEntryHeights(current, items.length));
-  }, [items.length]);
+    setRuntime((current) => {
+      const flipped = inlineXrepoContract !== null;
+      if ((current["xrepo"]?.flipped ?? false) === flipped) return current;
+      return { ...current, xrepo: { ...current["xrepo"], flipped } };
+    });
+  }, [inlineXrepoContract]);
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem("leftNarrowEntryHeights.v1", JSON.stringify(heights));
-    } catch {
-      /* ignore */
-    }
-  }, [heights]);
+    persistEntryDeltas(deltas);
+  }, [deltas]);
 
   function startResize(event: React.MouseEvent<HTMLDivElement>, index: number) {
     event.preventDefault();
-    const stack = stackRef.current;
-    if (!stack) return;
+    const id = items[index].item.id;
     const startY = event.clientY;
-    const startHeights = [...heights];
-    const totalHeight = stack.getBoundingClientRect().height;
-    if (totalHeight <= 0) return;
+    const startDelta = Math.max(0, deltas[id] ?? 0);
 
     function onMove(ev: MouseEvent) {
-      const delta = ((ev.clientY - startY) / totalHeight) * 100;
-      const before = startHeights[index] + delta;
-      const after = startHeights[index + 1] - delta;
-      if (before < MIN_LEFT_ENTRY_HEIGHT || after < MIN_LEFT_ENTRY_HEIGHT) {
-        return;
-      }
-      const next = [...startHeights];
-      next[index] = before;
-      next[index + 1] = after;
-      setHeights(normalizeEntryHeights(next, items.length));
+      const dragPx = ev.clientY - startY;
+      const next = Math.max(0, Math.round(startDelta + dragPx));
+      setDeltas((current) =>
+        current[id] === next ? current : { ...current, [id]: next },
+      );
     }
 
     function onUp() {
@@ -2745,6 +2791,15 @@ function NarrowRailSummary({
     document.body.style.cursor = "row-resize";
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
+  }
+
+  function resetDelta(id: ModuleEntryId) {
+    setDeltas((current) => {
+      if (!(id in current)) return current;
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
   }
 
   function toggleCollapsed(id: ModuleEntryId) {
@@ -2897,14 +2952,17 @@ function NarrowRailSummary({
           );
         }
 
+        const minH = collapsed
+          ? LEFT_ENTRY_COLLAPSED_PX
+          : slotHeight(item.id, "narrow-summary", deltas, runtime);
+
         return (
           <Fragment key={item.id}>
             <div
-              className={`group/entry relative min-h-0 ${collapsed ? "rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]" : ""}`}
+              className={`group/entry relative ${collapsed ? "overflow-hidden rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]" : ""}`}
               style={{
-                flex: collapsed
-                  ? "0 0 38px"
-                  : `0 0 ${heights[index] ?? 100 / items.length}%`,
+                flex: "0 0 auto",
+                minHeight: minH,
               }}
             >
               {collapsed ? (
@@ -2944,9 +3002,10 @@ function NarrowRailSummary({
                 role="separator"
                 aria-orientation="horizontal"
                 aria-label="调整左侧组件高度"
-                title="拖动调整高度"
+                title="拖动调整高度，双击恢复自适应"
                 className="group relative my-0.5 h-2 shrink-0 cursor-row-resize rounded bg-transparent transition-colors hover:bg-[rgba(231,53,58,0.18)]"
                 onMouseDown={(event) => startResize(event, index)}
+                onDoubleClick={() => resetDelta(item.id)}
               >
                 <GripHorizontal className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-slate-600 group-hover:text-red-200" size={18} />
               </div>
@@ -3057,12 +3116,14 @@ function ModuleEntryItem({
   displayMode,
   tenorFilter = "all",
   onOpen,
+  onFlippedChange,
 }: {
   entry: ModuleEntryConfig;
   active: boolean;
   displayMode: EntryDisplayMode;
   tenorFilter?: QuoteTenorFilter;
   onOpen: (options?: FrameOpenOptions) => void;
+  onFlippedChange?: (flipped: boolean) => void;
 }) {
   const Icon = entry.icon;
   const metric = getModuleEntryData(entry.id, tenorFilter);
@@ -3094,6 +3155,7 @@ function ModuleEntryItem({
             id={entry.id}
             tenorFilter={tenorFilter}
             onOpen={onOpen}
+            onFlippedChange={onFlippedChange}
           />
         </div>
       );
@@ -3342,12 +3404,16 @@ function XrepoSummaryOverview({
     (item): item is SummaryTableSection =>
       item.layout === "table" && item.title === "XREPO",
   );
-  const rows = filterRowsByQuoteTenor(section?.rows ?? [], tenorFilter, [0]).slice(0, 5);
+  const rows = filterRowsByQuoteTenor(
+    xrepoR001Rows(section?.rows ?? []),
+    tenorFilter,
+    [0],
+  ).slice(0, 5);
 
   return (
-    <div className="mt-2 border-t border-[color:var(--tk-color-border-divider-dark)] pt-2">
+    <div className="mt-1 border-t border-[color:var(--tk-color-border-divider-dark)] pt-1">
       <div className="tk-table-shell overflow-hidden rounded border">
-        <div className="grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-1 text-[9px] text-[color:var(--tk-color-text-tertiary)]">
+        <div className="grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-1.5 py-0.5 text-[9px] leading-tight text-[color:var(--tk-color-text-tertiary)]">
           <span className="truncate">合约</span>
           <span className="truncate text-right">正量</span>
           <span className="truncate text-right">正利率</span>
@@ -3357,7 +3423,7 @@ function XrepoSummaryOverview({
         {rows.length ? rows.map((row, index) => (
           <div
             key={`${row[0]}-${index}`}
-            className={`grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] items-center gap-1 border-b border-[color:var(--tk-color-border-divider-dark)] px-2 py-1 text-[10px] last:border-b-0 ${
+            className={`grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] items-center gap-1 border-b border-[color:var(--tk-color-border-divider-dark)] px-1.5 py-0.5 text-[10px] leading-tight last:border-b-0 ${
               index === 0 ? "bg-[rgba(143,32,38,0.24)]" : ""
             }`}
           >
@@ -3523,7 +3589,11 @@ function getModuleEntryData(
       (item): item is SummaryTableSection =>
         item.layout === "table" && item.title === "XREPO",
     );
-    const rows = filterRowsByQuoteTenor(section?.rows ?? [], tenorFilter, [0]);
+    const rows = filterRowsByQuoteTenor(
+      xrepoR001Rows(section?.rows ?? []),
+      tenorFilter,
+      [0],
+    );
     const first = rows[0];
     const mini = rows.find((row) => row[0]?.includes("mini"));
     const label = tenorFilter === "all" ? first?.[0] ?? "XREPO" : tenorFilter;
@@ -3845,17 +3915,20 @@ function ModuleEntryPreview({
   id,
   tenorFilter = "all",
   onOpen,
+  onFlippedChange,
 }: {
   id: ModuleEntryId;
   tenorFilter?: QuoteTenorFilter;
   onOpen?: (options?: FrameOpenOptions) => void;
+  onFlippedChange?: (flipped: boolean) => void;
 }) {
   if (id === "big-bank-price") {
     return (
-      <RichPreviewFrame autoHeight>
+      <RichPreviewFrame heightClassName="h-full">
         <BigBankPriceFrame
           embeddedPreview
           onOpen={onOpen}
+          onFlippedChange={onFlippedChange}
         />
       </RichPreviewFrame>
     );
@@ -3863,11 +3936,12 @@ function ModuleEntryPreview({
 
   if (id === "xrepo") {
     return (
-      <RichPreviewFrame autoHeight>
+      <RichPreviewFrame heightClassName="h-full">
         <XrepoFrame
           embeddedPreview
           tenorFilter={tenorFilter}
           onOpen={onOpen}
+          onFlippedChange={onFlippedChange}
         />
       </RichPreviewFrame>
     );
@@ -3875,7 +3949,7 @@ function ModuleEntryPreview({
 
   if (id === "exchange-repo") {
     return (
-      <RichPreviewFrame autoHeight>
+      <RichPreviewFrame heightClassName="h-full">
         <ExchangeRepoFrame
           embeddedPreview
           tenorFilter={tenorFilter}
@@ -3887,7 +3961,7 @@ function ModuleEntryPreview({
 
   if (id === "ncd") {
     return (
-      <RichPreviewFrame autoHeight>
+      <RichPreviewFrame heightClassName="h-full">
         <LeftNcdCard
           embeddedPreview
           tenorFilter={tenorFilter}
@@ -4190,27 +4264,17 @@ function MiniInstitutionSeriesPreview({
   const min = showAsStackedBars ? 0 : allValues.length ? Math.min(...allValues) : 0;
   const max = allValues.length ? Math.max(...allValues) : 1;
   const range = max - min || 1;
-  const width = Math.max(220, Math.round(chartSize.width));
-  const height = Math.max(120, Math.round(chartSize.height));
-  const plotLeft = unit === "%" ? 40 : 36;
-  const plotRight = 8;
-  const plotTop = 8;
-  const plotBottom = 22;
-  const plotWidth = width - plotLeft - plotRight;
-  const plotHeight = height - plotTop - plotBottom;
+  const width = Math.max(120, Math.round(chartSize.width));
+  const height = Math.max(70, Math.round(chartSize.height));
+  const plotLeft = unit === "%" ? 40 : unit === "亿" || unit === "万" ? 44 : 36;
+  const plotRight = 10;
+  const plotTop = 10;
+  const plotBottom = 20;
+  const plotWidth = Math.max(20, width - plotLeft - plotRight);
+  const plotHeight = Math.max(20, height - plotTop - plotBottom);
   const yAxisLabels = buildAxisLabels(min, max, 4);
   const pointCount = plottedSeries[0]?.values.length ?? 1;
   const xLabelIndexes = [0, Math.floor(pointCount / 2), Math.max(pointCount - 1, 0)];
-  const latestIndex = Math.max(pointCount - 1, 0);
-  const topSeries = plottedSeries
-    .map((item) => ({
-      ...item,
-      latest: Math.max(0, item.values[latestIndex] ?? 0),
-    }))
-    .filter((item) => item.latest > 0)
-    .sort((a, b) => b.latest - a.latest)
-    .slice(0, 3);
-
   useEffect(() => {
     const node = chartRef.current;
     if (!node || typeof ResizeObserver === "undefined") return;
@@ -4218,8 +4282,8 @@ function MiniInstitutionSeriesPreview({
       const rect = node.getBoundingClientRect();
       setChartSize((current) => {
         const next = {
-          width: Math.max(220, Math.round(rect.width)),
-          height: Math.max(120, Math.round(rect.height)),
+          width: Math.max(120, Math.round(rect.width)),
+          height: Math.max(70, Math.round(rect.height)),
         };
         return current.width === next.width && current.height === next.height
           ? current
@@ -4259,7 +4323,7 @@ function MiniInstitutionSeriesPreview({
           {visibleSeries.length}/{series.length}
         </span>
       </div>
-      <div className="flex flex-wrap gap-x-2 gap-y-1 pb-1 text-[9px]">
+      <div className="flex gap-x-2 overflow-x-auto whitespace-nowrap pb-1 text-[9px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {series.map((item) => {
           const hidden = hiddenKeys.has(item.key);
           return (
@@ -4281,12 +4345,12 @@ function MiniInstitutionSeriesPreview({
           );
         })}
       </div>
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_5.6rem] gap-2">
-        <div ref={chartRef} className="min-h-0">
+      <div className="min-h-0 flex-1">
+        <div ref={chartRef} className="h-full min-h-0 min-w-0">
         <svg
-          className="h-full w-full overflow-visible"
+          className="block h-full w-full"
           viewBox={`0 0 ${width} ${height}`}
-          preserveAspectRatio="xMidYMid meet"
+          preserveAspectRatio="none"
         >
           <line
             x1={plotLeft}
@@ -4330,7 +4394,10 @@ function MiniInstitutionSeriesPreview({
             );
           })}
           {xLabelIndexes.map((index) => {
-            const x = plotLeft + (index / Math.max(pointCount - 1, 1)) * plotWidth;
+            const x =
+              showAsStackedBars
+                ? plotLeft + ((index + 0.5) / Math.max(pointCount, 1)) * plotWidth
+                : plotLeft + (index / Math.max(pointCount - 1, 1)) * plotWidth;
             const axisLabel =
               xLabels?.[index] ??
               (index === 0 ? "起点" : index === xLabelIndexes[xLabelIndexes.length - 1] ? "最新" : "中段");
@@ -4338,7 +4405,7 @@ function MiniInstitutionSeriesPreview({
               <text
                 key={index}
                 x={x}
-                y={height - 5}
+                y={plotTop + plotHeight + 12}
                 textAnchor={index === 0 ? "start" : index === xLabelIndexes[xLabelIndexes.length - 1] ? "end" : "middle"}
                 fontSize="8"
                 fill="#64748b"
@@ -4351,9 +4418,9 @@ function MiniInstitutionSeriesPreview({
             <g>
               {dailyTotals.map((total, dateIndex) => {
                 let stackY = plotTop + plotHeight;
-                const x =
-                  plotLeft + (dateIndex / Math.max(pointCount - 1, 1)) * plotWidth;
-                const barWidth = Math.max(4, Math.min(11, plotWidth / pointCount - 2));
+                const slot = plotWidth / Math.max(pointCount, 1);
+                const x = plotLeft + (dateIndex + 0.5) * slot;
+                const barWidth = Math.max(3, Math.min(11, slot - 2));
                 return (
                   <g key={dateIndex}>
                     {plottedSeries.map((item) => {
@@ -4395,24 +4462,6 @@ function MiniInstitutionSeriesPreview({
             )
           )}
         </svg>
-        </div>
-        <div className="flex min-h-0 flex-col justify-center gap-1 rounded border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.42)] px-2 py-1">
-          <div className="truncate text-[9px] text-slate-500">最新排行</div>
-          {topSeries.map((item) => (
-            <div key={item.key} className="grid grid-cols-[0.45rem_1fr] items-center gap-1">
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: item.color }}
-              />
-              <div className="min-w-0">
-                <div className="truncate text-[9px] text-slate-400">{item.label}</div>
-                <div className="truncate font-mono text-[10px] font-semibold text-slate-200">
-                  {formatMiniChartValue(item.latest, unit)}
-                  {unit === "%" ? "%" : unit}
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
       <div className="mt-1 truncate text-[10px] text-slate-500">{footnote}</div>
@@ -4640,6 +4689,11 @@ function rateWithDelta(rate: string, refRate: string): string {
   return `${rate.trim()}(${rateDeltaValue(rate, refRate) ?? "--"})`;
 }
 
+function bankHistorySessionLabel(tenor?: string) {
+  if (!tenor) return "当日";
+  return /ON|001|隔夜|1天/.test(tenor) ? "隔夜" : "当日";
+}
+
 function buildBankHistorySeries(bank: string) {
   const seed = bank.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
   return Array.from({ length: 28 }, (_, index) => {
@@ -4659,16 +4713,67 @@ function buildBankHistorySeries(bank: string) {
   });
 }
 
-function BigBankPricingTrendChart({
-  bank,
-  className = "",
-  compact = false,
+type BankHistoryPoint = ReturnType<typeof buildBankHistorySeries>[number];
+
+function bankTrendPath(
+  values: readonly number[],
+  width: number,
+  height: number,
+  min: number,
+  max: number,
+  margin: { left: number; right: number; top: number; bottom: number },
+) {
+  const plotWidth = width - margin.left - margin.right;
+  const plotHeight = height - margin.top - margin.bottom;
+  return values
+    .map((value, index) => {
+      const x = margin.left + (index / (values.length - 1)) * plotWidth;
+      const y = margin.top + (1 - (value - min) / (max - min)) * plotHeight;
+      return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
+    })
+    .join(" ");
+}
+
+function bankTrendX(
+  index: number,
+  count: number,
+  width: number,
+  margin: { left: number; right: number },
+) {
+  return margin.left + (index / (count - 1)) * (width - margin.left - margin.right);
+}
+
+function bankTrendY(
+  value: number,
+  height: number,
+  min: number,
+  max: number,
+  margin: { top: number; bottom: number },
+) {
+  return margin.top + (1 - (value - min) / (max - min)) * (height - margin.top - margin.bottom);
+}
+
+function bankChartTicks(min: number, max: number, count = 4) {
+  return Array.from({ length: count }, (_, index) =>
+    Number((max - ((max - min) * index) / (count - 1)).toFixed(3)),
+  );
+}
+
+function bankChartXTickIndices(count: number) {
+  return Array.from(
+    new Set([0, Math.floor((count - 1) / 3), Math.floor(((count - 1) * 2) / 3), count - 1]),
+  );
+}
+
+function BigBankRateTrendPlot({
+  data,
+  sessionLabel,
 }: {
-  bank: string;
-  className?: string;
-  compact?: boolean;
+  data: readonly BankHistoryPoint[];
+  sessionLabel: string;
 }) {
-  const data = buildBankHistorySeries(bank);
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(data.length);
   const nonBank = data.map((item) => item.nonBank);
   const bankRates = data.map((item) => item.bankRate);
   const spread = data.map((item) => item.spread);
@@ -4677,6 +4782,311 @@ function BigBankPricingTrendChart({
   const maxSpread = Math.max(...spread, 1);
   const width = 360;
   const height = 150;
+  const margin = { left: 35, right: 22, top: 16, bottom: 25 };
+  const plotBottom = height - margin.bottom;
+  const yTicks = bankChartTicks(minRate, maxRate);
+  const xTickIndices = bankChartXTickIndices(data.length);
+  const tooltipIndex = tooltipState?.index ?? null;
+  const hoverX =
+    tooltipIndex === null ? null : bankTrendX(tooltipIndex, data.length, width, margin);
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative min-h-0 cursor-crosshair"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      <svg className="absolute inset-0 h-full w-full" viewBox={`0 0 ${width} ${height}`}>
+        <text x={margin.left} y="9" fill="#64748b" fontSize="8">
+          利率(%)
+        </text>
+        <text x={width - 2} y="9" textAnchor="end" fill="#64748b" fontSize="8">
+          价差(BP)
+        </text>
+        {yTicks.map((tick) => {
+          const y = bankTrendY(tick, height, minRate, maxRate, margin);
+          return (
+            <g key={tick}>
+              <line
+                x1={margin.left}
+                x2={width - margin.right}
+                y1={y}
+                y2={y}
+                stroke="rgba(148,163,184,0.18)"
+              />
+              <text x={margin.left - 6} y={y + 3} textAnchor="end" fill="#64748b" fontSize="8">
+                {tick.toFixed(3)}
+              </text>
+            </g>
+          );
+        })}
+        <line
+          x1={margin.left}
+          x2={margin.left}
+          y1={margin.top}
+          y2={plotBottom}
+          stroke="rgba(148,163,184,0.28)"
+        />
+        <line
+          x1={margin.left}
+          x2={width - margin.right}
+          y1={plotBottom}
+          y2={plotBottom}
+          stroke="rgba(148,163,184,0.28)"
+        />
+        {xTickIndices.map((index) => {
+          const x = bankTrendX(index, data.length, width, margin);
+          return (
+            <g key={index}>
+              <line x1={x} x2={x} y1={plotBottom} y2={plotBottom + 3} stroke="#475569" />
+              <text x={x} y={height - 7} textAnchor="middle" fill="#64748b" fontSize="8">
+                {data[index].date}
+              </text>
+            </g>
+          );
+        })}
+        {spread.map((value, index) => {
+          const barWidth = Math.max(2, (width - margin.left - margin.right) / spread.length - 3);
+          const barHeight = (value / maxSpread) * ((height - margin.top - margin.bottom) * 0.42);
+          return (
+            <rect
+              key={`spread-${index}`}
+              x={bankTrendX(index, data.length, width, margin) - barWidth / 2}
+              y={plotBottom - barHeight}
+              width={barWidth}
+              height={barHeight}
+              fill="#f4dfaa"
+              opacity="0.58"
+            />
+          );
+        })}
+        <path
+          d={bankTrendPath(nonBank, width, height, minRate, maxRate, margin)}
+          fill="none"
+          stroke="#cf6b74"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d={bankTrendPath(bankRates, width, height, minRate, maxRate, margin)}
+          fill="none"
+          stroke="#5b8cc9"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {tooltipIndex !== null && hoverX !== null ? (
+          <>
+            <line
+              x1={hoverX}
+              x2={hoverX}
+              y1={margin.top}
+              y2={plotBottom}
+              stroke="#7aa2d6"
+              strokeDasharray="3 2"
+              strokeWidth="0.9"
+            />
+            <circle
+              cx={hoverX}
+              cy={bankTrendY(nonBank[tooltipIndex], height, minRate, maxRate, margin)}
+              r="3"
+              fill="#cf6b74"
+              stroke="#0b1020"
+            />
+            <circle
+              cx={hoverX}
+              cy={bankTrendY(bankRates[tooltipIndex], height, minRate, maxRate, margin)}
+              r="3"
+              fill="#5b8cc9"
+              stroke="#0b1020"
+            />
+          </>
+        ) : null}
+      </svg>
+      <div className="pointer-events-none absolute right-2 top-1 rounded border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.72)] px-1.5 py-0.5 text-[10px] text-slate-300">
+        {sessionLabel}
+      </div>
+      {tooltipIndex !== null && tooltipState ? (
+        <ChartTooltip clientX={tooltipState.clientX} clientY={tooltipState.clientY}>
+          <div className="mb-1.5 flex items-center justify-between gap-4 font-semibold text-slate-100">
+            <span>{data[tooltipIndex].date}</span>
+            <span className="rounded border border-[color:var(--tk-color-border-panel)] px-1.5 py-0.5 text-[10px] text-slate-300">
+              {sessionLabel}
+            </span>
+          </div>
+          <TooltipValueRow color="#cf6b74" label="出给非银" value={`${nonBank[tooltipIndex].toFixed(3)}%`} />
+          <TooltipValueRow color="#5b8cc9" label="出给银行" value={`${bankRates[tooltipIndex].toFixed(3)}%`} />
+          <TooltipValueRow color="#f4dfaa" label="非银-银行价差" value={`${spread[tooltipIndex]}BP`} />
+        </ChartTooltip>
+      ) : null}
+    </div>
+  );
+}
+
+function BigBankSpreadDiffPlot({
+  data,
+  sessionLabel,
+}: {
+  data: readonly BankHistoryPoint[];
+  sessionLabel: string;
+}) {
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(data.length);
+  const groups = [
+    { key: "bank", label: "给银行价差", color: "#5b8cc9", values: data.map((item) => item.bankDiff) },
+    { key: "nonBank", label: "给非银价差", color: "#d76370", values: data.map((item) => item.nonBankDiff) },
+  ];
+  const allValues = groups.flatMap((group) => group.values);
+  const maxValue = Math.max(...allValues, 1);
+  const width = 360;
+  const height = 132;
+  const margin = { left: 35, right: 14, top: 12, bottom: 24 };
+  const rowHeight = (height - margin.top - margin.bottom - 10) / 2;
+  const xTickIndices = bankChartXTickIndices(data.length);
+  const tooltipIndex = tooltipState?.index ?? null;
+  const hoverX =
+    tooltipIndex === null ? null : bankTrendX(tooltipIndex, data.length, width, margin);
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative min-h-0 cursor-crosshair"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      <svg className="absolute inset-0 h-full w-full" viewBox={`0 0 ${width} ${height}`}>
+        <text x={margin.left} y="8" fill="#64748b" fontSize="8">
+          BP
+        </text>
+        {groups.map((group, groupIndex) => {
+          const baseline = margin.top + rowHeight * (groupIndex + 1) + groupIndex * 10;
+          return (
+            <g key={group.key}>
+              <text x={margin.left - 6} y={baseline - rowHeight / 2 + 3} textAnchor="end" fill="#64748b" fontSize="8">
+                {group.label}
+              </text>
+              <line
+                x1={margin.left}
+                x2={width - margin.right}
+                y1={baseline}
+                y2={baseline}
+                stroke="rgba(148,163,184,0.28)"
+              />
+              <line
+                x1={margin.left}
+                x2={width - margin.right}
+                y1={baseline - rowHeight}
+                y2={baseline - rowHeight}
+                stroke="rgba(148,163,184,0.14)"
+              />
+              {group.values.map((value, index) => {
+                const barWidth = Math.max(2, (width - margin.left - margin.right) / data.length - 3);
+                const barHeight = Math.max(2, (value / maxValue) * (rowHeight - 4));
+                return (
+                  <rect
+                    key={`${group.key}-${index}`}
+                    x={bankTrendX(index, data.length, width, margin) - barWidth / 2}
+                    y={baseline - barHeight}
+                    width={barWidth}
+                    height={barHeight}
+                    rx="1"
+                    fill={group.color}
+                    opacity="0.82"
+                  />
+                );
+              })}
+            </g>
+          );
+        })}
+        <line
+          x1={margin.left}
+          x2={margin.left}
+          y1={margin.top}
+          y2={height - margin.bottom}
+          stroke="rgba(148,163,184,0.28)"
+        />
+        <line
+          x1={margin.left}
+          x2={width - margin.right}
+          y1={height - margin.bottom}
+          y2={height - margin.bottom}
+          stroke="rgba(148,163,184,0.28)"
+        />
+        {xTickIndices.map((index) => {
+          const x = bankTrendX(index, data.length, width, margin);
+          return (
+            <g key={index}>
+              <line x1={x} x2={x} y1={height - margin.bottom} y2={height - margin.bottom + 3} stroke="#475569" />
+              <text x={x} y={height - 7} textAnchor="middle" fill="#64748b" fontSize="8">
+                {data[index].date}
+              </text>
+            </g>
+          );
+        })}
+        {hoverX !== null ? (
+          <line
+            x1={hoverX}
+            x2={hoverX}
+            y1={margin.top}
+            y2={height - margin.bottom}
+            stroke="#7aa2d6"
+            strokeDasharray="3 2"
+            strokeWidth="0.9"
+          />
+        ) : null}
+      </svg>
+      <div className="pointer-events-none absolute right-2 top-1 rounded border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.72)] px-1.5 py-0.5 text-[10px] text-slate-300">
+        {sessionLabel}
+      </div>
+      {tooltipIndex !== null && tooltipState ? (
+        <ChartTooltip clientX={tooltipState.clientX} clientY={tooltipState.clientY}>
+          <div className="mb-1.5 flex items-center justify-between gap-4 font-semibold text-slate-100">
+            <span>{data[tooltipIndex].date}</span>
+            <span className="rounded border border-[color:var(--tk-color-border-panel)] px-1.5 py-0.5 text-[10px] text-slate-300">
+              {sessionLabel}
+            </span>
+          </div>
+          <TooltipValueRow color="#5b8cc9" label="给银行价差" value={`${data[tooltipIndex].bankDiff}BP`} />
+          <TooltipValueRow color="#d76370" label="给非银价差" value={`${data[tooltipIndex].nonBankDiff}BP`} />
+        </ChartTooltip>
+      ) : null}
+    </div>
+  );
+}
+
+function TooltipValueRow({
+  color,
+  label,
+  value,
+}: {
+  color: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 py-0.5">
+      <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+      <span className="text-slate-400">{label}</span>
+      <span className="ml-auto pl-4 font-mono font-semibold text-slate-100">{value}</span>
+    </div>
+  );
+}
+
+function BigBankPricingTrendChart({
+  bank,
+  tenor,
+  className = "",
+  compact = false,
+}: {
+  bank: string;
+  tenor?: string;
+  className?: string;
+  compact?: boolean;
+}) {
+  const data = buildBankHistorySeries(bank);
+  const sessionLabel = bankHistorySessionLabel(tenor);
 
   return (
     <div
@@ -4687,7 +5097,9 @@ function BigBankPricingTrendChart({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="text-sm font-semibold text-slate-100">大行定价走势</div>
-          <div className="mt-0.5 text-[10px] text-slate-500">{bank} · 多日历史</div>
+          <div className="mt-0.5 text-[10px] text-slate-500">
+            {bank} · {tenor || "全部期限"} · {sessionLabel}
+          </div>
         </div>
         <div className="flex flex-wrap justify-end gap-x-3 gap-y-1 text-[10px] text-slate-400">
           <LegendDot color="#cf6b74" label="出给非银价格(%)" />
@@ -4695,88 +5107,41 @@ function BigBankPricingTrendChart({
           <LegendDot color="#f4dfaa" label="非银-银行价差(BP)" />
         </div>
       </div>
-      <div className="relative min-h-[150px]">
-        <svg
-          className="absolute inset-0 h-full w-full"
-          preserveAspectRatio="none"
-          viewBox={`0 0 ${width} ${height}`}
-        >
-          {[0, 1, 2, 3].map((index) => (
-            <line
-              key={index}
-              x1="0"
-              x2={width}
-              y1={(index / 3) * height}
-              y2={(index / 3) * height}
-              stroke="rgba(148,163,184,0.18)"
-            />
-          ))}
-          {spread.map((value, index) => {
-            const barWidth = width / spread.length - 3;
-            const barHeight = (value / maxSpread) * (height * 0.42);
-            return (
-              <rect
-                key={`spread-${index}`}
-                x={(index / spread.length) * width + 1}
-                y={height - barHeight}
-                width={Math.max(2, barWidth)}
-                height={barHeight}
-                fill="#f4dfaa"
-                opacity="0.58"
-              />
-            );
-          })}
-          <path
-            d={buildLinePath(nonBank, width, height, minRate, maxRate)}
-            fill="none"
-            stroke="#cf6b74"
-            strokeWidth="2.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d={buildLinePath(bankRates, width, height, minRate, maxRate)}
-            fill="none"
-            stroke="#5b8cc9"
-            strokeWidth="2.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </div>
+      <BigBankRateTrendPlot data={data} sessionLabel={sessionLabel} />
     </div>
   );
 }
 
 function BigBankHistoryBack({
   bank,
+  tenor,
+  compact = false,
   onBack,
 }: {
   bank: string;
+  tenor?: string;
+  compact?: boolean;
   onBack: () => void;
 }) {
   const data = buildBankHistorySeries(bank);
-  const nonBank = data.map((item) => item.nonBank);
-  const bankRates = data.map((item) => item.bankRate);
-  const spread = data.map((item) => item.spread);
-  const minRate = Math.min(...nonBank, ...bankRates) - 0.03;
-  const maxRate = Math.max(...nonBank, ...bankRates) + 0.03;
-  const maxSpread = Math.max(...spread, 1);
-  const width = 360;
-  const height = 150;
+  const sessionLabel = bankHistorySessionLabel(tenor);
 
   return (
     <div
-      className="grid h-full min-h-0 grid-rows-[auto_1fr] gap-2 overflow-hidden p-3"
+      className={`grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden ${
+        compact ? "gap-1.5 p-2" : "gap-2 p-3"
+      }`}
       onClick={onBack}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="text-sm font-semibold text-slate-100">{bank} 多日历史</div>
-          <div className="mt-0.5 text-xs text-slate-500">点击空白区域或返回按钮翻回正面</div>
+          <div className="mt-0.5 text-xs text-slate-500">
+            {tenor || "全部期限"} · {sessionLabel} · 悬浮查看单日明细
+          </div>
         </div>
         <button
-          className="tk-button px-3 py-1 text-xs"
+          className={`tk-button ${compact ? "px-2 py-0.5 text-[10px]" : "px-3 py-1 text-xs"}`}
           onClick={(event) => {
             event.stopPropagation();
             onBack();
@@ -4786,7 +5151,7 @@ function BigBankHistoryBack({
           返回
         </button>
       </div>
-      <div className="grid min-h-0 grid-cols-2 gap-3">
+      <div className={`grid min-h-0 grid-rows-2 ${compact ? "gap-1.5" : "gap-3"}`}>
         <div
           className="grid min-h-0 grid-rows-[auto_1fr] rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-3"
           onClick={(event) => event.stopPropagation()}
@@ -4799,51 +5164,7 @@ function BigBankHistoryBack({
               <LegendDot color="#f4dfaa" label="非银-银行价差(BP)" />
             </div>
           </div>
-          <div className="relative min-h-0">
-            <svg className="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox={`0 0 ${width} ${height}`}>
-              {[0, 1, 2, 3].map((index) => (
-                <line
-                  key={index}
-                  x1="0"
-                  x2={width}
-                  y1={(index / 3) * height}
-                  y2={(index / 3) * height}
-                  stroke="rgba(148,163,184,0.18)"
-                />
-              ))}
-              {spread.map((value, index) => {
-                const barWidth = width / spread.length - 3;
-                const barHeight = (value / maxSpread) * (height * 0.42);
-                return (
-                  <rect
-                    key={`spread-${index}`}
-                    x={(index / spread.length) * width + 1}
-                    y={height - barHeight}
-                    width={Math.max(2, barWidth)}
-                    height={barHeight}
-                    fill="#f4dfaa"
-                    opacity="0.58"
-                  />
-                );
-              })}
-              <path
-                d={buildLinePath(nonBank, width, height, minRate, maxRate)}
-                fill="none"
-                stroke="#cf6b74"
-                strokeWidth="2.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d={buildLinePath(bankRates, width, height, minRate, maxRate)}
-                fill="none"
-                stroke="#5b8cc9"
-                strokeWidth="2.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
+          <BigBankRateTrendPlot data={data} sessionLabel={sessionLabel} />
         </div>
         <div
           className="grid min-h-0 grid-rows-[auto_1fr] rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-3"
@@ -4856,31 +5177,7 @@ function BigBankHistoryBack({
               <LegendDot color="#d76370" label="给非银价差(BP)" />
             </div>
           </div>
-          <div className="grid min-h-0 grid-rows-2 gap-2">
-            {[
-              { key: "bank", color: "#5b8cc9", values: data.map((item) => item.bankDiff) },
-              { key: "nonBank", color: "#d76370", values: data.map((item) => item.nonBankDiff) },
-            ].map((group) => {
-              const max = Math.max(...group.values, 1);
-              return (
-                <div key={group.key} className="relative min-h-0 border-t border-[color:var(--tk-color-border-divider)]">
-                  <div className="absolute inset-x-0 bottom-1 top-1 flex items-end gap-1">
-                    {group.values.map((value, index) => (
-                      <div
-                        key={`${group.key}-${index}`}
-                        className="min-w-0 flex-1 rounded-t"
-                        style={{
-                          height: `${Math.max(2, (value / max) * 86)}%`,
-                          backgroundColor: group.color,
-                          opacity: 0.82,
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <BigBankSpreadDiffPlot data={data} sessionLabel={sessionLabel} />
         </div>
       </div>
     </div>
@@ -4891,12 +5188,18 @@ function BigBankPriceFrame({
   embeddedPreview = false,
   onOpen,
   initialBank,
+  onFlippedChange,
 }: {
   embeddedPreview?: boolean;
   onOpen?: () => void;
   initialBank?: string;
+  onFlippedChange?: (flipped: boolean) => void;
 }) {
   const [flippedBank, setFlippedBank] = useState<string | null>(initialBank ?? null);
+  useEffect(() => {
+    onFlippedChange?.(flippedBank !== null);
+  }, [flippedBank, onFlippedChange]);
+  const [flippedTenor, setFlippedTenor] = useState("");
   const [whitelist, setWhitelist] = useState<string[]>([
     ...defaultBigBankWhitelist,
   ]);
@@ -5003,7 +5306,7 @@ function BigBankPriceFrame({
     <>
       <section
         className={`tk-panel flex min-h-0 flex-col border ${
-          embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
+          embeddedPreview ? "h-full overflow-hidden" : "h-full overflow-hidden"
         }`}
       >
         {embeddedPreview ? (
@@ -5057,13 +5360,10 @@ function BigBankPriceFrame({
             </div>
           </div>
         )}
-        <div className={embeddedPreview ? "min-h-0" : "min-h-0 flex-1"}>
-          {flippedBank && !embeddedPreview ? (
-            <BigBankHistoryBack
-              bank={flippedBank}
-              onBack={() => setFlippedBank(null)}
-            />
-          ) : (
+        <div className="min-h-0 flex-1">
+          <div className={`tk-flip-card h-full min-h-0 ${flippedBank ? "is-flipped" : ""}`}>
+            <div className="tk-flip-card__inner h-full min-h-0">
+              <div className="tk-flip-card__face h-full min-h-0">
             <StructuredTable
               columns={[
                 "机构",
@@ -5078,11 +5378,28 @@ function BigBankPriceFrame({
               nowrapHeader
               fitToWidth
               flush
-              adaptiveHeight={embeddedPreview}
-              scrollY={!embeddedPreview}
-              onRowClick={embeddedPreview ? undefined : (row) => setFlippedBank(row[0] ?? null)}
+              compact={embeddedPreview}
+              adaptiveHeight={false}
+              scrollY
+              onRowClick={(row) => {
+                setFlippedBank(row[0] ?? null);
+                setFlippedTenor(row[1] ?? "");
+              }}
             />
-          )}
+              </div>
+              <div className="tk-flip-card__face tk-flip-card__face--back h-full min-h-0">
+                <BigBankHistoryBack
+                  bank={flippedBank ?? rows[0]?.[0] ?? "大行"}
+                  tenor={flippedTenor || rows[0]?.[1]}
+                  compact={embeddedPreview}
+                  onBack={() => {
+                    setFlippedBank(null);
+                    setFlippedTenor("");
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
       <BankRateEditorModal
@@ -5103,27 +5420,34 @@ function XrepoFrame({
   onOpen,
   initialContract,
   tenorFilter = "all",
+  onFlippedChange,
 }: {
   embeddedPreview?: boolean;
   onOpen?: () => void;
   initialContract?: string;
   tenorFilter?: QuoteTenorFilter;
+  onFlippedChange?: (flipped: boolean) => void;
 }) {
   const [flippedContract, setFlippedContract] = useState<string | null>(initialContract ?? null);
+  useEffect(() => {
+    onFlippedChange?.(flippedContract !== null);
+  }, [flippedContract, onFlippedChange]);
   const section = leftSections.find(
     (item): item is SummaryTableSection =>
       item.layout === "table" && item.title === "XREPO",
   );
   if (!section) return <ReservedModuleFrame />;
-  const rows = filterRowsByQuoteTenor(section.rows, tenorFilter, [0]);
+  const rows = filterRowsByQuoteTenor(
+    xrepoR001Rows(section.rows),
+    tenorFilter,
+    [0],
+  );
   const openInlineHistory = (contractName = rows[0]?.[0] ?? (tenorFilter === "all" ? "R001" : tenorFilter)) =>
     setFlippedContract(contractName);
 
   return (
     <section
-      className={`tk-panel flex min-h-0 flex-col border ${
-        embeddedPreview ? "h-[270px] overflow-hidden" : "h-full overflow-hidden"
-      }`}
+      className="tk-panel flex h-full min-h-0 flex-col overflow-hidden border"
     >
       {embeddedPreview ? (
           <IntegratedPreviewHeader
@@ -5174,9 +5498,9 @@ function XrepoFrame({
             buttonColumn={section.buttonColumn}
             fitToWidth
             columnWidths={section.columnWidths}
+            compact={embeddedPreview}
             flush
-            adaptiveHeight={embeddedPreview}
-            scrollY={!embeddedPreview}
+            scrollY
             onRowClick={(row) => openInlineHistory(row[0] ?? "R001")}
           />
         )}
@@ -5384,7 +5708,7 @@ function XrepoInlineHistoryChart({
           </div>
         </div>
       </div>
-      <div className="grid h-[95%] min-h-0 grid-cols-[2.5rem_1fr] px-2 pb-1 pt-1">
+      <div className="grid h-full min-h-0 grid-cols-[2.5rem_1fr] px-2 pb-1 pt-1">
         <div className="flex flex-col justify-between pb-5 pt-5 pr-1 text-right text-[9px] text-slate-500">
           {buildAxisLabels(minRate, maxRate, 4).map((tick) => (
             <div key={tick}>{tick}</div>
@@ -5654,6 +5978,7 @@ function LeftSummaryPanel() {
   ]);
   const [isBankEditorOpen, setIsBankEditorOpen] = useState(false);
   const [flippedBigBankName, setFlippedBigBankName] = useState<string | null>(null);
+  const [flippedBigBankTenor, setFlippedBigBankTenor] = useState("");
 
   const summarySections = leftSections
     .filter(
@@ -5675,7 +6000,12 @@ function LeftSummaryPanel() {
                 bankRateSpread(row),
               ]),
           }
-        : section,
+        : section.title === "XREPO"
+          ? {
+              ...section,
+              rows: xrepoR001Rows(section.rows),
+            }
+          : section,
     );
   const exchangeRepoSection = leftSections.find(
     (section): section is ExchangeMarketSplitSection =>
@@ -5814,7 +6144,10 @@ function LeftSummaryPanel() {
                           flush
                           adaptiveHeight={!section.scrollable}
                           scrollY={section.scrollable}
-                          onRowClick={(row) => setFlippedBigBankName(row[0] ?? "大行")}
+                          onRowClick={(row) => {
+                            setFlippedBigBankName(row[0] ?? "大行");
+                            setFlippedBigBankTenor(row[1] ?? "");
+                          }}
                         />
                       </PanelCard>
                     </div>
@@ -5828,7 +6161,10 @@ function LeftSummaryPanel() {
                         actions={
                           <button
                             className="tk-button px-3 py-1"
-                            onClick={() => setFlippedBigBankName(null)}
+                            onClick={() => {
+                              setFlippedBigBankName(null);
+                              setFlippedBigBankTenor("");
+                            }}
                             type="button"
                           >
                             返回
@@ -5838,6 +6174,7 @@ function LeftSummaryPanel() {
                         <div className="h-full min-h-[230px]">
                           <BigBankPricingTrendChart
                             bank={flippedBigBankName ?? "大行"}
+                            tenor={flippedBigBankTenor}
                             className="h-full"
                             compact
                           />
@@ -5896,7 +6233,10 @@ function LeftSummaryPanel() {
                 scrollY={section.scrollable}
                 onRowClick={
                   isBigBankPrice
-                    ? (row) => setFlippedBigBankName(row[0] ?? "大行")
+                    ? (row) => {
+                        setFlippedBigBankName(row[0] ?? "大行");
+                        setFlippedBigBankTenor(row[1] ?? "");
+                      }
                     : undefined
                 }
               />
@@ -6801,8 +7141,8 @@ const middleMatrixPlaceholders = [
 ] as const;
 
 const demandTenors: DemandTenor[] = ["R001", "R007"];
-const xrepoR001Rows = (rows: readonly (readonly string[])[]) =>
-  rows.filter((row) => row[0]?.includes("R001"));
+const xrepoR001Rows = <T extends readonly string[]>(rows: readonly T[]) =>
+  rows.filter((row) => row[0]?.toUpperCase().includes("R001"));
 
 const demandRowsByDirection: Record<DemandDirection, DemandRow[]> = {
   repo: [
@@ -7360,7 +7700,7 @@ function InstitutionPeriodMatrixCard() {
 
   return (
     <>
-      <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
         <div className="flex flex-wrap items-center gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2 text-xs">
           <label className="flex items-center gap-1.5 text-slate-400">
             期限
