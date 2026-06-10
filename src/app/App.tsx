@@ -135,7 +135,17 @@ type ModuleEntryId =
 type ActiveFrame = {
   id: ModuleEntryId;
   title: string;
+  bank?: string;
+  contract?: string;
+  cfetsPeriod?: CfetsInstPeriod;
+  cfetsMetric?: CfetsMetricKey;
 } | null;
+type FrameOpenOptions = {
+  bank?: string;
+  contract?: string;
+  cfetsPeriod?: CfetsInstPeriod;
+  cfetsMetric?: CfetsMetricKey;
+};
 type ModuleEntryConfig = {
   id: ModuleEntryId;
   group: string;
@@ -227,36 +237,21 @@ const moduleEntries: readonly ModuleEntryConfig[] = [
     statusText: "R001",
     icon: Network,
   },
-  {
-    id: "market-sentiment",
-    group: "全局工具",
-    title: "DR007 / 资金情绪",
-    description: "DR007、全市场资金情绪指标",
-    statusText: "平衡",
-    icon: Gauge,
-  },
-  {
-    id: "weighted-price",
-    group: "底部趋势",
-    title: "历史成交趋势",
-    description: "R001 历史走势、成交量和对比品种",
-    statusText: "R001",
-    icon: LineChartIcon,
-  },
-  {
-    id: "anonymous-trade",
-    group: "底部趋势",
-    title: "匿名成交走势图",
-    description: "日内成交走势与叠加品种",
-    statusText: "日内",
-    icon: Activity,
-  },
 ] as const;
 
+const leftRailEntries = moduleEntries.filter(
+  (entry) => entry.id !== "institution-period",
+);
+
 const narrowRailSummaryItems: readonly NarrowRailSummaryItem[] = [
-  { id: "market-sentiment", label: "资金情绪", value: "偏松 62" },
-  { id: "anonymous-trade", label: "成交方向", value: "先补 R014" },
   { id: "big-bank-price", label: "大行价格", value: "R001 1.58 / 1.66" },
+  {
+    id: "xrepo",
+    label: "XREPO",
+    value: "R001 1.58 / 1.66",
+    badge: "R001",
+    badgeTone: "warning",
+  },
   {
     id: "exchange-repo",
     label: "交易所回购",
@@ -264,15 +259,7 @@ const narrowRailSummaryItems: readonly NarrowRailSummaryItem[] = [
     badge: "延迟",
     badgeTone: "warning",
   },
-  {
-    id: "xrepo",
-    label: "XREPO",
-    value: "R001 1.58 / 1.66",
-    badge: "双标",
-    badgeTone: "warning",
-  },
   { id: "ncd", label: "NCD 同业存单", value: "AAA 1M 1.88" },
-  { id: "institution-period", label: "机构分期限统计", value: "R014 最密集" },
 ] as const;
 
 const initialBankRateRows: readonly BankRateRow[] = [
@@ -388,7 +375,7 @@ const leftSections: readonly (
       "涨跌",
       "银行利率",
       "涨跌",
-      "更新时间",
+      "利差",
     ],
     rows: [],
     greenColumns: [2],
@@ -2235,8 +2222,8 @@ function App() {
     setColumns(DEFAULT_COLUMN_RATIOS);
   }
 
-  function openFrame(entry: ModuleEntryConfig) {
-    setActiveFrame({ id: entry.id, title: entry.title });
+  function openFrame(entry: ModuleEntryConfig, options: FrameOpenOptions = {}) {
+    setActiveFrame({ id: entry.id, title: entry.title, ...options });
   }
 
   const gridTemplate = `${columns[0]}% 10px ${columns[1]}% 10px ${columns[2]}%`;
@@ -2254,7 +2241,7 @@ function App() {
         >
           <AdaptiveEntryRail
             activeId={activeFrame?.id ?? null}
-            entries={moduleEntries}
+            entries={leftRailEntries}
             onOpen={openFrame}
           />
           <ColumnSplitter onMouseDown={(e) => startDragSplitter(e, 0)} />
@@ -2269,7 +2256,7 @@ function App() {
           onClose={() => setActiveFrame(null)}
         >
           {activeFrame.id === "big-bank-price" ? (
-            <BigBankPriceFrame />
+            <BigBankPriceFrame initialBank={activeFrame.bank} />
           ) : activeFrame.id === "weighted-price" ? (
             <div className="h-full min-h-0">
               <HistoryClosePanel
@@ -2293,10 +2280,13 @@ function App() {
             </div>
           ) : activeFrame.id === "institution-period" ? (
             <div className="tk-panel h-full min-h-0 border p-3">
-              <CfetsInstPanel />
+              <CfetsInstPanel
+                initialPeriod={activeFrame.cfetsPeriod}
+                initialMetric={activeFrame.cfetsMetric}
+              />
             </div>
           ) : activeFrame.id === "xrepo" ? (
-            <XrepoFrame />
+            <XrepoFrame initialContract={activeFrame.contract} />
           ) : activeFrame.id === "exchange-repo" ? (
             <ExchangeRepoFrame />
           ) : activeFrame.id === "ncd" ? (
@@ -2340,7 +2330,7 @@ function AdaptiveEntryRail({
 }: {
   entries: readonly ModuleEntryConfig[];
   activeId: ModuleEntryId | null;
-  onOpen: (entry: ModuleEntryConfig) => void;
+  onOpen: (entry: ModuleEntryConfig, options?: FrameOpenOptions) => void;
 }) {
   const railRef = useRef<HTMLElement>(null);
   const [width, setWidth] = useState(0);
@@ -2364,7 +2354,7 @@ function AdaptiveEntryRail({
   const displayMode: EntryDisplayMode =
     width < 80
       ? "icon"
-      : width < 220
+      : width < 325
         ? "narrow-summary"
         : width <= 400
           ? "summary"
@@ -2416,22 +2406,8 @@ function AdaptiveEntryRail({
               activeId={activeId}
               onOpen={onOpen}
             />
-          ) : displayMode === "summary" ? (
-            <RailMarketOverview />
           ) : null}
-          {displayMode === "compact" ? (
-            <div className="flex min-h-full flex-col justify-evenly gap-2">
-              {entries.map((entry) => (
-                <ModuleEntryItem
-                  key={entry.id}
-                  entry={entry}
-                  active={entry.id === activeId}
-                  displayMode={displayMode}
-                  onOpen={() => onOpen(entry)}
-                />
-              ))}
-            </div>
-          ) : displayMode === "narrow-summary" ? null : (
+          {displayMode === "narrow-summary" ? null : displayMode === "icon" ? (
             groups.map((group) => (
               <div
                 key={group}
@@ -2445,11 +2421,23 @@ function AdaptiveEntryRail({
                       entry={entry}
                       active={entry.id === activeId}
                       displayMode={groupedDisplayMode}
-                      onOpen={() => onOpen(entry)}
+                      onOpen={(options) => onOpen(entry, options)}
                     />
                   ))}
               </div>
             ))
+          ) : (
+            <div className="grid h-full min-h-0 grid-rows-[repeat(4,minmax(0,1fr))] gap-2">
+              {entries.map((entry) => (
+                <ModuleEntryItem
+                  key={entry.id}
+                  entry={entry}
+                  active={entry.id === activeId}
+                  displayMode={displayMode}
+                  onOpen={(options) => onOpen(entry, options)}
+                />
+              ))}
+            </div>
           )}
         </div>
       </div>
@@ -2464,25 +2452,29 @@ function NarrowRailSummary({
 }: {
   entries: readonly ModuleEntryConfig[];
   activeId: ModuleEntryId | null;
-  onOpen: (entry: ModuleEntryConfig) => void;
+  onOpen: (entry: ModuleEntryConfig, options?: FrameOpenOptions) => void;
 }) {
+  const [institutionPeriod, setInstitutionPeriod] = useState<CfetsInstPeriod>("R001");
+  const [institutionMetric, setInstitutionMetric] = useState<CfetsMetricKey>("buyBalance");
   return (
-    <div className="space-y-2">
+    <div className="grid h-full min-h-0 grid-rows-[repeat(4,minmax(0,1fr))] gap-2">
       {narrowRailSummaryItems.map((item) => {
         const entry = entries.find((candidate) => candidate.id === item.id);
         if (!entry) return null;
-        return (
-          <button
-            key={item.id}
-            type="button"
-            aria-label={item.label}
-            onClick={() => onOpen(entry)}
-            className={`group w-full min-w-0 rounded border px-3 py-2.5 text-left transition-colors hover:border-[color:var(--tdx-red)] hover:bg-[rgba(231,53,58,0.12)] ${
-              activeId === item.id
-                ? "tk-selected"
-                : "border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]"
-            }`}
-          >
+        const isInstitution = item.id === "institution-period";
+        const institutionMetricDef = cfetsMetricDefs.find(
+          (metric) => metric.key === institutionMetric,
+        );
+        const displayValue = isInstitution
+          ? `${institutionPeriod} · ${institutionMetricDef?.label ?? ""}`
+          : item.value;
+        const cardClassName = `group w-full min-w-0 rounded border px-3 py-2.5 text-left transition-colors hover:border-[color:var(--tdx-red)] hover:bg-[rgba(231,53,58,0.12)] ${
+          activeId === item.id
+            ? "tk-selected"
+            : "border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]"
+        }`;
+        const summary = (
+          <>
             <div className="flex min-w-0 items-start justify-between gap-2">
               <span className="min-w-0 truncate text-[14px] font-semibold leading-5 text-[color:var(--tdx-text-heading)]">
                 {item.label}
@@ -2506,8 +2498,71 @@ function NarrowRailSummary({
                   : "text-[color:var(--tdx-yellow)]"
               }`}
             >
-              {item.value}
+              {displayValue}
             </div>
+          </>
+        );
+
+        if (isInstitution) {
+          const openInstitutionFrame = () =>
+            onOpen(entry, {
+              cfetsPeriod: institutionPeriod,
+              cfetsMetric: institutionMetric,
+            });
+          return (
+            <div key={item.id} className={cardClassName}>
+              <button
+                type="button"
+                aria-label={item.label}
+                onClick={openInstitutionFrame}
+                className="w-full text-left"
+              >
+                {summary}
+              </button>
+              <div className="mt-2 grid gap-1.5">
+                <select
+                  className="tk-field h-7 w-full rounded px-2 text-[11px] text-slate-100 outline-none"
+                  value={institutionPeriod}
+                  onChange={(event) => setInstitutionPeriod(event.target.value as CfetsInstPeriod)}
+                >
+                  {cfetsInstPeriodLabels.map((period) => (
+                    <option key={period} value={period}>
+                      {period}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="tk-field h-7 w-full rounded px-2 text-[11px] text-slate-100 outline-none"
+                  value={institutionMetric}
+                  onChange={(event) => setInstitutionMetric(event.target.value as CfetsMetricKey)}
+                >
+                  {cfetsMetricDefs.map((metric) => (
+                    <option key={metric.key} value={metric.key}>
+                      {metric.label}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  className="tk-button w-full px-2 py-1 text-[11px]"
+                  onClick={openInstitutionFrame}
+                  type="button"
+                >
+                  打开大图
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <button
+            key={item.id}
+            type="button"
+            aria-label={item.label}
+            onClick={() => onOpen(entry)}
+            className={cardClassName}
+          >
+            {summary}
           </button>
         );
       })}
@@ -2522,7 +2577,7 @@ function AdaptiveEntryRailLegacyUnused({
 }: {
   entries: readonly ModuleEntryConfig[];
   activeId: ModuleEntryId | null;
-  onOpen: (entry: ModuleEntryConfig) => void;
+  onOpen: (entry: ModuleEntryConfig, options?: FrameOpenOptions) => void;
 }) {
   const railRef = useRef<HTMLElement>(null);
   const width = 0;
@@ -2578,7 +2633,7 @@ function AdaptiveEntryRailLegacyUnused({
                   entry={entry}
                   active={entry.id === activeId}
                   displayMode={displayMode}
-                  onOpen={() => onOpen(entry)}
+                  onOpen={(options) => onOpen(entry, options)}
                 />
               ))}
             </div>
@@ -2596,7 +2651,7 @@ function AdaptiveEntryRailLegacyUnused({
                       entry={entry}
                       active={entry.id === activeId}
                       displayMode={displayMode}
-                      onOpen={() => onOpen(entry)}
+                      onOpen={(options) => onOpen(entry, options)}
                     />
                   ))}
               </div>
@@ -2617,7 +2672,7 @@ function ModuleEntryItem({
   entry: ModuleEntryConfig;
   active: boolean;
   displayMode: EntryDisplayMode;
-  onOpen: () => void;
+  onOpen: (options?: FrameOpenOptions) => void;
 }) {
   const Icon = entry.icon;
   const metric = getModuleEntryData(entry.id);
@@ -2639,7 +2694,7 @@ function ModuleEntryItem({
     if (integratedPreviewEntryIds.has(entry.id)) {
       return (
         <div
-          className={`w-full min-w-0 overflow-hidden rounded-lg border transition-colors ${
+          className={`flex h-full min-h-0 w-full flex-col overflow-hidden rounded-lg border transition-colors ${
             active
               ? "tk-selected"
               : "tk-chip"
@@ -2652,7 +2707,7 @@ function ModuleEntryItem({
 
     return (
       <div
-        className={`w-full min-w-0 overflow-hidden rounded-lg border transition-colors ${
+        className={`flex h-full min-h-0 w-full flex-col overflow-hidden rounded-lg border transition-colors ${
           active
             ? "tk-selected"
             : "tk-chip"
@@ -2662,7 +2717,7 @@ function ModuleEntryItem({
           ref={buttonRef}
           type="button"
           aria-label={entry.title}
-          onClick={onOpen}
+          onClick={() => onOpen()}
           className="group w-full px-2.5 py-1.5 text-left transition-colors hover:bg-[rgba(231,53,58,0.12)]"
         >
           <div className="flex min-w-0 items-center gap-2">
@@ -2685,7 +2740,7 @@ function ModuleEntryItem({
             </span>
           </div>
         </button>
-        <div className="border-t border-[color:var(--tk-color-border-divider)] p-2">
+        <div className="flex-1 min-h-0 border-t border-[color:var(--tk-color-border-divider)] p-2">
           <ModuleEntryPreview id={entry.id} />
         </div>
       </div>
@@ -2698,7 +2753,7 @@ function ModuleEntryItem({
         ref={buttonRef}
         type="button"
         aria-label={entry.title}
-        onClick={onOpen}
+        onClick={() => onOpen()}
         onFocus={showPreview}
         onBlur={hidePreview}
         onMouseEnter={showPreview}
@@ -2879,7 +2934,7 @@ function XrepoSummaryOverview() {
     (item): item is SummaryTableSection =>
       item.layout === "table" && item.title === "XREPO",
   );
-  const rows = section?.rows.slice(0, 5) ?? [];
+  const rows = xrepoR001Rows(section?.rows ?? []).slice(0, 5);
 
   return (
     <div className="mt-2 border-t border-[color:var(--tk-color-border-divider-dark)] pt-2">
@@ -3011,16 +3066,17 @@ function getModuleEntryData(id: ModuleEntryId): ModuleEntryMetric {
       (item): item is SummaryTableSection =>
         item.layout === "table" && item.title === "XREPO",
     );
-    const r001 = section?.rows[0];
-    const r007 = section?.rows.find((row) => row[0] === "R007");
+    const r001Rows = xrepoR001Rows(section?.rows ?? []);
+    const r001 = r001Rows[0];
+    const mini = r001Rows.find((row) => row[0]?.includes("mini"));
     return {
       summary: r001
         ? `R001 正 ${r001[1]}@${r001[2]} · 逆 ${r001[4]}@${r001[3]}`
-        : "双边报价待更新",
-      badge: "双边",
+        : "R001 相关报价待更新",
+      badge: "R001",
       rows: [
         ["R001", r001 ? `正 ${r001[1]}@${r001[2]} / 逆 ${r001[4]}@${r001[3]}` : "-"],
-        ["R007", r007 ? `正 ${r007[1]}@${r007[2]} / 逆 ${r007[4]}@${r007[3]}` : "-"],
+        ["R001-mini", mini ? `正 ${mini[1]}@${mini[2]} / 逆 ${mini[4]}@${mini[3]}` : "-"],
       ],
       chips: [
         { label: "正利率", value: r001?.[2] ?? "-", tone: "alert" },
@@ -3029,7 +3085,7 @@ function getModuleEntryData(id: ModuleEntryId): ModuleEntryMetric {
       ],
       detailRows: [
         ["R001", r001 ? `正 ${r001[1]} / 逆 ${r001[4]}` : "-", r001 ? `${r001[2]} / ${r001[3]}` : undefined],
-        ["R007", r007 ? `正 ${r007[1]} / 逆 ${r007[4]}` : "-", r007 ? `${r007[2]} / ${r007[3]}` : undefined],
+        ["R001-mini", mini ? `正 ${mini[1]} / 逆 ${mini[4]}` : "-", mini ? `${mini[2]} / ${mini[3]}` : undefined],
       ],
     };
   }
@@ -3242,7 +3298,7 @@ function IntegratedPreviewHeader({
   actions,
 }: {
   id: ModuleEntryId;
-  onOpen?: () => void;
+  onOpen?: (options?: FrameOpenOptions) => void;
   actions?: ReactNode;
 }) {
   const entry = moduleEntries.find((item) => item.id === id);
@@ -3255,7 +3311,7 @@ function IntegratedPreviewHeader({
       <div className="flex min-w-0 items-center gap-2">
         <button
           className="group flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-[rgba(231,53,58,0.12)]"
-          onClick={onOpen}
+          onClick={() => onOpen?.()}
           type="button"
         >
           <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] text-[color:var(--tk-color-text-inverse-secondary)]">
@@ -3285,7 +3341,7 @@ function ModuleEntryPreview({
   onOpen,
 }: {
   id: ModuleEntryId;
-  onOpen?: () => void;
+  onOpen?: (options?: FrameOpenOptions) => void;
 }) {
   if (id === "big-bank-price") {
     return (
@@ -3329,10 +3385,8 @@ function ModuleEntryPreview({
 
   if (id === "institution-period") {
     return (
-      <RichPreviewFrame heightClassName="h-[340px]">
-        <div className="h-full min-h-0 rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
-          <CfetsInstPanel />
-        </div>
+      <RichPreviewFrame heightClassName="h-[190px]">
+        <InstitutionPeriodEntryPreview onOpen={onOpen} />
       </RichPreviewFrame>
     );
   }
@@ -3387,6 +3441,75 @@ function AnonymousTradeEntryPreview() {
         onOverlayChange={setOverlayProduct}
       />
     </RichPreviewFrame>
+  );
+}
+
+function InstitutionPeriodEntryPreview({
+  onOpen,
+}: {
+  onOpen?: (options?: FrameOpenOptions) => void;
+}) {
+  const [period, setPeriod] = useState<CfetsInstPeriod>("R001");
+  const [metricKey, setMetricKey] = useState<CfetsMetricKey>("buyBalance");
+  const metric = cfetsMetricDefs.find((item) => item.key === metricKey);
+  const openWithCurrentFilters = () =>
+    onOpen?.({ cfetsPeriod: period, cfetsMetric: metricKey });
+
+  return (
+    <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <div className="tk-strong truncate text-xs font-semibold">
+            机构分期限统计
+          </div>
+          <div className="tk-muted mt-0.5 truncate text-[10px]">
+            期限与指标作为大图默认参数
+          </div>
+        </div>
+        <button
+          className="tk-button px-2 py-1 text-[10px]"
+          onClick={openWithCurrentFilters}
+          type="button"
+        >
+          打开大图
+        </button>
+      </div>
+      <div className="grid content-start gap-2">
+        <label className="grid gap-1 text-[10px] text-slate-400">
+          <span>期限</span>
+          <select
+            className="tk-field h-7 rounded px-2 text-xs text-slate-100 outline-none"
+            value={period}
+            onChange={(event) => setPeriod(event.target.value as CfetsInstPeriod)}
+          >
+            {cfetsInstPeriodLabels.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-1 text-[10px] text-slate-400">
+          <span>指标</span>
+          <select
+            className="tk-field h-7 rounded px-2 text-xs text-slate-100 outline-none"
+            value={metricKey}
+            onChange={(event) => setMetricKey(event.target.value as CfetsMetricKey)}
+          >
+            {cfetsMetricDefs.map((item) => (
+              <option key={item.key} value={item.key}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="grid grid-cols-3 gap-1 text-[10px]">
+        <InfoPill label="期限" value={period} />
+        <InfoPill label="指标" value={metric?.label ?? "-"} />
+        <InfoPill label="视图" value="大弹窗" />
+      </div>
+    </div>
   );
 }
 
@@ -3533,6 +3656,15 @@ function MiniMetricPreview({
   );
 }
 
+function InfoPill({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.54)] px-2 py-1">
+      <div className="truncate text-[9px] text-slate-500">{label}</div>
+      <div className="truncate text-[11px] font-semibold text-slate-200">{value}</div>
+    </div>
+  );
+}
+
 function PageFrame({
   title,
   onClose,
@@ -3660,13 +3792,281 @@ function deriveHasQuote(row: BankRateRow): boolean {
   );
 }
 
+function parseRatePercent(value: string): number | null {
+  const parsed = parseFloat(value.replace("%", ""));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatBpValue(value: number): string {
+  const rounded = Math.round(value * 10) / 10;
+  const text = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+  return `${rounded > 0 ? "+" : ""}${text}bp`;
+}
+
+function bankRateSpread(row: BankRateRow): string {
+  const nonBankRate = parseRatePercent(row.nonBankRate);
+  const bankRate = parseRatePercent(row.bankRate);
+  if (nonBankRate === null || bankRate === null) return "-";
+  return formatBpValue((bankRate - nonBankRate) * 100);
+}
+
+function buildBankHistorySeries(bank: string) {
+  const seed = bank.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return Array.from({ length: 28 }, (_, index) => {
+    const wave = Math.sin((index + seed) * 0.42) * 0.035;
+    const drift = index > 20 ? (index - 20) * 0.006 : index > 10 ? -0.018 : 0;
+    const nonBank = Number((1.36 + wave + drift + (index % 7 === 0 ? 0.018 : 0)).toFixed(3));
+    const bankRate = Number((nonBank - 0.055 + Math.cos(index * 0.55 + seed) * 0.014).toFixed(3));
+    const spread = Math.max(1, Math.round((nonBank - bankRate) * 100));
+    return {
+      date: `05-${String(index + 10).padStart(2, "0")}`,
+      nonBank,
+      bankRate,
+      spread,
+      bankDiff: Math.max(-1, Math.round((bankRate - 1.31) * 100)),
+      nonBankDiff: Math.max(0, Math.round((nonBank - 1.30) * 100)),
+    };
+  });
+}
+
+function BigBankPricingTrendChart({
+  bank,
+  className = "",
+  compact = false,
+}: {
+  bank: string;
+  className?: string;
+  compact?: boolean;
+}) {
+  const data = buildBankHistorySeries(bank);
+  const nonBank = data.map((item) => item.nonBank);
+  const bankRates = data.map((item) => item.bankRate);
+  const spread = data.map((item) => item.spread);
+  const minRate = Math.min(...nonBank, ...bankRates) - 0.03;
+  const maxRate = Math.max(...nonBank, ...bankRates) + 0.03;
+  const maxSpread = Math.max(...spread, 1);
+  const width = 360;
+  const height = 150;
+
+  return (
+    <div
+      className={`grid min-h-0 grid-rows-[auto_1fr] rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] ${
+        compact ? "p-2.5" : "p-3"
+      } ${className}`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-slate-100">大行定价走势</div>
+          <div className="mt-0.5 text-[10px] text-slate-500">{bank} · 多日历史</div>
+        </div>
+        <div className="flex flex-wrap justify-end gap-x-3 gap-y-1 text-[10px] text-slate-400">
+          <LegendDot color="#cf6b74" label="出给非银价格(%)" />
+          <LegendDot color="#5b8cc9" label="出给银行价格(%)" />
+          <LegendDot color="#f4dfaa" label="非银-银行价差(BP)" />
+        </div>
+      </div>
+      <div className="relative min-h-[150px]">
+        <svg
+          className="absolute inset-0 h-full w-full"
+          preserveAspectRatio="none"
+          viewBox={`0 0 ${width} ${height}`}
+        >
+          {[0, 1, 2, 3].map((index) => (
+            <line
+              key={index}
+              x1="0"
+              x2={width}
+              y1={(index / 3) * height}
+              y2={(index / 3) * height}
+              stroke="rgba(148,163,184,0.18)"
+            />
+          ))}
+          {spread.map((value, index) => {
+            const barWidth = width / spread.length - 3;
+            const barHeight = (value / maxSpread) * (height * 0.42);
+            return (
+              <rect
+                key={`spread-${index}`}
+                x={(index / spread.length) * width + 1}
+                y={height - barHeight}
+                width={Math.max(2, barWidth)}
+                height={barHeight}
+                fill="#f4dfaa"
+                opacity="0.58"
+              />
+            );
+          })}
+          <path
+            d={buildLinePath(nonBank, width, height, minRate, maxRate)}
+            fill="none"
+            stroke="#cf6b74"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d={buildLinePath(bankRates, width, height, minRate, maxRate)}
+            fill="none"
+            stroke="#5b8cc9"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function BigBankHistoryBack({
+  bank,
+  onBack,
+}: {
+  bank: string;
+  onBack: () => void;
+}) {
+  const data = buildBankHistorySeries(bank);
+  const nonBank = data.map((item) => item.nonBank);
+  const bankRates = data.map((item) => item.bankRate);
+  const spread = data.map((item) => item.spread);
+  const minRate = Math.min(...nonBank, ...bankRates) - 0.03;
+  const maxRate = Math.max(...nonBank, ...bankRates) + 0.03;
+  const maxSpread = Math.max(...spread, 1);
+  const width = 360;
+  const height = 150;
+
+  return (
+    <div
+      className="grid h-full min-h-0 grid-rows-[auto_1fr] gap-2 overflow-hidden p-3"
+      onClick={onBack}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-slate-100">{bank} 多日历史</div>
+          <div className="mt-0.5 text-xs text-slate-500">点击空白区域或返回按钮翻回正面</div>
+        </div>
+        <button
+          className="tk-button px-3 py-1 text-xs"
+          onClick={(event) => {
+            event.stopPropagation();
+            onBack();
+          }}
+          type="button"
+        >
+          返回
+        </button>
+      </div>
+      <div className="grid min-h-0 grid-cols-2 gap-3">
+        <div
+          className="grid min-h-0 grid-rows-[auto_1fr] rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-3"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-sm font-semibold text-slate-100">大行定价走势</div>
+            <div className="flex gap-3 text-[10px] text-slate-400">
+              <LegendDot color="#cf6b74" label="出给非银价格(%)" />
+              <LegendDot color="#5b8cc9" label="出给银行价格(%)" />
+              <LegendDot color="#f4dfaa" label="非银-银行价差(BP)" />
+            </div>
+          </div>
+          <div className="relative min-h-0">
+            <svg className="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox={`0 0 ${width} ${height}`}>
+              {[0, 1, 2, 3].map((index) => (
+                <line
+                  key={index}
+                  x1="0"
+                  x2={width}
+                  y1={(index / 3) * height}
+                  y2={(index / 3) * height}
+                  stroke="rgba(148,163,184,0.18)"
+                />
+              ))}
+              {spread.map((value, index) => {
+                const barWidth = width / spread.length - 3;
+                const barHeight = (value / maxSpread) * (height * 0.42);
+                return (
+                  <rect
+                    key={`spread-${index}`}
+                    x={(index / spread.length) * width + 1}
+                    y={height - barHeight}
+                    width={Math.max(2, barWidth)}
+                    height={barHeight}
+                    fill="#f4dfaa"
+                    opacity="0.58"
+                  />
+                );
+              })}
+              <path
+                d={buildLinePath(nonBank, width, height, minRate, maxRate)}
+                fill="none"
+                stroke="#cf6b74"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d={buildLinePath(bankRates, width, height, minRate, maxRate)}
+                fill="none"
+                stroke="#5b8cc9"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        </div>
+        <div
+          className="grid min-h-0 grid-rows-[auto_1fr] rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-3"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-sm font-semibold text-slate-100">大行定价与加权价差</div>
+            <div className="flex gap-3 text-[10px] text-slate-400">
+              <LegendDot color="#5b8cc9" label="给银行价差(BP)" />
+              <LegendDot color="#d76370" label="给非银价差(BP)" />
+            </div>
+          </div>
+          <div className="grid min-h-0 grid-rows-2 gap-2">
+            {[
+              { key: "bank", color: "#5b8cc9", values: data.map((item) => item.bankDiff) },
+              { key: "nonBank", color: "#d76370", values: data.map((item) => item.nonBankDiff) },
+            ].map((group) => {
+              const max = Math.max(...group.values, 1);
+              return (
+                <div key={group.key} className="relative min-h-0 border-t border-[color:var(--tk-color-border-divider)]">
+                  <div className="absolute inset-x-0 bottom-1 top-1 flex items-end gap-1">
+                    {group.values.map((value, index) => (
+                      <div
+                        key={`${group.key}-${index}`}
+                        className="min-w-0 flex-1 rounded-t"
+                        style={{
+                          height: `${Math.max(2, (value / max) * 86)}%`,
+                          backgroundColor: group.color,
+                          opacity: 0.82,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function BigBankPriceFrame({
   embeddedPreview = false,
   onOpen,
+  initialBank,
 }: {
   embeddedPreview?: boolean;
   onOpen?: () => void;
+  initialBank?: string;
 }) {
+  const [flippedBank, setFlippedBank] = useState<string | null>(initialBank ?? null);
   const [whitelist, setWhitelist] = useState<string[]>([
     ...defaultBigBankWhitelist,
   ]);
@@ -3687,7 +4087,7 @@ function BigBankPriceFrame({
       row.deltaNonBankBp,
       row.bankRate,
       row.deltaBp,
-      row.updatedAt,
+      bankRateSpread(row),
     ]);
   function buildDraft(): BankRateRow[] {
     const byKey = new Map<string, BankRateRow>();
@@ -3838,25 +4238,33 @@ function BigBankPriceFrame({
           </div>
         )}
         <div className={embeddedPreview ? "min-h-0" : "min-h-0 flex-1"}>
-          <StructuredTable
-            columns={[
-              "机构",
-              "期限",
-              "非银利率",
-              "涨跌",
-              "银行利率",
-              "涨跌",
-              "更新时间",
-            ]}
-            rows={rows}
-            greenColumns={[2]}
-            redColumns={[4]}
-            deltaColumns={[3, 5]}
-            fitToWidth
-            flush
-            adaptiveHeight={embeddedPreview}
-            scrollY={!embeddedPreview}
-          />
+          {flippedBank && !embeddedPreview ? (
+            <BigBankHistoryBack
+              bank={flippedBank}
+              onBack={() => setFlippedBank(null)}
+            />
+          ) : (
+            <StructuredTable
+              columns={[
+                "机构",
+                "期限",
+                "非银利率",
+                "涨跌",
+                "银行利率",
+                "涨跌",
+                "利差",
+              ]}
+              rows={rows}
+              greenColumns={[2]}
+              redColumns={[4]}
+              deltaColumns={[3, 5]}
+              fitToWidth
+              flush
+              adaptiveHeight={embeddedPreview}
+              scrollY={!embeddedPreview}
+              onRowClick={embeddedPreview ? undefined : (row) => setFlippedBank(row[0] ?? null)}
+            />
+          )}
         </div>
       </section>
       <BankRateEditorModal
@@ -3875,15 +4283,22 @@ function BigBankPriceFrame({
 function XrepoFrame({
   embeddedPreview = false,
   onOpen,
+  initialContract,
 }: {
   embeddedPreview?: boolean;
   onOpen?: () => void;
+  initialContract?: string;
 }) {
+  const [flippedContract, setFlippedContract] = useState<string | null>(initialContract ?? null);
+  const [historyRange, setHistoryRange] = useState<HistoryRange>("5d");
+  const [baseProduct, setBaseProduct] = useState<BaseTrendProduct>("r001");
+  const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
   const section = leftSections.find(
     (item): item is SummaryTableSection =>
       item.layout === "table" && item.title === "XREPO",
   );
   if (!section) return <ReservedModuleFrame />;
+  const rows = xrepoR001Rows(section.rows);
 
   return (
     <section
@@ -3923,21 +4338,94 @@ function XrepoFrame({
         </div>
       )}
       <div className={embeddedPreview ? "min-h-0" : "min-h-0 flex-1"}>
-        <StructuredTable
-          columns={section.columns}
-          rows={section.rows}
-          greenColumns={section.greenColumns}
-          redColumns={section.redColumns}
-          emphasisColumns={section.emphasisColumns}
-          buttonColumn={section.buttonColumn}
-          fitToWidth
-          columnWidths={section.columnWidths}
-          flush
-          adaptiveHeight={embeddedPreview}
-          scrollY={!embeddedPreview}
-        />
+        {flippedContract && !embeddedPreview ? (
+          <XrepoHistoryBack
+            contractName={flippedContract}
+            activeRange={historyRange}
+            baseProduct={baseProduct}
+            compareProduct={compareProduct}
+            onRangeChange={setHistoryRange}
+            onBaseProductChange={setBaseProduct}
+            onCompareChange={setCompareProduct}
+            onBack={() => setFlippedContract(null)}
+          />
+        ) : (
+          <StructuredTable
+            columns={section.columns}
+            rows={rows}
+            greenColumns={section.greenColumns}
+            redColumns={section.redColumns}
+            emphasisColumns={section.emphasisColumns}
+            buttonColumn={section.buttonColumn}
+            fitToWidth
+            columnWidths={section.columnWidths}
+            flush
+            adaptiveHeight={embeddedPreview}
+            scrollY={!embeddedPreview}
+            onRowClick={embeddedPreview ? undefined : (row) => setFlippedContract(row[0] ?? null)}
+          />
+        )}
       </div>
     </section>
+  );
+}
+
+function XrepoHistoryBack({
+  contractName,
+  activeRange,
+  baseProduct,
+  compareProduct,
+  onRangeChange,
+  onBaseProductChange,
+  onCompareChange,
+  onBack,
+}: {
+  contractName: string;
+  activeRange: HistoryRange;
+  baseProduct: BaseTrendProduct;
+  compareProduct: CompareProduct;
+  onRangeChange: (range: HistoryRange) => void;
+  onBaseProductChange: (product: BaseTrendProduct) => void;
+  onCompareChange: (product: CompareProduct) => void;
+  onBack: () => void;
+}) {
+  return (
+    <div
+      className="grid h-full min-h-0 grid-rows-[auto_1fr] gap-2 overflow-hidden p-3"
+      onClick={onBack}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-slate-100">
+            历史成交走势 - {contractName}
+          </div>
+          <div className="mt-0.5 text-xs text-slate-500">
+            默认参数来自正面点击行；点击空白区域或返回按钮翻回
+          </div>
+        </div>
+        <button
+          className="tk-button px-3 py-1 text-xs"
+          onClick={(event) => {
+            event.stopPropagation();
+            onBack();
+          }}
+          type="button"
+        >
+          返回
+        </button>
+      </div>
+      <div className="min-h-0 overflow-hidden rounded-md" onClick={(event) => event.stopPropagation()}>
+        <HistoryClosePanel
+          activeRange={activeRange}
+          baseProduct={baseProduct}
+          overlayProduct="none"
+          compareProduct={compareProduct}
+          onRangeChange={onRangeChange}
+          onBaseProductChange={onBaseProductChange}
+          onCompareChange={onCompareChange}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -4043,6 +4531,7 @@ function LeftSummaryPanel() {
     ...initialBankRateRows,
   ]);
   const [isBankEditorOpen, setIsBankEditorOpen] = useState(false);
+  const [flippedBigBankName, setFlippedBigBankName] = useState<string | null>(null);
 
   const summarySections = leftSections
     .filter(
@@ -4063,7 +4552,7 @@ function LeftSummaryPanel() {
                 row.deltaNonBankBp,
                 row.bankRate,
                 row.deltaBp,
-                row.updatedAt,
+                bankRateSpread(row),
               ]),
           }
         : section,
@@ -4166,7 +4655,90 @@ function LeftSummaryPanel() {
   return (
     <>
       <aside className="flex h-full min-h-0 min-w-0 flex-col gap-3 overflow-hidden pr-1">
-        {summarySections.map((section) => (
+        {summarySections.map((section) => {
+          const isBigBankPrice = section.title === moduleEntries[0].title;
+          if (isBigBankPrice) {
+            return (
+              <div
+                key={section.title}
+                className={section.scrollable ? "min-h-0 flex-1" : "shrink-0"}
+              >
+                <div className={`tk-flip-card ${flippedBigBankName ? "is-flipped" : ""}`}>
+                  <div className="tk-flip-card__inner">
+                    <div className="tk-flip-card__face">
+                      <PanelCard
+                        title={section.title}
+                        bodyClassName="min-h-0 flex-1"
+                        bodyPaddingClassName="p-0"
+                        bodyFill
+                        actions={
+                          <div className="flex items-center gap-2">
+                            <button
+                              className="tk-button px-3 py-1"
+                              onClick={openBankEditor}
+                              type="button"
+                            >
+                              手工输入
+                            </button>
+                            <button
+                              className="tk-button tk-button-success px-3 py-1"
+                              type="button"
+                            >
+                              下载
+                            </button>
+                          </div>
+                        }
+                      >
+                        <StructuredTable
+                          columns={section.columns}
+                          rows={section.rows}
+                          greenColumns={section.greenColumns}
+                          redColumns={section.redColumns}
+                          deltaColumns={section.deltaColumns}
+                          emphasisColumns={section.emphasisColumns}
+                          buttonColumn={section.buttonColumn}
+                          fitToWidth={section.fitToWidth}
+                          columnWidths={section.columnWidths}
+                          compact
+                          flush
+                          adaptiveHeight={!section.scrollable}
+                          scrollY={section.scrollable}
+                          onRowClick={(row) => setFlippedBigBankName(row[0] ?? "大行")}
+                        />
+                      </PanelCard>
+                    </div>
+                    <div className="tk-flip-card__face tk-flip-card__face--back">
+                      <PanelCard
+                        title="大行定价走势"
+                        subtitle={flippedBigBankName ? `${flippedBigBankName} 多日历史` : undefined}
+                        bodyClassName="min-h-0 flex-1"
+                        bodyPaddingClassName="p-2"
+                        bodyFill
+                        actions={
+                          <button
+                            className="tk-button px-3 py-1"
+                            onClick={() => setFlippedBigBankName(null)}
+                            type="button"
+                          >
+                            返回
+                          </button>
+                        }
+                      >
+                        <div className="h-full min-h-[230px]">
+                          <BigBankPricingTrendChart
+                            bank={flippedBigBankName ?? "大行"}
+                            className="h-full"
+                            compact
+                          />
+                        </div>
+                      </PanelCard>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          return (
           <div
             key={section.title}
             className={section.scrollable ? "min-h-0 flex-1" : "shrink-0"}
@@ -4210,10 +4782,16 @@ function LeftSummaryPanel() {
                 flush
                 adaptiveHeight={!section.scrollable}
                 scrollY={section.scrollable}
+                onRowClick={
+                  isBigBankPrice
+                    ? (row) => setFlippedBigBankName(row[0] ?? "大行")
+                    : undefined
+                }
               />
             </PanelCard>
           </div>
-        ))}
+          );
+        })}
         {exchangeRepoSection ? (
           <div className="flex min-h-0 flex-1 flex-col gap-3">
             <div className="h-[250px] shrink-0 overflow-hidden">
@@ -5070,6 +5648,8 @@ const middleMatrixPlaceholders = [
 ] as const;
 
 const demandTenors: DemandTenor[] = ["R001", "R007"];
+const xrepoR001Rows = (rows: readonly (readonly string[])[]) =>
+  rows.filter((row) => row[0]?.includes("R001"));
 
 const demandRowsByDirection: Record<DemandDirection, DemandRow[]> = {
   repo: [
@@ -5128,6 +5708,15 @@ const barometerMetricOptions: Array<{ value: BarometerMetric; label: string }> =
   { value: "count", label: "笔数" },
   { value: "volume", label: "量" },
 ];
+const qtInstitutionOptions = [
+  { value: "all", label: "全部机构", factor: 1 },
+  { value: "large-bank", label: "大型银行", factor: 1.12 },
+  { value: "joint-bank", label: "股份制商业银行", factor: 0.96 },
+  { value: "city-bank", label: "城市商业银行", factor: 0.82 },
+  { value: "broker", label: "证券公司", factor: 0.74 },
+  { value: "fund", label: "基金公司及产品", factor: 0.68 },
+] as const;
+type QtInstitutionType = (typeof qtInstitutionOptions)[number]["value"];
 
 const barometerAmSlots = [
   "08:15",
@@ -5201,28 +5790,28 @@ function buildBarometerSeries(
   return [
     {
       key: "todayOut",
-      label: "今日融出",
+      label: "今日正回购",
       color: barometerOutColor,
       lineStyle: "solid",
       points: todayOut,
     },
     {
       key: "todayIn",
-      label: "今日融入",
+      label: "今日逆回购",
       color: barometerInColor,
       lineStyle: "solid",
       points: todayIn,
     },
     {
       key: "yesterdayOut",
-      label: "昨日融出",
+      label: "昨日正回购",
       color: barometerOutColor,
       lineStyle: "dashed",
       points: yesterdayOut,
     },
     {
       key: "yesterdayIn",
-      label: "昨日融入",
+      label: "昨日逆回购",
       color: barometerInColor,
       lineStyle: "dashed",
       points: yesterdayIn,
@@ -5285,7 +5874,17 @@ const barometerData: Record<BarometerRange, Record<BarometerMetric, BarometerSli
 function BarometerMatrixCard() {
   const [range, setRange] = useState<BarometerRange>("overnight");
   const [metric, setMetric] = useState<BarometerMetric>("count");
-  const currentSlice = barometerData[range][metric];
+  const [institutionType, setInstitutionType] = useState<QtInstitutionType>("all");
+  const institutionFactor =
+    qtInstitutionOptions.find((option) => option.value === institutionType)?.factor ?? 1;
+  const rawSlice = barometerData[range][metric];
+  const currentSlice: BarometerSlice = {
+    ...rawSlice,
+    series: rawSlice.series.map((series) => ({
+      ...series,
+      points: scaleBarometerPoints(series.points, institutionFactor),
+    })),
+  };
   const allValues = currentSlice.series.flatMap((series) =>
     series.points.map((point) => point.value),
   );
@@ -5304,11 +5903,24 @@ function BarometerMatrixCard() {
   return (
     <div className="grid min-h-0 grid-rows-[auto_auto_minmax(0,1fr)_auto] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
       <div className="flex items-baseline justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
-        <div className="tk-matrix-card-title shrink-0 whitespace-nowrap">个人QT行情</div>
-        <span className="shrink-0 whitespace-nowrap text-[10px] text-slate-400">今日 vs 昨日</span>
+        <div className="tk-matrix-card-title shrink-0 whitespace-nowrap">机构报价热度</div>
       </div>
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[color:var(--tk-color-border-divider)] px-3 py-2 text-xs">
+        <label className="flex items-center gap-1.5 text-slate-400">
+          分机构统计
+          <select
+            className="tk-field h-6 rounded px-2 text-[11px] text-slate-100 outline-none"
+            value={institutionType}
+            onChange={(event) => setInstitutionType(event.target.value as QtInstitutionType)}
+          >
+            {qtInstitutionOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <BarometerSegmentedControl
           label="期限"
           options={barometerRangeOptions}
@@ -5321,9 +5933,6 @@ function BarometerMatrixCard() {
           value={metric}
           onChange={setMetric}
         />
-        <span className="min-w-0 flex-1 text-right text-[11px] text-slate-300">
-          当日成交变化 · 截至 16:00
-        </span>
       </div>
 
       <div className="grid min-h-0 grid-cols-[2.7rem_minmax(0,1fr)] px-3 pb-1.5 pt-2">
@@ -5440,6 +6049,84 @@ function BarometerMatrixCard() {
   );
 }
 
+function InstitutionPeriodMatrixCard() {
+  const [period, setPeriod] = useState<CfetsInstPeriod>("R001");
+  const [metricKey, setMetricKey] = useState<CfetsMetricKey>("buyBalance");
+  const [open, setOpen] = useState(false);
+  const metric = cfetsMetricDefs.find((item) => item.key === metricKey);
+  const seriesPreview = cfetsInstTrend[period]?.buyBalance?.["14d"]?.series?.[0] ?? [];
+
+  return (
+    <>
+      <div className="grid min-h-0 grid-rows-[auto_auto_minmax(0,1fr)_auto] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+        <div className="flex items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
+          <div className="min-w-0">
+            <div className="tk-matrix-card-title truncate">机构分期限统计</div>
+            <div className="tk-matrix-card-subtitle truncate">中间压缩统计 · 大图弹窗</div>
+          </div>
+          <button
+            className="tk-button px-2 py-1 text-[10px]"
+            onClick={() => setOpen(true)}
+            type="button"
+          >
+            打开大图
+          </button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 border-b border-[color:var(--tk-color-border-divider)] px-3 py-2 text-xs">
+          <label className="flex items-center gap-1.5 text-slate-400">
+            期限
+            <select
+              className="tk-field h-6 rounded px-2 text-[11px] text-slate-100 outline-none"
+              value={period}
+              onChange={(event) => setPeriod(event.target.value as CfetsInstPeriod)}
+            >
+              {cfetsInstPeriodLabels.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex min-w-0 flex-1 items-center gap-1.5 text-slate-400">
+            指标
+            <select
+              className="tk-field h-6 min-w-0 rounded px-2 text-[11px] text-slate-100 outline-none"
+              value={metricKey}
+              onChange={(event) => setMetricKey(event.target.value as CfetsMetricKey)}
+            >
+              {cfetsMetricDefs.map((item) => (
+                <option key={item.key} value={item.key}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="min-h-0 p-3">
+          <MiniSparklinePreview
+            label={`${period} ${metric?.label ?? ""}`}
+            values={seriesPreview.length ? seriesPreview : [1.2, 1.4, 1.3, 1.6, 1.5]}
+            color={chartPalette.blue}
+            footnote="点击打开完整机构分期限统计大图"
+          />
+        </div>
+        <div className="grid grid-cols-3 gap-1 border-t border-[color:var(--tk-color-border-divider)] p-2">
+          <InfoPill label="方向" value="正/逆" />
+          <InfoPill label="图形" value="柱状/折线" />
+          <InfoPill label="明细" value="下拉展开" />
+        </div>
+      </div>
+      {open ? (
+        <PageFrame title="机构分期限统计大图" onClose={() => setOpen(false)}>
+          <div className="tk-panel h-full min-h-0 border p-3">
+            <CfetsInstPanel />
+          </div>
+        </PageFrame>
+      ) : null}
+    </>
+  );
+}
+
 function BarometerSegmentedControl<T extends string>({
   label,
   options,
@@ -5509,6 +6196,112 @@ function MatrixPlaceholderCard({
           }}
         />
         <MiniChartSkeleton activeIndex={index} />
+      </div>
+    </div>
+  );
+}
+
+function CombinedDemandMatrixCard() {
+  const repoMatrix = buildDemandMatrix(demandRowsByDirection.repo);
+  const reverseMatrix = buildDemandMatrix(demandRowsByDirection.reverse);
+  const reverseByTenor = demandTenors.map((tenor) => reverseMatrix.columnTotals[tenor]);
+  const reverseTotal = reverseMatrix.grandTotal;
+
+  return (
+    <div className="grid min-h-0 grid-rows-[auto_1fr_auto] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="flex items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2.5 py-1.5">
+        <div className="min-w-0">
+          <div className="tk-matrix-card-title truncate">正/逆回购需求</div>
+          <div className="tk-matrix-card-subtitle truncate">本方需求 · 押券 × 期限 · 单位：亿</div>
+        </div>
+        <div className="flex shrink-0 gap-1">
+          {demandTenors.map((tenor) => (
+            <span key={tenor} className="tk-matrix-tag rounded border px-1 py-0.5">
+              {tenor}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="min-h-0 overflow-hidden p-1">
+        <div className="grid h-full min-h-0 grid-cols-[4.2rem_repeat(3,minmax(0,1fr))] grid-rows-[1.55rem_repeat(5,minmax(0,1fr))] gap-px text-[8px]">
+          <DemandTableHeader label="正回购需求" />
+          {demandTenors.map((tenor) => (
+            <DemandTableHeader key={tenor} label={tenor} align="right" />
+          ))}
+          <DemandTableHeader label="合计" align="right" />
+          {repoMatrix.rows.map((row) => (
+            <Fragment key={row.label}>
+              <DemandRowHeader row={row} />
+              {demandTenors.map((tenor) => (
+                <DemandCompactCell key={`${row.label}-${tenor}`} amount={row.cells[tenor]} />
+              ))}
+              <DemandCompactCell amount={repoMatrix.rowTotals[row.label]} strong />
+            </Fragment>
+          ))}
+          <DemandTableHeader label="合计" />
+          {demandTenors.map((tenor) => (
+            <DemandCompactCell key={`repo-total-${tenor}`} amount={repoMatrix.columnTotals[tenor]} strong />
+          ))}
+          <DemandCompactCell amount={repoMatrix.grandTotal} strong />
+          <DemandTableHeader label="逆回购需求" />
+          {reverseByTenor.map((amount, index) => (
+            <DemandCompactCell key={`reverse-${demandTenors[index]}`} amount={amount} accent="var(--tk-color-brand-cyan)" />
+          ))}
+          <DemandCompactCell amount={reverseTotal} strong accent="var(--tk-color-brand-cyan)" />
+        </div>
+      </div>
+      <div className="border-t border-[color:var(--tk-color-border-divider)] px-2 py-1 text-[9px] text-slate-500">
+        单元格 = 需求量 / 已完成量
+      </div>
+    </div>
+  );
+}
+
+function DemandTableHeader({
+  label,
+  align = "left",
+}: {
+  label: string;
+  align?: "left" | "right";
+}) {
+  return (
+    <div
+      className={`flex min-w-0 items-center overflow-hidden rounded-sm border border-[color:var(--tk-color-border-panel)] bg-[rgba(30,41,59,0.82)] px-1 text-[9px] font-semibold text-slate-300 ${
+        align === "right" ? "justify-end text-right" : ""
+      }`}
+    >
+      <span className="truncate">{label}</span>
+    </div>
+  );
+}
+
+function DemandCompactCell({
+  amount,
+  strong = false,
+  accent = "var(--tdx-red)",
+}: {
+  amount: DemandAmount;
+  strong?: boolean;
+  accent?: string;
+}) {
+  const progress = demandProgress(amount);
+  const empty = amount.need <= 0;
+  return (
+    <div
+      className={`grid min-w-0 content-center overflow-hidden rounded-sm border px-1 py-[1px] text-right ${
+        strong
+          ? "border-[rgba(231,53,58,0.32)] bg-[rgba(30,41,59,0.86)]"
+          : "border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.66)]"
+      } ${empty ? "opacity-40" : ""}`}
+    >
+      <div className="truncate text-[10px] font-semibold text-slate-200">
+        {formatDemandAmount(amount.need)} / {formatDemandAmount(amount.done)}
+      </div>
+      <div className="mt-0.5 h-0.5 overflow-hidden rounded-full bg-slate-800">
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${progress}%`, backgroundColor: accent }}
+        />
       </div>
     </div>
   );
@@ -6294,28 +7087,9 @@ function MiddleMatrixColumn() {
         </div>
 
         <div className="grid min-h-0 grid-cols-2 grid-rows-[minmax(122px,0.86fr)_minmax(0,1fr)_minmax(0,1fr)] gap-1 overflow-hidden p-1.5">
-          {middleMatrixPlaceholders.slice(0, 2).map((item, index) => (
-            <DemandMatrixCard
-              key={item.title}
-              direction={item.direction}
-              title={item.title}
-              tag={item.tag}
-              hint={item.hint}
-            />
-          ))}
-          <PersonalInstitutionCompareCard />
+          <CombinedDemandMatrixCard />
           <BarometerMatrixCard />
-          <div className="min-h-0 overflow-hidden rounded-md">
-            <HistoryClosePanel
-              activeRange={activeRange}
-              baseProduct={baseProduct}
-              overlayProduct="none"
-              compareProduct={compareProduct}
-              onRangeChange={setActiveRange}
-              onBaseProductChange={setBaseProduct}
-              onCompareChange={setCompareProduct}
-            />
-          </div>
+          <InstitutionPeriodMatrixCard />
           <div className="min-h-0 overflow-hidden rounded-md">
             <IntradayPanel
               baseProduct={baseProduct}
@@ -6324,6 +7098,20 @@ function MiddleMatrixColumn() {
               onOverlayChange={setOverlayProduct}
             />
           </div>
+          <div className="min-h-0 overflow-hidden rounded-md">
+            <MatrixPlaceholderCard
+              title="历史成交走势"
+              tag="XRepo背面"
+              hint="点击 XRepo 行后在背面展示对应合约历史"
+              index={4}
+            />
+          </div>
+          <MatrixPlaceholderCard
+            title="删除模块空位"
+            tag="预留"
+            hint="今日预览 / DR007资金情绪 / 个人&机构"
+            index={5}
+          />
         </div>
       </section>
     </aside>
@@ -7698,6 +8486,9 @@ function IntradayPanel({
 }) {
   const productLabel = trendProductLabel(baseProduct);
   const mainSeries = getIntradayRateSeries(baseProduct);
+  const yesterdaySeries = mainSeries.map((value, index) =>
+    Number((value - 0.012 + Math.sin(index * 0.63) * 0.006).toFixed(3)),
+  );
   const overlaySeries =
     overlayProduct === "none"
       ? null
@@ -7708,9 +8499,10 @@ function IntradayPanel({
       )
     : null;
   const pad = 0.01;
-  const min = Math.min(...mainSeries, ...(overlaySeries ?? [])) - pad;
-  const max = Math.max(...mainSeries, ...(overlaySeries ?? [])) + pad;
+  const min = Math.min(...mainSeries, ...yesterdaySeries, ...(overlaySeries ?? [])) - pad;
+  const max = Math.max(...mainSeries, ...yesterdaySeries, ...(overlaySeries ?? [])) + pad;
   const mainPath = buildLinePath(mainSeries, 680, 178, min, max);
+  const yesterdayPath = buildLinePath(yesterdaySeries, 680, 178, min, max);
   const areaPath = buildAreaPath(mainSeries, 680, 178, min, max);
   const overlayPath = overlaySeries
     ? buildLinePath(overlaySeries, 680, 178, min, max)
@@ -7798,6 +8590,16 @@ function IntradayPanel({
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
+                <path
+                  d={yesterdayPath}
+                  fill="none"
+                  stroke={chartPalette.violet}
+                  strokeWidth="2"
+                  strokeDasharray="7 5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeOpacity="0.9"
+                />
                 {overlayPath ? (
                   <path
                     d={overlayPath}
@@ -7841,6 +8643,18 @@ function IntradayPanel({
                     {mainSeries[ti].toFixed(3)}%
                   </span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-1.5 w-3"
+                    style={{
+                      borderTop: `2px dashed ${chartPalette.violet}`,
+                    }}
+                  />
+                  <span className="text-slate-400">昨日{productLabel}</span>
+                  <span className="ml-1 font-semibold text-slate-100">
+                    {yesterdaySeries[ti].toFixed(3)}%
+                  </span>
+                </div>
                 {overlaySeries && (
                   <div className="flex items-center gap-2">
                     <span
@@ -7869,7 +8683,8 @@ function IntradayPanel({
               </ChartTooltip>
             )}
             <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-300">
-              <LegendDot color={chartPalette.blue} label={`${productLabel} 加权利率`} />
+              <LegendDot color={chartPalette.blue} label={`今日${productLabel}`} />
+              <LegendDot color={chartPalette.violet} label={`昨日${productLabel}`} />
               {overlaySeries ? (
                 <LegendDot
                   color={chartPalette.amber}
@@ -8950,6 +9765,57 @@ const cfetsMetricDefs: {
   },
 ];
 
+type CfetsInstMetricMode =
+  | "weightedRate"
+  | "turnover"
+  | "balance"
+  | "crossMonth"
+  | "netInflow";
+type CfetsRepoDirection = "repo" | "reverse";
+type CfetsChartKind = "line" | "bar";
+type CfetsDimension = "period" | "institution";
+
+const cfetsDenseMetricOptions: Array<{
+  key: CfetsInstMetricMode;
+  label: string;
+}> = [
+  { key: "weightedRate", label: "加权利率" },
+  { key: "turnover", label: "交易额" },
+  { key: "balance", label: "回购余额" },
+  { key: "crossMonth", label: "跨月金额" },
+  { key: "netInflow", label: "净融入金额" },
+];
+
+const cfetsPeriodColors: Record<CfetsInstPeriod, string> = {
+  R001: "#637cd8",
+  R007: "#8cca72",
+  R014: "#f3c65f",
+  R021: "#e85c67",
+  R1M: "#6fb6d0",
+  R2M: "#3fa36d",
+  R3M: "#ff8354",
+  R4M: "#8e55b0",
+  R6M: "#da62b2",
+  R9M: "#4f68c5",
+  R1Y: "#7fbd64",
+};
+
+const cfetsInstitutionOptions = [
+  { label: "大型银行", sourceIndex: 0, factor: 0.95, color: "#637cd8" },
+  { label: "大型商业/政策性银行", sourceIndex: 0, factor: 0.72, color: "#4f6cc4" },
+  { label: "股份制商业银行", sourceIndex: 1, factor: 0.92, color: "#8cca72" },
+  { label: "中小型银行", sourceIndex: 1, factor: 0.66, color: "#6fbf89" },
+  { label: "城市商业银行", sourceIndex: 1, factor: 0.54, color: "#57b4b5" },
+  { label: "农村金融机构", sourceIndex: 1, factor: 0.42, color: "#4aa3a1" },
+  { label: "证券公司", sourceIndex: 4, factor: 0.9, color: "#e85c67" },
+  { label: "保险公司", sourceIndex: 6, factor: 0.9, color: "#f3a85d" },
+  { label: "基金公司及产品", sourceIndex: 5, factor: 0.86, color: "#6fb6d0" },
+  { label: "货币市场基金", sourceIndex: 5, factor: 0.62, color: "#74b6e6" },
+  { label: "理财子公司及理财类产品", sourceIndex: 3, factor: 0.94, color: "#8e55b0" },
+  { label: "其他产品类", sourceIndex: 2, factor: 0.48, color: "#da62b2" },
+  { label: "其他", sourceIndex: 2, factor: 0.36, color: "#a1a1aa" },
+] as const;
+
 const INST_ONLY_METRIC_KEYS = new Set<CfetsMetricKey>([
   "netInflow",
   "netInflowAmt",
@@ -10007,112 +10873,667 @@ function MultiSeriesChart({
   );
 }
 
-// ─── 机构面板 ───────────────────────────────────────────────
-function CfetsInstPanel() {
-  const [period, setPeriod] = useState<CfetsInstPeriod>("R001");
-  const [range, _setRange] = useState<FundStructureRange>("14d");
-  const [metricKey, setMetricKey] = useState<CfetsMetricKey>("buyRate");
-  const [hiddenSeries, setHiddenSeries] = useState<ReadonlySet<number>>(
-    () => new Set<number>(),
-  );
-  const metricDef = cfetsMetricDefs.find((d) => d.key === metricKey)!;
-  const block =
-    metricKey !== "netInflow"
-      ? cfetsInstTrend[period][metricKey][range]
-      : null!;
+function cfetsModeFromMetricKey(metricKey: CfetsMetricKey): CfetsInstMetricMode {
+  if (metricKey === "buyRate" || metricKey === "sellRate") return "weightedRate";
+  if (metricKey === "buyAmt" || metricKey === "sellAmt") return "turnover";
+  if (metricKey === "buyBalance" || metricKey === "sellBalance") return "balance";
+  if (metricKey === "netInflowAmt" || metricKey === "netInflow") return "netInflow";
+  return "balance";
+}
 
-  function toggleSeries(idx: number) {
-    setHiddenSeries((prev) => {
-      const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx);
-      else next.add(idx);
+function cfetsMetricKeyForMode(
+  metricMode: CfetsInstMetricMode,
+  direction: CfetsRepoDirection,
+): CfetsMetricKey {
+  if (metricMode === "weightedRate") {
+    return direction === "repo" ? "buyRate" : "sellRate";
+  }
+  if (metricMode === "turnover") {
+    return direction === "repo" ? "buyAmt" : "sellAmt";
+  }
+  if (metricMode === "balance") {
+    return direction === "repo" ? "buyBalance" : "sellBalance";
+  }
+  if (metricMode === "crossMonth") {
+    return direction === "repo" ? "buyAmt" : "sellAmt";
+  }
+  return "netInflowAmt";
+}
+
+function cfetsMetricDisplayLabel(metricMode: CfetsInstMetricMode) {
+  return cfetsDenseMetricOptions.find((item) => item.key === metricMode)?.label ?? "回购余额";
+}
+
+function cfetsMetricUnit(metricMode: CfetsInstMetricMode) {
+  return metricMode === "weightedRate" ? "%" : "亿";
+}
+
+function cfetsMetricIsRate(metricMode: CfetsInstMetricMode) {
+  return metricMode === "weightedRate";
+}
+
+function cfetsValueScale(metricMode: CfetsInstMetricMode) {
+  return metricMode === "weightedRate" ? 1 : 0.01;
+}
+
+function cfetsCrossMonthFactor(period: CfetsInstPeriod) {
+  return period.includes("M") || period === "R1Y" ? 1 : 0.08;
+}
+
+function formatCfetsDenseValue(value: number, metricMode: CfetsInstMetricMode) {
+  if (metricMode === "weightedRate") return `${value.toFixed(3)}%`;
+  if (Math.abs(value) >= 1000) return `${Math.round(value).toLocaleString()}亿`;
+  return `${value.toFixed(value >= 100 ? 0 : 1)}亿`;
+}
+
+function toggleArrayValue<T extends string>(items: readonly T[], value: T) {
+  return items.includes(value)
+    ? items.filter((item) => item !== value)
+    : [...items, value];
+}
+
+function buildCfetsDenseSeries({
+  metricMode,
+  direction,
+  dimension,
+  selectedPeriods,
+  selectedInstitutions,
+}: {
+  metricMode: CfetsInstMetricMode;
+  direction: CfetsRepoDirection;
+  dimension: CfetsDimension;
+  selectedPeriods: readonly CfetsInstPeriod[];
+  selectedInstitutions: readonly number[];
+}) {
+  const metricKey = cfetsMetricKeyForMode(metricMode, direction);
+  const dates = cfetsInstTrend.R001[metricKey]["6m"].dates;
+  const isRate = cfetsMetricIsRate(metricMode);
+  const valueScale = cfetsValueScale(metricMode);
+
+  const institutionOptions = selectedInstitutions.length
+    ? selectedInstitutions.map((index) => cfetsInstitutionOptions[index])
+    : [...cfetsInstitutionOptions];
+  const periods = selectedPeriods.length ? [...selectedPeriods] : [...cfetsInstPeriodLabels];
+
+  function institutionSeries(period: CfetsInstPeriod, institutionIndex: number) {
+    const option = cfetsInstitutionOptions[institutionIndex];
+    const raw = cfetsInstTrend[period][metricKey]["6m"].series[option.sourceIndex] ?? [];
+    const crossMonthFactor = metricMode === "crossMonth" ? cfetsCrossMonthFactor(period) : 1;
+    return raw.map((value) => Math.max(0, value * option.factor * crossMonthFactor * valueScale));
+  }
+
+  function combineSeries(seriesList: number[][]) {
+    return dates.map((_, index) => {
+      const values = seriesList.map((series) => series[index] ?? 0);
+      if (isRate) {
+        const nonZero = values.filter((value) => value > 0);
+        return nonZero.length
+          ? nonZero.reduce((sum, value) => sum + value, 0) / nonZero.length
+          : 0;
+      }
+      return values.reduce((sum, value) => sum + value, 0);
+    });
+  }
+
+  if (dimension === "period") {
+    return {
+      dates,
+      series: periods.map((period) => ({
+        key: period,
+        label: period,
+        color: cfetsPeriodColors[period],
+        values: combineSeries(
+          institutionOptions.map((option) =>
+            institutionSeries(period, cfetsInstitutionOptions.indexOf(option)),
+          ),
+        ),
+      })),
+    };
+  }
+
+  return {
+    dates,
+    series: institutionOptions.map((option) => {
+      const optionIndex = cfetsInstitutionOptions.indexOf(option);
+      return {
+        key: option.label,
+        label: option.label,
+        color: option.color,
+        values: combineSeries(periods.map((period) => institutionSeries(period, optionIndex))),
+      };
+    }),
+  };
+}
+
+// ─── 机构面板 ───────────────────────────────────────────────
+function CfetsInstPanel({
+  initialPeriod = "R001",
+  initialMetric = "buyRate",
+}: {
+  initialPeriod?: CfetsInstPeriod;
+  initialMetric?: CfetsMetricKey;
+}) {
+  const [metricMode, setMetricMode] = useState<CfetsInstMetricMode>(() =>
+    cfetsModeFromMetricKey(initialMetric),
+  );
+  const [direction, setDirection] = useState<CfetsRepoDirection>(
+    initialMetric === "sellRate" || initialMetric === "sellAmt" || initialMetric === "sellBalance"
+      ? "reverse"
+      : "repo",
+  );
+  const [chartKind, setChartKind] = useState<CfetsChartKind>("bar");
+  const [dimension, setDimension] = useState<CfetsDimension>("period");
+  const [selectedPeriods, setSelectedPeriods] = useState<CfetsInstPeriod[]>(
+    () => [...cfetsInstPeriodLabels],
+  );
+  const [selectedInstitutions, setSelectedInstitutions] = useState<number[]>(
+    () => cfetsInstitutionOptions.map((_, index) => index),
+  );
+  const [selectedSupplyTags, setSelectedSupplyTags] = useState<string[]>([
+    "利率债",
+    "同业存单",
+    "信用债",
+    "有效供给",
+  ]);
+  const [expandedRule, setExpandedRule] = useState<string | null>("回购比例(~2025)");
+  const [activeDetail, setActiveDetail] = useState<{
+    date: string;
+    label: string;
+    value: number;
+  } | null>(null);
+
+  const selectedPeriod = selectedPeriods.includes(initialPeriod)
+    ? initialPeriod
+    : (selectedPeriods[0] ?? initialPeriod);
+  const metricLabel = cfetsMetricDisplayLabel(metricMode);
+  const chartTitle = `${direction === "repo" ? "正回购" : "逆回购"}-${metricLabel}（${
+    chartKind === "bar" ? "柱状图" : "折线图"
+  }）`;
+  const chartData = buildCfetsDenseSeries({
+    metricMode,
+    direction,
+    dimension,
+    selectedPeriods,
+    selectedInstitutions,
+  });
+
+  function toggleInstitution(index: number) {
+    setSelectedInstitutions((current) => toggleArrayValue(current, index));
+  }
+
+  function toggleSupplyTag(tag: string) {
+    setSelectedSupplyTags((current) => toggleArrayValue(current, tag));
+  }
+
+  function setAllPeriods(checked: boolean) {
+    setSelectedPeriods(checked ? [...cfetsInstPeriodLabels] : []);
+  }
+
+  function setAllInstitutions(checked: boolean) {
+    setSelectedInstitutions(
+      checked ? cfetsInstitutionOptions.map((_, index) => index) : [],
+    );
+  }
+
+  return (
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tk-color-surface-page)] text-slate-200">
+      <div className="shrink-0 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)]">
+        <DenseOptionRow>
+          {cfetsDenseMetricOptions.map((option) => (
+            <DenseRadio
+              key={option.key}
+              checked={metricMode === option.key}
+              label={option.label}
+              name="cfets-metric-mode"
+              onChange={() => setMetricMode(option.key)}
+            />
+          ))}
+        </DenseOptionRow>
+        <DenseOptionRow>
+          <DenseCheckbox
+            checked={selectedInstitutions.length === cfetsInstitutionOptions.length}
+            label="全部机构"
+            onChange={setAllInstitutions}
+          />
+          {cfetsInstitutionOptions.map((option, index) => (
+            <DenseCheckbox
+              key={option.label}
+              checked={selectedInstitutions.includes(index)}
+              label={option.label}
+              onChange={() => toggleInstitution(index)}
+            />
+          ))}
+        </DenseOptionRow>
+        <DenseOptionRow>
+          <DenseCheckbox
+            checked={selectedPeriods.length === cfetsInstPeriodLabels.length}
+            label="全部期限"
+            onChange={setAllPeriods}
+          />
+          {cfetsInstPeriodLabels.map((period) => (
+            <DenseCheckbox
+              key={period}
+              checked={selectedPeriods.includes(period)}
+              label={period}
+              onChange={() =>
+                setSelectedPeriods((current) => toggleArrayValue(current, period))
+              }
+            />
+          ))}
+        </DenseOptionRow>
+        <div className="grid border-t border-[color:var(--tk-color-border-divider-dark)] text-xs">
+          {["回购比例(~2025)", "回购比例(2026~)", "质押券比例(~2025)", "质押券比例(2026~)"].map(
+            (rule, index) => (
+              <button
+                key={rule}
+                type="button"
+                className={`grid grid-cols-[12rem_1fr_auto] items-center gap-3 border-b border-[color:var(--tk-color-border-divider-dark)] px-4 py-2 text-left last:border-b-0 ${
+                  expandedRule === rule
+                    ? "bg-[rgba(56,113,189,0.12)] text-slate-100"
+                    : "text-slate-400 hover:bg-[rgba(56,113,189,0.08)]"
+                }`}
+                onClick={() => setExpandedRule(expandedRule === rule ? null : rule)}
+              >
+                <span>{rule}</span>
+                <span className="truncate text-[11px] text-slate-500">
+                  {expandedRule === rule
+                    ? `${selectedPeriod} · ${metricLabel} · 机构/期限明细已展开`
+                    : "点击展开该口径明细"}
+                </span>
+                <span className="flex items-center gap-2">
+                  {index < 2 ? (
+                    <>
+                      {["利率债", "同业存单", "信用债"].map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center gap-1 text-[11px]"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            toggleSupplyTag(tag);
+                          }}
+                        >
+                          <input
+                            checked={selectedSupplyTags.includes(tag)}
+                            className="h-3 w-3 accent-[var(--tk-color-brand-primary)]"
+                            readOnly
+                            type="checkbox"
+                          />
+                          {tag}
+                        </span>
+                      ))}
+                      <span className="rounded bg-[var(--tk-color-brand-primary)] px-2 py-1 text-[11px] font-semibold text-white">
+                        有效供给
+                      </span>
+                    </>
+                  ) : (
+                    <span className="rounded bg-[var(--tk-color-brand-primary)] px-2 py-1 text-[11px] font-semibold text-white">
+                      三四类
+                    </span>
+                  )}
+                </span>
+              </button>
+            ),
+          )}
+        </div>
+        <DenseOptionRow>
+          <DenseRadio
+            checked={direction === "repo"}
+            label="正回购"
+            name="cfets-direction"
+            onChange={() => setDirection("repo")}
+          />
+          <DenseRadio
+            checked={direction === "reverse"}
+            label="逆回购"
+            name="cfets-direction"
+            onChange={() => setDirection("reverse")}
+          />
+        </DenseOptionRow>
+        <DenseOptionRow>
+          <DenseRadio
+            checked={chartKind === "line"}
+            label="折线图"
+            name="cfets-chart-kind"
+            onChange={() => setChartKind("line")}
+          />
+          <DenseRadio
+            checked={chartKind === "bar"}
+            label="柱状图"
+            name="cfets-chart-kind"
+            onChange={() => setChartKind("bar")}
+          />
+        </DenseOptionRow>
+        <DenseOptionRow>
+          <DenseRadio
+            checked={dimension === "period"}
+            label="期限"
+            name="cfets-dimension"
+            onChange={() => setDimension("period")}
+          />
+          <DenseRadio
+            checked={dimension === "institution"}
+            label="机构"
+            name="cfets-dimension"
+            onChange={() => setDimension("institution")}
+          />
+        </DenseOptionRow>
+      </div>
+
+      <div className="min-h-0 flex-1 px-4 pb-3 pt-4">
+        <CfetsDenseChart
+          chartKind={chartKind}
+          data={chartData}
+          metricMode={metricMode}
+          title={chartTitle}
+          onDetail={setActiveDetail}
+        />
+      </div>
+
+      <div className="shrink-0 border-t border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-4 py-2 text-xs">
+        <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_auto] items-center gap-3">
+          <div className="truncate text-slate-300">
+            {activeDetail
+              ? `${activeDetail.date} · ${activeDetail.label}`
+              : `${expandedRule ?? "回购比例(~2025)"} · ${selectedPeriod} · ${metricLabel}`}
+          </div>
+          <div className="text-slate-400">
+            指标值{" "}
+            <span className="font-mono text-slate-100">
+              {formatCfetsDenseValue(activeDetail?.value ?? 0, metricMode)}
+            </span>
+          </div>
+          <div className="text-slate-400">
+            环比 <span className="text-emerald-300">+2.4%</span>
+          </div>
+          <div className="text-slate-400">
+            更新时间 <span className="font-mono text-slate-100">10:53:27</span>
+          </div>
+          <button
+            className="tk-button px-2 py-1 text-[11px]"
+            type="button"
+            onClick={() => setActiveDetail(null)}
+          >
+            收起明细
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DenseOptionRow({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-8 flex-wrap items-center gap-x-4 gap-y-1 border-b border-[color:var(--tk-color-border-divider-dark)] px-4 py-1.5 text-xs">
+      {children}
+    </div>
+  );
+}
+
+function DenseRadio({
+  checked,
+  label,
+  name,
+  onChange,
+}: {
+  checked: boolean;
+  label: string;
+  name: string;
+  onChange: () => void;
+}) {
+  return (
+    <label className="inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-slate-300">
+      <input
+        checked={checked}
+        className="h-3.5 w-3.5 accent-[var(--tk-color-brand-primary)]"
+        name={name}
+        onChange={onChange}
+        type="radio"
+      />
+      {label}
+    </label>
+  );
+}
+
+function DenseCheckbox({
+  checked,
+  label,
+  onChange,
+}: {
+  checked: boolean;
+  label: string;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-slate-300">
+      <input
+        checked={checked}
+        className="h-3.5 w-3.5 accent-[var(--tk-color-brand-primary)]"
+        onChange={(event) => onChange(event.target.checked)}
+        type="checkbox"
+      />
+      {label}
+    </label>
+  );
+}
+
+function CfetsDenseChart({
+  chartKind,
+  data,
+  metricMode,
+  title,
+  onDetail,
+}: {
+  chartKind: CfetsChartKind;
+  data: {
+    dates: string[];
+    series: Array<{ key: string; label: string; color: string; values: number[] }>;
+  };
+  metricMode: CfetsInstMetricMode;
+  title: string;
+  onDetail: (detail: { date: string; label: string; value: number }) => void;
+}) {
+  const [hiddenKeys, setHiddenKeys] = useState<ReadonlySet<string>>(
+    () => new Set<string>(),
+  );
+  const visibleSeries = data.series.filter((series) => !hiddenKeys.has(series.key));
+  const isRate = cfetsMetricIsRate(metricMode);
+  const unit = cfetsMetricUnit(metricMode);
+  const allValues = visibleSeries.flatMap((series) => series.values);
+  const maxValue = Math.max(...allValues, 1);
+  const minValue = chartKind === "line" && isRate ? Math.min(...allValues, 0) : 0;
+  const yMax = maxValue * 1.12;
+  const yMin = isRate ? Math.max(0, minValue - (yMax - minValue) * 0.08) : 0;
+  const width = 1600;
+  const height = 430;
+  const xTickStep = Math.max(1, Math.floor(data.dates.length / 16));
+  const yTicks = Array.from({ length: 6 }, (_, index) =>
+    yMax - ((yMax - yMin) * index) / 5,
+  );
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(data.dates.length);
+  const tooltipIndex = tooltipState?.index ?? null;
+
+  function toggleLegend(key: string) {
+    setHiddenKeys((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   }
 
+  const dailyTotals = data.dates.map((_, index) =>
+    visibleSeries.reduce((sum, series) => sum + (series.values[index] ?? 0), 0),
+  );
+  const maxTotal = Math.max(...dailyTotals, 1);
+
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2">
-      {/* 控件行 1：期限 */}
-      <div className="flex flex-wrap items-center gap-1 text-xs">
-        <span className="mr-1 text-xs text-slate-500">期限</span>
-        {cfetsInstPeriodLabels.map((pt) => (
-          <button
-            key={pt}
-            type="button"
-            className={`rounded-md px-2 py-1 text-xs transition-colors ${
-              period === pt
-                ? "bg-[var(--tk-color-surface-selected)] font-semibold text-slate-100"
-                : "text-slate-400 hover:text-slate-200"
-            }`}
-            onClick={() => setPeriod(pt)}
-          >
-            {pt}
-          </button>
-        ))}
+    <div className="grid h-full min-h-0 grid-rows-[auto_auto_minmax(0,1fr)_auto] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="flex items-center justify-between gap-3 px-4 pb-1 pt-4">
+        <div className="min-w-0 flex-1 text-center text-xl font-semibold text-slate-100">
+          {title}
+        </div>
+        <button
+          className="tk-button h-7 w-7 px-0 text-sm"
+          type="button"
+          title="导出"
+        >
+          ⤓
+        </button>
       </div>
-      {/* 控件行 2：指标 单选按钮组 */}
-      <div className="flex flex-wrap items-center gap-1 text-xs">
-        <span className="mr-1 text-xs text-slate-500">指标</span>
-        {cfetsMetricDefs.map((d) => {
-          const active = metricKey === d.key;
+      <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 px-4 pb-2 text-sm">
+        {data.series.map((series) => {
+          const hidden = hiddenKeys.has(series.key);
           return (
             <button
-              key={d.key}
-              type="button"
-              aria-pressed={active}
-              className={`rounded-md px-2 py-1 text-xs transition-colors ${
-                active
-                  ? "bg-[var(--tk-color-surface-selected)] font-semibold text-slate-100"
-                  : "text-slate-400 hover:text-slate-200"
+              key={series.key}
+              className={`inline-flex items-center gap-1.5 rounded px-1 transition-opacity ${
+                hidden ? "opacity-35" : "opacity-100"
               }`}
-              onClick={() => setMetricKey(d.key)}
+              type="button"
+              onClick={() => toggleLegend(series.key)}
             >
-              {d.label}
+              <span
+                className="h-3 w-6 rounded-sm"
+                style={{ backgroundColor: series.color }}
+              />
+              <span className="text-slate-300">{series.label}</span>
             </button>
           );
         })}
       </div>
-      {/* 图例（点击切换显隐） */}
-      <div className="flex flex-wrap gap-3 text-xs">
-        {fundStructureLegendItems.map((item, i) => {
-          const hidden = hiddenSeries.has(i);
-          return (
-            <button
-              key={item.label}
-              type="button"
-              aria-pressed={!hidden}
-              onClick={() => toggleSeries(i)}
-              className={`rounded px-1 font-semibold transition-opacity hover:opacity-100 ${
-                hidden ? "opacity-50 line-through" : "opacity-100"
-              }`}
-              style={{ color: hidden ? "#475569" : item.color }}
+      <div className="grid min-h-0 grid-cols-[3.8rem_1fr] px-3 pb-1">
+        <div className="flex flex-col justify-between pb-7 pt-1 text-right text-[11px] text-slate-500">
+          {yTicks.map((tick) => (
+            <div key={tick}>{isRate ? tick.toFixed(2) : Math.round(tick).toLocaleString()}</div>
+          ))}
+          <div>0</div>
+        </div>
+        <div
+          ref={containerRef}
+          className="relative min-h-0 cursor-crosshair overflow-hidden"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
+          {[0, 1, 2, 3, 4, 5].map((index) => (
+            <div
+              key={index}
+              className="absolute inset-x-0 border-t border-[color:var(--tk-color-border-divider)] opacity-70"
+              style={{ top: `${(index / 5) * 100}%` }}
+            />
+          ))}
+          {chartKind === "bar" ? (
+            <div className="absolute inset-x-1 bottom-7 top-1 flex items-end gap-[1px]">
+              {data.dates.map((date, dateIndex) => {
+                const total = dailyTotals[dateIndex] || 0;
+                return (
+                  <button
+                    key={date}
+                    className="flex h-full min-w-0 flex-1 cursor-pointer flex-col justify-end overflow-hidden"
+                    style={{ height: `${(total / maxTotal) * 100}%` }}
+                    type="button"
+                    onClick={() => {
+                      const leader =
+                        visibleSeries
+                          .slice()
+                          .sort(
+                            (a, b) =>
+                              (b.values[dateIndex] ?? 0) - (a.values[dateIndex] ?? 0),
+                          )[0] ?? visibleSeries[0];
+                      onDetail({
+                        date,
+                        label: leader?.label ?? "-",
+                        value: total,
+                      });
+                    }}
+                  >
+                    {visibleSeries.map((series) => {
+                      const value = series.values[dateIndex] ?? 0;
+                      const pct = total > 0 ? (value / total) * 100 : 0;
+                      return pct > 0 ? (
+                        <span
+                          key={series.key}
+                          style={{
+                            height: `${pct}%`,
+                            backgroundColor: series.color,
+                            opacity: tooltipIndex === null || tooltipIndex === dateIndex ? 0.92 : 0.5,
+                          }}
+                        />
+                      ) : null;
+                    })}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <svg
+              className="absolute inset-x-1 bottom-7 top-1 h-[calc(100%-2rem)] w-[calc(100%-0.5rem)]"
+              preserveAspectRatio="none"
+              viewBox={`0 0 ${width} ${height}`}
             >
-              {item.label}
-            </button>
-          );
-        })}
+              {visibleSeries.map((series) => (
+                <path
+                  key={series.key}
+                  d={buildLinePath(series.values, width, height, yMin, yMax)}
+                  fill="none"
+                  stroke={series.color}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                />
+              ))}
+            </svg>
+          )}
+          {tooltipIndex !== null ? (
+            <div
+              className="pointer-events-none absolute bottom-7 top-1 w-px bg-[var(--tk-color-brand-primary)]"
+              style={{ left: `${(tooltipIndex / (data.dates.length - 1)) * 100}%` }}
+            />
+          ) : null}
+          <div className="absolute inset-x-0 bottom-0 h-6">
+            {data.dates.map((date, index) =>
+              index % xTickStep === 0 || index === data.dates.length - 1 ? (
+                <span
+                  key={date}
+                  className="absolute top-1 -translate-x-1/2 whitespace-nowrap text-[10px] text-slate-500"
+                  style={{ left: `${(index / (data.dates.length - 1)) * 100}%` }}
+                >
+                  {date}
+                </span>
+              ) : null,
+            )}
+          </div>
+          {tooltipIndex !== null && tooltipState ? (
+            <ChartTooltip
+              clientX={tooltipState.clientX}
+              clientY={tooltipState.clientY}
+            >
+              <div className="mb-1 font-semibold text-slate-200">
+                {data.dates[tooltipIndex]}
+              </div>
+              {visibleSeries.slice(0, 12).map((series) => (
+                <div key={series.key} className="flex items-center gap-2 py-0.5">
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: series.color }}
+                  />
+                  <span className="text-slate-400">{series.label}</span>
+                  <span className="ml-auto pl-4 font-mono font-semibold text-slate-100">
+                    {formatCfetsDenseValue(series.values[tooltipIndex] ?? 0, metricMode)}
+                  </span>
+                </div>
+              ))}
+              {visibleSeries.length > 12 ? (
+                <div className="mt-1 text-slate-500">其余 {visibleSeries.length - 12} 项略</div>
+              ) : null}
+            </ChartTooltip>
+          ) : null}
+        </div>
       </div>
-      {/* 图表 */}
-      {metricKey === "netInflow" ? (
-        <div className="min-h-[170px] flex-1">
-          <FundStructureBars
-            range={range}
-            hiddenSeries={hiddenSeries}
-            unit={metricDef.unit}
-            axisLabel={metricDef.axisLabel}
-          />
-        </div>
-      ) : (
-        <div className="min-h-[170px] flex-1">
-          <MultiSeriesChart
-            block={block}
-            chartType={metricDef.chartType}
-            unit={metricDef.unit}
-            axisLabel={metricDef.axisLabel}
-            hiddenSeries={hiddenSeries}
-          />
-        </div>
-      )}
+      <div className="flex items-center justify-between border-t border-[color:var(--tk-color-border-divider)] px-4 py-2 text-[11px] text-slate-500">
+        <span>单位：{unit}</span>
+        <span>图例点击可筛选；点击非图例柱体展开明细</span>
+      </div>
     </div>
   );
 }
@@ -11367,6 +12788,7 @@ function StructuredTable({
   flush = false,
   adaptiveHeight = false,
   scrollY = false,
+  onRowClick,
 }: {
   columns: readonly string[];
   rows: readonly (readonly string[])[];
@@ -11381,6 +12803,7 @@ function StructuredTable({
   flush?: boolean;
   adaptiveHeight?: boolean;
   scrollY?: boolean;
+  onRowClick?: (row: readonly string[], rowIndex: number) => void;
 }) {
   return (
     <div
@@ -11428,7 +12851,10 @@ function StructuredTable({
           {rows.map((row, rowIndex) => (
             <tr
               key={`${row[0]}-${rowIndex}`}
-              className={rowIndex % 2 === 0 ? "bg-transparent" : ""}
+              onClick={onRowClick ? () => onRowClick(row, rowIndex) : undefined}
+              className={`${rowIndex % 2 === 0 ? "bg-transparent" : ""} ${
+                onRowClick ? "cursor-pointer transition-colors hover:bg-[rgba(231,53,58,0.12)]" : ""
+              }`}
             >
               {row.map((cell, cellIndex) => (
                 <td
