@@ -3,6 +3,19 @@
 
 @import 'tw-animate-css';
 
+@utility text-micro {
+  font-size: var(--tk-font-size-micro);
+}
+
+@utility text-mini {
+  font-size: var(--tk-font-size-mini);
+}
+
+.tk-button.text-micro,
+.tk-chip.text-micro { font-size: var(--tk-font-size-micro); }
+.tk-button.text-mini,
+.tk-chip.text-mini { font-size: var(--tk-font-size-mini); }
+
 @layer base {
   * {
     scrollbar-width: thin;

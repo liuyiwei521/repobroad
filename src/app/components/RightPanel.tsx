@@ -229,13 +229,13 @@ function TrendChart({ title, data, periodColors }: TrendChartProps) {
             <CartesianGrid strokeDasharray="3 3" stroke={marketChartTheme.grid} />
             <XAxis
               dataKey="time"
-              tick={{ fontSize: 9, fill: marketChartTheme.axis }}
+              tick={{ fontSize: 10, fill: marketChartTheme.axis }}
               stroke={marketChartTheme.axis}
               interval="preserveEnd"
               tickCount={4}
             />
             <YAxis
-              tick={{ fontSize: 9, fill: marketChartTheme.axis }}
+              tick={{ fontSize: 10, fill: marketChartTheme.axis }}
               stroke={marketChartTheme.axis}
               domain={['auto', 'auto']}
               tickFormatter={(value) => `${value.toFixed(1)}%`}
@@ -273,13 +273,13 @@ function TrendChart({ title, data, periodColors }: TrendChartProps) {
                 className="w-3 h-0.5"
                 style={{ backgroundColor: periodColors[period] }}
               />
-              <span className="tdx-muted" style={{ fontSize: '10px' }}>
+              <span className="tdx-muted" style={{ fontSize: 10 }}>
                 {period}
               </span>
               {latestValue && (
                 <span
                   className="font-mono font-semibold"
-                  style={{ fontSize: '10px', color: periodColors[period] }}
+                  style={{ fontSize: 10, color: periodColors[period] }}
                 >
                   {(latestValue as number).toFixed(2)}%
                 </span>

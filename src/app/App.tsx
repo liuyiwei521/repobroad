@@ -2389,7 +2389,7 @@ function AdaptiveEntryRail({
           }`}
         >
           {displayMode === "icon" ? (
-            <div className="tk-muted text-center text-[10px] font-semibold">
+            <div className="tk-muted text-center text-micro font-semibold">
               入口
             </div>
           ) : (
@@ -2400,7 +2400,7 @@ function AdaptiveEntryRail({
                 </div>
               </div>
               {displayMode === "narrow-summary" ? null : (
-                <div className="tk-chip rounded border px-1.5 py-0.5 text-[10px]">
+                <div className="tk-chip rounded border px-1.5 py-0.5 text-micro">
                   {Math.round(width)}px
                 </div>
               )}
@@ -2834,7 +2834,7 @@ function NarrowRailSummary({
               </span>
               {item.badge ? (
                 <span
-                  className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] leading-none ${
+                  className={`shrink-0 rounded-full border px-1.5 py-0.5 text-micro leading-none ${
                     item.badgeTone === "danger"
                       ? "border-[color:rgba(231,53,58,0.45)] bg-[rgba(231,53,58,0.16)] text-[color:var(--tdx-red)]"
                       : "border-[color:rgba(246,180,84,0.45)] bg-[rgba(246,180,84,0.14)] text-[color:var(--tdx-yellow)]"
@@ -2845,7 +2845,7 @@ function NarrowRailSummary({
               ) : null}
             </div>
             <div
-              className={`mt-1 min-w-0 break-words text-[20px] font-bold leading-6 ${
+              className={`mt-1 min-w-0 break-words text-xl font-bold leading-6 ${
                 item.tone === "alert"
                   ? "text-[color:var(--tdx-red)]"
                   : "text-[color:var(--tdx-yellow)]"
@@ -2905,7 +2905,7 @@ function NarrowRailSummary({
               </button>
               <div className="mt-2 grid gap-1.5">
                 <select
-                  className="tk-field h-7 w-full rounded px-2 text-[11px] text-slate-100 outline-none"
+                  className="tk-field h-7 w-full rounded px-2 text-mini text-slate-100 outline-none"
                   value={institutionPeriod}
                   onChange={(event) => setInstitutionPeriod(event.target.value as CfetsInstPeriod)}
                 >
@@ -2916,7 +2916,7 @@ function NarrowRailSummary({
                   ))}
                 </select>
                 <select
-                  className="tk-field h-7 w-full rounded px-2 text-[11px] text-slate-100 outline-none"
+                  className="tk-field h-7 w-full rounded px-2 text-mini text-slate-100 outline-none"
                   value={institutionMetric}
                   onChange={(event) => setInstitutionMetric(event.target.value as CfetsMetricKey)}
                 >
@@ -2927,7 +2927,7 @@ function NarrowRailSummary({
                   ))}
                 </select>
                 <button
-                  className="tk-button w-full px-2 py-1 text-[11px]"
+                  className="tk-button w-full px-2 py-1 text-mini"
                   onClick={openInstitutionFrame}
                   type="button"
                 >
@@ -3047,7 +3047,7 @@ function AdaptiveEntryRailLegacyUnused({
           }`}
         >
           {displayMode === "icon" ? (
-            <div className="tk-muted text-center text-[10px] font-semibold">
+            <div className="tk-muted text-center text-micro font-semibold">
               入口
             </div>
           ) : (
@@ -3057,7 +3057,7 @@ function AdaptiveEntryRailLegacyUnused({
                   行情入口
                 </div>
               </div>
-              <div className="tk-chip rounded border px-1.5 py-0.5 text-[10px]">
+              <div className="tk-chip rounded border px-1.5 py-0.5 text-micro">
                 {Math.round(width)}px
               </div>
             </div>
@@ -3188,7 +3188,7 @@ function ModuleEntryItem({
                 {entry.title}
               </span>
             </span>
-            <span className="tk-chip shrink-0 rounded border px-1.5 py-0.5 text-[10px]">
+            <span className="tk-chip shrink-0 rounded border px-1.5 py-0.5 text-micro">
               {metric.badge}
             </span>
           </div>
@@ -3251,7 +3251,7 @@ function ModuleEntryItem({
             </span>
           ) : null}
           {!compact && displayMode !== "wide-preview" ? (
-            <span className="tk-chip shrink-0 rounded border px-1.5 py-0.5 text-[10px]">
+            <span className="tk-chip shrink-0 rounded border px-1.5 py-0.5 text-micro">
               {metric.badge}
             </span>
           ) : null}
@@ -3289,10 +3289,10 @@ function RailMarketOverview() {
   return (
     <div className="tk-panel-soft mb-2 rounded border border-[color:var(--tk-color-border-panel)] p-2.5">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="tk-strong text-[11px] font-semibold">
+        <span className="tk-strong text-mini font-semibold">
           今日概览
         </span>
-        <span className="tk-chip rounded border px-1.5 py-0.5 text-[10px]">
+        <span className="tk-chip rounded border px-1.5 py-0.5 text-micro">
           实时
         </span>
       </div>
@@ -3317,8 +3317,8 @@ function OverviewStat({
 }) {
   return (
     <div className="tk-field min-w-0 rounded px-2 py-1.5">
-      <div className="tk-muted truncate text-[10px]">{label}</div>
-      <div className={`tk-number mt-0.5 truncate text-[12px] font-semibold ${overviewToneClass(tone)}`}>
+      <div className="tk-muted truncate text-micro">{label}</div>
+      <div className={`tk-number mt-0.5 truncate text-xs font-semibold ${overviewToneClass(tone)}`}>
         {value}
       </div>
     </div>
@@ -3345,11 +3345,11 @@ function ModuleSummaryOverview({
               key={`${chip.label}-${chip.value}`}
               className="tk-field min-w-0 rounded px-2 py-1"
             >
-              <div className="tk-muted truncate text-[10px]">
+              <div className="tk-muted truncate text-micro">
                 {chip.label}
               </div>
               <div
-                className={`tk-number mt-0.5 truncate text-[11px] font-semibold ${overviewToneClass(
+                className={`tk-number mt-0.5 truncate text-mini font-semibold ${overviewToneClass(
                   chip.tone ?? "neutral",
                 )}`}
               >
@@ -3364,7 +3364,7 @@ function ModuleSummaryOverview({
           {metric.detailRows.slice(0, 2).map(([label, value, extra]) => (
             <div
               key={`${label}-${value}`}
-              className="tk-field grid grid-cols-[0.9fr_1fr_auto] items-center gap-2 rounded px-2 py-1 text-[10px]"
+              className="tk-field grid grid-cols-[0.9fr_1fr_auto] items-center gap-2 rounded px-2 py-1 text-micro"
             >
               <span className="tk-muted truncate">{label}</span>
               <span className="tk-number tk-strong truncate font-semibold">
@@ -3410,7 +3410,7 @@ function XrepoSummaryOverview({
   return (
     <div className="mt-1 border-t border-[color:var(--tk-color-border-divider-dark)] pt-1">
       <div className="tk-table-shell overflow-hidden rounded border">
-        <div className="grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-1.5 py-0.5 text-[10px] leading-tight text-[color:var(--tk-color-text-tertiary)]">
+        <div className="grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-1.5 py-0.5 text-micro leading-tight text-[color:var(--tk-color-text-tertiary)]">
           <span className="truncate">合约</span>
           <span className="truncate text-right">正量</span>
           <span className="truncate text-right">正利率</span>
@@ -3420,7 +3420,7 @@ function XrepoSummaryOverview({
         {rows.length ? rows.map((row, index) => (
           <div
             key={`${row[0]}-${index}`}
-            className={`grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] items-center gap-1 border-b border-[color:var(--tk-color-border-divider-dark)] px-1.5 py-0.5 text-[10px] leading-tight last:border-b-0 ${
+            className={`grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] items-center gap-1 border-b border-[color:var(--tk-color-border-divider-dark)] px-1.5 py-0.5 text-micro leading-tight last:border-b-0 ${
               index === 0 ? "bg-[rgba(143,32,38,0.24)]" : ""
             }`}
           >
@@ -3441,7 +3441,7 @@ function XrepoSummaryOverview({
             </span>
           </div>
         )) : (
-          <div className="px-2 py-3 text-center text-[10px] text-slate-500">
+          <div className="px-2 py-3 text-center text-micro text-slate-500">
             当前期限暂无报价
           </div>
         )}
@@ -3473,7 +3473,7 @@ function SummarySparkline({
 
   return (
     <div className="tk-field rounded px-2 py-1.5">
-      <div className="mb-1 flex items-center justify-between gap-2 text-[10px]">
+      <div className="mb-1 flex items-center justify-between gap-2 text-micro">
         <span className="tk-muted truncate">{label}</span>
         <span className="tk-number tk-strong font-semibold">
           {latest.toFixed(latest > 100 ? 0 : 3)}
@@ -3853,7 +3853,7 @@ function EntryPreviewPopover({
               </div>
             ))}
           </div>
-          <div className="mt-2 inline-flex rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-2 py-0.5 text-[11px] text-slate-300">
+          <div className="mt-2 inline-flex rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-2 py-0.5 text-mini text-slate-300">
             {metric.badge}
           </div>
         </div>
@@ -3895,7 +3895,7 @@ function IntegratedPreviewHeader({
             </span>
           </span>
         </button>
-        <span className="tk-chip shrink-0 rounded border px-1.5 py-0.5 text-[10px]">
+        <span className="tk-chip shrink-0 rounded border px-1.5 py-0.5 text-micro">
           {metric.badge}
         </span>
         {actions ? (
@@ -4055,12 +4055,12 @@ function InstitutionPeriodEntryPreview({
           <div className="tk-strong truncate text-xs font-semibold">
             机构分期限统计
           </div>
-          <div className="tk-muted mt-0.5 truncate text-[10px]">
+          <div className="tk-muted mt-0.5 truncate text-micro">
             期限与指标作为大图默认参数
           </div>
         </div>
         <button
-          className="tk-button px-2 py-1 text-[10px]"
+          className="tk-button px-2 py-1 text-micro"
           onClick={openWithCurrentFilters}
           type="button"
         >
@@ -4068,7 +4068,7 @@ function InstitutionPeriodEntryPreview({
         </button>
       </div>
       <div className="grid content-start gap-2">
-        <label className="grid gap-1 text-[10px] text-slate-400">
+        <label className="grid gap-1 text-micro text-slate-400">
           <span>期限</span>
           <select
             className="tk-field h-7 rounded px-2 text-xs text-slate-100 outline-none"
@@ -4082,7 +4082,7 @@ function InstitutionPeriodEntryPreview({
             ))}
           </select>
         </label>
-        <label className="grid gap-1 text-[10px] text-slate-400">
+        <label className="grid gap-1 text-micro text-slate-400">
           <span>指标</span>
           <select
             className="tk-field h-7 rounded px-2 text-xs text-slate-100 outline-none"
@@ -4097,7 +4097,7 @@ function InstitutionPeriodEntryPreview({
           </select>
         </label>
       </div>
-      <div className="grid grid-cols-3 gap-1 text-[10px]">
+      <div className="grid grid-cols-3 gap-1 text-micro">
         <InfoPill label="期限" value={period} />
         <InfoPill label="指标" value={metric?.label ?? "-"} />
         <InfoPill label="视图" value="大弹窗" />
@@ -4144,7 +4144,7 @@ function MiniPreviewTable({
   return (
     <div className="tk-table-shell overflow-hidden rounded border">
       <div
-        className="grid border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] text-[10px] text-[color:var(--tk-color-text-tertiary)]"
+        className="grid border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] text-micro text-[color:var(--tk-color-text-tertiary)]"
         style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
       >
         {columns.map((column) => (
@@ -4156,7 +4156,7 @@ function MiniPreviewTable({
       {rows.map((row, rowIndex) => (
         <div
           key={`${row[0]}-${rowIndex}`}
-          className="tk-strong grid text-[10px]"
+          className="tk-strong grid text-micro"
           style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
         >
           {row.map((cell, cellIndex) => (
@@ -4199,7 +4199,7 @@ function MiniSparklinePreview({
 
   return (
     <div className="min-w-0 overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
-      <div className="mb-1 flex items-center justify-between gap-2 text-[10px]">
+      <div className="mb-1 flex items-center justify-between gap-2 text-micro">
         <span className="truncate font-semibold text-slate-300">{label}</span>
         <span className="font-mono text-slate-500">
           {values[values.length - 1].toFixed(3)}%
@@ -4224,7 +4224,7 @@ function MiniSparklinePreview({
           strokeWidth="2"
         />
       </svg>
-      <div className="mt-1 truncate text-[10px] text-slate-500">{footnote}</div>
+      <div className="mt-1 truncate text-micro text-slate-500">{footnote}</div>
     </div>
   );
 }
@@ -4354,13 +4354,13 @@ function MiniInstitutionSeriesPreview({
 
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
-      <div className="mb-1 flex items-center justify-between gap-2 text-[10px]">
+      <div className="mb-1 flex items-center justify-between gap-2 text-micro">
         <span className="truncate font-semibold text-slate-300">{label}</span>
         <span className="shrink-0 font-mono text-slate-500">
           {visibleSeries.length}/{series.length}
         </span>
       </div>
-      <div className="flex gap-x-2 overflow-x-auto whitespace-nowrap pb-1 text-[10px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-x-2 overflow-x-auto whitespace-nowrap pb-1 text-micro [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {series.map((item) => {
           const hidden = hiddenKeys.has(item.key);
           return (
@@ -4524,7 +4524,7 @@ function MiniInstitutionSeriesPreview({
             <div className="mb-1 font-semibold text-slate-200">
               {xLabels?.[tooltipIndex] ?? `#${tooltipIndex + 1}`}
             </div>
-            <div className="mb-1 flex items-center justify-between gap-5 border-b border-[color:var(--tk-color-border-divider-dark)] pb-1 text-[11px]">
+            <div className="mb-1 flex items-center justify-between gap-5 border-b border-[color:var(--tk-color-border-divider-dark)] pb-1 text-mini">
               <span className="text-slate-400">合计</span>
               <span className="font-mono font-semibold text-slate-100">
                 {formatMiniChartValue(tooltipTotal, unit)}
@@ -4551,7 +4551,7 @@ function MiniInstitutionSeriesPreview({
         ) : null}
         </div>
       </div>
-      <div className="mt-1 truncate text-[10px] text-slate-500">{footnote}</div>
+      <div className="mt-1 truncate text-micro text-slate-500">{footnote}</div>
     </div>
   );
 }
@@ -4566,7 +4566,7 @@ function MiniMetricPreview({
       {rows.map(([label, value]) => (
         <div
           key={label}
-          className="flex items-center justify-between gap-2 text-[10px]"
+          className="flex items-center justify-between gap-2 text-micro"
         >
           <span className="truncate text-slate-500">{label}</span>
           <span className="truncate font-semibold text-slate-300">{value}</span>
@@ -4579,8 +4579,8 @@ function MiniMetricPreview({
 function InfoPill({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 rounded border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.54)] px-2 py-1">
-      <div className="truncate text-[10px] text-slate-500">{label}</div>
-      <div className="truncate text-[11px] font-semibold text-slate-200">{value}</div>
+      <div className="truncate text-micro text-slate-500">{label}</div>
+      <div className="truncate text-mini font-semibold text-slate-200">{value}</div>
     </div>
   );
 }
@@ -4669,11 +4669,11 @@ function TopBar({
     <header className="tk-topbar border-b px-3 py-2 shadow-[0_1px_4px_rgba(0,0,0,0.3)]">
       <div className="grid grid-cols-[minmax(230px,320px)_minmax(320px,1fr)_auto] items-center gap-3">
         <div className="flex items-center gap-2">
-          <div className="whitespace-nowrap text-[16px] font-semibold tracking-[0] text-[color:var(--tk-color-text-inverse)]">
+          <div className="whitespace-nowrap text-base font-semibold tracking-[0] text-[color:var(--tk-color-text-inverse)]">
             资金实时行情看板
           </div>
           <button
-            className="tk-button px-1.5 py-0.5 text-[10px]"
+            className="tk-button px-1.5 py-0.5 text-micro"
             onClick={onResetColumns}
             type="button"
             title="恢复默认三栏宽度"
@@ -4995,14 +4995,14 @@ function BigBankRateTrendPlot({
           </>
         ) : null}
       </svg>
-      <div className="pointer-events-none absolute right-2 top-1 rounded border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.72)] px-1.5 py-0.5 text-[10px] text-slate-300">
+      <div className="pointer-events-none absolute right-2 top-1 rounded border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.72)] px-1.5 py-0.5 text-micro text-slate-300">
         {sessionLabel}
       </div>
       {tooltipIndex !== null && tooltipState ? (
         <ChartTooltip clientX={tooltipState.clientX} clientY={tooltipState.clientY}>
           <div className="mb-1.5 flex items-center justify-between gap-4 font-semibold text-slate-100">
             <span>{data[tooltipIndex].date}</span>
-            <span className="rounded border border-[color:var(--tk-color-border-panel)] px-1.5 py-0.5 text-[10px] text-slate-300">
+            <span className="rounded border border-[color:var(--tk-color-border-panel)] px-1.5 py-0.5 text-micro text-slate-300">
               {sessionLabel}
             </span>
           </div>
@@ -5127,14 +5127,14 @@ function BigBankSpreadDiffPlot({
           />
         ) : null}
       </svg>
-      <div className="pointer-events-none absolute right-2 top-1 rounded border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.72)] px-1.5 py-0.5 text-[10px] text-slate-300">
+      <div className="pointer-events-none absolute right-2 top-1 rounded border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.72)] px-1.5 py-0.5 text-micro text-slate-300">
         {sessionLabel}
       </div>
       {tooltipIndex !== null && tooltipState ? (
         <ChartTooltip clientX={tooltipState.clientX} clientY={tooltipState.clientY}>
           <div className="mb-1.5 flex items-center justify-between gap-4 font-semibold text-slate-100">
             <span>{data[tooltipIndex].date}</span>
-            <span className="rounded border border-[color:var(--tk-color-border-panel)] px-1.5 py-0.5 text-[10px] text-slate-300">
+            <span className="rounded border border-[color:var(--tk-color-border-panel)] px-1.5 py-0.5 text-micro text-slate-300">
               {sessionLabel}
             </span>
           </div>
@@ -5187,11 +5187,11 @@ function BigBankPricingTrendChart({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="text-sm font-semibold text-slate-100">大行定价走势</div>
-          <div className="mt-0.5 text-[10px] text-slate-500">
+          <div className="mt-0.5 text-micro text-slate-500">
             {bank} · {tenor || "全部期限"} · {sessionLabel}
           </div>
         </div>
-        <div className="flex flex-wrap justify-end gap-x-3 gap-y-1 text-[10px] text-slate-400">
+        <div className="flex flex-wrap justify-end gap-x-3 gap-y-1 text-micro text-slate-400">
           <LegendDot color="#cf6b74" label="出给非银价格(%)" />
           <LegendDot color="#5b8cc9" label="出给银行价格(%)" />
           <LegendDot color="#f4dfaa" label="非银-银行价差(BP)" />
@@ -5231,7 +5231,7 @@ function BigBankHistoryBack({
           </div>
         </div>
         <button
-          className={`tk-button ${compact ? "px-2 py-0.5 text-[10px]" : "px-3 py-1 text-xs"}`}
+          className={`tk-button ${compact ? "px-2 py-0.5 text-micro" : "px-3 py-1 text-xs"}`}
           onClick={(event) => {
             event.stopPropagation();
             onBack();
@@ -5248,7 +5248,7 @@ function BigBankHistoryBack({
         >
           <div className="flex items-center justify-between gap-2">
             <div className="text-sm font-semibold text-slate-100">大行定价走势</div>
-            <div className="flex gap-3 text-[10px] text-slate-400">
+            <div className="flex gap-3 text-micro text-slate-400">
               <LegendDot color="#cf6b74" label="出给非银价格(%)" />
               <LegendDot color="#5b8cc9" label="出给银行价格(%)" />
               <LegendDot color="#f4dfaa" label="非银-银行价差(BP)" />
@@ -5262,7 +5262,7 @@ function BigBankHistoryBack({
         >
           <div className="flex items-center justify-between gap-2">
             <div className="text-sm font-semibold text-slate-100">大行定价与加权价差</div>
-            <div className="flex gap-3 text-[10px] text-slate-400">
+            <div className="flex gap-3 text-micro text-slate-400">
               <LegendDot color="#5b8cc9" label="给银行价差(BP)" />
               <LegendDot color="#d76370" label="给非银价差(BP)" />
             </div>
@@ -5634,12 +5634,12 @@ function XrepoHistoryBack({
           <div className={`${compact ? "text-xs" : "text-sm"} font-semibold text-slate-100`}>
             历史成交走势对比 - {contractName}
           </div>
-          <div className="mt-0.5 text-[10px] text-slate-500">
+          <div className="mt-0.5 text-micro text-slate-500">
             当前合约 / 品种对比 / 价差柱
           </div>
         </div>
         <button
-          className={`tk-button ${compact ? "px-1.5 py-0.5 text-[10px]" : "px-2.5 py-0.5 text-xs"}`}
+          className={`tk-button ${compact ? "px-1.5 py-0.5 text-micro" : "px-2.5 py-0.5 text-xs"}`}
           onClick={(event) => {
             event.stopPropagation();
             onBack();
@@ -5763,7 +5763,7 @@ function XrepoInlineHistoryChart({
       data-xrepo-history-chart
     >
       <div
-        className="absolute left-2 right-2 top-1 z-20 flex items-start justify-between gap-2 text-[10px]"
+        className="absolute left-2 right-2 top-1 z-20 flex items-start justify-between gap-2 text-micro"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="pointer-events-none flex min-w-0 flex-wrap items-center gap-2 rounded bg-[rgba(15,23,42,0.72)] px-2 py-0.5 text-slate-400">
@@ -5780,7 +5780,7 @@ function XrepoInlineHistoryChart({
           <label className="flex items-center gap-1 whitespace-nowrap text-slate-400">
             <span>对比</span>
             <select
-              className="h-5 rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-1 text-[10px] text-slate-100 outline-none"
+              className="h-5 rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-1 text-micro text-slate-100 outline-none"
               value={compareProduct}
               onChange={(event) =>
                 setCompareProduct(event.target.value as CompareProduct)
@@ -5808,7 +5808,7 @@ function XrepoInlineHistoryChart({
         </div>
       </div>
       <div className="grid h-full min-h-0 grid-cols-[2.5rem_1fr] px-2 pb-1 pt-1">
-        <div className="flex flex-col justify-between pb-5 pt-5 pr-1 text-right text-[10px] text-slate-500">
+        <div className="flex flex-col justify-between pb-5 pt-5 pr-1 text-right text-micro text-slate-500">
           {buildAxisLabels(minRate, maxRate, 4).map((tick) => (
             <div key={tick}>{tick}</div>
           ))}
@@ -5903,7 +5903,7 @@ function XrepoInlineHistoryChart({
               index % tickStep === 0 || index === data.labels.length - 1 ? (
                 <span
                   key={label}
-                  className="absolute top-0 -translate-x-1/2 text-[10px] text-slate-500"
+                  className="absolute top-0 -translate-x-1/2 text-micro text-slate-500"
                   style={{ left: `${(index / (data.labels.length - 1)) * 100}%` }}
                 >
                   {label}
@@ -5954,7 +5954,7 @@ function XrepoInlineHistoryChart({
           ) : null}
         </div>
       </div>
-      <div className="pointer-events-none absolute bottom-1 left-2 right-2 z-10 flex items-center justify-between rounded bg-[rgba(15,23,42,0.66)] px-2 py-0.5 text-[10px] text-slate-500">
+      <div className="pointer-events-none absolute bottom-1 left-2 right-2 z-10 flex items-center justify-between rounded bg-[rgba(15,23,42,0.66)] px-2 py-0.5 text-micro text-slate-500">
         <span>点击返回 XRepo 表格</span>
         <span>{range === "5d" ? "近5日" : range === "1m" ? "近1M" : "近半年"} / {compareLabel}</span>
       </div>
@@ -6421,7 +6421,7 @@ function BankRateEditorModal({
         </div>
         <div className="px-5 py-4">
           <div className="tk-table-shell overflow-hidden rounded border">
-            <div className="grid grid-cols-[1.4fr_0.7fr_1fr_1fr] border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-4 py-2 text-[11px] font-medium tracking-[0] text-[color:var(--tk-color-text-tertiary)]">
+            <div className="grid grid-cols-[1.4fr_0.7fr_1fr_1fr] border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-4 py-2 text-mini font-medium tracking-[0] text-[color:var(--tk-color-text-tertiary)]">
               <span>机构</span>
               <span className="text-center">期限</span>
               <span className="text-right">非银利率</span>
@@ -6946,7 +6946,7 @@ function ExchangeCoreCompactBlock({
     >
       <table className="w-full table-fixed shrink-0">
         <thead>
-          <tr className="border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] text-[11px] font-medium tracking-[0.02em] text-slate-400">
+          <tr className="border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] text-mini font-medium tracking-[0.02em] text-slate-400">
             <th className="w-[15%] px-2 py-1.5 text-left font-medium">期限</th>
             <th className="w-[25%] px-2 py-1.5 text-left font-medium">品种</th>
             <th className="w-[22%] px-2 py-1.5 text-right font-medium">最新</th>
@@ -7020,7 +7020,7 @@ function ExchangeMarketTable({
     >
       <table className="w-full table-fixed shrink-0">
         <thead>
-          <tr className="border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] text-[11px] font-medium tracking-[0.02em] text-slate-400">
+          <tr className="border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] text-mini font-medium tracking-[0.02em] text-slate-400">
             {market.columns.map((column, index) => (
               <th
                 key={`${market.title}-${column}`}
@@ -7751,7 +7751,7 @@ function BarometerMatrixCard() {
         <label className="flex items-center gap-1.5 text-slate-400">
           分机构统计
           <select
-            className="tk-field h-6 rounded px-2 text-[11px] text-slate-100 outline-none"
+            className="tk-field h-6 rounded px-2 text-mini text-slate-100 outline-none"
             value={institutionType}
             onChange={(event) => setInstitutionType(event.target.value as QtInstitutionType)}
           >
@@ -7777,8 +7777,8 @@ function BarometerMatrixCard() {
       </div>
 
       <div className="grid min-h-0 grid-cols-[2.7rem_minmax(0,1fr)] grid-rows-[minmax(0,1fr)_1rem] px-3 pb-1 pt-2">
-        <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-500">
-          <div className="text-[10px] text-slate-500">{currentSlice.yLabel}</div>
+        <div className="flex flex-col justify-between pr-2 text-right text-micro text-slate-500">
+          <div className="text-micro text-slate-500">{currentSlice.yLabel}</div>
           {yTicks.map((tick) => (
             <div key={tick}>{tick}</div>
           ))}
@@ -7859,7 +7859,7 @@ function BarometerMatrixCard() {
             </ChartTooltip>
           ) : null}
         </div>
-        <div className="col-start-2 row-start-2 flex items-end justify-between text-[10px] leading-none text-slate-500">
+        <div className="col-start-2 row-start-2 flex items-end justify-between text-micro leading-none text-slate-500">
           {barometerTimeline.map((label) => (
             <span key={label}>
               {visibleTimeLabels.has(label) ? label : ""}
@@ -7910,7 +7910,7 @@ function InstitutionPeriodMatrixCard() {
           <label className="flex items-center gap-1.5 text-slate-400">
             期限
             <select
-              className="tk-field h-6 rounded px-2 text-[11px] text-slate-100 outline-none"
+              className="tk-field h-6 rounded px-2 text-mini text-slate-100 outline-none"
               value={period}
               onChange={(event) => setPeriod(event.target.value as CfetsInstPeriod)}
             >
@@ -7924,7 +7924,7 @@ function InstitutionPeriodMatrixCard() {
           <label className="flex min-w-0 flex-1 items-center gap-1.5 text-slate-400">
             指标
             <select
-              className="tk-field h-6 min-w-0 rounded px-2 text-[11px] text-slate-100 outline-none"
+              className="tk-field h-6 min-w-0 rounded px-2 text-mini text-slate-100 outline-none"
               value={metricKey}
               onChange={(event) => setMetricKey(event.target.value as CfetsMetricKey)}
             >
@@ -7936,7 +7936,7 @@ function InstitutionPeriodMatrixCard() {
             </select>
           </label>
           <button
-            className="tk-button ml-auto px-2 py-1 text-[10px]"
+            className="tk-button ml-auto px-2 py-1 text-micro"
             onClick={() => setOpen(true)}
             type="button"
           >
@@ -8098,7 +8098,7 @@ function CombinedDemandMatrixCard() {
             {tabItems.map((tab) => (
               <button
                 key={tab.key}
-                className={`rounded px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                className={`rounded px-2 py-0.5 text-micro font-medium transition-colors ${
                   bottomTab === tab.key
                     ? "bg-[rgba(248,113,113,0.18)] text-red-200"
                     : "text-slate-400 hover:text-slate-200"
@@ -8123,7 +8123,7 @@ function CombinedDemandMatrixCard() {
         <div className="min-h-0 overflow-auto">
           {bottomTab === "demand" ? (
             <div className="h-full min-h-0 p-1">
-              <div className="grid h-full min-h-0 grid-cols-[4.2rem_repeat(3,minmax(0,1fr))] grid-rows-[1.55rem_repeat(5,minmax(0,1fr))] gap-px text-[10px]">
+              <div className="grid h-full min-h-0 grid-cols-[4.2rem_repeat(3,minmax(0,1fr))] grid-rows-[1.55rem_repeat(5,minmax(0,1fr))] gap-px text-micro">
                 <DemandTableHeader label="正回购需求" />
                 {demandTenors.map((tenor) => (
                   <DemandTableHeader key={tenor} label={tenor} align="right" />
@@ -8151,7 +8151,7 @@ function CombinedDemandMatrixCard() {
               </div>
             </div>
           ) : bottomTab === "gap" ? (
-            <table className="w-full border-separate border-spacing-0 text-[10px]">
+            <table className="w-full border-separate border-spacing-0 text-mini">
               <thead className="sticky top-0 z-10 bg-[var(--tk-color-surface-dark-soft)] text-slate-400">
                 <tr>
                   {["账户", "保本利率", "资金缺口/可用额度", "账户要求", "质押要求"].map((col) => (
@@ -8172,7 +8172,7 @@ function CombinedDemandMatrixCard() {
               </tbody>
             </table>
           ) : (
-            <table className="w-full border-separate border-spacing-0 text-[10px]">
+            <table className="w-full border-separate border-spacing-0 text-mini">
               <thead className="sticky top-0 z-10 bg-[var(--tk-color-surface-dark-soft)] text-slate-400">
                 <tr>
                   {["账户", "资金缺口/可用额度", "完成度", "账户要求", "质押要求", "下达时间"].map((col) => (
@@ -8332,11 +8332,11 @@ function DemandGapSummaryCard({
 }) {
   return (
     <div className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.72)] px-3 py-2">
-      <div className="text-[11px] text-slate-500">{label}</div>
+      <div className="text-mini text-slate-500">{label}</div>
       <div className={`mt-1 text-base font-semibold ${tone === "alert" ? "text-red-200" : "text-slate-100"}`}>
         {value}
       </div>
-      {helper ? <div className="mt-1 truncate text-[11px] text-slate-500">{helper}</div> : null}
+      {helper ? <div className="mt-1 truncate text-mini text-slate-500">{helper}</div> : null}
     </div>
   );
 }
@@ -8350,7 +8350,7 @@ function DemandTableHeader({
 }) {
   return (
     <div
-      className={`flex min-w-0 items-center overflow-hidden rounded-sm border border-[color:var(--tk-color-border-panel)] bg-[rgba(30,41,59,0.82)] px-1 text-[10px] font-semibold text-slate-300 ${
+      className={`flex min-w-0 items-center overflow-hidden rounded-sm border border-[color:var(--tk-color-border-panel)] bg-[rgba(30,41,59,0.82)] px-1 text-micro font-semibold text-slate-300 ${
         align === "right" ? "justify-end text-right" : ""
       }`}
     >
@@ -8378,7 +8378,7 @@ function DemandCompactCell({
           : "border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.66)]"
       } ${empty ? "opacity-40" : ""}`}
     >
-      <div className="truncate text-[10px] font-semibold text-slate-200">
+      <div className="truncate text-micro font-semibold text-slate-200">
         {formatDemandAmount(amount.need)} / {formatDemandAmount(amount.done)}
       </div>
       <div className="mt-0.5 h-0.5 overflow-hidden rounded-full bg-slate-800">
@@ -8430,7 +8430,7 @@ function DemandMatrixCard({
       </div>
 
       <div className="min-h-0 overflow-hidden p-[1px]">
-        <div className="grid h-full min-h-0 grid-cols-[3.75rem_repeat(3,minmax(0,1fr))] grid-rows-[1.95rem_repeat(3,minmax(0,1fr))] gap-px text-[10px]">
+        <div className="grid h-full min-h-0 grid-cols-[3.75rem_repeat(3,minmax(0,1fr))] grid-rows-[1.95rem_repeat(3,minmax(0,1fr))] gap-px text-micro">
           <DemandAxisHeader />
           <DemandHeaderCell label="合计" amount={matrix.grandTotal} accent={directionAccent} />
           {demandTenors.map((tenor) => (
@@ -8492,7 +8492,7 @@ function DemandHeaderCell({
           : "border-[color:var(--tk-color-border-panel)] bg-[rgba(30,41,59,0.82)] text-slate-300"
       } ${empty ? "opacity-45" : ""}`}
     >
-      <div className="text-[10px] font-semibold leading-none">{label}</div>
+      <div className="text-micro font-semibold leading-none">{label}</div>
       <DemandMiniStats amount={amount} accent={accent} progress={progress} muted={done || empty} />
     </div>
   );
@@ -8504,7 +8504,7 @@ function DemandRowHeader({ row }: { row: DemandRow }) {
       className="flex min-w-0 items-center overflow-hidden rounded-sm border border-[color:var(--tk-color-border-panel)] bg-[rgba(30,41,59,0.74)] px-1 py-[1px]"
       style={{ borderLeft: `2px solid ${row.color}` }}
     >
-      <div className="text-[10px] font-semibold leading-none text-slate-200">{row.label}</div>
+      <div className="text-micro font-semibold leading-none text-slate-200">{row.label}</div>
     </div>
   );
 }
@@ -8541,7 +8541,7 @@ function DemandMatrixCell({
         <div className="grid min-w-0 grid-cols-[auto_minmax(14px,1fr)_auto] items-center gap-0.5">
           <DemandCellMetric label="已" value={amount.done} tone="done" />
           <DemandInlineProgress progress={progress} accent={accent} muted={done || empty} />
-          <span className="text-[10px] text-slate-400">{progress}%</span>
+          <span className="text-micro text-slate-400">{progress}%</span>
         </div>
       </div>
     </button>
@@ -8570,7 +8570,7 @@ function DemandCellMetric({
 
   return (
     <div className={`flex min-w-0 items-baseline gap-0.5 ${align === "right" ? "justify-end text-right" : ""}`}>
-      <span className="shrink-0 text-[10px] text-slate-500">{label}</span>
+      <span className="shrink-0 text-micro text-slate-500">{label}</span>
       <span className={`truncate text-[13px] font-semibold leading-none ${valueClass}`}>
         {formatDemandAmount(value)}
       </span>
@@ -8593,7 +8593,7 @@ function DemandMiniStats({
 }) {
   const gap = demandGap(amount);
   return (
-    <div className={`mt-[1px] grid gap-y-0 leading-none text-slate-400 ${compact ? "text-[10px]" : "text-[10px]"}`}>
+    <div className={`mt-[1px] grid gap-y-0 leading-none text-slate-400 ${compact ? "text-micro" : "text-micro"}`}>
       <div className="flex min-w-0 items-baseline justify-between gap-1">
         <span className="whitespace-nowrap">
           <span className="text-slate-500">需</span>
@@ -8946,14 +8946,14 @@ function PersonalInstitutionCompareCard() {
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2.5 py-1.5">
         <div className="flex shrink-0 items-baseline gap-1.5">
           <span className="tk-matrix-card-title shrink-0 whitespace-nowrap">个人 & 机构</span>
-          <span className="shrink-0 whitespace-nowrap text-[10px] text-slate-500">实线=个人 / 虚线=机构</span>
+          <span className="shrink-0 whitespace-nowrap text-micro text-slate-500">实线=个人 / 虚线=机构</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] text-slate-400">截至 16:00</span>
+          <span className="text-micro text-slate-400">截至 16:00</span>
           {personalInstitutionModeOptions.map((option) => (
             <button
               key={option.key}
-              className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold transition ${
+              className={`rounded-sm border px-1.5 py-0.5 text-micro font-semibold transition ${
                 mode === option.key
                   ? "border-[rgba(231,53,58,0.7)] bg-[var(--tdx-red)] text-white"
                   : "border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.45)] text-slate-400 hover:text-slate-200"
@@ -8967,13 +8967,13 @@ function PersonalInstitutionCompareCard() {
         </div>
       </div>
       <div className="flex items-center gap-1.5 border-b border-[color:var(--tk-color-border-divider)] px-2 py-1">
-        <span className="text-[10px] text-slate-500">{mode === "tenor" ? "期限" : "押券"}</span>
+        <span className="text-micro text-slate-500">{mode === "tenor" ? "期限" : "押券"}</span>
         {items.map((item) => {
           const active = activeKeys.includes(item.key);
           return (
             <button
               key={item.key}
-              className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold transition ${
+              className={`rounded-sm border px-1.5 py-0.5 text-micro font-semibold transition ${
                 active
                   ? "text-white"
                   : "border-transparent bg-transparent text-slate-500 hover:text-slate-300"
@@ -8987,7 +8987,7 @@ function PersonalInstitutionCompareCard() {
           );
         })}
       </div>
-      <div className="flex min-w-0 items-center gap-1.5 overflow-hidden border-b border-[color:var(--tk-color-border-divider)] px-2 py-0.5 text-[10px] text-slate-400">
+      <div className="flex min-w-0 items-center gap-1.5 overflow-hidden border-b border-[color:var(--tk-color-border-divider)] px-2 py-0.5 text-micro text-slate-400">
         <span className="shrink-0 text-slate-500">图例</span>
         <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
           {visibleItems.map((item) => (
@@ -9024,7 +9024,7 @@ function PersonalInstitutionCompareCard() {
         />
       </div>
       <div className="grid min-h-0 grid-cols-[2.3rem_1fr] px-2 pt-2">
-        <div className="flex flex-col justify-between pb-4 pr-1 text-right text-[10px] text-slate-500">
+        <div className="flex flex-col justify-between pb-4 pr-1 text-right text-micro text-slate-500">
           {buildAxisLabels(min, max, 4).map((tick) => (
             <div key={tick}>{tick}</div>
           ))}
@@ -9077,7 +9077,7 @@ function PersonalInstitutionCompareCard() {
                 style={{ left: hoverLeft }}
               />
               <div
-                className="pointer-events-none absolute top-1 z-10 min-w-[9.5rem] rounded border border-slate-600/80 bg-slate-950/95 px-2 py-1 text-[10px] shadow-lg"
+                className="pointer-events-none absolute top-1 z-10 min-w-[9.5rem] rounded border border-slate-600/80 bg-slate-950/95 px-2 py-1 text-micro shadow-lg"
                 style={{
                   left: hoverIndex > personalInstitutionLabels.length / 2 ? "auto" : `calc(${hoverLeft} + 6px)`,
                   right: hoverIndex > personalInstitutionLabels.length / 2 ? `calc(${100 - (hoverIndex / (personalInstitutionLabels.length - 1)) * 100}% + 6px)` : "auto",
@@ -9103,7 +9103,7 @@ function PersonalInstitutionCompareCard() {
               </div>
             </>
           ) : null}
-          <div className="absolute inset-x-0 bottom-0 grid grid-cols-7 text-[10px] text-slate-500">
+          <div className="absolute inset-x-0 bottom-0 grid grid-cols-7 text-micro text-slate-500">
             {personalInstitutionLabels.map((label, index) => (
               <span key={label} className="text-center">
                 {personalInstitutionAxisLabelIndexes.has(index) ? label : ""}
@@ -9154,7 +9154,7 @@ function MiddleMatrixNoticeBar({
     );
   }
   return (
-    <div className="grid shrink-0 grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto] gap-2 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2 text-[10px]">
+    <div className="grid shrink-0 grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto] gap-2 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2 text-micro">
       <div className="min-w-0">
         <div className="tk-muted truncate">提示信息</div>
         <div className="mt-0.5 truncate font-semibold text-slate-200">
@@ -9466,7 +9466,7 @@ function QuoteBoardFilterControls({
   onCollateralSearchChange: (value: string) => void;
 }) {
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 whitespace-nowrap text-[11px] text-slate-400">
+    <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 whitespace-nowrap text-mini text-slate-400">
       <FilterLabel>金额</FilterLabel>
       <CompactFilterField value={topBoardFilters.amountMin} />
       <span className="text-slate-500">~</span>
@@ -9497,7 +9497,7 @@ function QuoteBoardFilterControls({
 
 function CompactFilterField({ value }: { value: string }) {
   return (
-    <div className="tk-field flex h-6 min-w-[54px] items-center justify-center px-2 text-[11px]">
+    <div className="tk-field flex h-6 min-w-[54px] items-center justify-center px-2 text-mini">
       {value}
     </div>
   );
@@ -9514,7 +9514,7 @@ function CompactSearchField({
 }) {
   return (
     <input
-      className="tk-field h-6 w-[92px] px-2 text-[11px] text-slate-100 outline-none placeholder:text-slate-600"
+      className="tk-field h-6 w-[92px] px-2 text-mini text-slate-100 outline-none placeholder:text-slate-600"
       value={value}
       placeholder={placeholder}
       onChange={(event) => onChange(event.target.value)}
@@ -9694,7 +9694,7 @@ function MainQuoteBoard({
                 2级
               </button>
               <button
-                className="tk-button tk-button-success whitespace-nowrap px-2 py-1 text-[11px]"
+                className="tk-button tk-button-success whitespace-nowrap px-2 py-1 text-mini"
                 type="button"
               >
                 下载
@@ -9720,7 +9720,7 @@ function MainQuoteBoard({
           ]).map((tab) => (
             <button
               key={tab.key}
-              className={`rounded-md px-3 py-1.5 text-[12px] font-semibold transition-colors ${tab.text} ${
+              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${tab.text} ${
                 collateralTab === tab.key ? "ring-1 ring-white/25" : "opacity-60 hover:opacity-100"
               }`}
               style={{ backgroundColor: collateralTab === tab.key ? tab.activeBg : tab.bg }}
@@ -9869,7 +9869,7 @@ function QuoteChatDialog({
             <div className="truncate text-sm font-semibold text-slate-50">
               {context.contactName} · {context.row.institution}
             </div>
-            <div className="mt-0.5 truncate text-[11px] text-slate-500">
+            <div className="mt-0.5 truncate text-mini text-slate-500">
               {context.sectionTitle} / {context.groupName} / {context.row.tenor}
             </div>
           </div>
@@ -9884,7 +9884,7 @@ function QuoteChatDialog({
 
         <div className="grid min-h-0 grid-rows-[auto_1fr] overflow-hidden">
           <div className="border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-page)] p-3">
-            <div className="grid grid-cols-4 gap-1.5 text-[10px] text-slate-400">
+            <div className="grid grid-cols-4 gap-1.5 text-micro text-slate-400">
               <span className="tk-field truncate px-2 py-1">{context.row.amount}</span>
               <span className="tk-field truncate px-2 py-1">{context.row.rate}</span>
               <span className="tk-field truncate px-2 py-1">{context.row.collateral}</span>
@@ -9908,7 +9908,7 @@ function QuoteChatDialog({
                   }`}
                 >
                   <div>{message.text}</div>
-                  <div className="mt-1 text-right text-[10px] text-slate-500">
+                  <div className="mt-1 text-right text-micro text-slate-500">
                     {message.time}
                   </div>
                 </div>
@@ -9922,7 +9922,7 @@ function QuoteChatDialog({
             {quickReplies.map((reply) => (
               <button
                 key={reply.label}
-                className="tk-chip rounded border px-2 py-1 text-[10px] transition-colors hover:border-[color:var(--tdx-red)] hover:text-slate-100"
+                className="tk-chip rounded border px-2 py-1 text-micro transition-colors hover:border-[color:var(--tdx-red)] hover:text-slate-100"
                 onClick={() => setDraft(reply.text)}
                 type="button"
               >
@@ -10006,7 +10006,7 @@ function QuoteEditorModal({
           {textFields.map((f) => (
             <label
               key={f.key}
-              className="flex flex-col gap-1 text-[11px] text-slate-400"
+              className="flex flex-col gap-1 text-mini text-slate-400"
             >
               <span>{f.label}</span>
               <input
@@ -10017,7 +10017,7 @@ function QuoteEditorModal({
               />
             </label>
           ))}
-          <label className="flex flex-col gap-1 text-[11px] text-slate-400">
+          <label className="flex flex-col gap-1 text-mini text-slate-400">
             <span>评级</span>
             <select
               className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-[color:var(--tk-color-brand-primary-hover)]"
@@ -10244,7 +10244,7 @@ function OpponentExpandPanel({
   return (
     <div className="border-b border-[color:var(--tk-color-border-divider)] bg-[rgba(18,19,27,0.98)] px-3 pb-3 pt-2">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider-dark)] pb-2">
-        <div className="flex items-center gap-1.5 text-[11px]">
+        <div className="flex items-center gap-1.5 text-mini">
           {[
             { id: "unreplied", label: "未回复" },
             { id: "replied", label: "已回复" },
@@ -10279,7 +10279,7 @@ function OpponentExpandPanel({
               type="button"
             >
               <div className="flex items-center justify-between gap-2">
-                <div className="truncate text-[12px] font-semibold text-slate-100">
+                <div className="truncate text-xs font-semibold text-slate-100">
                   {card.name} · {card.institution}
                 </div>
                 <span
@@ -10304,28 +10304,28 @@ function OpponentExpandPanel({
                 >
                   <Pin size={12} fill={pinned ? "currentColor" : "none"} />
                 </span>
-                <span className="shrink-0 rounded-full border border-amber-400/40 px-2 py-0.5 text-[10px] text-amber-200">
+                <span className="shrink-0 rounded-full border border-amber-400/40 px-2 py-0.5 text-micro text-amber-200">
                   等 {card.waitMinutes}min
                 </span>
               </div>
-              <div className="mt-1 text-[12px] text-slate-400">
+              <div className="mt-1 text-xs text-slate-400">
                 {card.amount ? (
                   <span className="text-[18px] font-bold text-slate-50">{card.amount}</span>
                 ) : (
                   <span className="text-slate-500">待报价</span>
                 )}
               </div>
-              <span className="ml-2 text-[12px] font-semibold text-amber-300">
+              <span className="ml-2 text-xs font-semibold text-amber-300">
                 {card.rate}
               </span>
               {!card.special ? null : (
-                <div className="mt-1 text-[11px] text-amber-300">{card.rate}</div>
+                <div className="mt-1 text-mini text-amber-300">{card.rate}</div>
               )}
               <div className="mt-2 flex flex-wrap gap-1">
                 {card.tags.map((tag) => (
                   <span
                     key={`${card.id}-${tag}`}
-                    className={`rounded-sm px-1.5 py-0.5 text-[10px] ${
+                    className={`rounded-sm px-1.5 py-0.5 text-micro ${
                       tag === "核心对手"
                         ? "bg-emerald-500/15 text-emerald-300"
                         : tag.startsWith(card.tenor)
@@ -10455,7 +10455,7 @@ function RepoQuoteSectionBoard({
         >
           <div className="flex items-center gap-2">
             <button
-              className="inline-flex h-5 w-5 items-center justify-center rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] text-[10px] text-amber-200"
+              className="inline-flex h-5 w-5 items-center justify-center rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] text-micro text-amber-200"
               onClick={(event) => {
                 event.stopPropagation();
                 if (rowClickTimerRef.current !== null) {
@@ -10490,7 +10490,7 @@ function RepoQuoteSectionBoard({
           <span className="text-right text-xs tabular-nums text-slate-400">{row.updatedAt}</span>
           <span className="flex items-center justify-end gap-1">
             <button
-              className="hidden whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200"
+              className="hidden whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-micro font-medium text-amber-200"
               onClick={(e) => {
                 e.stopPropagation();
                 onEdit(row, groupName);
@@ -10515,7 +10515,7 @@ function RepoQuoteSectionBoard({
               <Pin size={12} fill={rowPinned ? "currentColor" : "none"} />
             </button>
             <button
-              className="whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
+              className="whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-micro font-medium text-blue-300"
               onClick={(e) => {
                 e.stopPropagation();
                 onSend(row, groupName);
@@ -10577,7 +10577,7 @@ function RepoQuoteSectionBoard({
           displayLevel === 2 ? "flex-1 overflow-y-auto" : "overflow-visible"
         }`}
       >
-        <div className="grid grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] border-y border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-4 py-1.5 text-[11px] font-medium tracking-[0.02em] text-slate-400">
+        <div className="grid grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] border-y border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-4 py-1.5 text-mini font-medium tracking-[0.02em] text-slate-400">
           <span>分组 / 机构</span>
           <span className="text-right">期限</span>
           <span className="text-right">金额(总量)</span>
@@ -10591,7 +10591,7 @@ function RepoQuoteSectionBoard({
           <div className="border-b-2 border-[rgba(234,179,8,0.35)]">
             <div className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-amber-400 bg-[rgba(234,179,8,0.08)] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(234,179,8,0.18)]">
               <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-1 rounded-md border border-amber-400/60 bg-amber-400/15 px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-amber-200">
+                <span className="inline-flex items-center gap-1 rounded-md border border-amber-400/60 bg-amber-400/15 px-2 py-0.5 text-micro font-semibold tracking-[0.08em] text-amber-200">
                   固定
                 </span>
                 <div className="text-xs font-semibold text-slate-50">
@@ -10603,7 +10603,7 @@ function RepoQuoteSectionBoard({
               <span aria-hidden="true" />
               <span aria-hidden="true" />
               <span aria-hidden="true" />
-              <span className="text-right text-[11px] text-amber-200">
+              <span className="text-right text-mini text-amber-200">
                 {pinnedSectionQuotes.length} 条
               </span>
               <span />
@@ -10624,7 +10624,7 @@ function RepoQuoteSectionBoard({
           <div key={group.id} className="border-b-2 border-[color:var(--tk-color-border-divider)]">
             <div className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-[color:var(--tk-color-brand-cyan)] bg-[var(--tk-color-surface-selected)] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
               <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-1 rounded-md border border-[color:rgba(0,207,232,0.55)] bg-[rgba(0,207,232,0.12)] px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-[color:var(--tk-color-brand-primary-deep)]">
+                <span className="inline-flex items-center gap-1 rounded-md border border-[color:rgba(0,207,232,0.55)] bg-[rgba(0,207,232,0.12)] px-2 py-0.5 text-micro font-semibold tracking-[0.08em] text-[color:var(--tk-color-brand-primary-deep)]">
                   汇总
                 </span>
                 <div className="text-xs font-semibold text-slate-50">
@@ -10869,7 +10869,7 @@ function RankBadge({ rank }: { rank: QuoteRank }) {
         : "border-slate-500/40 bg-slate-500/15 text-slate-300";
   return (
     <span
-      className={`inline-flex shrink-0 items-center rounded border px-1.5 py-0.5 text-[10px] font-medium ${styles}`}
+      className={`inline-flex shrink-0 items-center rounded border px-1.5 py-0.5 text-micro font-medium ${styles}`}
     >
       {rank}
     </span>
@@ -11021,7 +11021,7 @@ function IntradayPanel({
       </div>
       <div className="grid min-h-0 grid-rows-[minmax(0,1fr)_1.25rem] px-3 pb-2 pt-2">
         <div className="grid min-h-0 grid-cols-[3rem_1fr]">
-            <div className="flex flex-col justify-between pb-6 pr-2 text-right text-[10px] text-slate-400">
+            <div className="flex flex-col justify-between pb-6 pr-2 text-right text-micro text-slate-400">
             {buildAxisLabels(min, max, 4).map((tick) => (
               <div key={tick}>{tick}</div>
             ))}
@@ -11163,7 +11163,7 @@ function IntradayPanel({
                 ) : null}
               </ChartTooltip>
             )}
-            <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-300">
+            <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-micro text-slate-300">
               <LegendDot color={chartPalette.blue} label={`今日${productLabel}`} />
               <LegendDot color={chartPalette.violet} label={`昨日${productLabel}`} />
               {overlaySeries ? (
@@ -11177,7 +11177,7 @@ function IntradayPanel({
         </div>
         <div className="grid grid-cols-[3rem_1fr] pt-1">
           <div />
-          <div className="grid grid-cols-8 text-[10px] text-slate-400">
+          <div className="grid grid-cols-8 text-micro text-slate-400">
             {intradayTimeLabels.map((label) => (
               <div key={label} className="text-center">
                 {label}
@@ -11321,7 +11321,7 @@ function HistoryClosePanel({
         }}
       >
         <div className="grid min-h-0 grid-cols-[3.25rem_1fr]">
-          <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+          <div className="flex flex-col justify-between pr-2 text-right text-micro text-slate-400">
             {buildAxisLabels(min, max, 4).map((label) => (
               <div key={label}>{label}</div>
             ))}
@@ -11394,7 +11394,7 @@ function HistoryClosePanel({
                 />
               ) : null}
             </svg>
-            <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-300">
+            <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-micro text-slate-300">
               <LegendDot color={chartPalette.blue} label={`${productLabel} 加权利率`} />
               {overlaySeries ? (
                 <LegendDot
@@ -11483,7 +11483,7 @@ function HistoryClosePanel({
         </div>
         {compareProduct !== "none" && spreadValues ? (
           <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[color:var(--tk-color-border-divider)] pt-2 pb-1">
-            <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+            <div className="flex flex-col justify-between pr-2 text-right text-micro text-slate-400">
               {(() => {
                 const dMax = Math.max(...spreadValues, 0);
                 const dMin = Math.min(...spreadValues, 0);
@@ -11540,13 +11540,13 @@ function HistoryClosePanel({
           </div>
         ) : (
           <div className="grid min-h-0 grid-cols-[3.25rem_1fr] border-t border-[color:var(--tk-color-border-divider)] pt-2 pb-1">
-            <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-400">
+            <div className="flex flex-col justify-between pr-2 text-right text-micro text-slate-400">
               {buildCompactVolumeTicks(volumeMax).map((tick) => (
                 <div key={tick}>{tick}</div>
               ))}
             </div>
             <div className="relative min-h-0">
-              <span className="absolute top-0.5 left-0.5 text-[10px] text-slate-500 z-10 pointer-events-none">
+              <span className="absolute top-0.5 left-0.5 text-micro text-slate-500 z-10 pointer-events-none">
                 成交量
               </span>
               <div className="absolute inset-0 flex items-end gap-[4px]">
@@ -11567,7 +11567,7 @@ function HistoryClosePanel({
         <div className="grid grid-cols-[3.25rem_1fr] pt-2">
           <div />
           <div
-            className="grid text-[10px] text-slate-400"
+            className="grid text-micro text-slate-400"
             style={{
               gridTemplateColumns: `repeat(${dataset.labels.length}, minmax(0, 1fr))`,
             }}
@@ -12770,13 +12770,13 @@ function CfetsMatrixPanel({
           <table className="w-full border-collapse text-xs">
             <thead>
               <tr>
-                <th className="px-2 py-1.5 text-left text-[10px] font-medium text-slate-500">
+                <th className="px-2 py-1.5 text-left text-micro font-medium text-slate-500">
                   逆\正
                 </th>
                 {cfetsMatrixColLabels.map((col) => (
                   <th
                     key={col}
-                    className="px-2 py-1.5 text-center text-[10px] font-medium text-slate-400"
+                    className="px-2 py-1.5 text-center text-micro font-medium text-slate-400"
                   >
                     {col}
                   </th>
@@ -12786,7 +12786,7 @@ function CfetsMatrixPanel({
             <tbody>
               {cfetsMatrixRowLabels.map((row, ri) => (
                 <tr key={row}>
-                  <td className="py-1.5 pr-3 text-[11px] font-medium text-slate-300">
+                  <td className="py-1.5 pr-3 text-mini font-medium text-slate-300">
                     {row}
                   </td>
                   {cfetsMatrixColLabels.map((col, ci) => {
@@ -12794,13 +12794,13 @@ function CfetsMatrixPanel({
                     return (
                       <td key={col} className="px-1 py-1">
                         {rate === null ? (
-                          <div className="flex h-8 w-full items-center justify-center rounded text-[10px] text-slate-600 bg-[var(--tk-color-surface-dark-deep)]">
+                          <div className="flex h-8 w-full items-center justify-center rounded text-micro text-slate-600 bg-[var(--tk-color-surface-dark-deep)]">
                             —
                           </div>
                         ) : (
                           <button
                             type="button"
-                            className="flex h-8 w-full cursor-pointer items-center justify-center rounded text-[11px] font-semibold text-white transition-opacity hover:opacity-80"
+                            className="flex h-8 w-full cursor-pointer items-center justify-center rounded text-mini font-semibold text-white transition-opacity hover:opacity-80"
                             style={{ backgroundColor: rateColor(rate) }}
                             onClick={() =>
                               setModal({ rowLabel: row, colLabel: col, rate })
@@ -12817,7 +12817,7 @@ function CfetsMatrixPanel({
             </tbody>
           </table>
         </div>
-        <div className="flex items-center gap-2 text-[10px] text-slate-500">
+        <div className="flex items-center gap-2 text-micro text-slate-500">
           <span>低利率</span>
           <div
             className="h-2 w-24 rounded"
@@ -12843,7 +12843,7 @@ function CfetsMatrixPanel({
                 <div className="text-xs font-semibold text-slate-200">
                   {modal.rowLabel} → {modal.colLabel}
                 </div>
-                <div className="mt-0.5 text-[10px] text-slate-500">
+                <div className="mt-0.5 text-micro text-slate-500">
                   逆回购方 → 正回购方，加权利率
                 </div>
               </div>
@@ -12860,10 +12860,10 @@ function CfetsMatrixPanel({
                 {modal.rate.toFixed(4)}%
               </span>
             </div>
-            <div className="text-[10px] text-slate-500">
+            <div className="text-micro text-slate-500">
               正回购方（{modal.colLabel}）期限明细：
             </div>
-            <table className="mt-1.5 w-full text-[11px]">
+            <table className="mt-1.5 w-full text-mini">
               <thead>
                 <tr className="text-slate-500">
                   <th className="py-1 text-left font-normal">期限</th>
@@ -12983,7 +12983,7 @@ function MultiSeriesChart({
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-1">
         <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr]">
-          <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+          <div className="flex flex-col justify-between py-1 pr-1 text-right text-micro text-slate-500">
             {yTicks.map((t) => (
               <div key={t}>{t}</div>
             ))}
@@ -12995,7 +12995,7 @@ function MultiSeriesChart({
             onMouseLeave={handleMouseLeave}
           >
             {axisCaption && (
-              <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[10px] text-slate-500">
+              <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-micro text-slate-500">
                 {axisCaption}
               </div>
             )}
@@ -13063,7 +13063,7 @@ function MultiSeriesChart({
             {xLabels.map((label) => (
               <span
                 key={label}
-                className="absolute -translate-x-1/2 text-[10px] text-slate-600"
+                className="absolute -translate-x-1/2 text-micro text-slate-600"
                 style={{
                   left: `${(dates.indexOf(label) / (dates.length - 1)) * 100}%`,
                 }}
@@ -13078,14 +13078,14 @@ function MultiSeriesChart({
             clientX={tooltipState.clientX}
             clientY={tooltipState.clientY}
           >
-            <div className="mb-1 text-[11px] font-semibold text-slate-300">
+            <div className="mb-1 text-mini font-semibold text-slate-300">
               {dates[tooltipState.index]}
             </div>
             {series.map((vals, si) =>
               !isHidden(si) && vals[0] > 0 ? (
                 <div
                   key={si}
-                  className="flex items-center gap-2 py-0.5 text-[11px]"
+                  className="flex items-center gap-2 py-0.5 text-mini"
                 >
                   <span
                     className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
@@ -13121,7 +13121,7 @@ function MultiSeriesChart({
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-1">
         <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr]">
-          <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+          <div className="flex flex-col justify-between py-1 pr-1 text-right text-micro text-slate-500">
             {[...yTicks, 0].map((t) => (
               <div key={t}>{t}</div>
             ))}
@@ -13133,7 +13133,7 @@ function MultiSeriesChart({
             onMouseLeave={handleMouseLeave}
           >
             {axisCaption && (
-              <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[10px] text-slate-500">
+              <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-micro text-slate-500">
                 {axisCaption}
               </div>
             )}
@@ -13187,7 +13187,7 @@ function MultiSeriesChart({
             {xLabels.map((label) => (
               <span
                 key={label}
-                className="absolute -translate-x-1/2 text-[10px] text-slate-600"
+                className="absolute -translate-x-1/2 text-micro text-slate-600"
                 style={{
                   left: `${(dates.indexOf(label) / (dates.length - 1)) * 100}%`,
                 }}
@@ -13202,14 +13202,14 @@ function MultiSeriesChart({
             clientX={tooltipState.clientX}
             clientY={tooltipState.clientY}
           >
-            <div className="mb-1 text-[11px] font-semibold text-slate-300">
+            <div className="mb-1 text-mini font-semibold text-slate-300">
               {dates[tooltipState.index]}
             </div>
             {series.map((vals, si) =>
               !isHidden(si) && vals[tooltipState.index] > 0 ? (
                 <div
                   key={si}
-                  className="flex items-center gap-2 py-0.5 text-[11px]"
+                  className="flex items-center gap-2 py-0.5 text-mini"
                 >
                   <span
                     className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
@@ -13241,7 +13241,7 @@ function MultiSeriesChart({
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-1">
       <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr]">
-        <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+        <div className="flex flex-col justify-between py-1 pr-1 text-right text-micro text-slate-500">
           {[
             absMax,
             Math.round(absMax / 2),
@@ -13259,7 +13259,7 @@ function MultiSeriesChart({
           onMouseLeave={handleMouseLeave}
         >
           {axisCaption && (
-            <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[10px] text-slate-500">
+            <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-micro text-slate-500">
               {axisCaption}
             </div>
           )}
@@ -13321,7 +13321,7 @@ function MultiSeriesChart({
           {xLabels.map((label) => (
             <span
               key={label}
-              className="absolute -translate-x-1/2 text-[10px] text-slate-600"
+              className="absolute -translate-x-1/2 text-micro text-slate-600"
               style={{
                 left: `${(dates.indexOf(label) / (dates.length - 1)) * 100}%`,
               }}
@@ -13336,10 +13336,10 @@ function MultiSeriesChart({
           clientX={tooltipState.clientX}
           clientY={tooltipState.clientY}
         >
-          <div className="mb-1 text-[11px] font-semibold text-slate-300">
+          <div className="mb-1 text-mini font-semibold text-slate-300">
             {dates[tooltipState.index]}
           </div>
-          <div className="text-[11px] text-slate-400">
+          <div className="text-mini text-slate-400">
             净融入{" "}
             <span
               className={`font-semibold ${netVals[tooltipState.index] >= 0 ? "text-red-400" : "text-emerald-400"}`}
@@ -13634,7 +13634,7 @@ function CfetsInstPanel({
                 onClick={() => setExpandedRule(expandedRule === rule ? null : rule)}
               >
                 <span>{rule}</span>
-                <span className="truncate text-[11px] text-slate-500">
+                <span className="truncate text-mini text-slate-500">
                   {expandedRule === rule
                     ? `${selectedPeriod} · ${metricLabel} · 机构/期限明细已展开`
                     : "点击展开该口径明细"}
@@ -13645,7 +13645,7 @@ function CfetsInstPanel({
                       {["利率债", "同业存单", "信用债"].map((tag) => (
                         <span
                           key={tag}
-                          className="inline-flex items-center gap-1 text-[11px]"
+                          className="inline-flex items-center gap-1 text-mini"
                           onClick={(event) => {
                             event.stopPropagation();
                             toggleSupplyTag(tag);
@@ -13660,12 +13660,12 @@ function CfetsInstPanel({
                           {tag}
                         </span>
                       ))}
-                      <span className="rounded bg-[var(--tk-color-brand-primary)] px-2 py-1 text-[11px] font-semibold text-white">
+                      <span className="rounded bg-[var(--tk-color-brand-primary)] px-2 py-1 text-mini font-semibold text-white">
                         有效供给
                       </span>
                     </>
                   ) : (
-                    <span className="rounded bg-[var(--tk-color-brand-primary)] px-2 py-1 text-[11px] font-semibold text-white">
+                    <span className="rounded bg-[var(--tk-color-brand-primary)] px-2 py-1 text-mini font-semibold text-white">
                       三四类
                     </span>
                   )}
@@ -13748,7 +13748,7 @@ function CfetsInstPanel({
             更新时间 <span className="font-mono text-slate-100">10:53:27</span>
           </div>
           <button
-            className="tk-button px-2 py-1 text-[11px]"
+            className="tk-button px-2 py-1 text-mini"
             type="button"
             onClick={() => setActiveDetail(null)}
           >
@@ -13943,7 +13943,7 @@ function CfetsDenseChart({
         })}
       </div>
       <div className="grid min-h-0 grid-cols-[4.8rem_1fr] px-3 pb-1">
-        <div className="flex flex-col justify-between pb-7 pt-1 text-right text-[11px] text-slate-500">
+        <div className="flex flex-col justify-between pb-7 pt-1 text-right text-mini text-slate-500">
           {yTicks.map((tick) => (
             <div key={tick}>{formatCfetsAxisTick(tick, metricMode)}</div>
           ))}
@@ -14020,7 +14020,7 @@ function CfetsDenseChart({
               index % xTickStep === 0 || index === data.dates.length - 1 ? (
                 <span
                   key={date}
-                  className="absolute top-1 -translate-x-1/2 whitespace-nowrap text-[10px] text-slate-500"
+                  className="absolute top-1 -translate-x-1/2 whitespace-nowrap text-micro text-slate-500"
                   style={{ left: `${(index / (data.dates.length - 1)) * 100}%` }}
                 >
                   {date}
@@ -14042,7 +14042,7 @@ function CfetsDenseChart({
                 {data.dates[tooltipIndex]}
               </div>
               {chartKind === "bar" ? (
-                <div className="mb-1 flex items-center justify-between gap-6 border-b border-[color:var(--tk-color-border-divider-dark)] pb-1 text-[11px]">
+                <div className="mb-1 flex items-center justify-between gap-6 border-b border-[color:var(--tk-color-border-divider-dark)] pb-1 text-mini">
                   <span className="text-slate-400">合计</span>
                   <span className="font-mono font-semibold text-slate-100">
                     {formatCfetsDenseValue(dailyTotals[tooltipIndex] ?? 0, metricMode)}
@@ -14068,7 +14068,7 @@ function CfetsDenseChart({
           ) : null}
         </div>
       </div>
-      <div className="flex items-center justify-between border-t border-[color:var(--tk-color-border-divider)] px-4 py-2 text-[11px] text-slate-500">
+      <div className="flex items-center justify-between border-t border-[color:var(--tk-color-border-divider)] px-4 py-2 text-mini text-slate-500">
         <span>单位：{unit}</span>
         <span>图例点击可筛选；点击非图例柱体展开明细</span>
       </div>
@@ -14093,7 +14093,7 @@ function CfetsBondPanel() {
             <button
               key={bt}
               type="button"
-              className={`rounded-md px-2.5 py-1 text-[11px] transition-colors ${
+              className={`rounded-md px-2.5 py-1 text-mini transition-colors ${
                 bondType === bt
                   ? "bg-[var(--tk-color-surface-selected)] font-semibold text-slate-100"
                   : "text-slate-400 hover:text-slate-200"
@@ -14106,7 +14106,7 @@ function CfetsBondPanel() {
         </div>
         <div className="flex items-center gap-2">
           <select
-            className="rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-1 text-[11px] text-slate-200 focus:outline-none"
+            className="rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-1 text-mini text-slate-200 focus:outline-none"
             value={metricKey}
             onChange={(e) => setMetricKey(e.target.value as CfetsBondMetricKey)}
           >
@@ -14131,7 +14131,7 @@ function CfetsBondPanel() {
         </div>
       </div>
       {/* 图例 */}
-      <div className="flex flex-wrap gap-3 text-[11px] text-slate-400">
+      <div className="flex flex-wrap gap-3 text-mini text-slate-400">
         {fundStructureLegendItems.map((item) => (
           <LegendDot key={item.label} color={item.color} label={item.label} />
         ))}
@@ -14144,7 +14144,7 @@ function CfetsBondPanel() {
         axisLabel={metricDef.axisLabel}
       />
       {/* 说明 */}
-      <div className="text-[10px] text-slate-500">{metricDef.desc}</div>
+      <div className="text-micro text-slate-500">{metricDef.desc}</div>
     </div>
   );
 }
@@ -14176,7 +14176,7 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className="grid h-full min-h-0 flex-1 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
-      <div className="flex items-center justify-between text-[11px] text-slate-400">
+      <div className="flex items-center justify-between text-mini text-slate-400">
         <div className="flex flex-wrap items-center gap-3">
           <LegendDot color={chartPalette.blue} label="1M" />
           <LegendDot color={chartPalette.emerald} label="3M" />
@@ -14185,7 +14185,7 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
         <span>近14天</span>
       </div>
       <div className="grid min-h-0 grid-cols-[2.8rem_1fr] gap-1">
-        <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+        <div className="flex flex-col justify-between py-1 pr-1 text-right text-micro text-slate-500">
           {yTicks.map((t) => (
             <div key={t}>{t}%</div>
           ))}
@@ -14295,7 +14295,7 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
         </div>
       </div>
       <div
-        className={`grid ${compact ? "grid-cols-7" : "grid-cols-14"} text-center text-[10px] text-slate-400`}
+        className={`grid ${compact ? "grid-cols-7" : "grid-cols-14"} text-center text-micro text-slate-400`}
       >
         {labels.map((label) => (
           <div key={label}>{label}</div>
@@ -14353,7 +14353,7 @@ function NcdPrimaryTrendPanel({ period = "1M" }: { period?: NcdPeriod }) {
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
       {/* header: legend + range tabs */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-mini text-slate-400">
         {series.map((s) => (
           <LegendDot key={s.label} color={s.color} label={s.label} />
         ))}
@@ -14373,7 +14373,7 @@ function NcdPrimaryTrendPanel({ period = "1M" }: { period?: NcdPeriod }) {
       {/* chart */}
       <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr] gap-x-1">
         {/* y-axis: top portion only (bottom 20px reserved for x-axis) */}
-        <div className="flex flex-col justify-between pb-5 pr-1 text-right text-[10px] text-slate-500">
+        <div className="flex flex-col justify-between pb-5 pr-1 text-right text-micro text-slate-500">
           {yTicks.map((t) => (
             <div key={t}>{t}%</div>
           ))}
@@ -14448,7 +14448,7 @@ function NcdPrimaryTrendPanel({ period = "1M" }: { period?: NcdPeriod }) {
             {xLabels.map(({ d, i }) => (
               <span
                 key={i}
-                className="absolute top-[5px] -translate-x-1/2 text-[10px] leading-none text-slate-400"
+                className="absolute top-[5px] -translate-x-1/2 text-micro leading-none text-slate-400"
                 style={{ left: `${(i / (count - 1)) * 100}%` }}
               >
                 {d}
@@ -14460,7 +14460,7 @@ function NcdPrimaryTrendPanel({ period = "1M" }: { period?: NcdPeriod }) {
               clientX={tooltipState.clientX}
               clientY={tooltipState.clientY}
             >
-              <div className="mb-1 text-[11px] font-medium text-slate-400">
+              <div className="mb-1 text-mini font-medium text-slate-400">
                 {dates[ti]}
               </div>
               {series.map((s) => (
@@ -14542,13 +14542,13 @@ function NcdLinkedChartPane({
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-1 overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
-      <div className="flex flex-wrap items-center gap-x-3 text-[11px] text-slate-400">
+      <div className="flex flex-wrap items-center gap-x-3 text-mini text-slate-400">
         {series.map((s) => (
           <LegendDot key={s.label} color={s.color} label={s.label} />
         ))}
       </div>
       <div className="grid min-h-0 flex-1 grid-cols-[2.8rem_1fr] gap-x-1">
-        <div className="flex flex-col justify-between pb-7 pr-1 text-right text-[10px] text-slate-500">
+        <div className="flex flex-col justify-between pb-7 pr-1 text-right text-micro text-slate-500">
           {yTicks.map((t) => (
             <div key={t}>{t}%</div>
           ))}
@@ -14618,7 +14618,7 @@ function NcdLinkedChartPane({
             {xLabels.map(({ d, i }) => (
               <span
                 key={i}
-                className="absolute top-[6px] text-[12px] font-medium leading-none text-slate-300"
+                className="absolute top-[6px] text-xs font-medium leading-none text-slate-300"
                 style={{
                   left: `${(i / (count - 1)) * 100}%`,
                   transform:
@@ -14638,7 +14638,7 @@ function NcdLinkedChartPane({
               clientX={tooltipState.clientX}
               clientY={tooltipState.clientY}
             >
-              <div className="mb-1 text-[11px] font-medium text-slate-400">
+              <div className="mb-1 text-mini font-medium text-slate-400">
                 {dates[ti]}
               </div>
               {series.map((s) => (
@@ -14737,7 +14737,7 @@ function NcdExpandedDualView({ period }: { period: NcdPeriod }) {
         ))}
       </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="mb-1 text-[11px] font-medium text-slate-400">一级</div>
+        <div className="mb-1 text-mini font-medium text-slate-400">一级</div>
         <div className="min-h-0 flex-1 overflow-hidden">
           <NcdLinkedChartPane
             series={primarySeries}
@@ -14751,7 +14751,7 @@ function NcdExpandedDualView({ period }: { period: NcdPeriod }) {
       </div>
       <div className="h-px bg-[var(--tk-color-border-divider)]" />
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="mb-1 text-[11px] font-medium text-slate-400">二级</div>
+        <div className="mb-1 text-mini font-medium text-slate-400">二级</div>
         <div className="min-h-0 flex-1 overflow-hidden">
           <NcdLinkedChartPane
             series={secondarySeries}
@@ -14796,7 +14796,7 @@ function NcdPrimaryTable({ initialPeriod = "1M" }: { initialPeriod?: NcdPeriod }
             </button>
           ))}
         </div>
-        <span className="ml-2 text-[11px] text-slate-500">(周一 26-06-08)</span>
+        <span className="ml-2 text-mini text-slate-500">(周一 26-06-08)</span>
       </div>
       <div
         className="grid overflow-y-auto"
@@ -14808,7 +14808,7 @@ function NcdPrimaryTable({ initialPeriod = "1M" }: { initialPeriod?: NcdPeriod }
         {groups.map((group) => (
           <div
             key={group.label}
-            className="border-b border-r border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-1 text-center text-[11px] font-medium text-slate-400 last:border-r-0"
+            className="border-b border-r border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-1 text-center text-mini font-medium text-slate-400 last:border-r-0"
           >
             {group.label}
           </div>
@@ -14830,7 +14830,7 @@ function NcdPrimaryTable({ initialPeriod = "1M" }: { initialPeriod?: NcdPeriod }
                     <span className="truncate text-xs text-slate-300">
                       {row.name}
                       {row.marker && (
-                        <span className="ml-0.5 text-[10px] text-slate-500">
+                        <span className="ml-0.5 text-micro text-slate-500">
                           ▲
                         </span>
                       )}
@@ -14840,7 +14840,7 @@ function NcdPrimaryTable({ initialPeriod = "1M" }: { initialPeriod?: NcdPeriod }
                         {row.rate}
                       </span>
                       {row.change && (
-                        <span className="text-[11px] text-emerald-400">
+                        <span className="text-mini text-emerald-400">
                           {row.change}
                         </span>
                       )}
@@ -14862,7 +14862,7 @@ function NcdPrimaryExpandedTable() {
       <table className="w-full border-collapse text-xs">
         <thead className="sticky top-0 z-10">
           <tr className="bg-[var(--tk-color-surface-dark-soft)]">
-            <th className="w-20 border-b border-r border-[color:var(--tk-color-border-divider)] px-2 py-2 text-left text-[11px] text-slate-500" />
+            <th className="w-20 border-b border-r border-[color:var(--tk-color-border-divider)] px-2 py-2 text-left text-mini text-slate-500" />
             {ncdPrimaryPeriods.map((p) => {
               const h = ncdColHeaders[p];
               return (
@@ -14872,11 +14872,11 @@ function NcdPrimaryExpandedTable() {
                 >
                   <div className="flex items-baseline justify-center gap-1">
                     <span className="font-semibold text-slate-200">{p}</span>
-                    <span className="text-[10px] text-slate-500">
+                    <span className="text-micro text-slate-500">
                       ({h.dow} {h.date})
                     </span>
                     {h.count && (
-                      <span className="rounded bg-blue-500/20 px-1 text-[10px] text-blue-300">
+                      <span className="rounded bg-blue-500/20 px-1 text-micro text-blue-300">
                         {h.count}
                       </span>
                     )}
@@ -14889,7 +14889,7 @@ function NcdPrimaryExpandedTable() {
         <tbody>
           {ncdAllPeriodsData.map((group) => (
             <tr key={group.label} className="align-top">
-              <td className="border-b border-r border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-2 text-[11px] font-medium text-slate-400">
+              <td className="border-b border-r border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-2 text-mini font-medium text-slate-400">
                 {group.label}
               </td>
               {ncdPrimaryPeriods.map((p) => {
@@ -14906,20 +14906,20 @@ function NcdPrimaryExpandedTable() {
                             key={cell.name}
                             className="flex items-center justify-between gap-1"
                           >
-                            <span className="truncate text-[11px] text-slate-300">
+                            <span className="truncate text-mini text-slate-300">
                               {cell.name}
                             </span>
                             <div className="flex shrink-0 items-center gap-1">
-                              <span className="font-mono text-[11px] text-amber-400">
+                              <span className="font-mono text-mini text-amber-400">
                                 {cell.rate}
                               </span>
                               {cell.change && (
-                                <span className="text-[10px] text-emerald-400">
+                                <span className="text-micro text-emerald-400">
                                   +{cell.change}
                                 </span>
                               )}
                               {cell.limitNonBank && (
-                                <span className="rounded bg-slate-700/60 px-0.5 text-[10px] text-slate-400">
+                                <span className="rounded bg-slate-700/60 px-0.5 text-micro text-slate-400">
                                   限非
                                 </span>
                               )}
@@ -14928,7 +14928,7 @@ function NcdPrimaryExpandedTable() {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center text-[10px] text-slate-600">
+                      <div className="text-center text-micro text-slate-600">
                         —
                       </div>
                     )}
@@ -14966,14 +14966,14 @@ function FundStructureBars({
 
   return (
     <div className="grid h-full min-h-0 grid-cols-[3rem_1fr] gap-2">
-      <div className="flex flex-col justify-between pb-2 pt-1 text-right text-[10px] text-slate-400">
+      <div className="flex flex-col justify-between pb-2 pt-1 text-right text-micro text-slate-400">
         {yTicks.map((tick) => (
           <div key={tick}>{tick.toLocaleString()}</div>
         ))}
       </div>
       <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[color:var(--tk-color-border-panel)]">
         {axisCaption && (
-          <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[10px] text-slate-500">
+          <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-micro text-slate-500">
             {axisCaption}
           </div>
         )}
@@ -15084,7 +15084,7 @@ function FundStructurePanel() {
 
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_1fr_auto] gap-2 overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-2">
-      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-mini text-slate-400">
         <div className="flex flex-wrap items-center gap-3">
           {fundStructureLegendItems.map((item) => (
             <LegendDot key={item.label} color={item.color} label={item.label} />
@@ -15107,7 +15107,7 @@ function FundStructurePanel() {
         </div>
       </div>
       <div className="grid h-full min-h-0 grid-cols-[3rem_1fr] gap-2">
-        <div className="flex flex-col justify-between pb-2 pt-1 text-right text-[10px] text-slate-400">
+        <div className="flex flex-col justify-between pb-2 pt-1 text-right text-micro text-slate-400">
           {yTicks.map((tick) => (
             <div key={tick}>{tick.toLocaleString()}</div>
           ))}
@@ -15205,7 +15205,7 @@ function FundStructurePanel() {
       <div className="grid shrink-0 grid-cols-[3rem_1fr]">
         <div />
         <div
-          className="grid pt-0.5 text-[10px] text-slate-400"
+          className="grid pt-0.5 text-micro text-slate-400"
           style={{
             gridTemplateColumns: `repeat(${labels.length}, minmax(0, 1fr))`,
           }}
@@ -15375,7 +15375,7 @@ function StructuredTable({
             {columns.map((column, index) => (
               <th
                 key={`${column}-${index}`}
-                className={`border-b px-3 py-2 text-[11px] font-medium tracking-[0] ${
+                className={`border-b px-3 py-2 text-mini font-medium tracking-[0] ${
                   index === 0 ? "text-left" : "text-right"
                 } ${compact ? "px-2 py-1.5" : "px-3 py-2.5"} ${
                   fitToWidth
@@ -15410,7 +15410,7 @@ function StructuredTable({
                     <button
                       className={`tk-button tk-button-primary font-medium ${
                         compact
-                          ? "px-1.5 py-0.5 text-[10px]"
+                          ? "px-1.5 py-0.5 text-micro"
                           : "px-3 py-1 text-xs"
                       }`}
                       type="button"
@@ -15475,7 +15475,7 @@ function TrendOverviewCard() {
       </div>
       <div className="grid min-h-0 grid-rows-[68fr_26fr_auto] gap-0 px-4 pb-4 pt-3">
         <div className="grid min-h-0 grid-cols-[4rem_1fr]">
-          <div className="flex flex-col justify-between pr-3 pb-2 pt-6 text-right text-[10px] text-slate-400">
+          <div className="flex flex-col justify-between pr-3 pb-2 pt-6 text-right text-micro text-slate-400">
             {trendPriceTicks.map((tick) => (
               <div key={tick}>{tick.toFixed(3)}</div>
             ))}
@@ -15522,7 +15522,7 @@ function TrendOverviewCard() {
           </div>
         </div>
         <div className="grid min-h-0 grid-cols-[4rem_1fr] border-t border-[color:var(--tk-color-border-divider)] pt-2">
-          <div className="flex flex-col justify-between pr-3 pb-1 text-right text-[10px] text-slate-400">
+          <div className="flex flex-col justify-between pr-3 pb-1 text-right text-micro text-slate-400">
             {trendVolumeTicks.map((tick) => (
               <div key={tick}>{tick}</div>
             ))}
@@ -15551,7 +15551,7 @@ function TrendOverviewCard() {
         </div>
         <div className="grid grid-cols-[4rem_1fr] pt-2">
           <div />
-          <div className="grid grid-cols-10 text-[10px] text-slate-400">
+          <div className="grid grid-cols-10 text-micro text-slate-400">
             {trendAxisLabels.map((label) => (
               <div key={label} className="text-center">
                 {label}
@@ -15575,7 +15575,7 @@ function MiniChartCard({
     <div className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
       <div className="flex items-center justify-between gap-3 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-1.5">
         <div className="text-xs font-medium text-slate-200">{title}</div>
-        <div className="flex flex-wrap gap-2 text-[11px] text-slate-500">
+        <div className="flex flex-wrap gap-2 text-mini text-slate-500">
           <LegendDot color={chartPalette.emerald} label="1" />
           <LegendDot color={chartPalette.blue} label="7" />
           <LegendDot color={chartPalette.violet} label="14" />
@@ -16151,7 +16151,7 @@ function SentimentPopoverPanel({
           {(["realtime", "trend"] as const).map((t) => (
             <button
               key={t}
-              className={`rounded px-2.5 py-0.5 text-[11px] transition-colors ${
+              className={`rounded px-2.5 py-0.5 text-mini transition-colors ${
                 tab === t
                   ? "bg-[var(--tk-color-brand-primary)] font-semibold text-white"
                   : "text-slate-400 hover:text-slate-200"
@@ -16164,16 +16164,16 @@ function SentimentPopoverPanel({
           ))}
         </div>
         {tab === "trend" && (
-          <span className="text-[10px] text-slate-500">
+          <span className="text-micro text-slate-500">
             2026-04-10 → 2026-05-10
           </span>
         )}
-        <span className="ml-auto cursor-default select-none text-[11px] text-slate-600">
+        <span className="ml-auto cursor-default select-none text-mini text-slate-600">
           ?
         </span>
       </div>
 
-      <div className="flex gap-4 px-3 pb-1 pt-2 text-[11px] text-slate-400">
+      <div className="flex gap-4 px-3 pb-1 pt-2 text-mini text-slate-400">
         {sentimentSeriesConfig.map(({ key, label, color }) => (
           <LegendDot key={key} color={color} label={label} />
         ))}
@@ -16184,7 +16184,7 @@ function SentimentPopoverPanel({
             key={key}
             className="rounded border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.46)] px-2 py-1.5"
           >
-            <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+            <div className="flex items-center gap-1.5 text-micro text-slate-500">
               <span
                 className="h-1.5 w-1.5 rounded-full"
                 style={{ backgroundColor: color }}
@@ -16199,7 +16199,7 @@ function SentimentPopoverPanel({
       </div>
 
       <div className="grid grid-cols-[36px_1fr] px-1 pb-1">
-        <div className="flex flex-col justify-between py-1 pr-1 text-right text-[10px] text-slate-500">
+        <div className="flex flex-col justify-between py-1 pr-1 text-right text-micro text-slate-500">
           {yTicks.map((tick) => (
             <div key={tick}>{tick}</div>
           ))}
@@ -16283,7 +16283,7 @@ function SentimentPopoverPanel({
           {xTickIndices.map((idx) => (
             <span
               key={idx}
-              className="absolute -translate-x-1/2 text-[10px] text-slate-600"
+              className="absolute -translate-x-1/2 text-micro text-slate-600"
               style={{ left: `${(idx / (data.length - 1)) * 100}%` }}
             >
               {data[idx].label}
@@ -16576,8 +16576,8 @@ function auxTabClass(active: boolean) {
 
 function miniChipClass(active: boolean) {
   return active
-    ? "tk-chip-active whitespace-nowrap px-1.5 py-0.5 text-[11px] font-medium"
-    : "tk-chip whitespace-nowrap px-1.5 py-0.5 text-[11px]";
+    ? "tk-chip-active whitespace-nowrap px-1.5 py-0.5 text-mini font-medium"
+    : "tk-chip whitespace-nowrap px-1.5 py-0.5 text-mini";
 }
 
 function cellClassName(

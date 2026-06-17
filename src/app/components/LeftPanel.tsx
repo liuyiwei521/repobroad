@@ -54,7 +54,7 @@ const lightTooltipStyle = {
   border: `1px solid ${chartTheme.tooltipBorder}`,
   borderRadius: 2,
   color: 'var(--tk-color-text-primary)',
-  fontSize: '10px',
+  fontSize: 10,
   padding: '6px 8px',
 };
 
@@ -96,8 +96,8 @@ export function LeftPanel() {
           <ResponsiveContainer width="100%" height={100}>
             <LineChart data={sentimentData}>
               <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
-              <XAxis dataKey="time" stroke={chartTheme.axis} style={{ fontSize: '10px' }} />
-              <YAxis stroke={chartTheme.axis} style={{ fontSize: '10px' }} domain={[0, 100]} />
+              <XAxis dataKey="time" stroke={chartTheme.axis} style={{ fontSize: 10 }} />
+              <YAxis stroke={chartTheme.axis} style={{ fontSize: 10 }} domain={[0, 100]} />
               <Tooltip
                 contentStyle={lightTooltipStyle}
               />
@@ -127,12 +127,12 @@ export function LeftPanel() {
           <ResponsiveContainer width="100%" height={120}>
             <LineChart data={rateHistoryData}>
               <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
-              <XAxis dataKey="date" stroke={chartTheme.axis} style={{ fontSize: '10px' }} />
-              <YAxis stroke={chartTheme.axis} style={{ fontSize: '10px' }} domain={[1.5, 2.5]} />
+              <XAxis dataKey="date" stroke={chartTheme.axis} style={{ fontSize: 10 }} />
+              <YAxis stroke={chartTheme.axis} style={{ fontSize: 10 }} domain={[1.5, 2.5]} />
               <Tooltip
                 contentStyle={lightTooltipStyle}
               />
-              <Legend wrapperStyle={{ fontSize: '10px' }} />
+              <Legend wrapperStyle={{ fontSize: 10 }} />
               <Line type="monotone" dataKey="DR001" stroke={chartTheme.success} strokeWidth={1.5} />
               <Line type="monotone" dataKey="DR007" stroke={chartTheme.blue} strokeWidth={1.5} />
               <Line type="monotone" dataKey="GC001" stroke={chartTheme.purple} strokeWidth={1.5} />
@@ -147,12 +147,12 @@ export function LeftPanel() {
           <ResponsiveContainer width="100%" height={140}>
             <BarChart data={institutionStructure}>
               <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
-              <XAxis dataKey="name" stroke={chartTheme.axis} style={{ fontSize: '9px' }} />
-              <YAxis stroke={chartTheme.axis} style={{ fontSize: '10px' }} />
+              <XAxis dataKey="name" stroke={chartTheme.axis} style={{ fontSize: 10 }} />
+              <YAxis stroke={chartTheme.axis} style={{ fontSize: 10 }} />
               <Tooltip
                 contentStyle={lightTooltipStyle}
               />
-              <Legend wrapperStyle={{ fontSize: '10px' }} />
+              <Legend wrapperStyle={{ fontSize: 10 }} />
               <Bar dataKey="lend" fill={chartTheme.success} name="融出" />
               <Bar dataKey="borrow" fill={chartTheme.danger} name="融入" />
             </BarChart>

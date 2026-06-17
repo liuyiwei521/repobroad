@@ -57,6 +57,11 @@
   --tk-font-size-sm: 13px;
   --tk-font-size-md: 14px;
   --tk-font-size-lg: 16px;
+  --tk-font-size-micro: 10px;
+  --tk-font-size-mini: 11px;
+  --tk-font-size-xl: 18px;
+  --tk-font-size-xxl: 20px;
+  --tk-font-size-display: 22px;
   --tk-line-height-tight: 12px;
   --tk-line-height-compact: 14px;
   --tk-line-height-normal: 16px;
@@ -69,6 +74,7 @@
   --tk-radius-xs: 1px;
   --tk-radius-sm: 2px;
   --tk-radius-md: 4px;
+  --tk-radius-lg: 6px;
   --tk-radius-pill: 999px;
 
   --tk-space-xxs: 2px;
@@ -85,7 +91,7 @@
 
   --tk-modal-width: 642px;
   --tk-modal-header-height: 30px;
-  --tk-tab-height: 22px;
+  --tk-tab-height: 24px;
   --tk-switch-width: 29px;
   --tk-switch-height: 14px;
   --tk-section-accent-width: 2px;

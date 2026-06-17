@@ -35,6 +35,11 @@
   --tdx-font-size-sm: 13px;
   --tdx-font-size-md: 14px;
   --tdx-font-size-lg: 16px;
+  --tdx-font-size-micro: 10px;
+  --tdx-font-size-mini: 11px;
+  --tdx-font-size-xl: 18px;
+  --tdx-font-size-xxl: 20px;
+  --tdx-font-size-display: 22px;
 
   --tdx-line-height-tight: 16px;
   --tdx-line-height-row: 28px;
@@ -44,6 +49,7 @@
   --tdx-radius-xs: 1px;
   --tdx-radius-sm: 2px;
   --tdx-radius-md: 4px;
+  --tdx-radius-lg: 6px;
   --tdx-radius-pill: 999px;
 
   --tdx-space-xxs: 2px;
@@ -114,6 +120,11 @@
   --tk-font-size-sm: var(--tdx-font-size-sm);
   --tk-font-size-md: var(--tdx-font-size-md);
   --tk-font-size-lg: var(--tdx-font-size-lg);
+  --tk-font-size-micro: var(--tdx-font-size-micro);
+  --tk-font-size-mini: var(--tdx-font-size-mini);
+  --tk-font-size-xl: var(--tdx-font-size-xl);
+  --tk-font-size-xxl: var(--tdx-font-size-xxl);
+  --tk-font-size-display: var(--tdx-font-size-display);
   --tk-line-height-tight: 12px;
   --tk-line-height-compact: 14px;
   --tk-line-height-normal: 16px;
@@ -126,6 +137,7 @@
   --tk-radius-xs: var(--tdx-radius-xs);
   --tk-radius-sm: var(--tdx-radius-sm);
   --tk-radius-md: var(--tdx-radius-md);
+  --tk-radius-lg: var(--tdx-radius-lg);
   --tk-radius-pill: var(--tdx-radius-pill);
 
   --tk-space-xxs: var(--tdx-space-xxs);
@@ -142,7 +154,7 @@
 
   --tk-modal-width: 642px;
   --tk-modal-header-height: 30px;
-  --tk-tab-height: 22px;
+  --tk-tab-height: 24px;
   --tk-switch-width: 29px;
   --tk-switch-height: 14px;
   --tk-section-accent-width: 2px;

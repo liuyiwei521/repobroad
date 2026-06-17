@@ -354,7 +354,7 @@ export function MarketChartPage({ onClose }: Props) {
                   background: 'color-mix(in srgb, var(--tk-color-surface-dark-deep) 94%, transparent)',
                   border: `1px solid ${chartTheme.border}`,
                   borderRadius: 2,
-                  fontSize: 11,
+                  fontSize: 10,
                 }}
                 labelStyle={{ color: chartTheme.text }}
                 itemStyle={{ color: chartTheme.text }}
@@ -402,7 +402,7 @@ export function MarketChartPage({ onClose }: Props) {
               <CartesianGrid strokeDasharray="1 4" stroke={chartTheme.borderSoft} vertical={false} />
               <XAxis dataKey="timeLabel" tick={false} axisLine={{ stroke: chartTheme.border }} tickLine={false} />
               <YAxis
-                tick={{ fill: chartTheme.muted, fontSize: 9 }}
+                tick={{ fill: chartTheme.muted, fontSize: 10 }}
                 axisLine={false}
                 tickLine={false}
                 width={52}

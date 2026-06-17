@@ -76,33 +76,33 @@ body,
 
 .tk-matrix-section-title {
   color: var(--tdx-text-heading);
-  font-size: 14px;
+  font-size: var(--tk-font-size-md);
   font-weight: 600;
   letter-spacing: 0;
-  line-height: 20px;
+  line-height: var(--tk-line-height-relaxed);
 }
 
 .tk-matrix-card-title {
   color: var(--tdx-text-heading);
-  font-size: 12px;
+  font-size: var(--tk-font-size-xs);
   font-weight: 600;
   letter-spacing: 0;
-  line-height: 16px;
+  line-height: var(--tk-line-height-normal);
 }
 
 .tk-matrix-card-subtitle {
   color: var(--tdx-text-muted);
-  font-size: 10px;
+  font-size: var(--tk-font-size-micro);
   font-weight: 400;
   letter-spacing: 0;
-  line-height: 12px;
+  line-height: var(--tk-line-height-tight);
 }
 
 .tk-matrix-tag {
-  font-size: 10px;
+  font-size: var(--tk-font-size-micro);
   font-weight: 500;
   letter-spacing: 0;
-  line-height: 12px;
+  line-height: var(--tk-line-height-tight);
 }
 
 .tk-muted,
