@@ -423,10 +423,10 @@ const leftSections: readonly (
       {
         id: "sse",
         title: "上交所",
-        columns: ["期限", "品种", "最新", "涨跌bp"],
+        columns: ["期限", "品种", "最新", "涨跌bp", "时间"],
         rows: [
-          ["1天", "GC001", "1.3700", "-1.00"],
-          ["7天", "GC007", "1.3750", "-1.00"],
+          ["1天", "GC001", "1.3700", "-1.00", "10:31"],
+          ["7天", "GC007", "1.3750", "-1.00", "10:28"],
         ],
         greenColumns: [2],
         deltaColumns: [3],
@@ -434,10 +434,10 @@ const leftSections: readonly (
       {
         id: "szse",
         title: "深交所",
-        columns: ["期限", "品种", "最新", "涨跌bp"],
+        columns: ["期限", "品种", "最新", "涨跌bp", "时间"],
         rows: [
-          ["1天", "R-001", "1.3900", "-1.50"],
-          ["7天", "R-007", "1.4000", "-0.50"],
+          ["1天", "R-001", "1.3900", "-1.50", "10:30"],
+          ["7天", "R-007", "1.4000", "-0.50", "10:25"],
         ],
         greenColumns: [2],
         deltaColumns: [3],
@@ -6881,18 +6881,18 @@ const exchangeRepoOneMonthMarketRows: Record<
   readonly (readonly string[])[]
 > = {
   sse: [
-    ["1\u5929", "GC001", "1.3700", "-1.00"],
-    ["7\u5929", "GC007", "1.3750", "-1.00"],
-    ["14\u5929", "GC014", "1.3920", "-0.50"],
-    ["21\u5929", "GC021", "1.4180", "0.00"],
-    ["1M", "GC028", "1.4460", "0.50"],
+    ["1\u5929", "GC001", "1.3700", "-1.00", "10:31"],
+    ["7\u5929", "GC007", "1.3750", "-1.00", "10:28"],
+    ["14\u5929", "GC014", "1.3920", "-0.50", "10:22"],
+    ["21\u5929", "GC021", "1.4180", "0.00", "10:15"],
+    ["1M", "GC028", "1.4460", "0.50", "10:10"],
   ],
   szse: [
-    ["1\u5929", "R-001", "1.3900", "-1.50"],
-    ["7\u5929", "R-007", "1.4000", "-0.50"],
-    ["14\u5929", "R-014", "1.4230", "0.00"],
-    ["21\u5929", "R-021", "1.4520", "0.50"],
-    ["1M", "R-028", "1.4850", "1.00"],
+    ["1\u5929", "R-001", "1.3900", "-1.50", "10:30"],
+    ["7\u5929", "R-007", "1.4000", "-0.50", "10:25"],
+    ["14\u5929", "R-014", "1.4230", "0.00", "10:20"],
+    ["21\u5929", "R-021", "1.4520", "0.50", "10:12"],
+    ["1M", "R-028", "1.4850", "1.00", "10:08"],
   ],
 };
 
@@ -6947,12 +6947,11 @@ function ExchangeCoreCompactBlock({
       <table className="w-full table-fixed shrink-0">
         <thead>
           <tr className="border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] text-[11px] font-medium tracking-[0.02em] text-slate-400">
-            <th className="w-[18%] px-2 py-1.5 text-left font-medium">期限</th>
-            <th className="w-[30%] px-2 py-1.5 text-left font-medium">品种</th>
-            <th className="w-[28%] px-2 py-1.5 text-right font-medium">最新</th>
-            <th className="w-[24%] px-2 py-1.5 text-right font-medium">
-              涨跌bp
-            </th>
+            <th className="w-[15%] px-2 py-1.5 text-left font-medium">期限</th>
+            <th className="w-[25%] px-2 py-1.5 text-left font-medium">品种</th>
+            <th className="w-[22%] px-2 py-1.5 text-right font-medium">最新</th>
+            <th className="w-[20%] px-2 py-1.5 text-right font-medium">涨跌bp</th>
+            <th className="w-[18%] px-2 py-1.5 text-right font-medium">时间</th>
           </tr>
         </thead>
       </table>
@@ -6972,23 +6971,26 @@ function ExchangeCoreCompactBlock({
               >
                 {row ? (
                   <>
-                    <td className="w-[18%] px-2 py-1.5 font-semibold text-slate-100">
+                    <td className="w-[15%] px-2 py-1.5 font-semibold text-slate-100">
                       {row[0]}
                     </td>
-                    <td className="w-[30%] px-2 py-1.5 font-semibold text-slate-100">
+                    <td className="w-[25%] px-2 py-1.5 font-semibold text-slate-100">
                       {row[1]}
                     </td>
-                    <td className="w-[28%] px-2 py-1.5 text-right font-semibold text-emerald-300">
+                    <td className="w-[22%] px-2 py-1.5 text-right font-semibold text-emerald-300">
                       {row[2]}
                     </td>
                     <td
-                      className={`w-[24%] px-2 py-1.5 text-right ${cellClassName(row[3], 1, [], [], [1], [])}`}
+                      className={`w-[20%] px-2 py-1.5 text-right ${cellClassName(row[3], 1, [], [], [1], [])}`}
                     >
                       {row[3]}
                     </td>
+                    <td className="w-[18%] px-2 py-1.5 text-right text-slate-400">
+                      {row[4] ?? "--"}
+                    </td>
                   </>
                 ) : (
-                  <td colSpan={4} />
+                  <td colSpan={5} />
                 )}
               </tr>
             ))}
@@ -7024,12 +7026,14 @@ function ExchangeMarketTable({
                 key={`${market.title}-${column}`}
                 className={`px-2 py-1.5 font-medium ${
                   index === 0
-                    ? "w-[18%] text-left"
+                    ? "w-[15%] text-left"
                     : index === 1
-                      ? "w-[30%] text-left"
+                      ? "w-[25%] text-left"
                       : index === 2
-                        ? "w-[28%] text-right"
-                        : "w-[24%] text-right"
+                        ? "w-[22%] text-right"
+                        : index === 3
+                          ? "w-[20%] text-right"
+                          : "w-[18%] text-right"
                 }`}
               >
                 {column}
@@ -7057,12 +7061,14 @@ function ExchangeMarketTable({
                     key={`${market.title}-${row[0]}-${cellIndex}`}
                     className={`px-2 py-1.5 ${
                       cellIndex === 0
-                        ? "w-[18%] text-left"
+                        ? "w-[15%] text-left"
                         : cellIndex === 1
-                          ? "w-[30%] text-left truncate"
+                          ? "w-[25%] text-left truncate"
                           : cellIndex === 2
-                            ? "w-[28%] text-right"
-                            : "w-[24%] text-right"
+                            ? "w-[22%] text-right"
+                            : cellIndex === 3
+                              ? "w-[20%] text-right"
+                              : "w-[18%] text-right text-slate-400"
                     }`}
                     title={cell}
                   >
