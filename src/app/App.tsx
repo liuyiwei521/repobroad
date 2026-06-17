@@ -394,25 +394,26 @@ const leftSections: readonly (
       "正回购利率(%)",
       "逆回购利率(%)",
       "逆回购量(亿)",
+      "时间",
     ],
     rows: [
-      ["R001", "5 (0)", "1.36", "1.25", "1185 (0)"],
-      ["R001", "-", "-", "1.36", "30 (7)"],
-      ["R001", "-", "-", "1.38", "70 (62)"],
-      ["R001_mini", "0.6 (0)", "1.38", "1.30", "12 (0)"],
-      ["DFR001_mini", "5 (0)", "1.37", "1.38", "47 (34)"],
-      ["CDR001_mini", "20.6 (0)", "1.40", "1.41", "20 (10)"],
-      ["R004", "-", "-", "1.42", "3 (0)"],
-      ["R007", "2 (0)", "1.42", "1.40", "132 (0)"],
-      ["R007_mini", "-", "-", "-", "-"],
-      ["R014", "-", "-", "1.45", "5 (0)"],
-      ["R014_mini", "-", "-", "-", "-"],
+      ["R001", "5 (0)", "1.36", "1.25", "1185 (0)", "10:31"],
+      ["R001", "-", "-", "1.36", "30 (7)", "10:28"],
+      ["R001", "-", "-", "1.38", "70 (62)", "10:25"],
+      ["R001_mini", "0.6 (0)", "1.38", "1.30", "12 (0)", "10:30"],
+      ["DFR001_mini", "5 (0)", "1.37", "1.38", "47 (34)", "10:29"],
+      ["CDR001_mini", "20.6 (0)", "1.40", "1.41", "20 (10)", "10:27"],
+      ["R004", "-", "-", "1.42", "3 (0)", "10:22"],
+      ["R007", "2 (0)", "1.42", "1.40", "132 (0)", "10:31"],
+      ["R007_mini", "-", "-", "-", "-", "--"],
+      ["R014", "-", "-", "1.45", "5 (0)", "10:18"],
+      ["R014_mini", "-", "-", "-", "-", "--"],
     ],
     greenColumns: [3],
     redColumns: [2],
     emphasisColumns: [1, 4],
     fitToWidth: true,
-    columnWidths: ["24%", "19%", "19%", "19%", "19%"],
+    columnWidths: ["20%", "16%", "16%", "16%", "16%", "16%"],
     scrollable: true,
   },
   {
@@ -449,7 +450,7 @@ const leftSections: readonly (
 const repoQuoteSections: readonly RepoQuoteSection[] = [
   {
     id: "reverse",
-    title: "我方融券",
+    title: "逆回购",
     groups: [
       {
         id: "reverse-rate-local",
@@ -813,7 +814,7 @@ const repoQuoteSections: readonly RepoQuoteSection[] = [
   },
   {
     id: "forward",
-    title: "我方融资",
+    title: "正回购",
     groups: [
       {
         id: "forward-rate-local",
@@ -2239,7 +2240,7 @@ function App() {
         />
         <main
           ref={mainRef}
-          className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] overflow-hidden px-3 pb-3 pt-2"
+          className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] overflow-hidden px-2 pb-1.5 pt-1"
           style={{ gridTemplateColumns: gridTemplate, columnGap: 0 }}
         >
           <LeftInfoColumn />
@@ -4680,12 +4681,15 @@ function TopBar({
             ⤺ 布局
           </button>
         </div>
-        <div className="min-w-0">
-          <MiddleMatrixNoticeBar
-            variant="inline"
-            noticeText={tradingNotice}
-            onOpenEditor={() => setNoticeEditorOpen(true)}
-          />
+        <div className="flex min-w-0 items-center gap-2">
+          <SentimentChipWithPopover />
+          <div className="min-w-0 flex-1">
+            <MiddleMatrixNoticeBar
+              variant="inline"
+              noticeText={tradingNotice}
+              onOpenEditor={() => setNoticeEditorOpen(true)}
+            />
+          </div>
         </div>
         <div className="flex items-center justify-end gap-3">
           <TopToolMetricChip
@@ -5307,6 +5311,7 @@ function BigBankPriceFrame({
       rateWithDelta(row.nonBankRate, row.refNonBankRate),
       rateWithDelta(row.bankRate, row.refBankRate),
       bankRateSpread(row),
+      row.updatedAt ? row.updatedAt.slice(0, 5) : "--",
     ]);
   function buildDraft(): BankRateRow[] {
     const byKey = new Map<string, BankRateRow>();
@@ -5457,6 +5462,7 @@ function BigBankPriceFrame({
                 "非银利率(涨跌)",
                 "银行利率(涨跌)",
                 "利差",
+                "时间",
               ]}
               rows={rows}
               greenColumns={[2]}
@@ -6637,7 +6643,7 @@ function LeftNcdCard({
     <>
       <section
         className={`tk-panel flex min-h-0 flex-col border ${
-          embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
+          embeddedPreview ? "h-full overflow-hidden" : "h-full overflow-hidden"
         }`}
       >
         {embeddedPreview ? (
@@ -6702,7 +6708,7 @@ function LeftNcdCard({
         <div
           className={
             embeddedPreview
-              ? "flex min-h-[220px] flex-col overflow-visible p-2"
+              ? "flex min-h-0 flex-1 flex-col overflow-hidden p-2"
               : "flex min-h-0 flex-1 flex-col overflow-hidden p-2"
           }
         >
@@ -6777,7 +6783,7 @@ function ExchangeRepoCard({
   return (
     <section
       className={`tk-panel flex min-h-0 flex-col border ${
-        embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
+        embeddedPreview ? "h-full overflow-hidden" : "h-full overflow-hidden"
       }`}
     >
       {embeddedPreview ? (
@@ -6841,7 +6847,7 @@ function ExchangeRepoCard({
           </div>
         </div>
       )}
-      <div className={embeddedPreview ? "min-h-0 p-2" : "min-h-0 flex-1 p-2"}>
+      <div className={embeddedPreview ? "min-h-0 flex-1 overflow-hidden p-2" : "min-h-0 flex-1 p-2"}>
         {activeView === "core" ? (
           <ExchangeCoreCompactBoard
             markets={displayedMarkets}
@@ -6851,7 +6857,7 @@ function ExchangeRepoCard({
           <div
             className={
               embeddedPreview
-                ? "grid min-h-0 grid-cols-1"
+                ? "grid h-full min-h-0 grid-cols-1"
                 : "grid h-full min-h-0 grid-cols-1"
             }
           >
@@ -7730,7 +7736,7 @@ function BarometerMatrixCard() {
   const tooltipIndex = tooltipState?.index ?? null;
 
   return (
-    <div className="grid min-h-0 grid-rows-[auto_auto_minmax(0,1fr)_auto] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+    <div className="grid h-full min-h-0 grid-rows-[auto_auto_minmax(0,1fr)_auto] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
       <div className="flex items-baseline justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
         <div className="tk-matrix-card-title shrink-0 whitespace-nowrap">机构报价热度</div>
       </div>
@@ -8027,68 +8033,168 @@ function MatrixPlaceholderCard({
   );
 }
 
+type DemandBottomTab = "demand" | "gap" | "inflight";
+
+const fundGapRows = [
+  { account: "泰康稳健增利A", breakEvenRate: "1.42%", gap: "-3.2 / 15.0", accountReq: "利率债质押", collateralReq: "国债/政金债" },
+  { account: "泰康丰盈债券", breakEvenRate: "1.55%", gap: "-1.8 / 8.5", accountReq: "不限", collateralReq: "利率债优先" },
+  { account: "泰康沪港深精选", breakEvenRate: "1.38%", gap: "0.0 / 5.0", accountReq: "信用债可用", collateralReq: "AA+以上" },
+  { account: "泰康颐年混合", breakEvenRate: "1.60%", gap: "-2.5 / 12.0", accountReq: "利率债质押", collateralReq: "国债" },
+  { account: "泰康安益纯债", breakEvenRate: "1.48%", gap: "-0.6 / 6.0", accountReq: "不限", collateralReq: "政金债" },
+  { account: "泰康裕泰回报", breakEvenRate: "1.52%", gap: "-4.1 / 20.0", accountReq: "利率债质押", collateralReq: "国债/地方债" },
+  { account: "泰康策略配置7号", breakEvenRate: "1.35%", gap: "-1.5 / 10.0", accountReq: "利率债质押", collateralReq: "国债/政金债" },
+  { account: "泰康宏观回报", breakEvenRate: "1.62%", gap: "-5.3 / 25.0", accountReq: "不限", collateralReq: "利率债优先" },
+  { account: "泰康鑫选利90天", breakEvenRate: "1.45%", gap: "-0.8 / 4.0", accountReq: "信用债可用", collateralReq: "AA+以上" },
+  { account: "泰康添润6个月", breakEvenRate: "1.58%", gap: "-2.0 / 9.5", accountReq: "利率债质押", collateralReq: "政金债" },
+  { account: "泰康恒泰回报", breakEvenRate: "1.40%", gap: "0.0 / 3.0", accountReq: "不限", collateralReq: "国债" },
+  { account: "泰康均衡优选", breakEvenRate: "1.50%", gap: "-1.2 / 7.0", accountReq: "利率债质押", collateralReq: "国债/地方债" },
+  { account: "泰康瑞坤纯债", breakEvenRate: "1.43%", gap: "-3.8 / 18.0", accountReq: "不限", collateralReq: "政金债" },
+  { account: "泰康稳固收益A", breakEvenRate: "1.56%", gap: "-0.4 / 2.5", accountReq: "信用债可用", collateralReq: "AA+以上" },
+  { account: "泰康新机遇", breakEvenRate: "1.65%", gap: "-6.0 / 30.0", accountReq: "利率债质押", collateralReq: "国债/政金债" },
+  { account: "泰康长江经济带", breakEvenRate: "1.47%", gap: "-1.0 / 5.5", accountReq: "不限", collateralReq: "利率债优先" },
+] as const;
+
+const inflightRows = [
+  { account: "泰康稳健增利A", gap: "-3.2 / 15.0", progress: 78, accountReq: "利率债质押", collateralReq: "国债/政金债", issuedAt: "09:32" },
+  { account: "泰康丰盈债券", gap: "-1.8 / 8.5", progress: 45, accountReq: "不限", collateralReq: "利率债优先", issuedAt: "09:45" },
+  { account: "泰康颐年混合", gap: "-2.5 / 12.0", progress: 12, accountReq: "利率债质押", collateralReq: "国债", issuedAt: "10:05" },
+  { account: "泰康裕泰回报", gap: "-4.1 / 20.0", progress: 60, accountReq: "利率债质押", collateralReq: "国债/地方债", issuedAt: "10:18" },
+  { account: "泰康安益纯债", gap: "-0.6 / 6.0", progress: 100, accountReq: "不限", collateralReq: "政金债", issuedAt: "10:22" },
+  { account: "泰康宏观回报", gap: "-5.3 / 25.0", progress: 32, accountReq: "不限", collateralReq: "利率债优先", issuedAt: "09:28" },
+  { account: "泰康策略配置7号", gap: "-1.5 / 10.0", progress: 90, accountReq: "利率债质押", collateralReq: "国债/政金债", issuedAt: "09:35" },
+  { account: "泰康新机遇", gap: "-6.0 / 30.0", progress: 8, accountReq: "利率债质押", collateralReq: "国债/政金债", issuedAt: "10:30" },
+  { account: "泰康瑞坤纯债", gap: "-3.8 / 18.0", progress: 55, accountReq: "不限", collateralReq: "政金债", issuedAt: "09:50" },
+  { account: "泰康添润6个月", gap: "-2.0 / 9.5", progress: 100, accountReq: "利率债质押", collateralReq: "政金债", issuedAt: "09:40" },
+  { account: "泰康均衡优选", gap: "-1.2 / 7.0", progress: 68, accountReq: "利率债质押", collateralReq: "国债/地方债", issuedAt: "10:12" },
+  { account: "泰康鑫选利90天", gap: "-0.8 / 4.0", progress: 100, accountReq: "信用债可用", collateralReq: "AA+以上", issuedAt: "10:08" },
+  { account: "泰康长江经济带", gap: "-1.0 / 5.5", progress: 20, accountReq: "不限", collateralReq: "利率债优先", issuedAt: "10:35" },
+] as const;
+
 function CombinedDemandMatrixCard() {
   const [detailOpen, setDetailOpen] = useState(false);
+  const [bottomTab, setBottomTab] = useState<DemandBottomTab>("demand");
   const repoMatrix = buildDemandMatrix(demandRowsByDirection.repo);
   const reverseMatrix = buildDemandMatrix(demandRowsByDirection.reverse);
   const reverseByTenor = demandTenors.map((tenor) => reverseMatrix.columnTotals[tenor]);
   const reverseTotal = reverseMatrix.grandTotal;
 
+  const tabItems: { key: DemandBottomTab; label: string }[] = [
+    { key: "demand", label: "正/逆回购需求" },
+    { key: "gap", label: "资金缺口" },
+    { key: "inflight", label: "在途指令" },
+  ];
+
   return (
     <>
-      <div className="grid min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
-        <div className="flex items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2.5 py-1.5">
-          <div className="min-w-0">
-            <button
-              aria-label="打开正逆回购需求缺口详情"
-              className="tk-matrix-card-title inline-flex max-w-full truncate border-0 border-b border-[rgba(248,113,113,0.95)] bg-transparent p-0 pb-0.5 text-left underline decoration-[rgba(248,113,113,0.95)] decoration-2 underline-offset-4 transition hover:border-white hover:text-white hover:decoration-white"
-              onClick={() => setDetailOpen(true)}
-              style={{
-                textDecorationLine: "underline",
-                textDecorationThickness: "2px",
-                textUnderlineOffset: "4px",
-              }}
-              title="查看缺口详情"
-              type="button"
-            >
-              正/逆回购需求
-            </button>
-          </div>
-          <div className="flex shrink-0 gap-1">
-            {demandTenors.map((tenor) => (
-              <span key={tenor} className="tk-matrix-tag rounded border px-1 py-0.5">
-                {tenor}
-              </span>
+      <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+        <div className="flex items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2.5 py-1">
+          <div className="flex min-w-0 items-center gap-1">
+            {tabItems.map((tab) => (
+              <button
+                key={tab.key}
+                className={`rounded px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                  bottomTab === tab.key
+                    ? "bg-[rgba(248,113,113,0.18)] text-red-200"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+                onClick={() => setBottomTab(tab.key)}
+                type="button"
+              >
+                {tab.label}
+              </button>
             ))}
           </div>
+          {bottomTab === "demand" && (
+            <div className="flex shrink-0 gap-1">
+              {demandTenors.map((tenor) => (
+                <span key={tenor} className="tk-matrix-tag rounded border px-1 py-0.5">
+                  {tenor}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="min-h-0 overflow-hidden p-1">
-          <div className="grid h-full min-h-0 grid-cols-[4.2rem_repeat(3,minmax(0,1fr))] grid-rows-[1.55rem_repeat(5,minmax(0,1fr))] gap-px text-[8px]">
-            <DemandTableHeader label="正回购需求" />
-            {demandTenors.map((tenor) => (
-              <DemandTableHeader key={tenor} label={tenor} align="right" />
-            ))}
-            <DemandTableHeader label="合计" align="right" />
-            {repoMatrix.rows.map((row) => (
-              <Fragment key={row.label}>
-                <DemandRowHeader row={row} />
+        <div className="min-h-0 overflow-auto">
+          {bottomTab === "demand" ? (
+            <div className="h-full min-h-0 p-1">
+              <div className="grid h-full min-h-0 grid-cols-[4.2rem_repeat(3,minmax(0,1fr))] grid-rows-[1.55rem_repeat(5,minmax(0,1fr))] gap-px text-[8px]">
+                <DemandTableHeader label="正回购需求" />
                 {demandTenors.map((tenor) => (
-                  <DemandCompactCell key={`${row.label}-${tenor}`} amount={row.cells[tenor]} />
+                  <DemandTableHeader key={tenor} label={tenor} align="right" />
                 ))}
-                <DemandCompactCell amount={repoMatrix.rowTotals[row.label]} strong />
-              </Fragment>
-            ))}
-            <DemandTableHeader label="合计" />
-            {demandTenors.map((tenor) => (
-              <DemandCompactCell key={`repo-total-${tenor}`} amount={repoMatrix.columnTotals[tenor]} strong />
-            ))}
-            <DemandCompactCell amount={repoMatrix.grandTotal} strong />
-            <DemandTableHeader label="逆回购需求" />
-            {reverseByTenor.map((amount, index) => (
-              <DemandCompactCell key={`reverse-${demandTenors[index]}`} amount={amount} accent="var(--tk-color-brand-cyan)" />
-            ))}
-            <DemandCompactCell amount={reverseTotal} strong accent="var(--tk-color-brand-cyan)" />
-          </div>
+                <DemandTableHeader label="合计" align="right" />
+                {repoMatrix.rows.map((row) => (
+                  <Fragment key={row.label}>
+                    <DemandRowHeader row={row} />
+                    {demandTenors.map((tenor) => (
+                      <DemandCompactCell key={`${row.label}-${tenor}`} amount={row.cells[tenor]} />
+                    ))}
+                    <DemandCompactCell amount={repoMatrix.rowTotals[row.label]} strong />
+                  </Fragment>
+                ))}
+                <DemandTableHeader label="合计" />
+                {demandTenors.map((tenor) => (
+                  <DemandCompactCell key={`repo-total-${tenor}`} amount={repoMatrix.columnTotals[tenor]} strong />
+                ))}
+                <DemandCompactCell amount={repoMatrix.grandTotal} strong />
+                <DemandTableHeader label="逆回购需求" />
+                {reverseByTenor.map((amount, index) => (
+                  <DemandCompactCell key={`reverse-${demandTenors[index]}`} amount={amount} accent="var(--tk-color-brand-cyan)" />
+                ))}
+                <DemandCompactCell amount={reverseTotal} strong accent="var(--tk-color-brand-cyan)" />
+              </div>
+            </div>
+          ) : bottomTab === "gap" ? (
+            <table className="w-full border-separate border-spacing-0 text-[10px]">
+              <thead className="sticky top-0 z-10 bg-[var(--tk-color-surface-dark-soft)] text-slate-400">
+                <tr>
+                  {["账户", "保本利率", "资金缺口/可用额度", "账户要求", "质押要求"].map((col) => (
+                    <th key={col} className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-left font-medium">{col}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {fundGapRows.map((row) => (
+                  <tr key={row.account} className="hover:bg-[rgba(255,255,255,0.03)]">
+                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 font-medium text-slate-200">{row.account}</td>
+                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-amber-300">{row.breakEvenRate}</td>
+                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 font-semibold text-red-300">{row.gap}</td>
+                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-slate-400">{row.accountReq}</td>
+                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-slate-400">{row.collateralReq}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <table className="w-full border-separate border-spacing-0 text-[10px]">
+              <thead className="sticky top-0 z-10 bg-[var(--tk-color-surface-dark-soft)] text-slate-400">
+                <tr>
+                  {["账户", "资金缺口/可用额度", "完成度", "账户要求", "质押要求", "下达时间"].map((col) => (
+                    <th key={col} className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-left font-medium">{col}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {inflightRows.map((row) => (
+                  <tr key={row.account} className="hover:bg-[rgba(255,255,255,0.03)]">
+                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 font-medium text-slate-200">{row.account}</td>
+                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 font-semibold text-red-300">{row.gap}</td>
+                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-1 w-12 overflow-hidden rounded-full bg-slate-700">
+                          <div className={`h-full rounded-full ${row.progress >= 100 ? "bg-emerald-500" : "bg-[var(--tdx-red)]"}`} style={{ width: `${Math.min(row.progress, 100)}%` }} />
+                        </div>
+                        <span className={`${row.progress >= 100 ? "text-emerald-400" : "text-slate-300"}`}>{row.progress}%</span>
+                      </div>
+                    </td>
+                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-slate-400">{row.accountReq}</td>
+                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-slate-400">{row.collateralReq}</td>
+                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-slate-300">{row.issuedAt}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
       {detailOpen ? (
@@ -9028,11 +9134,11 @@ function MiddleMatrixNoticeBar({
         type="button"
         title="编辑交易提醒"
       >
-        <span className="shrink-0 whitespace-nowrap text-[13px] font-semibold text-[color:var(--tdx-red,#e7353a)]">
+        <span className="shrink-0 whitespace-nowrap text-[13px] font-semibold text-slate-200">
           {statusText}
         </span>
         <div className="tk-marquee relative flex min-w-0 items-center overflow-hidden">
-          <div className="tk-marquee__track flex shrink-0 items-center gap-12 whitespace-nowrap text-[13px] font-semibold text-[color:var(--tdx-red,#e7353a)]">
+          <div className="tk-marquee__track flex shrink-0 items-center gap-12 whitespace-nowrap text-[13px] font-semibold text-slate-200">
             <span>{noticeText}</span>
             <span aria-hidden="true">{noticeText}</span>
             <span aria-hidden="true">{noticeText}</span>
@@ -9169,19 +9275,22 @@ function TradingNoticeEditorModal({
 
 function LeftInfoColumn() {
   return (
-    <aside className="flex h-full min-h-0 min-w-0 flex-col gap-1.5 overflow-hidden pr-1">
-      <div className="min-h-0 flex-[1.3]">
+    <aside className="flex h-full min-h-0 min-w-0 flex-col gap-1 overflow-hidden pr-1">
+      <div className="min-h-0 flex-[1.4]">
         <BigBankPriceFrame embeddedPreview />
       </div>
-      <div className="min-h-0 flex-1">
+      <div className="min-h-0 flex-[1.1]">
         <XrepoFrame embeddedPreview />
       </div>
-      <div className="min-h-0 flex-1">
+      <div className="min-h-0 flex-[0.8]">
         <ExchangeRepoFrame embeddedPreview />
       </div>
     </aside>
   );
 }
+
+const CENTER_SPLIT_KEY = "centerSplitRatio.v1";
+const DEFAULT_CENTER_TOP = 78;
 
 function CenterColumn({
   tenorFilter,
@@ -9190,15 +9299,63 @@ function CenterColumn({
   tenorFilter: QuoteTenorFilter;
   onTenorFilterChange: (tenor: QuoteTenorFilter) => void;
 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [topPct, setTopPct] = useState(() => {
+    try {
+      const saved = localStorage.getItem(CENTER_SPLIT_KEY);
+      if (saved) {
+        const n = Number(saved);
+        if (n >= 30 && n <= 90) return n;
+      }
+    } catch {}
+    return DEFAULT_CENTER_TOP;
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem(CENTER_SPLIT_KEY, String(topPct)); } catch {}
+  }, [topPct]);
+
+  function startRowDrag(e: React.MouseEvent) {
+    e.preventDefault();
+    const container = containerRef.current;
+    if (!container) return;
+    function onMove(ev: MouseEvent) {
+      const rect = container!.getBoundingClientRect();
+      if (rect.height <= 0) return;
+      const pct = ((ev.clientY - rect.top) / rect.height) * 100;
+      setTopPct(Math.max(30, Math.min(90, pct)));
+    }
+    function onUp() {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    }
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "row-resize";
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }
+
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col gap-1.5 overflow-hidden px-1">
-      <div className="min-h-0 flex-[3]">
+    <div ref={containerRef} className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden px-1">
+      <div className="min-h-0 overflow-hidden" style={{ height: `${topPct}%` }}>
         <MainQuoteBoard
           tenorFilter={tenorFilter}
           onTenorFilterChange={onTenorFilterChange}
         />
       </div>
-      <div className="min-h-0 flex-1">
+      <div
+        role="separator"
+        aria-orientation="horizontal"
+        aria-label="拖动调整上下高度"
+        title="拖动调整上下高度"
+        onMouseDown={startRowDrag}
+        className="group relative shrink-0 cursor-row-resize py-[2px]"
+      >
+        <span className="pointer-events-none block h-[2px] w-full rounded bg-[var(--tk-color-border-panel)] group-hover:bg-[var(--tdx-red)]" />
+      </div>
+      <div className="min-h-0 flex-1 overflow-hidden">
         <CombinedDemandMatrixCard />
       </div>
     </div>
@@ -9210,11 +9367,11 @@ function RightChartColumn() {
   const [baseProduct, setBaseProduct] = useState<BaseTrendProduct>("r001");
 
   return (
-    <aside className="flex h-full min-h-0 min-w-0 flex-col gap-1.5 overflow-hidden pl-1">
-      <div className="min-h-0 flex-1">
+    <aside className="flex h-full min-h-0 min-w-0 flex-col gap-1 overflow-hidden pl-1">
+      <div className="min-h-0 flex-[1.2]">
         <BarometerMatrixCard />
       </div>
-      <div className="min-h-0 flex-1">
+      <div className="min-h-0 flex-[1.2]">
         <IntradayPanel
           baseProduct={baseProduct}
           overlayProduct={overlayProduct}
@@ -9222,7 +9379,7 @@ function RightChartColumn() {
           onOverlayChange={setOverlayProduct}
         />
       </div>
-      <div className="min-h-0 flex-1">
+      <div className="min-h-0 flex-[0.8]">
         <LeftNcdCard embeddedPreview />
       </div>
     </aside>
@@ -9473,13 +9630,25 @@ function MainQuoteBoard({
   }
 
   return (
-    <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pr-1">
+    <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
       <section className="tk-panel flex min-h-0 flex-1 flex-col overflow-hidden border">
         <div className="tk-panel-header border-b px-4 py-2.5">
           <div className="flex flex-nowrap items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-2">
+            <div className="flex min-w-0 items-center gap-3">
               <div className="tk-title-lg shrink-0 whitespace-nowrap">
                 非银报价
+              </div>
+              <div className="flex items-center gap-0.5 border-r border-[color:var(--tk-color-border-divider-dark)] pr-3">
+                {repoQuoteSections.map((s) => (
+                  <button
+                    key={s.id}
+                    className={`whitespace-nowrap rounded px-2.5 py-1 text-xs font-medium transition-colors ${activeSectionId === s.id ? "bg-[var(--tk-color-brand-cyan)] text-slate-900" : "text-slate-400 hover:bg-[var(--tk-color-surface-selected)] hover:text-slate-200"}`}
+                    onClick={() => setActiveSectionId(s.id)}
+                    type="button"
+                  >
+                    {s.title}
+                  </button>
+                ))}
               </div>
               <div className="tk-muted flex flex-nowrap items-center gap-0.5 text-xs">
                 <button
@@ -9535,58 +9704,38 @@ function MainQuoteBoard({
         </div>
         <div
           ref={bodyRef}
-          className={`flex min-h-0 flex-1 flex-col ${
-            displayLevel === 1 ? "overflow-y-auto" : "overflow-hidden"
-          }`}
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto"
         >
-          {repoQuoteSections.map((section, index) => {
-            const isLast = index === repoQuoteSections.length - 1;
-            const dragRatio =
-              displayLevel === 2
-                ? index === 0
-                  ? topRatio
-                  : 100 - topRatio
-                : null;
-            return (
-              <Fragment key={section.id}>
-                <RepoQuoteSectionBoard
-                  section={section}
-                  displayLevel={displayLevel}
-                  withTopBorder={index === 1}
-                  isActive={section.id === activeSectionId}
-                  onActivate={() => setActiveSectionId(section.id)}
-                  dragRatio={dragRatio}
-                  tenorFilter={tenorFilter}
-                  accountSearch={accountSearch}
-                  collateralSearch={collateralSearch}
-                  applyOverride={applyOverride}
-                  pinnedQuotes={pinnedQuotes}
-                  pinnedKeys={pinnedKeys}
-                  onEdit={openEditor}
-                  onTogglePin={togglePinnedQuote}
-                  onSend={(row, groupName, contactName) =>
-                    setChatContext({
-                      row,
-                      groupName,
-                      sectionTitle: section.title,
-                      contactName:
-                        contactName ?? contactNameForInstitution(row.institution),
-                    })
-                  }
-                />
-                {displayLevel === 2 && !isLast ? (
-                  <div
-                    role="separator"
-                    aria-orientation="horizontal"
-                    onMouseDown={startDrag}
-                    className="group relative h-1.5 shrink-0 cursor-row-resize bg-[var(--tk-color-border-panel)] transition-colors hover:bg-[var(--tk-color-brand-cyan)]"
-                  >
-                    <span className="pointer-events-none absolute left-1/2 top-1/2 h-[2px] w-10 -translate-x-1/2 -translate-y-1/2 rounded bg-slate-500/60 group-hover:bg-sky-200" />
-                  </div>
-                ) : null}
-              </Fragment>
-            );
-          })}
+          {repoQuoteSections
+            .filter((section) => section.id === activeSectionId)
+            .map((section) => (
+              <RepoQuoteSectionBoard
+                key={section.id}
+                section={section}
+                displayLevel={displayLevel}
+                withTopBorder={false}
+                isActive
+                onActivate={() => {}}
+                dragRatio={null}
+                tenorFilter={tenorFilter}
+                accountSearch={accountSearch}
+                collateralSearch={collateralSearch}
+                applyOverride={applyOverride}
+                pinnedQuotes={pinnedQuotes}
+                pinnedKeys={pinnedKeys}
+                onEdit={openEditor}
+                onTogglePin={togglePinnedQuote}
+                onSend={(row, groupName, contactName) =>
+                  setChatContext({
+                    row,
+                    groupName,
+                    sectionTitle: section.title,
+                    contactName:
+                      contactName ?? contactNameForInstitution(row.institution),
+                  })
+                }
+              />
+            ))}
         </div>
       </section>
       <QuoteEditorModal
@@ -10377,23 +10526,17 @@ function RepoQuoteSectionBoard({
       onClick={onActivate}
       tabIndex={0}
     >
-      <div
-        className={`flex cursor-pointer items-center justify-between px-4 py-1.5 ${isActive ? "border-l-[3px] border-[color:var(--tk-color-brand-cyan)] bg-[var(--tk-color-surface-selected)] shadow-[inset_3px_0_0_var(--tk-color-brand-cyan)]" : "bg-[var(--tk-color-surface-page)]"}`}
-      >
-        <div className="flex items-center gap-2">
-          <div className="text-sm font-semibold text-slate-100">
-            {section.title}
+      {!isActive && (
+        <div
+          className="flex cursor-pointer items-center justify-between bg-[var(--tk-color-surface-page)] px-4 py-1.5"
+        >
+          <div className="flex items-center gap-2">
+            <div className="text-sm font-semibold text-slate-100">
+              {section.title}
+            </div>
           </div>
-          {isActive ? (
-            <span className="rounded-full bg-[rgba(0,207,232,0.12)] px-2 py-0.5 text-[10px] font-medium text-sky-300">
-              焦点
-            </span>
-          ) : null}
         </div>
-        <div className="rounded-full border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-2 py-0.5 text-[11px] text-slate-400">
-          层级 1 / 2
-        </div>
-      </div>
+      )}
       <div
         className={`min-h-0 ${
           displayLevel === 2 ? "flex-1 overflow-y-auto" : "overflow-visible"
