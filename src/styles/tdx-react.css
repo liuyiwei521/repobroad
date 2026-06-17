@@ -74,6 +74,38 @@ body,
   color: var(--tdx-text-heading);
 }
 
+.tk-page-title {
+  color: var(--tdx-text-heading);
+  font-size: var(--tk-font-size-lg);
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 24px;
+}
+
+.tk-title {
+  color: var(--tdx-text-heading);
+  font-size: var(--tk-font-size-md);
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 20px;
+}
+
+.tk-title-lg {
+  color: var(--tdx-text-heading);
+  font-size: var(--tk-font-size-md);
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 20px;
+}
+
+.tk-title-sm {
+  color: var(--tdx-text-heading);
+  font-size: var(--tk-font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 16px;
+}
+
 .tk-matrix-section-title {
   color: var(--tdx-text-heading);
   font-size: var(--tk-font-size-md);
@@ -84,10 +116,10 @@ body,
 
 .tk-matrix-card-title {
   color: var(--tdx-text-heading);
-  font-size: var(--tk-font-size-xs);
+  font-size: var(--tk-font-size-md);
   font-weight: 600;
   letter-spacing: 0;
-  line-height: var(--tk-line-height-normal);
+  line-height: 20px;
 }
 
 .tk-matrix-card-subtitle {
@@ -140,6 +172,58 @@ body,
   box-shadow: none;
 }
 
+.tk-button {
+  min-height: 28px;
+  padding: 0 12px;
+  font-size: var(--tk-font-size-xs);
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.tk-button.text-mini {
+  min-height: 24px;
+  padding: 0 10px;
+  font-size: var(--tk-font-size-mini);
+  line-height: 16px;
+}
+
+.tk-button.text-micro {
+  min-height: 20px;
+  padding: 0 8px;
+  font-size: var(--tk-font-size-micro);
+  line-height: 14px;
+}
+
+.tk-icon-button {
+  min-height: 28px;
+  width: 28px;
+  padding: 0;
+  font-size: var(--tk-font-size-xs);
+  line-height: 16px;
+}
+
+.tk-chip {
+  min-height: 28px;
+  padding: 0 12px;
+  font-size: var(--tk-font-size-xs);
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.tk-chip.text-mini {
+  min-height: 24px;
+  padding: 0 8px;
+  font-size: var(--tk-font-size-mini);
+  line-height: 16px;
+}
+
+.tk-chip.text-micro {
+  min-height: 20px;
+  padding: 0 8px;
+  font-size: var(--tk-font-size-micro);
+  line-height: 14px;
+}
+
 .tk-button:hover,
 .tk-chip:hover {
   background: var(--tdx-bg-row-hover);
@@ -161,6 +245,63 @@ body,
   border-color: color-mix(in srgb, var(--tdx-yellow) 45%, var(--tdx-border));
   border-radius: var(--tdx-radius-sm);
   color: var(--tdx-yellow);
+  min-height: 20px;
+  padding: 0 8px;
+  font-size: var(--tk-font-size-micro);
+  font-weight: 500;
+  line-height: 14px;
+}
+
+.tk-status-badge {
+  min-height: 20px;
+  padding: 0 8px;
+  font-size: var(--tk-font-size-micro);
+  font-weight: 500;
+  line-height: 14px;
+}
+
+.tk-info-chip {
+  min-height: 24px;
+  padding: 0 12px;
+  font-size: var(--tk-font-size-xs);
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.tk-segmented-tab {
+  min-height: 28px;
+  padding: 0 12px;
+  font-size: var(--tk-font-size-xs);
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.tk-segmented-tab--compact {
+  min-height: 24px;
+  padding: 0 8px;
+  font-size: var(--tk-font-size-mini);
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.tk-inline-action {
+  min-height: 24px;
+  padding: 0 8px;
+  font-size: var(--tk-font-size-mini);
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.tk-field {
+  min-height: 28px;
+  font-size: var(--tk-font-size-xs);
+  line-height: 16px;
+}
+
+.tk-field.tk-field--compact {
+  min-height: 24px;
+  font-size: var(--tk-font-size-mini);
+  line-height: 16px;
 }
 
 .tk-overlay {
