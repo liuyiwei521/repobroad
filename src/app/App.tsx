@@ -2325,10 +2325,10 @@ function ColumnSplitter({
       aria-label="拖动调整列宽"
       title="拖动调整列宽"
       onMouseDown={onMouseDown}
-      className="group relative h-full cursor-col-resize bg-transparent transition-colors hover:bg-[rgba(231,53,58,0.18)]"
-      style={{ width: "100%", minWidth: 6 }}
+      className="group relative h-full cursor-col-resize border-l border-[rgba(255,255,255,0.04)] bg-transparent transition-colors hover:bg-[rgba(231,53,58,0.18)]"
+      style={{ width: "100%", minWidth: 8 }}
     >
-      <span className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-[2px] -translate-x-1/2 -translate-y-1/2 rounded bg-[var(--tk-color-border-panel)] group-hover:bg-[var(--tdx-red)]" />
+      <span className="pointer-events-none absolute left-1/2 top-1/2 h-16 w-[2px] -translate-x-1/2 -translate-y-1/2 rounded bg-[rgba(255,255,255,0.1)] group-hover:bg-[var(--tdx-red)]" />
     </div>
   );
 }
@@ -3345,7 +3345,7 @@ function ModuleSummaryOverview({
               key={`${chip.label}-${chip.value}`}
               className="tk-field min-w-0 rounded px-2 py-1"
             >
-              <div className="tk-muted truncate text-[9px]">
+              <div className="tk-muted truncate text-[10px]">
                 {chip.label}
               </div>
               <div
@@ -3410,7 +3410,7 @@ function XrepoSummaryOverview({
   return (
     <div className="mt-1 border-t border-[color:var(--tk-color-border-divider-dark)] pt-1">
       <div className="tk-table-shell overflow-hidden rounded border">
-        <div className="grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-1.5 py-0.5 text-[9px] leading-tight text-[color:var(--tk-color-text-tertiary)]">
+        <div className="grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-1.5 py-0.5 text-[10px] leading-tight text-[color:var(--tk-color-text-tertiary)]">
           <span className="truncate">合约</span>
           <span className="truncate text-right">正量</span>
           <span className="truncate text-right">正利率</span>
@@ -4360,7 +4360,7 @@ function MiniInstitutionSeriesPreview({
           {visibleSeries.length}/{series.length}
         </span>
       </div>
-      <div className="flex gap-x-2 overflow-x-auto whitespace-nowrap pb-1 text-[9px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-x-2 overflow-x-auto whitespace-nowrap pb-1 text-[10px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {series.map((item) => {
           const hidden = hiddenKeys.has(item.key);
           return (
@@ -4579,7 +4579,7 @@ function MiniMetricPreview({
 function InfoPill({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 rounded border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.54)] px-2 py-1">
-      <div className="truncate text-[9px] text-slate-500">{label}</div>
+      <div className="truncate text-[10px] text-slate-500">{label}</div>
       <div className="truncate text-[11px] font-semibold text-slate-200">{value}</div>
     </div>
   );
@@ -4666,10 +4666,10 @@ function TopBar({
   const [tradingNotice, setTradingNotice] = useState(DEFAULT_TRADING_NOTICE_TEXT);
 
   return (
-    <header className="tk-topbar border-b px-3 py-2">
+    <header className="tk-topbar border-b px-3 py-2 shadow-[0_1px_4px_rgba(0,0,0,0.3)]">
       <div className="grid grid-cols-[minmax(230px,320px)_minmax(320px,1fr)_auto] items-center gap-3">
         <div className="flex items-center gap-2">
-          <div className="whitespace-nowrap text-[20px] font-semibold tracking-[0] text-[color:var(--tk-color-text-inverse)]">
+          <div className="whitespace-nowrap text-[16px] font-semibold tracking-[0] text-[color:var(--tk-color-text-inverse)]">
             资金实时行情看板
           </div>
           <button
@@ -5808,7 +5808,7 @@ function XrepoInlineHistoryChart({
         </div>
       </div>
       <div className="grid h-full min-h-0 grid-cols-[2.5rem_1fr] px-2 pb-1 pt-1">
-        <div className="flex flex-col justify-between pb-5 pt-5 pr-1 text-right text-[9px] text-slate-500">
+        <div className="flex flex-col justify-between pb-5 pt-5 pr-1 text-right text-[10px] text-slate-500">
           {buildAxisLabels(minRate, maxRate, 4).map((tick) => (
             <div key={tick}>{tick}</div>
           ))}
@@ -5903,7 +5903,7 @@ function XrepoInlineHistoryChart({
               index % tickStep === 0 || index === data.labels.length - 1 ? (
                 <span
                   key={label}
-                  className="absolute top-0 -translate-x-1/2 text-[8px] text-slate-500"
+                  className="absolute top-0 -translate-x-1/2 text-[10px] text-slate-500"
                   style={{ left: `${(index / (data.labels.length - 1)) * 100}%` }}
                 >
                   {label}
@@ -7777,8 +7777,8 @@ function BarometerMatrixCard() {
       </div>
 
       <div className="grid min-h-0 grid-cols-[2.7rem_minmax(0,1fr)] grid-rows-[minmax(0,1fr)_1rem] px-3 pb-1 pt-2">
-        <div className="flex flex-col justify-between pr-2 text-right text-[8px] text-slate-500">
-          <div className="text-[7px] text-slate-500">{currentSlice.yLabel}</div>
+        <div className="flex flex-col justify-between pr-2 text-right text-[10px] text-slate-500">
+          <div className="text-[10px] text-slate-500">{currentSlice.yLabel}</div>
           {yTicks.map((tick) => (
             <div key={tick}>{tick}</div>
           ))}
@@ -7859,7 +7859,7 @@ function BarometerMatrixCard() {
             </ChartTooltip>
           ) : null}
         </div>
-        <div className="col-start-2 row-start-2 flex items-end justify-between text-[7px] leading-none text-slate-500">
+        <div className="col-start-2 row-start-2 flex items-end justify-between text-[10px] leading-none text-slate-500">
           {barometerTimeline.map((label) => (
             <span key={label}>
               {visibleTimeLabels.has(label) ? label : ""}
@@ -8123,7 +8123,7 @@ function CombinedDemandMatrixCard() {
         <div className="min-h-0 overflow-auto">
           {bottomTab === "demand" ? (
             <div className="h-full min-h-0 p-1">
-              <div className="grid h-full min-h-0 grid-cols-[4.2rem_repeat(3,minmax(0,1fr))] grid-rows-[1.55rem_repeat(5,minmax(0,1fr))] gap-px text-[8px]">
+              <div className="grid h-full min-h-0 grid-cols-[4.2rem_repeat(3,minmax(0,1fr))] grid-rows-[1.55rem_repeat(5,minmax(0,1fr))] gap-px text-[10px]">
                 <DemandTableHeader label="正回购需求" />
                 {demandTenors.map((tenor) => (
                   <DemandTableHeader key={tenor} label={tenor} align="right" />
@@ -8350,7 +8350,7 @@ function DemandTableHeader({
 }) {
   return (
     <div
-      className={`flex min-w-0 items-center overflow-hidden rounded-sm border border-[color:var(--tk-color-border-panel)] bg-[rgba(30,41,59,0.82)] px-1 text-[9px] font-semibold text-slate-300 ${
+      className={`flex min-w-0 items-center overflow-hidden rounded-sm border border-[color:var(--tk-color-border-panel)] bg-[rgba(30,41,59,0.82)] px-1 text-[10px] font-semibold text-slate-300 ${
         align === "right" ? "justify-end text-right" : ""
       }`}
     >
@@ -8430,7 +8430,7 @@ function DemandMatrixCard({
       </div>
 
       <div className="min-h-0 overflow-hidden p-[1px]">
-        <div className="grid h-full min-h-0 grid-cols-[3.75rem_repeat(3,minmax(0,1fr))] grid-rows-[1.95rem_repeat(3,minmax(0,1fr))] gap-px text-[8px]">
+        <div className="grid h-full min-h-0 grid-cols-[3.75rem_repeat(3,minmax(0,1fr))] grid-rows-[1.95rem_repeat(3,minmax(0,1fr))] gap-px text-[10px]">
           <DemandAxisHeader />
           <DemandHeaderCell label="合计" amount={matrix.grandTotal} accent={directionAccent} />
           {demandTenors.map((tenor) => (
@@ -8541,7 +8541,7 @@ function DemandMatrixCell({
         <div className="grid min-w-0 grid-cols-[auto_minmax(14px,1fr)_auto] items-center gap-0.5">
           <DemandCellMetric label="已" value={amount.done} tone="done" />
           <DemandInlineProgress progress={progress} accent={accent} muted={done || empty} />
-          <span className="text-[9px] text-slate-400">{progress}%</span>
+          <span className="text-[10px] text-slate-400">{progress}%</span>
         </div>
       </div>
     </button>
@@ -8570,7 +8570,7 @@ function DemandCellMetric({
 
   return (
     <div className={`flex min-w-0 items-baseline gap-0.5 ${align === "right" ? "justify-end text-right" : ""}`}>
-      <span className="shrink-0 text-[8px] text-slate-500">{label}</span>
+      <span className="shrink-0 text-[10px] text-slate-500">{label}</span>
       <span className={`truncate text-[13px] font-semibold leading-none ${valueClass}`}>
         {formatDemandAmount(value)}
       </span>
@@ -8593,7 +8593,7 @@ function DemandMiniStats({
 }) {
   const gap = demandGap(amount);
   return (
-    <div className={`mt-[1px] grid gap-y-0 leading-none text-slate-400 ${compact ? "text-[8px]" : "text-[9px]"}`}>
+    <div className={`mt-[1px] grid gap-y-0 leading-none text-slate-400 ${compact ? "text-[10px]" : "text-[10px]"}`}>
       <div className="flex min-w-0 items-baseline justify-between gap-1">
         <span className="whitespace-nowrap">
           <span className="text-slate-500">需</span>
@@ -8946,14 +8946,14 @@ function PersonalInstitutionCompareCard() {
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2.5 py-1.5">
         <div className="flex shrink-0 items-baseline gap-1.5">
           <span className="tk-matrix-card-title shrink-0 whitespace-nowrap">个人 & 机构</span>
-          <span className="shrink-0 whitespace-nowrap text-[9px] text-slate-500">实线=个人 / 虚线=机构</span>
+          <span className="shrink-0 whitespace-nowrap text-[10px] text-slate-500">实线=个人 / 虚线=机构</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-[9px] text-slate-400">截至 16:00</span>
+          <span className="text-[10px] text-slate-400">截至 16:00</span>
           {personalInstitutionModeOptions.map((option) => (
             <button
               key={option.key}
-              className={`rounded-sm border px-1.5 py-0.5 text-[9px] font-semibold transition ${
+              className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold transition ${
                 mode === option.key
                   ? "border-[rgba(231,53,58,0.7)] bg-[var(--tdx-red)] text-white"
                   : "border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.45)] text-slate-400 hover:text-slate-200"
@@ -8967,13 +8967,13 @@ function PersonalInstitutionCompareCard() {
         </div>
       </div>
       <div className="flex items-center gap-1.5 border-b border-[color:var(--tk-color-border-divider)] px-2 py-1">
-        <span className="text-[9px] text-slate-500">{mode === "tenor" ? "期限" : "押券"}</span>
+        <span className="text-[10px] text-slate-500">{mode === "tenor" ? "期限" : "押券"}</span>
         {items.map((item) => {
           const active = activeKeys.includes(item.key);
           return (
             <button
               key={item.key}
-              className={`rounded-sm border px-1.5 py-0.5 text-[9px] font-semibold transition ${
+              className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold transition ${
                 active
                   ? "text-white"
                   : "border-transparent bg-transparent text-slate-500 hover:text-slate-300"
@@ -9024,7 +9024,7 @@ function PersonalInstitutionCompareCard() {
         />
       </div>
       <div className="grid min-h-0 grid-cols-[2.3rem_1fr] px-2 pt-2">
-        <div className="flex flex-col justify-between pb-4 pr-1 text-right text-[8px] text-slate-500">
+        <div className="flex flex-col justify-between pb-4 pr-1 text-right text-[10px] text-slate-500">
           {buildAxisLabels(min, max, 4).map((tick) => (
             <div key={tick}>{tick}</div>
           ))}
@@ -9077,7 +9077,7 @@ function PersonalInstitutionCompareCard() {
                 style={{ left: hoverLeft }}
               />
               <div
-                className="pointer-events-none absolute top-1 z-10 min-w-[9.5rem] rounded border border-slate-600/80 bg-slate-950/95 px-2 py-1 text-[9px] shadow-lg"
+                className="pointer-events-none absolute top-1 z-10 min-w-[9.5rem] rounded border border-slate-600/80 bg-slate-950/95 px-2 py-1 text-[10px] shadow-lg"
                 style={{
                   left: hoverIndex > personalInstitutionLabels.length / 2 ? "auto" : `calc(${hoverLeft} + 6px)`,
                   right: hoverIndex > personalInstitutionLabels.length / 2 ? `calc(${100 - (hoverIndex / (personalInstitutionLabels.length - 1)) * 100}% + 6px)` : "auto",
@@ -9103,7 +9103,7 @@ function PersonalInstitutionCompareCard() {
               </div>
             </>
           ) : null}
-          <div className="absolute inset-x-0 bottom-0 grid grid-cols-7 text-[8px] text-slate-500">
+          <div className="absolute inset-x-0 bottom-0 grid grid-cols-7 text-[10px] text-slate-500">
             {personalInstitutionLabels.map((label, index) => (
               <span key={label} className="text-center">
                 {personalInstitutionAxisLabelIndexes.has(index) ? label : ""}
@@ -9281,7 +9281,7 @@ function TradingNoticeEditorModal({
 
 function LeftInfoColumn() {
   return (
-    <aside className="flex h-full min-h-0 min-w-0 flex-col gap-1 overflow-hidden pr-1">
+    <aside className="flex h-full min-h-0 min-w-0 flex-col gap-1 overflow-hidden pr-1 brightness-[0.92]">
       <div className="min-h-0 flex-[1.4]">
         <BigBankPriceFrame embeddedPreview />
       </div>
@@ -9373,7 +9373,7 @@ function RightChartColumn() {
   const [baseProduct, setBaseProduct] = useState<BaseTrendProduct>("r001");
 
   return (
-    <aside className="flex h-full min-h-0 min-w-0 flex-col gap-1 overflow-hidden pl-1">
+    <aside className="flex h-full min-h-0 min-w-0 flex-col gap-1 overflow-hidden pl-1 brightness-[0.92]">
       <div className="min-h-0 flex-[1.2]">
         <BarometerMatrixCard />
       </div>
@@ -9535,6 +9535,8 @@ function MainQuoteBoard({
   const [activeSectionId, setActiveSectionId] = useState<
     RepoQuoteSection["id"]
   >(repoQuoteSections[0].id);
+  type CollateralTab = "best" | "all" | "利率地方" | "存单商金" | "信用";
+  const [collateralTab, setCollateralTab] = useState<CollateralTab>("best");
   const [overrides, setOverrides] = useState<Record<string, QuoteOverride>>({});
   const [editingRow, setEditingRow] = useState<QuoteDetailRow | null>(null);
   const [editingDraft, setEditingDraft] = useState<QuoteOverride>({});
@@ -9637,7 +9639,7 @@ function MainQuoteBoard({
 
   return (
     <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-      <section className="tk-panel flex min-h-0 flex-1 flex-col overflow-hidden border">
+      <section className="tk-panel flex min-h-0 flex-1 flex-col overflow-hidden border border-[rgba(255,255,255,0.1)]">
         <div className="tk-panel-header border-b px-4 py-2.5">
           <div className="flex flex-nowrap items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-3">
@@ -9699,7 +9701,7 @@ function MainQuoteBoard({
               </button>
             </div>
           </div>
-          <div className="mt-2 border-t border-[color:var(--tk-color-border-divider-dark)] pt-2">
+          <div className="mt-1.5 border-t border-[color:var(--tk-color-border-divider-dark)] pt-1.5">
             <QuoteBoardFilterControls
               accountSearch={accountSearch}
               collateralSearch={collateralSearch}
@@ -9707,6 +9709,27 @@ function MainQuoteBoard({
               onCollateralSearchChange={setCollateralSearch}
             />
           </div>
+        </div>
+        <div className="flex items-center gap-1.5 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-deep)] px-4 py-1.5">
+          {([
+            { key: "best" as CollateralTab, label: "最优", bg: "rgba(231,53,58,0.22)", activeBg: "rgba(231,53,58,0.55)", text: "text-red-200" },
+            { key: "all" as CollateralTab, label: "全部", bg: "rgba(148,163,184,0.18)", activeBg: "rgba(148,163,184,0.45)", text: "text-slate-200" },
+            { key: "利率地方" as CollateralTab, label: "国债地方", bg: "rgba(34,197,94,0.15)", activeBg: "rgba(34,197,94,0.4)", text: "text-emerald-300" },
+            { key: "存单商金" as CollateralTab, label: "存单商金", bg: "rgba(59,130,246,0.15)", activeBg: "rgba(59,130,246,0.4)", text: "text-blue-300" },
+            { key: "信用" as CollateralTab, label: "信用", bg: "rgba(168,85,247,0.15)", activeBg: "rgba(168,85,247,0.4)", text: "text-purple-300" },
+          ]).map((tab) => (
+            <button
+              key={tab.key}
+              className={`rounded-md px-3 py-1.5 text-[12px] font-semibold transition-colors ${tab.text} ${
+                collateralTab === tab.key ? "ring-1 ring-white/25" : "opacity-60 hover:opacity-100"
+              }`}
+              style={{ backgroundColor: collateralTab === tab.key ? tab.activeBg : tab.bg }}
+              onClick={() => setCollateralTab(tab.key)}
+              type="button"
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
         <div
           ref={bodyRef}
@@ -9718,7 +9741,7 @@ function MainQuoteBoard({
               <RepoQuoteSectionBoard
                 key={section.id}
                 section={section}
-                displayLevel={displayLevel}
+                displayLevel={collateralTab === "best" ? displayLevel : 2}
                 withTopBorder={false}
                 isActive
                 onActivate={() => {}}
@@ -9726,6 +9749,7 @@ function MainQuoteBoard({
                 tenorFilter={tenorFilter}
                 accountSearch={accountSearch}
                 collateralSearch={collateralSearch}
+                collateralTab={collateralTab}
                 applyOverride={applyOverride}
                 pinnedQuotes={pinnedQuotes}
                 pinnedKeys={pinnedKeys}
@@ -10331,6 +10355,7 @@ function RepoQuoteSectionBoard({
   tenorFilter,
   accountSearch,
   collateralSearch,
+  collateralTab = "best",
   applyOverride,
   pinnedQuotes,
   pinnedKeys,
@@ -10347,6 +10372,7 @@ function RepoQuoteSectionBoard({
   tenorFilter: QuoteTenorFilter;
   accountSearch: string;
   collateralSearch: string;
+  collateralTab?: string;
   applyOverride: (row: QuoteDetailRow) => QuoteDetailRow;
   pinnedQuotes: readonly PinnedQuote[];
   pinnedKeys: ReadonlySet<string>;
@@ -10376,7 +10402,10 @@ function RepoQuoteSectionBoard({
         : sortRowsByRank(logicalRows);
     return rows.filter(matchRowFilters);
   };
-  const visibleGroups = section.groups
+  const filteredGroups = collateralTab === "best" || collateralTab === "all"
+    ? section.groups
+    : section.groups.filter((g) => g.name === collateralTab);
+  const visibleGroups = filteredGroups
     .map((group) => ({ group, rows: getVisibleRows(group) }))
     .filter(({ rows }) => rows.length > 0);
   const pinnedSectionQuotes = pinnedQuotes
@@ -11517,7 +11546,7 @@ function HistoryClosePanel({
               ))}
             </div>
             <div className="relative min-h-0">
-              <span className="absolute top-0.5 left-0.5 text-[9px] text-slate-500 z-10 pointer-events-none">
+              <span className="absolute top-0.5 left-0.5 text-[10px] text-slate-500 z-10 pointer-events-none">
                 成交量
               </span>
               <div className="absolute inset-0 flex items-end gap-[4px]">
@@ -12966,7 +12995,7 @@ function MultiSeriesChart({
             onMouseLeave={handleMouseLeave}
           >
             {axisCaption && (
-              <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[9px] text-slate-500">
+              <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[10px] text-slate-500">
                 {axisCaption}
               </div>
             )}
@@ -13034,7 +13063,7 @@ function MultiSeriesChart({
             {xLabels.map((label) => (
               <span
                 key={label}
-                className="absolute -translate-x-1/2 text-[9px] text-slate-600"
+                className="absolute -translate-x-1/2 text-[10px] text-slate-600"
                 style={{
                   left: `${(dates.indexOf(label) / (dates.length - 1)) * 100}%`,
                 }}
@@ -13104,7 +13133,7 @@ function MultiSeriesChart({
             onMouseLeave={handleMouseLeave}
           >
             {axisCaption && (
-              <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[9px] text-slate-500">
+              <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[10px] text-slate-500">
                 {axisCaption}
               </div>
             )}
@@ -13158,7 +13187,7 @@ function MultiSeriesChart({
             {xLabels.map((label) => (
               <span
                 key={label}
-                className="absolute -translate-x-1/2 text-[9px] text-slate-600"
+                className="absolute -translate-x-1/2 text-[10px] text-slate-600"
                 style={{
                   left: `${(dates.indexOf(label) / (dates.length - 1)) * 100}%`,
                 }}
@@ -13230,7 +13259,7 @@ function MultiSeriesChart({
           onMouseLeave={handleMouseLeave}
         >
           {axisCaption && (
-            <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[9px] text-slate-500">
+            <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[10px] text-slate-500">
               {axisCaption}
             </div>
           )}
@@ -13292,7 +13321,7 @@ function MultiSeriesChart({
           {xLabels.map((label) => (
             <span
               key={label}
-              className="absolute -translate-x-1/2 text-[9px] text-slate-600"
+              className="absolute -translate-x-1/2 text-[10px] text-slate-600"
               style={{
                 left: `${(dates.indexOf(label) / (dates.length - 1)) * 100}%`,
               }}
@@ -14266,7 +14295,7 @@ function NcdTrendPanel({ compact = false }: { compact?: boolean }) {
         </div>
       </div>
       <div
-        className={`grid ${compact ? "grid-cols-7" : "grid-cols-14"} text-center text-[9px] text-slate-400`}
+        className={`grid ${compact ? "grid-cols-7" : "grid-cols-14"} text-center text-[10px] text-slate-400`}
       >
         {labels.map((label) => (
           <div key={label}>{label}</div>
@@ -14419,7 +14448,7 @@ function NcdPrimaryTrendPanel({ period = "1M" }: { period?: NcdPeriod }) {
             {xLabels.map(({ d, i }) => (
               <span
                 key={i}
-                className="absolute top-[5px] -translate-x-1/2 text-[9px] leading-none text-slate-400"
+                className="absolute top-[5px] -translate-x-1/2 text-[10px] leading-none text-slate-400"
                 style={{ left: `${(i / (count - 1)) * 100}%` }}
               >
                 {d}
@@ -14801,7 +14830,7 @@ function NcdPrimaryTable({ initialPeriod = "1M" }: { initialPeriod?: NcdPeriod }
                     <span className="truncate text-xs text-slate-300">
                       {row.name}
                       {row.marker && (
-                        <span className="ml-0.5 text-[9px] text-slate-500">
+                        <span className="ml-0.5 text-[10px] text-slate-500">
                           ▲
                         </span>
                       )}
@@ -14890,7 +14919,7 @@ function NcdPrimaryExpandedTable() {
                                 </span>
                               )}
                               {cell.limitNonBank && (
-                                <span className="rounded bg-slate-700/60 px-0.5 text-[9px] text-slate-400">
+                                <span className="rounded bg-slate-700/60 px-0.5 text-[10px] text-slate-400">
                                   限非
                                 </span>
                               )}
@@ -14944,7 +14973,7 @@ function FundStructureBars({
       </div>
       <div className="relative min-h-0 overflow-hidden rounded-md border border-dashed border-[color:var(--tk-color-border-panel)]">
         {axisCaption && (
-          <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[9px] text-slate-500">
+          <div className="pointer-events-none absolute right-1.5 top-0.5 z-10 text-[10px] text-slate-500">
             {axisCaption}
           </div>
         )}
@@ -15176,7 +15205,7 @@ function FundStructurePanel() {
       <div className="grid shrink-0 grid-cols-[3rem_1fr]">
         <div />
         <div
-          className="grid pt-0.5 text-[9px] text-slate-400"
+          className="grid pt-0.5 text-[10px] text-slate-400"
           style={{
             gridTemplateColumns: `repeat(${labels.length}, minmax(0, 1fr))`,
           }}
@@ -16254,7 +16283,7 @@ function SentimentPopoverPanel({
           {xTickIndices.map((idx) => (
             <span
               key={idx}
-              className="absolute -translate-x-1/2 text-[9px] text-slate-600"
+              className="absolute -translate-x-1/2 text-[10px] text-slate-600"
               style={{ left: `${(idx / (data.length - 1)) * 100}%` }}
             >
               {data[idx].label}
