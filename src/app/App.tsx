@@ -4704,7 +4704,7 @@ function TopBar({
               { label: "更新时间", value: "10:53:27" },
             ]}
           />
-          <SentimentChipWithPopover />
+          <SentimentChipWithPopover label="公开资金情绪" />
           <StatusBadgeWithPopover statusText={DEFAULT_TRADING_STATUS_TEXT} />
         </div>
       </div>
@@ -16312,7 +16312,11 @@ function TopToolValuePopover({
   );
 }
 
-function SentimentChipWithPopover() {
+function SentimentChipWithPopover({
+  label = "泰康资金情绪",
+}: {
+  label?: string;
+}) {
   const {
     visible,
     anchorRect,
@@ -16327,7 +16331,7 @@ function SentimentChipWithPopover() {
       onMouseEnter={scheduleShow}
       onMouseLeave={scheduleHide}
     >
-      <InfoChip label="资金情绪" value="51 / 47 / 50 / 49" tone="neutral" />
+      <InfoChip label={label} value="51 / 47 / 50 / 49" tone="neutral" />
       {visible && anchorRect && (
         <SentimentPopoverPanel
           anchorRect={anchorRect}
