@@ -2,6 +2,7 @@ import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, ty
 import { createPortal } from "react-dom";
 import {
   Activity,
+  ArrowUpDown,
   BadgePercent,
   Banknote,
   ChevronDown,
@@ -1134,6 +1135,8 @@ const topBoardFilters = {
   rateMax: "不限",
 } as const;
 
+type AmountFilterUnit = "yi" | "wan";
+
 const overlayProductOptions: Array<{ id: OverlayProduct; label: string }> = [
   { id: "none", label: "不叠加" },
   { id: "dr007", label: "DR007" },
@@ -2230,7 +2233,7 @@ function App() {
     setActiveFrame({ id: entry.id, title: entry.title, ...options });
   }
 
-  const gridTemplate = `${columns[0]}% 10px ${columns[1]}% 10px ${columns[2]}%`;
+  const gridTemplate = `${columns[0]}% 6px ${columns[1]}% 6px ${columns[2]}%`;
   return (
     <div className="tk-app-shell h-screen w-screen overflow-hidden">
       <div className="flex h-full flex-col">
@@ -2326,7 +2329,7 @@ function ColumnSplitter({
       title="拖动调整列宽"
       onMouseDown={onMouseDown}
       className="group relative h-full cursor-col-resize border-l border-[rgba(255,255,255,0.04)] bg-transparent transition-colors hover:bg-[rgba(231,53,58,0.18)]"
-      style={{ width: "100%", minWidth: 8 }}
+      style={{ width: "100%", minWidth: 4 }}
     >
       <span className="pointer-events-none absolute left-1/2 top-1/2 h-16 w-[2px] -translate-x-1/2 -translate-y-1/2 rounded bg-[rgba(255,255,255,0.1)] group-hover:bg-[var(--tdx-red)]" />
     </div>
@@ -7112,11 +7115,21 @@ type QuoteOverride = Partial<
     | "updatedAt"
   >
 > & { groupName?: string };
+type QuoteChatPayload = {
+  id: string;
+  institution: string;
+  contactName: string;
+  tenor: string;
+  amount: string;
+  rate: string;
+  collateral: string;
+  account: string;
+  updatedAt: string;
+};
 type QuoteChatContext = {
-  row: QuoteDetailRow;
+  quote: QuoteChatPayload;
   groupName: string;
   sectionTitle: string;
-  contactName: string;
 };
 type PinnedQuote = {
   key: string;
@@ -7132,6 +7145,7 @@ type OpponentQuoteCard = {
   institution: string;
   waitMinutes: number;
   status: "unreplied" | "replied";
+  updatedAt: string;
   tenor: string;
   amount: string | null;
   rate: string;
@@ -7141,6 +7155,154 @@ type OpponentQuoteCard = {
   core: boolean;
   special?: boolean;
 };
+
+function formatInstitutionSender(institution: string, sender: string) {
+  return `${institution} / ${sender}`;
+}
+
+function parseOptionalFilterNumber(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === "不限") return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseAmountTextToYi(value: string | null | undefined) {
+  if (!value || value === "--") return null;
+  const normalized = value.replace(/,/g, "").trim();
+  const parsed = Number.parseFloat(normalized);
+  if (!Number.isFinite(parsed)) return null;
+  if (normalized.includes("万")) return parsed / 10000;
+  return parsed;
+}
+
+function normalizeAmountFilterToYi(value: string, unit: AmountFilterUnit) {
+  const parsed = parseOptionalFilterNumber(value);
+  if (parsed === null) return null;
+  return unit === "wan" ? parsed / 10000 : parsed;
+}
+
+function displayAmountForRow(row: QuoteDetailRow) {
+  return showRowAmount(row.id) ? row.amount : null;
+}
+
+function formatUnifiedReplyStatus(status: OpponentQuoteCard["status"]) {
+  return status === "replied" ? "已回复" : "未回复";
+}
+
+function buildPrimaryChatQuote(row: QuoteDetailRow): QuoteChatPayload {
+  return {
+    id: row.id,
+    institution: row.institution,
+    contactName: contactNameForInstitution(row.institution),
+    tenor: row.tenor,
+    amount: displayAmountForRow(row) ?? "--",
+    rate: row.rate,
+    collateral: row.collateral,
+    account: shouldShowAccountRequirement(row.id)
+      ? normalizeAccountRequirement(row.accountType)
+      : "",
+    updatedAt: row.updatedAt,
+  };
+}
+
+function buildOpponentChatQuote(card: OpponentQuoteCard): QuoteChatPayload {
+  return {
+    id: card.id,
+    institution: card.institution,
+    contactName: card.name,
+    tenor: card.tenor,
+    amount: card.amount ?? "--",
+    rate: card.rate,
+    collateral: card.pledge ?? "",
+    account: card.account ?? "",
+    updatedAt: card.updatedAt,
+  };
+}
+
+type UnifiedQuoteTableRow = {
+  id: string;
+  kind: "primary" | "supplement";
+  coreLabel: string;
+  replyStatus: string;
+  institution: string;
+  sender: string;
+  tenor: string;
+  amount: string;
+  rate: string;
+  account: string;
+  pledge: string;
+  updatedAt: string;
+  groupName: string;
+  chatQuote: QuoteChatPayload;
+  pinItem: PinnedQuote;
+};
+type QuoteTableSortField = "amount" | "rate";
+type QuoteTableSortDirection = "asc" | "desc";
+type QuoteTableSortState = {
+  field: QuoteTableSortField;
+  direction: QuoteTableSortDirection;
+};
+
+function nextQuoteTableSortState(
+  current: QuoteTableSortState | null,
+  field: QuoteTableSortField,
+  defaultDirection: QuoteTableSortDirection,
+): QuoteTableSortState | null {
+  if (!current || current.field !== field) {
+    return { field, direction: defaultDirection };
+  }
+  if (current.direction === defaultDirection) {
+    return {
+      field,
+      direction: defaultDirection === "asc" ? "desc" : "asc",
+    };
+  }
+  return null;
+}
+
+function compareOptionalSortNumbers(
+  left: number | null,
+  right: number | null,
+  direction: QuoteTableSortDirection,
+) {
+  if (left === null && right === null) return 0;
+  if (left === null) return 1;
+  if (right === null) return -1;
+  return direction === "asc" ? left - right : right - left;
+}
+
+function QuoteSortHeaderButton({
+  label,
+  activeDirection,
+  align = "right",
+  onToggle,
+}: {
+  label: string;
+  activeDirection: QuoteTableSortDirection | null;
+  align?: "left" | "right";
+  onToggle: () => void;
+}) {
+  const justifyClass = align === "left" ? "justify-start" : "justify-end";
+  const icon = activeDirection === "asc"
+    ? <ChevronUp size={12} />
+    : activeDirection === "desc"
+      ? <ChevronDown size={12} />
+      : <ArrowUpDown size={12} />;
+
+  return (
+    <button
+      className={`inline-flex w-full items-center gap-1 ${justifyClass} text-mini text-current transition hover:text-slate-200`}
+      onClick={onToggle}
+      type="button"
+    >
+      <span>{label}</span>
+      <span className={activeDirection ? "text-slate-200" : "text-slate-500"}>
+        {icon}
+      </span>
+    </button>
+  );
+}
 
 const pinnedQuoteKey = (
   sectionId: RepoQuoteSection["id"],
@@ -7195,48 +7357,48 @@ const opponentInstitutions = [
 ] as const;
 
 const quoteContactNames: Record<string, string> = {
-  中信银行: "李经理",
-  北京银行: "王经理",
-  上海农商行: "陈经理",
-  广州银行: "周经理",
-  招商银行: "赵经理",
-  浦发银行: "刘经理",
-  民生银行: "孙经理",
-  珠海农商行: "黄经理",
-  重庆农商行: "吴经理",
-  农银理财: "李经理",
-  阳光资产: "许经理",
-  招银理财: "周经理",
-  工银理财: "张经理",
-  太保资产: "陈经理",
-  交银理财: "赵经理",
-  鹏华基金: "林经理",
-  平安资产: "何经理",
-  中信建投证券: "张经理",
-  华安基金: "郑经理",
-  中信证券: "陆经理",
-  东方红资产: "宋经理",
-  上海银行: "顾经理",
-  国泰君安: "沈经理",
-  华夏基金: "马经理",
-  中国银行: "李经理",
-  建设银行: "孙经理",
-  交通银行: "赵经理",
-  农业银行: "李经理",
-  工商银行: "张经理",
-  兴业银行: "王经理",
-  北京农商行: "王经理",
-  中银理财: "吴经理",
-  平安资管: "何经理",
-  交银施罗德: "赵经理",
-  招商证券: "秦经理",
-  平安基金: "何经理",
-  信达证券: "高经理",
-  海通证券: "唐经理",
+  中信银行: "李明轩",
+  北京银行: "王知夏",
+  上海农商行: "陈以宁",
+  广州银行: "周叙白",
+  招商银行: "赵予安",
+  浦发银行: "刘星野",
+  民生银行: "孙若川",
+  珠海农商行: "黄景川",
+  重庆农商行: "吴书言",
+  农银理财: "李见山",
+  阳光资产: "许知远",
+  招银理财: "周临风",
+  工银理财: "张屿川",
+  太保资产: "陈北辰",
+  交银理财: "赵清和",
+  鹏华基金: "林疏桐",
+  平安资产: "何沐言",
+  中信建投证券: "张砚秋",
+  华安基金: "郑知微",
+  中信证券: "陆时安",
+  东方红资产: "宋景行",
+  上海银行: "顾言舟",
+  国泰君安: "沈之恒",
+  华夏基金: "马清越",
+  中国银行: "李承泽",
+  建设银行: "孙知行",
+  交通银行: "赵元恺",
+  农业银行: "李予川",
+  工商银行: "张闻野",
+  兴业银行: "王牧之",
+  北京农商行: "王叙川",
+  中银理财: "吴清野",
+  平安资管: "何叙安",
+  交银施罗德: "赵云澈",
+  招商证券: "秦知远",
+  平安基金: "何清禾",
+  信达证券: "高叙宁",
+  海通证券: "唐景川",
 };
 
 function contactNameForInstitution(institution: string) {
-  return quoteContactNames[institution] ?? "交易员";
+  return quoteContactNames[institution] ?? "周予安";
 }
 
 type DemandDirection = "repo" | "reverse";
@@ -9370,7 +9532,7 @@ function RightChartColumn() {
   const [baseProduct, setBaseProduct] = useState<BaseTrendProduct>("r001");
 
   return (
-    <aside className="flex h-full min-h-0 min-w-0 flex-col gap-1 overflow-hidden pl-1 brightness-[0.92]">
+    <aside className="flex h-full min-h-0 min-w-0 flex-col gap-1 overflow-hidden px-1 brightness-[0.92]">
       <div className="min-h-0 flex-[1.2]">
         <BarometerMatrixCard />
       </div>
@@ -9451,41 +9613,77 @@ function MiddleMatrixColumn() {
   );
 }
 
+const ACCOUNT_TYPE_OPTIONS = [
+  "自营户", "商金户", "股份行自营", "理财子", "保险资管",
+  "公募基金", "券商自营", "券商资管", "城商行自营", "大行自营",
+  "股份行", "可专户", "年金户",
+] as const;
+
+const COLLATERAL_OPTIONS = [
+  "利率", "利率地方", "地方债", "利率地方存单商金",
+  "大行存单", "商金存单", "国股存单", "大行存单 / 商金",
+  "国股存单 / 商金", "信用债", "AAA", "AA+",
+] as const;
+
 function QuoteBoardFilterControls({
+  amountMin,
+  amountMax,
+  amountUnit,
   accountSearch,
   collateralSearch,
+  onAmountMinChange,
+  onAmountMaxChange,
+  onAmountUnitChange,
   onAccountSearchChange,
   onCollateralSearchChange,
+  className = "",
 }: {
+  amountMin: string;
+  amountMax: string;
+  amountUnit: AmountFilterUnit;
   accountSearch: string;
   collateralSearch: string;
+  onAmountMinChange: (value: string) => void;
+  onAmountMaxChange: (value: string) => void;
+  onAmountUnitChange: (value: AmountFilterUnit) => void;
   onAccountSearchChange: (value: string) => void;
   onCollateralSearchChange: (value: string) => void;
+  className?: string;
 }) {
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 whitespace-nowrap text-mini text-slate-400">
+    <div className={`flex min-w-0 items-center gap-x-1.5 gap-y-1 whitespace-nowrap text-mini text-slate-400 ${className}`}>
       <FilterLabel>金额</FilterLabel>
-      <CompactFilterField value={topBoardFilters.amountMin} />
+      <CompactSearchField
+        value={amountMin}
+        placeholder="最小"
+        onChange={onAmountMinChange}
+      />
       <span className="text-slate-500">~</span>
-      <CompactFilterField value={topBoardFilters.amountMax} />
-      <span className="text-slate-500">亿</span>
-      <FilterDivider compact />
-      <FilterLabel>利率</FilterLabel>
-      <CompactFilterField value={topBoardFilters.rateMin} />
-      <span className="text-slate-500">~</span>
-      <CompactFilterField value={topBoardFilters.rateMax} />
-      <span className="text-slate-500">%</span>
+      <CompactSearchField
+        value={amountMax}
+        placeholder="不限"
+        onChange={onAmountMaxChange}
+      />
+      <CompactSelectField<AmountFilterUnit>
+        value={amountUnit}
+        options={["yi", "wan"]}
+        onChange={onAmountUnitChange}
+        getLabel={(option) => (option === "yi" ? "亿" : "万")}
+      />
       <FilterDivider compact />
       <FilterLabel>账户要求</FilterLabel>
-      <CompactSearchField
+      <FilterDropdown
         value={accountSearch}
         placeholder="自营 / 专户"
+        options={ACCOUNT_TYPE_OPTIONS as unknown as readonly string[]}
         onChange={onAccountSearchChange}
       />
+      <FilterDivider compact />
       <FilterLabel>质押要求</FilterLabel>
-      <CompactSearchField
+      <FilterDropdown
         value={collateralSearch}
         placeholder="利率 / 存单"
+        options={COLLATERAL_OPTIONS as unknown as readonly string[]}
         onChange={onCollateralSearchChange}
       />
     </div>
@@ -9494,7 +9692,7 @@ function QuoteBoardFilterControls({
 
 function CompactFilterField({ value }: { value: string }) {
   return (
-    <div className="tk-field flex h-6 min-w-[54px] items-center justify-center px-2 text-mini">
+    <div className="tk-field flex h-6 min-w-[48px] items-center justify-center px-2 text-mini">
       {value}
     </div>
   );
@@ -9511,11 +9709,73 @@ function CompactSearchField({
 }) {
   return (
     <input
-      className="tk-field h-6 w-[92px] px-2 text-mini text-slate-100 outline-none placeholder:text-slate-600"
+      className="tk-field h-6 w-[112px] px-2 text-mini text-slate-100 outline-none placeholder:text-slate-600"
       value={value}
       placeholder={placeholder}
       onChange={(event) => onChange(event.target.value)}
     />
+  );
+}
+
+function FilterDropdown({
+  value,
+  placeholder,
+  options,
+  onChange,
+}: {
+  value: string;
+  placeholder: string;
+  options: readonly string[];
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+  const filtered = options.filter((opt) =>
+    opt.toLowerCase().includes((search || value).toLowerCase()),
+  );
+  return (
+    <div ref={ref} className="relative">
+      <input
+        className="tk-field h-6 w-[96px] px-2 text-mini text-slate-100 outline-none placeholder:text-slate-600"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => { onChange(e.target.value); setSearch(e.target.value); setOpen(true); }}
+        onFocus={() => { setSearch(value); setOpen(true); }}
+      />
+      {open && (
+        <div className="absolute left-0 top-full z-50 mt-0.5 max-h-48 w-[160px] overflow-y-auto rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark)] shadow-lg">
+          <button
+            className="flex w-full items-center px-2 py-1.5 text-left text-mini text-slate-400 hover:bg-[var(--tk-color-surface-selected)]"
+            onClick={() => { onChange(""); setOpen(false); }}
+            type="button"
+          >
+            不限
+          </button>
+          {filtered.map((opt) => (
+            <button
+              key={opt}
+              className={`flex w-full items-center px-2 py-1.5 text-left text-mini hover:bg-[var(--tk-color-surface-selected)] ${value === opt ? "text-[color:var(--tk-color-brand-cyan)]" : "text-slate-200"}`}
+              onClick={() => { onChange(opt); setOpen(false); }}
+              type="button"
+            >
+              {opt}
+            </button>
+          ))}
+          {!filtered.length && (
+            <div className="px-2 py-1.5 text-mini text-slate-500">无匹配项</div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -9526,13 +9786,20 @@ function MainQuoteBoard({
   tenorFilter: QuoteTenorFilter;
   onTenorFilterChange: (tenor: QuoteTenorFilter) => void;
 }) {
+  const [amountMin, setAmountMin] = useState(topBoardFilters.amountMin);
+  const [amountMax, setAmountMax] = useState("");
+  const [amountUnit, setAmountUnit] = useState<AmountFilterUnit>("yi");
   const [accountSearch, setAccountSearch] = useState("");
   const [collateralSearch, setCollateralSearch] = useState("");
   const [activeSectionId, setActiveSectionId] = useState<
     RepoQuoteSection["id"]
   >(repoQuoteSections[0].id);
-  type CollateralTab = "best" | "all" | "利率地方" | "存单商金" | "信用";
-  const [collateralTab, setCollateralTab] = useState<CollateralTab>("best");
+  type CollateralFilter = "all" | "利率地方" | "存单商金" | "信用";
+  type RankFilter = "best" | "all";
+  type SupplementStatusFilter = ExpandStatus;
+  const [collateralFilter, setCollateralFilter] = useState<CollateralFilter>("all");
+  const [rankFilter, setRankFilter] = useState<RankFilter>("all");
+  const [supplementStatusFilter, setSupplementStatusFilter] = useState<SupplementStatusFilter>("all");
   const [overrides, setOverrides] = useState<Record<string, QuoteOverride>>({});
   const [editingRow, setEditingRow] = useState<QuoteDetailRow | null>(null);
   const [editingDraft, setEditingDraft] = useState<QuoteOverride>({});
@@ -9581,13 +9848,12 @@ function MainQuoteBoard({
     }));
     setEditingRow(null);
   }
-  const displayLevel: 1 | 2 = collateralTab === "best" ? 1 : 2;
-  const setDisplayLevel = (_level: 1 | 2) => {};
+  const displayLevel: 1 | 2 = rankFilter === "best" ? 1 : 2;
 
   return (
     <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
       <section className="tk-panel flex min-h-0 flex-1 flex-col overflow-hidden border border-[rgba(255,255,255,0.1)]">
-        <div className="tk-panel-header border-b px-4 py-2.5">
+        <div className="tk-panel-header border-b px-4 py-2">
           <div className="flex flex-nowrap items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-3">
               <div className="tk-title-lg shrink-0 whitespace-nowrap">
@@ -9597,7 +9863,7 @@ function MainQuoteBoard({
                 {repoQuoteSections.map((s) => (
                   <button
                     key={s.id}
-                    className={`tk-chip tk-segmented-tab whitespace-nowrap transition-colors ${activeSectionId === s.id ? "bg-[var(--tk-color-brand-cyan)] text-slate-900" : "text-slate-400 hover:bg-[var(--tk-color-surface-selected)] hover:text-slate-200"}`}
+                    className={`tk-chip tk-segmented-tab whitespace-nowrap transition-colors ${activeSectionId === s.id ? "tk-chip-active" : "text-slate-400 hover:bg-[var(--tk-color-surface-selected)] hover:text-slate-200"}`}
                     onClick={() => setActiveSectionId(s.id)}
                     type="button"
                   >
@@ -9605,7 +9871,68 @@ function MainQuoteBoard({
                   </button>
                 ))}
               </div>
-              <div className="tk-muted flex flex-nowrap items-center gap-0.5 text-xs">
+              <div className="flex items-center gap-0.5 border-r border-[color:var(--tk-color-border-divider-dark)] pr-3">
+                {([
+                  { key: "all" as RankFilter, label: "全部" },
+                  { key: "best" as RankFilter, label: "最优" },
+                ]).map((tab) => (
+                  <button
+                    key={tab.key}
+                    className={miniChipClass(rankFilter === tab.key)}
+                    onClick={() => setRankFilter(tab.key)}
+                    type="button"
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-0.5 border-r border-[color:var(--tk-color-border-divider-dark)] pr-3">
+                {([
+                  { key: "all" as CollateralFilter, label: "全部" },
+                  { key: "利率地方" as CollateralFilter, label: "国债地方" },
+                  { key: "存单商金" as CollateralFilter, label: "存单商金" },
+                  { key: "信用" as CollateralFilter, label: "信用" },
+                ]).map((tab) => (
+                  <button
+                    key={tab.key}
+                    className={miniChipClass(collateralFilter === tab.key)}
+                    onClick={() => setCollateralFilter(tab.key)}
+                    type="button"
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-0.5">
+                {([
+                  { key: "all" as SupplementStatusFilter, label: "全部" },
+                  { key: "replied" as SupplementStatusFilter, label: "已回复" },
+                  { key: "unreplied" as SupplementStatusFilter, label: "未回复" },
+                ]).map((tab) => (
+                  <button
+                    key={tab.key}
+                    className={miniChipClass(supplementStatusFilter === tab.key)}
+                    onClick={() => setSupplementStatusFilter(tab.key)}
+                    type="button"
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <button
+                className="tk-button tk-button-success whitespace-nowrap text-mini"
+                type="button"
+              >
+                下载
+              </button>
+            </div>
+          </div>
+          <div className="mt-1.5 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2 gap-y-1 border-t border-[color:var(--tk-color-border-divider-dark)] pt-1.5">
+            <div className="tk-muted flex items-center gap-1 whitespace-nowrap text-xs">
+              <FilterLabel>期限</FilterLabel>
+              <div className="flex flex-nowrap items-center gap-0.5">
                 <button
                   className={miniChipClass(tenorFilter === "all")}
                   onClick={() => onTenorFilterChange("all")}
@@ -9625,87 +9952,54 @@ function MainQuoteBoard({
                 ))}
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-1.5">
-              <button
-                className="hidden"
-                onClick={() => setDisplayLevel(1)}
-                type="button"
-              >
-                1级
-              </button>
-              <button
-                className="hidden"
-                onClick={() => setDisplayLevel(2)}
-                type="button"
-              >
-                2级
-              </button>
-              <button
-                className="tk-button tk-button-success whitespace-nowrap text-mini"
-                type="button"
-              >
-                下载
-              </button>
-            </div>
-          </div>
-          <div className="mt-1.5 border-t border-[color:var(--tk-color-border-divider-dark)] pt-1.5">
             <QuoteBoardFilterControls
+              amountMin={amountMin}
+              amountMax={amountMax}
+              amountUnit={amountUnit}
               accountSearch={accountSearch}
               collateralSearch={collateralSearch}
+              onAmountMinChange={setAmountMin}
+              onAmountMaxChange={setAmountMax}
+              onAmountUnitChange={setAmountUnit}
               onAccountSearchChange={setAccountSearch}
               onCollateralSearchChange={setCollateralSearch}
+              className="justify-end border-l border-[color:var(--tk-color-border-divider-dark)] pl-2"
             />
           </div>
-        </div>
-        <div className="flex items-center gap-1.5 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-deep)] px-4 py-1.5">
-          {([
-            { key: "best" as CollateralTab, label: "最优", bg: "rgba(231,53,58,0.22)", activeBg: "rgba(231,53,58,0.55)", text: "text-red-200" },
-            { key: "all" as CollateralTab, label: "全部", bg: "rgba(148,163,184,0.18)", activeBg: "rgba(148,163,184,0.45)", text: "text-slate-200" },
-            { key: "利率地方" as CollateralTab, label: "国债地方", bg: "rgba(34,197,94,0.15)", activeBg: "rgba(34,197,94,0.4)", text: "text-emerald-300" },
-            { key: "存单商金" as CollateralTab, label: "存单商金", bg: "rgba(59,130,246,0.15)", activeBg: "rgba(59,130,246,0.4)", text: "text-blue-300" },
-            { key: "信用" as CollateralTab, label: "信用", bg: "rgba(168,85,247,0.15)", activeBg: "rgba(168,85,247,0.4)", text: "text-purple-300" },
-          ]).map((tab) => (
-            <button
-              key={tab.key}
-              className={`tk-chip tk-segmented-tab transition-colors ${tab.text} ${
-                collateralTab === tab.key ? "ring-1 ring-white/25" : "opacity-60 hover:opacity-100"
-              }`}
-              style={{ backgroundColor: collateralTab === tab.key ? tab.activeBg : tab.bg }}
-              onClick={() => setCollateralTab(tab.key)}
-              type="button"
-            >
-              {tab.label}
-            </button>
-          ))}
         </div>
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           {repoQuoteSections
             .filter((section) => section.id === activeSectionId)
-            .map((section) => (
-              <RepoQuoteSectionBoard
-                key={section.id}
-                section={section}
-                displayLevel={collateralTab === "best" ? displayLevel : 2}
-                tenorFilter={tenorFilter}
-                accountSearch={accountSearch}
-                collateralSearch={collateralSearch}
-                collateralTab={collateralTab}
-                applyOverride={applyOverride}
-                pinnedQuotes={pinnedQuotes}
-                pinnedKeys={pinnedKeys}
-                onEdit={openEditor}
-                onTogglePin={togglePinnedQuote}
-                onSend={(row, groupName, contactName) =>
-                  setChatContext({
-                    row,
-                    groupName,
-                    sectionTitle: section.title,
-                    contactName:
-                      contactName ?? contactNameForInstitution(row.institution),
-                  })
-                }
-              />
-            ))}
+            .map((section) => {
+              const normalizedSection = normalizeRepoQuoteSection(section);
+              return (
+                <RepoQuoteSectionBoard
+                  key={section.id}
+                  section={normalizedSection}
+                  displayLevel={displayLevel}
+                  tenorFilter={tenorFilter}
+                  amountMin={amountMin}
+                  amountMax={amountMax}
+                  amountUnit={amountUnit}
+                  accountSearch={accountSearch}
+                  collateralSearch={collateralSearch}
+                  collateralTab={collateralFilter}
+                  supplementStatusFilter={supplementStatusFilter}
+                  applyOverride={applyOverride}
+                  pinnedQuotes={pinnedQuotes}
+                  pinnedKeys={pinnedKeys}
+                  onEdit={openEditor}
+                  onTogglePin={togglePinnedQuote}
+                  onSend={(quote, groupName) =>
+                    setChatContext({
+                      quote,
+                      groupName,
+                      sectionTitle: section.title,
+                    })
+                  }
+                />
+              );
+            })}
         </div>
       </section>
       <QuoteEditorModal
@@ -9740,14 +10034,14 @@ function QuoteChatDialog({
   useEffect(() => {
     if (!context) return;
     setDraft(
-      `${context.row.tenor} ${context.row.rate}，${context.row.amount}，${context.row.collateral}。`,
+      `${context.quote.tenor} ${context.quote.rate}，${context.quote.amount}，${context.quote.collateral}。`,
     );
     setLocalMessages([
       {
         id: "quote",
         from: "counterparty",
-        text: `${context.contactName}：${context.row.tenor} ${context.row.rate}，${context.row.amount}，${context.row.collateral}，${normalizeAccountRequirement(context.row.accountType)}。`,
-        time: context.row.updatedAt,
+        text: `${context.quote.contactName}：${context.quote.tenor} ${context.quote.rate}，${context.quote.amount}，${context.quote.collateral}，${context.quote.account}。`,
+        time: context.quote.updatedAt,
       },
     ]);
   }, [context]);
@@ -9770,15 +10064,15 @@ function QuoteChatDialog({
   const quickReplies = [
     {
       label: "确认可成交",
-      text: `这笔可以，${context.row.tenor} ${context.row.rate}，${context.row.amount} 按这个要素发我方确认。`,
+      text: `这笔可以，${context.quote.tenor} ${context.quote.rate}，${context.quote.amount} 按这个要素发我方确认。`,
     },
     {
       label: "价格可谈",
-      text: `${context.row.tenor} 价格还能再谈一下吗？目前看到 ${context.row.rate}。`,
+      text: `${context.quote.tenor} 价格还能再谈一下吗？目前看到 ${context.quote.rate}。`,
     },
     {
       label: "金额多少",
-      text: `这边想确认一下 ${context.row.tenor} 现在最多还能给多少量？`,
+      text: `这边想确认一下 ${context.quote.tenor} 现在最多还能给多少量？`,
     },
     {
       label: "补充要素",
@@ -9790,7 +10084,7 @@ function QuoteChatDialog({
     },
     {
       label: "改报利率",
-      text: `${context.row.tenor} 如果按我方价格再调整一点，可以继续沟通。`,
+      text: `${context.quote.tenor} 如果按我方价格再调整一点，可以继续沟通。`,
     },
   ];
 
@@ -9807,10 +10101,10 @@ function QuoteChatDialog({
         <div className="flex items-center justify-between gap-3 border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-4 py-3">
           <div className="min-w-0">
             <div className="tk-title truncate">
-              {context.contactName} · {context.row.institution}
+              {context.quote.contactName} · {context.quote.institution}
             </div>
             <div className="mt-0.5 truncate text-mini text-slate-500">
-              {context.sectionTitle} / {context.groupName} / {context.row.tenor}
+              {context.sectionTitle} / {context.groupName} / {context.quote.tenor}
             </div>
           </div>
           <button
@@ -9825,11 +10119,11 @@ function QuoteChatDialog({
         <div className="grid min-h-0 grid-rows-[auto_1fr] overflow-hidden">
           <div className="border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-page)] p-3">
             <div className="grid grid-cols-4 gap-1.5 text-micro text-slate-400">
-              <span className="tk-field truncate px-2 py-1">{context.row.amount}</span>
-              <span className="tk-field truncate px-2 py-1">{context.row.rate}</span>
-              <span className="tk-field truncate px-2 py-1">{context.row.collateral}</span>
+              <span className="tk-field truncate px-2 py-1">{context.quote.amount}</span>
+              <span className="tk-field truncate px-2 py-1">{context.quote.rate}</span>
+              <span className="tk-field truncate px-2 py-1">{context.quote.collateral}</span>
               <span className="tk-field truncate px-2 py-1">
-                {normalizeAccountRequirement(context.row.accountType)}
+                {context.quote.account}
               </span>
             </div>
           </div>
@@ -10027,10 +10321,154 @@ function hashSeed(text: string) {
   return hash;
 }
 
-function opponentCountForGroup(groupName: string) {
-  if (groupName === "信用") return 24;
-  if (groupName === "存单商金") return 12;
-  return 5;
+function shiftQuoteTime(baseTime: string, offsetMinutes: number) {
+  const [hourText = "10", minuteText = "53", secondText = "00"] = baseTime.split(":");
+  const hour = Number.parseInt(hourText, 10);
+  const minute = Number.parseInt(minuteText, 10);
+  const second = Number.parseInt(secondText, 10);
+  const safeHour = Number.isFinite(hour) ? hour : 10;
+  const safeMinute = Number.isFinite(minute) ? minute : 53;
+  const safeSecond = Number.isFinite(second) ? second : 0;
+  const totalMinutes = safeHour * 60 + safeMinute - offsetMinutes;
+  const normalizedMinutes = ((totalMinutes % (24 * 60)) + 24 * 60) % (24 * 60);
+  const nextHour = Math.floor(normalizedMinutes / 60);
+  const nextMinute = normalizedMinutes % 60;
+  return `${String(nextHour).padStart(2, "0")}:${String(nextMinute).padStart(2, "0")}:${String(safeSecond).padStart(2, "0")}`;
+}
+
+type SupplementGroupName = "利率地方" | "存单商金" | "信用";
+
+const supplementAccountOptions = [
+  "自营",
+  "公募",
+  "可专户",
+  "专户出老户",
+  "非专户",
+  "不限户",
+] as const;
+
+const supplementPledgeOptionsByGroup: Record<SupplementGroupName, readonly string[]> = {
+  利率地方: ["利率", "地方"],
+  存单商金: ["国股存单", "存单"],
+  信用: [
+    "二级",
+    "次级",
+    "永续",
+    "次永",
+    "二永",
+    "不可二级",
+    "不可次级",
+    "不可永续",
+    "不可次永",
+    "不可二永",
+    "AAA信用",
+    "AA+信用",
+    "信用",
+    "PPN",
+  ],
+};
+
+const supplementConfigByGroup: Record<
+  SupplementGroupName,
+  {
+    targetCount: number;
+    amountFillRate: number;
+    accountFillRate: number;
+    pledgeFillRate: number;
+  }
+> = {
+  利率地方: {
+    targetCount: 5,
+    amountFillRate: 0.3,
+    accountFillRate: 0.3,
+    pledgeFillRate: 1,
+  },
+  存单商金: {
+    targetCount: 12,
+    amountFillRate: 0.6,
+    accountFillRate: 0.3,
+    pledgeFillRate: 1,
+  },
+  信用: {
+    targetCount: 24,
+    amountFillRate: 0.7,
+    accountFillRate: 0.3,
+    pledgeFillRate: 0.7,
+  },
+};
+
+function classifyCollateralGroup(collateral?: string | null): SupplementGroupName {
+  const normalized = String(collateral ?? "").trim();
+  if (!normalized) return "信用";
+  if (normalized.includes("存单") || normalized.includes("商金")) return "存单商金";
+  if (
+    normalized.includes("信用") ||
+    normalized.includes("PPN") ||
+    normalized.includes("二级") ||
+    normalized.includes("次级") ||
+    normalized.includes("永续") ||
+    normalized.includes("次永") ||
+    normalized.includes("二永") ||
+    normalized.includes("AAA") ||
+    normalized.includes("AA+")
+  ) return "信用";
+  return "利率地方";
+}
+
+function normalizeSupplementGroup(groupName: string): SupplementGroupName {
+  if (groupName === "信用") return "信用";
+  if (groupName === "存单商金") return "存单商金";
+  return "利率地方";
+}
+
+function normalizeRepoQuoteSection(section: RepoQuoteSection): RepoQuoteSection {
+  const groupOrder: SupplementGroupName[] = ["利率地方", "存单商金", "信用"];
+  const groupMeta = new Map(
+    section.groups.map((group) => [group.name, group] as const),
+  );
+  const rowsByGroup = new Map<SupplementGroupName, QuoteDetailRow[]>(
+    groupOrder.map((groupName) => [groupName, []]),
+  );
+
+  for (const group of section.groups) {
+    for (const row of group.rows) {
+      const nextGroup = classifyCollateralGroup(row.collateral);
+      rowsByGroup.get(nextGroup)!.push(row);
+    }
+  }
+
+  return {
+    ...section,
+    groups: groupOrder
+      .map((groupName) => {
+        const baseGroup = groupMeta.get(groupName);
+        if (!baseGroup) return null;
+        const rows = rowsByGroup.get(groupName) ?? [];
+        return {
+          ...baseGroup,
+          rows,
+          name: groupName,
+        };
+      })
+      .filter(Boolean) as QuoteGroup[],
+  };
+}
+
+function pickSeededValue<T>(
+  options: readonly T[],
+  seed: number,
+  salt: number,
+): T {
+  return options[(seed + salt * 17) % options.length]!;
+}
+
+function shouldFillSeededField(
+  seed: number,
+  salt: number,
+  fillRate: number,
+): boolean {
+  const normalized = Math.max(0, Math.min(1, fillRate));
+  return ((seed + salt * 131) % 1000) / 1000 < normalized;
 }
 
 function buildOpponentCards(
@@ -10038,18 +10476,29 @@ function buildOpponentCards(
   groupName: string,
 ): OpponentQuoteCard[] {
   const seed = hashSeed(`${row.id}-${groupName}`);
+  const supplementGroup = normalizeSupplementGroup(groupName);
+  const supplementConfig = supplementConfigByGroup[supplementGroup];
   const cards: OpponentQuoteCard[] = [];
-  const targetCount = opponentCountForGroup(groupName);
+  const targetCount = supplementConfig.targetCount;
   const amountPool = ["3亿", "5亿", "8亿", "10亿", "15亿", "20亿"] as const;
   const rateBase = Number.parseFloat(row.rate.replace("%", ""));
   const anchorAccount = normalizeAccountRequirement(row.accountType);
   const anchorPledge = row.collateral?.trim() ? row.collateral : null;
+  const institutionPool = opponentInstitutions.filter((institution) => institution !== row.institution);
+  const orderedInstitutions = institutionPool
+    .map((institution, index) => ({
+      institution,
+      sortKey: (seed + index * 29) % 997,
+    }))
+    .sort((a, b) => a.sortKey - b.sortKey)
+    .map((item) => item.institution);
   const anchorCard: OpponentQuoteCard = {
     id: `${row.id}-anchor`,
     name: contactNameForInstitution(row.institution),
     institution: row.institution,
     waitMinutes: 1,
     status: "unreplied",
+    updatedAt: row.updatedAt,
     tenor: row.tenor,
     amount: row.amount && row.amount !== "--" ? row.amount : null,
     rate: row.rate,
@@ -10065,35 +10514,37 @@ function buildOpponentCards(
   };
 
   for (let index = 0; index < targetCount - 1; index += 1) {
-    const core = index < 1 || (groupName === "信用" && index % 8 === 0);
-    const hasAmount = index % 3 !== 1;
+    const core = index < 1 || (supplementGroup === "信用" && index % 8 === 0);
     const waitMinutes = 1 + ((seed + index * 3) % 19);
     const status: OpponentQuoteCard["status"] =
       index % 5 === 0 ? "replied" : "unreplied";
-    const institution = opponentInstitutions[(seed + index) % opponentInstitutions.length];
-    const name = opponentNames[(seed + index * 2) % opponentNames.length];
-    const accountOptions =
-      groupName === "信用"
-        ? ["自营", "公募", "可专户", "专户出老户", null]
-        : groupName === "存单商金"
-          ? ["自营", "资管户", "可拆", "理财", "非专户"]
-          : ["自营", "不限户", "公募", "可专户", "资管户"];
-    const pledgeOptions =
-      groupName === "信用"
-        ? ["信用", "二永", "AAA", "AA+", "公募", "早还", null]
-        : groupName === "存单商金"
-          ? ["商金", "国股", "存单", "利率商金", "国股商金", "商金老户"]
-          : ["利率", "地方", "国股", "老户", "不限户", "利率地方"];
-    const creditSparse = groupName === "信用" && index % 5 < 2;
-    const account = creditSparse && index % 2 === 0
-      ? null
-      : accountOptions[(seed + index * 5) % accountOptions.length];
-    const pledge =
-      groupName === "信用"
-        ? creditSparse
-          ? null
-          : pledgeOptions[(seed + index * 7) % pledgeOptions.length]
-        : pledgeOptions[(seed + index * 7) % pledgeOptions.length];
+    const institution = orderedInstitutions[index % orderedInstitutions.length] ?? row.institution;
+    const name = contactNameForInstitution(institution);
+    const hasAmount = shouldFillSeededField(
+      seed,
+      index + 1,
+      supplementConfig.amountFillRate,
+    );
+    const hasAccount = shouldFillSeededField(
+      seed,
+      index + 101,
+      supplementConfig.accountFillRate,
+    );
+    const hasPledge = shouldFillSeededField(
+      seed,
+      index + 201,
+      supplementConfig.pledgeFillRate,
+    );
+    const account = hasAccount
+      ? pickSeededValue(supplementAccountOptions, seed, index + 5)
+      : null;
+    const pledge = hasPledge
+      ? pickSeededValue(
+          supplementPledgeOptionsByGroup[supplementGroup],
+          seed,
+          index + 7,
+        )
+      : null;
     const tags = [
       `${row.tenor} ${`${(rateBase + ((index % 4) - 1) * 0.01).toFixed(2)}%`}`,
       core ? "核心对手" : "活跃对手",
@@ -10107,9 +10558,10 @@ function buildOpponentCards(
       institution,
       waitMinutes,
       status,
-      tenor: row.tenor === "R007" ? "1D" : "1D",
+      updatedAt: shiftQuoteTime(row.updatedAt, waitMinutes),
+      tenor: row.tenor,
       amount: hasAmount ? amountPool[(seed + index * 11) % amountPool.length] : null,
-      rate: `${(rateBase + ((index % 4) - 1) * 0.01).toFixed(2)}%`,
+      rate: row.rate,
       pledge,
       account,
       tags,
@@ -10123,21 +10575,52 @@ function buildOpponentCards(
           { tenor: "3D", amount: "5亿", rate: `${(rateBase + 0.01).toFixed(2)}%` },
           { tenor: "6D", amount: null, rate: `${(rateBase + 0.02).toFixed(2)}%` },
           { tenor: "2-7D", amount: "8亿", rate: `${(rateBase + 0.03).toFixed(2)}%` },
-        ] as const).map((item, index) => ({
-          id: `${row.id}-special-${index}`,
-          name: opponentNames[(seed + 30 + index) % opponentNames.length],
-          institution: opponentInstitutions[(seed + 40 + index) % opponentInstitutions.length],
-          waitMinutes: 2 + index * 2,
-          status: "unreplied" as const,
-          tenor: item.tenor,
-          amount: item.amount,
-          rate: item.rate,
-          pledge: groupName === "信用" ? null : row.collateral || (groupName === "存单商金" ? "商金" : "利率"),
-          account: groupName === "信用" ? null : normalizeAccountRequirement(row.accountType),
-          tags: [`${item.tenor} ${item.rate}`, "核心对手", "特殊期限"],
-          core: true,
-          special: true,
-        }))
+        ] as const).map((item, index) => {
+          const hasAmount = shouldFillSeededField(
+            seed,
+            index + 301,
+            supplementConfig.amountFillRate,
+          );
+          const hasAccount = shouldFillSeededField(
+            seed,
+            index + 401,
+            supplementConfig.accountFillRate,
+          );
+          const hasPledge = shouldFillSeededField(
+            seed,
+            index + 501,
+            supplementConfig.pledgeFillRate,
+          );
+          const pledge = hasPledge
+            ? pickSeededValue(
+                supplementPledgeOptionsByGroup[supplementGroup],
+                seed,
+                index + 11,
+              )
+            : null;
+          const account = hasAccount
+            ? pickSeededValue(supplementAccountOptions, seed, index + 13)
+            : null;
+
+          return {
+            id: `${row.id}-special-${index}`,
+            name: contactNameForInstitution(
+              orderedInstitutions[(index + targetCount) % orderedInstitutions.length] ?? row.institution,
+            ),
+            institution: orderedInstitutions[(index + targetCount) % orderedInstitutions.length] ?? row.institution,
+            waitMinutes: 2 + index * 2,
+            status: "unreplied" as const,
+            updatedAt: shiftQuoteTime(row.updatedAt, 2 + index * 2),
+            tenor: row.tenor,
+            amount: hasAmount ? item.amount : null,
+            rate: row.rate,
+            pledge,
+            account,
+            tags: [`${item.tenor} ${item.rate}`, "核心对手", "特殊期限", pledge, account].filter(Boolean) as string[],
+            core: true,
+            special: true,
+          };
+        })
       : [];
 
   const normalCards = cards.sort((a, b) => {
@@ -10157,6 +10640,93 @@ function buildOpponentCards(
   return [anchorCard, ...normalCards, ...specials];
 }
 
+function getVisibleOpponentCards(
+  row: QuoteDetailRow,
+  cards: readonly OpponentQuoteCard[],
+  status: ExpandStatus,
+  includeAnchor = false,
+) {
+  const filtered =
+    status === "all"
+      ? cards
+      : cards.filter((card) => card.status === status || card.special);
+  return includeAnchor
+    ? filtered
+    : filtered.filter((card) => card.id !== `${row.id}-anchor`);
+}
+
+function sortOpponentCardsForDisplay(
+  cards: readonly OpponentQuoteCard[],
+  rateAscending: boolean,
+) {
+  return [...cards].sort((a, b) => {
+    const aRate = Number.parseFloat(a.rate.replace("%", ""));
+    const bRate = Number.parseFloat(b.rate.replace("%", ""));
+    if (aRate !== bRate) {
+      return rateAscending ? aRate - bRate : bRate - aRate;
+    }
+    const aReplied = a.status === "replied" ? 1 : 0;
+    const bReplied = b.status === "replied" ? 1 : 0;
+    if (aReplied !== bReplied) return bReplied - aReplied;
+    const aCore = a.core ? 1 : 0;
+    const bCore = b.core ? 1 : 0;
+    if (aCore !== bCore) return bCore - aCore;
+    return b.updatedAt.localeCompare(a.updatedAt, "zh-CN");
+  });
+}
+
+function opponentQuoteTimeText(card: OpponentQuoteCard) {
+  return card.updatedAt.slice(0, 5);
+}
+
+function normalizeUnifiedTenorValue(tenor: string) {
+  if (/^R\d{3}$/i.test(tenor)) return tenor.toUpperCase();
+  if (/^\d+D$/i.test(tenor)) {
+    const days = Number.parseInt(tenor, 10);
+    return Number.isFinite(days) ? `R${String(days).padStart(3, "0")}` : tenor.toUpperCase();
+  }
+  const range = tenor.match(/^(\d+)-(\d+)D$/i);
+  if (range) {
+    const from = String(Number.parseInt(range[1] ?? "0", 10)).padStart(3, "0");
+    const to = String(Number.parseInt(range[2] ?? "0", 10)).padStart(3, "0");
+    return `R${from}-${to}`;
+  }
+  return tenor.toUpperCase();
+}
+
+function tenorSortValue(tenor: string) {
+  const normalized = normalizeUnifiedTenorValue(tenor);
+  const range = normalized.match(/^R(\d{3})-(\d{3})$/);
+  if (range) {
+    return Number.parseInt(range[1] ?? "999", 10);
+  }
+  const single = normalized.match(/^R(\d{3})$/);
+  if (single) {
+    return Number.parseInt(single[1] ?? "999", 10);
+  }
+  return 999;
+}
+
+function formatUnifiedUpdatedAt(value: string) {
+  return value ? value.slice(0, 5) : "--";
+}
+
+function displayUnifiedTenorValue(tenor: string) {
+  const normalized = normalizeUnifiedTenorValue(tenor);
+  const range = normalized.match(/^R(\d{3})-(\d{3})$/);
+  if (range) {
+    const from = Number.parseInt(range[1] ?? "0", 10);
+    const to = Number.parseInt(range[2] ?? "0", 10);
+    return `${from}-${to}D`;
+  }
+  const single = normalized.match(/^R(\d{3})$/);
+  if (single) {
+    const days = Number.parseInt(single[1] ?? "0", 10);
+    return `${days}D`;
+  }
+  return tenor.toUpperCase();
+}
+
 function OpponentExpandPanel({
   row,
   groupName,
@@ -10167,6 +10737,7 @@ function OpponentExpandPanel({
   pinnedKeys,
   onTogglePin,
   onSend,
+  showColumnHeader = true,
 }: {
   row: QuoteDetailRow;
   groupName: string;
@@ -10176,112 +10747,145 @@ function OpponentExpandPanel({
   onStatusChange: (status: ExpandStatus) => void;
   pinnedKeys: ReadonlySet<string>;
   onTogglePin: (item: PinnedQuote) => void;
-  onSend: (contactName: string) => void;
+  onSend: (quote: QuoteChatPayload) => void;
+  showColumnHeader?: boolean;
 }) {
-  const visibleCards =
-    status === "all" ? cards : cards.filter((card) => card.status === status || card.special);
+  const visibleCards = sortOpponentCardsForDisplay(
+    getVisibleOpponentCards(
+      row,
+      cards,
+      status,
+    ),
+    section.id === "reverse",
+  );
+  const parentPin = pinnedQuoteFromRow(row, groupName, section);
+  const pinned = pinnedKeys.has(parentPin.key);
+  const inlineMode = !showColumnHeader;
 
   return (
-    <div className="border-b border-[color:var(--tk-color-border-divider)] bg-[rgba(18,19,27,0.98)] px-3 pb-3 pt-2">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider-dark)] pb-2">
-        <div className="flex items-center gap-1.5 text-mini">
-          {[
-            { id: "unreplied", label: "未回复" },
-            { id: "replied", label: "已回复" },
-            { id: "all", label: "全部" },
-          ].map((item) => (
-            <button
-              key={item.id}
-              className={miniChipClass(status === item.id)}
-              onClick={() => onStatusChange(item.id as ExpandStatus)}
-              type="button"
-            >
-              {item.label}
-            </button>
-          ))}
+    <div className={showColumnHeader ? "border-b border-[color:var(--tk-color-border-divider)] bg-[rgba(18,19,27,0.98)] px-3 pb-3 pt-2" : "bg-[rgba(18,19,27,0.62)]"}>
+      {showColumnHeader ? (
+        <div className="grid grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_0.8fr_1.05fr] border-y border-[color:var(--tk-color-border-divider-dark)] bg-[rgba(255,255,255,0.03)] px-4 py-1.5 text-mini font-medium tracking-[0.02em] text-slate-400">
+          <span>对手 / 机构</span>
+          <span className="text-right">期限</span>
+          <span className="text-right">金额</span>
+          <span className="text-right">利率(报价)</span>
+          <span className="text-right">账户要求</span>
+          <span className="text-right">质押要求</span>
+          <span className="text-right">回复状态</span>
+          <span className="text-right">报价时间</span>
+          <span className="text-right">操作</span>
         </div>
-        <div className="text-xs font-semibold text-slate-200">
-          同期限 {row.tenor}
-        </div>
-      </div>
+      ) : null}
 
-      <div className="grid min-h-0 grid-cols-3 gap-px overflow-hidden rounded-md border border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-border-divider)]">
+      <div className={`${
+        showColumnHeader
+          ? "divide-y divide-[color:var(--tk-color-border-divider)] border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-page)]"
+          : inlineMode
+            ? "bg-transparent"
+            : "divide-y divide-[color:var(--tk-color-border-divider)] bg-[rgba(255,255,255,0.02)]"
+      }`}>
         {visibleCards.map((card) => {
-          const parentPin = pinnedQuoteFromRow(row, groupName, section);
-          const pinned = pinnedKeys.has(parentPin.key);
           return (
-            <button
+            <div
               key={card.id}
-              className={`min-h-[104px] bg-[var(--tk-color-surface-page)] px-3 py-2 text-left transition hover:bg-[rgba(255,255,255,0.04)] ${
-                card.core ? "shadow-[inset_2px_0_0_rgba(16,198,200,0.9)]" : ""
-              } ${pinned ? "ring-1 ring-amber-400/60" : ""}`}
-              onClick={() => onSend(card.name)}
-              type="button"
+              className={`grid grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_0.8fr_1.05fr] items-center px-4 py-2 text-left text-xs text-slate-200 transition hover:bg-[rgba(255,255,255,0.03)] ${
+                inlineMode ? "bg-transparent" : ""
+              }`}
             >
-              <div className="flex items-center justify-between gap-2">
-                <div className="tk-title block truncate text-xs">
-                  {card.name} · {card.institution}
+              <div className="flex min-w-0 items-center gap-2">
+                {card.core ? (
+                  <span className="inline-flex shrink-0 items-center rounded border border-emerald-500/40 bg-emerald-500/15 px-1.5 py-0.5 text-micro text-emerald-300">
+                    核心
+                  </span>
+                ) : null}
+                {card.special ? (
+                  <span className="inline-flex shrink-0 items-center rounded border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-micro text-amber-300">
+                    特殊
+                  </span>
+                ) : null}
+                <div className="min-w-0 truncate text-slate-100">
+                  {formatInstitutionSender(card.institution, card.name)}
                 </div>
-                <span
-                  className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border transition ${
+              </div>
+              <span className="text-right">{card.tenor}</span>
+              <span className="text-right">{card.amount ?? "--"}</span>
+              <span className="text-right font-semibold text-amber-300">{card.rate}</span>
+              <span
+                className="truncate pl-3 text-right text-xs text-slate-300"
+                title={card.account ?? ""}
+              >
+                {card.account ?? ""}
+              </span>
+              <span
+                className="truncate pl-3 text-right text-xs text-slate-300"
+                title={card.pledge ?? ""}
+              >
+                {card.pledge ?? ""}
+              </span>
+              <span className="text-right text-xs text-slate-400">
+                {formatUnifiedReplyStatus(card.status)}
+              </span>
+              <span className="text-right text-xs tabular-nums text-slate-400">
+                {opponentQuoteTimeText(card)}
+              </span>
+              <span className="flex items-center justify-end gap-1">
+                <button
+                  className={`inline-flex h-6 w-6 items-center justify-center rounded border transition ${
                     pinned
                       ? "border-amber-400/60 bg-amber-400/20 text-amber-200"
                       : "border-[color:var(--tk-color-border-panel)] bg-white/5 text-slate-500 hover:text-amber-200"
                   }`}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onTogglePin(parentPin);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key !== "Enter" && event.key !== " ") return;
-                    event.preventDefault();
-                    event.stopPropagation();
-                    onTogglePin(parentPin);
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  title={pinned ? "取消固定" : "固定行情"}
+                  onClick={() => onTogglePin(parentPin)}
+                  title={pinned ? "取消固定主报价" : "固定主报价"}
+                  type="button"
                 >
                   <Pin size={12} fill={pinned ? "currentColor" : "none"} />
-                </span>
-                <span className="tk-badge shrink-0 rounded-full border text-micro text-amber-200">
-                  等 {card.waitMinutes}min
-                </span>
-              </div>
-              <div className="mt-1 text-xs text-slate-400">
-                {card.amount ? (
-                  <span className="text-[18px] font-bold text-slate-50">{card.amount}</span>
-                ) : (
-                  <span className="text-slate-500">待报价</span>
-                )}
-              </div>
-              <span className="ml-2 text-xs font-semibold text-amber-300">
-                {card.rate}
+                </button>
+                <button
+                  className="tk-inline-action whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 text-blue-300"
+                  onClick={() => onSend(buildOpponentChatQuote(card))}
+                  type="button"
+                >
+                  发送
+                </button>
               </span>
-              {!card.special ? null : (
-                <div className="mt-1 text-mini text-amber-300">{card.rate}</div>
-              )}
-              <div className="mt-2 flex flex-wrap gap-1">
-                {card.tags.map((tag) => (
-                  <span
-                    key={`${card.id}-${tag}`}
-                    className={`rounded-sm px-1.5 py-0.5 text-micro ${
-                      tag === "核心对手"
-                        ? "bg-emerald-500/15 text-emerald-300"
-                        : tag.startsWith(card.tenor)
-                          ? "bg-red-500/15 text-red-300"
-                          : "bg-white/5 text-slate-400"
-                    }`}
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </button>
+            </div>
           );
         })}
+        {!visibleCards.length ? (
+          <div className="grid min-h-[72px] place-items-center text-xs text-slate-500">
+            暂无明细数据
+          </div>
+        ) : null}
       </div>
     </div>
+  );
+}
+
+function CompactSelectField<T extends string>({
+  value,
+  options,
+  onChange,
+  getLabel,
+}: {
+  value: T;
+  options: readonly T[];
+  onChange: (value: T) => void;
+  getLabel?: (value: T) => string;
+}) {
+  return (
+    <select
+      className="tk-field h-6 min-w-[56px] rounded border px-2 text-mini text-slate-100 outline-none"
+      value={value}
+      onChange={(event) => onChange(event.target.value as T)}
+    >
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {getLabel ? getLabel(option) : option}
+        </option>
+      ))}
+    </select>
   );
 }
 
@@ -10289,9 +10893,13 @@ function RepoQuoteSectionBoard({
   section,
   displayLevel,
   tenorFilter,
+  amountMin,
+  amountMax,
+  amountUnit,
   accountSearch,
   collateralSearch,
-  collateralTab = "best",
+  collateralTab = "all",
+  supplementStatusFilter = "all",
   applyOverride,
   pinnedQuotes,
   pinnedKeys,
@@ -10302,50 +10910,335 @@ function RepoQuoteSectionBoard({
   section: RepoQuoteSection;
   displayLevel: 1 | 2;
   tenorFilter: QuoteTenorFilter;
+  amountMin: string;
+  amountMax: string;
+  amountUnit: AmountFilterUnit;
   accountSearch: string;
   collateralSearch: string;
   collateralTab?: string;
+  supplementStatusFilter?: ExpandStatus;
   applyOverride: (row: QuoteDetailRow) => QuoteDetailRow;
   pinnedQuotes: readonly PinnedQuote[];
   pinnedKeys: ReadonlySet<string>;
   onEdit: (row: QuoteDetailRow, groupName: string) => void;
   onTogglePin: (item: PinnedQuote) => void;
-  onSend: (row: QuoteDetailRow, groupName: string, contactName?: string) => void;
+  onSend: (quote: QuoteChatPayload, groupName: string) => void;
 }) {
   const detailMode = displayLevel === 2;
+  const directionRateAscending = section.id === "reverse";
+  const defaultRateSortDirection: QuoteTableSortDirection = directionRateAscending ? "asc" : "desc";
+  const [sortState, setSortState] = useState<QuoteTableSortState | null>(null);
+  const minAmountValue = normalizeAmountFilterToYi(amountMin, amountUnit);
+  const maxAmountValue = normalizeAmountFilterToYi(amountMax, amountUnit);
+  const [expandedRowKey, setExpandedRowKey] = useState<string | null>(null);
+  const [expandedStatusByKey, setExpandedStatusByKey] = useState<Record<string, ExpandStatus>>({});
+
+  const toggleSort = (
+    field: QuoteTableSortField,
+    defaultDirection: QuoteTableSortDirection,
+  ) => {
+    setSortState((current) => nextQuoteTableSortState(current, field, defaultDirection));
+  };
+
+  const amountSortDirection = sortState?.field === "amount" ? sortState.direction : null;
+  const rateSortDirection = sortState?.field === "rate" ? sortState.direction : null;
+
   const matchTenor = (rowTenor: string) =>
     tenorFilter === "all" || rowTenor === tenorFilter;
+
+  const amountFilterActive = (minAmountValue !== null && minAmountValue > 0) || maxAmountValue !== null;
+
+  const matchAmount = (amountText: string | null | undefined) => {
+    const amountValue = parseAmountTextToYi(amountText);
+    if (amountValue === null) return !amountFilterActive;
+    if (minAmountValue !== null && amountValue < minAmountValue) return false;
+    if (maxAmountValue !== null && amountValue > maxAmountValue) return false;
+    return true;
+  };
+
   const matchRowFilters = (row: QuoteDetailRow) =>
+    matchTenor(row.tenor) &&
+    matchAmount(displayAmountForRow(row)) &&
+    fuzzyTextMatch(
+      `${normalizeAccountRequirement(row.accountType)} ${row.accountType}`,
+      accountSearch,
+    ) &&
+    fuzzyTextMatch(`${row.collateral} ${row.reason}`, collateralSearch);
+
+  const matchNonAmountFilters = (row: QuoteDetailRow) =>
     matchTenor(row.tenor) &&
     fuzzyTextMatch(
       `${normalizeAccountRequirement(row.accountType)} ${row.accountType}`,
       accountSearch,
     ) &&
     fuzzyTextMatch(`${row.collateral} ${row.reason}`, collateralSearch);
-  const getVisibleRows = (group: QuoteGroup) => {
+
+  const getLogicalRows = (group: QuoteGroup) => {
     const logicalRows = applyLogicalQuoteAmounts(
       applyLogicalQuoteRanks(group.rows.map(applyOverride), section.id),
     );
-    const rows =
-      displayLevel === 1
-        ? selectLevel1RowsFromRows(group.name, logicalRows)
-        : sortRowsByRank(logicalRows);
-    return rows.filter(matchRowFilters);
+    return displayLevel === 1
+      ? selectLevel1RowsFromRows(group.name, logicalRows)
+      : sortRowsByRank(logicalRows);
   };
-  const filteredGroups = collateralTab === "best" || collateralTab === "all"
+
+  const filteredGroups = collateralTab === "all"
     ? section.groups
     : section.groups.filter((g) => g.name === collateralTab);
+
   const visibleGroups = filteredGroups
-    .map((group) => ({ group, rows: getVisibleRows(group) }))
+    .map((group) => ({ group, rows: getLogicalRows(group).filter(matchRowFilters) }))
     .filter(({ rows }) => rows.length > 0);
+
   const flatVisibleRows = visibleGroups.flatMap(({ group, rows }) =>
     rows.map((row) => ({ row, groupName: group.name })),
   );
+
+  const detailCandidates = detailMode
+    ? filteredGroups.flatMap((group) =>
+        getLogicalRows(group)
+          .filter(matchNonAmountFilters)
+          .map((row) => ({ row, groupName: group.name })),
+      )
+    : [];
+
   const pinnedSectionQuotes = pinnedQuotes
     .filter((item) => item.sectionId === section.id)
-    .map((item) => ({ ...item, row: applyOverride(item.row) }));
+    .map((item) => ({ ...item, row: applyOverride(item.row) }))
+    .filter((item) => matchRowFilters(item.row));
+
   const openRowChat = (row: QuoteDetailRow, groupName: string) => {
-    onSend(row, groupName, contactNameForInstitution(row.institution));
+    onSend(buildPrimaryChatQuote(row), groupName);
+  };
+
+  const canExpandRows = !detailMode;
+
+  const toggleExpandedRow = (row: QuoteDetailRow, groupName: string) => {
+    if (!canExpandRows) return;
+    const key = pinnedQuoteKey(section.id, groupName, row.institution, row.tenor);
+    setExpandedRowKey((current) => (current === key ? null : key));
+    setExpandedStatusByKey((current) =>
+      current[key]
+        ? current
+        : {
+            ...current,
+            [key]: "unreplied",
+          },
+    );
+  };
+
+  const setExpandedStatus = (rowKey: string, status: ExpandStatus) => {
+    setExpandedStatusByKey((current) => ({ ...current, [rowKey]: status }));
+  };
+
+  const buildUnifiedPrimaryRow = (
+    row: QuoteDetailRow,
+    groupName: string,
+    primaryStatus: OpponentQuoteCard["status"] = "unreplied",
+  ): UnifiedQuoteTableRow => {
+    const mergedRow = applyOverride(row);
+    const pinItem = pinnedQuoteFromRow(mergedRow, groupName, section);
+    return {
+      id: `${mergedRow.id}-primary`,
+      kind: "primary",
+      coreLabel: "",
+      replyStatus: formatUnifiedReplyStatus(primaryStatus),
+      institution: formatInstitutionSender(
+        mergedRow.institution,
+        contactNameForInstitution(mergedRow.institution),
+      ),
+      sender: "",
+      tenor: normalizeUnifiedTenorValue(mergedRow.tenor),
+      amount: displayAmountForRow(mergedRow) ?? "--",
+      rate: mergedRow.rate,
+      account: shouldShowAccountRequirement(mergedRow.id)
+        ? normalizeAccountRequirement(mergedRow.accountType)
+        : "",
+      pledge: mergedRow.collateral,
+      updatedAt: formatUnifiedUpdatedAt(mergedRow.updatedAt),
+      groupName,
+      chatQuote: buildPrimaryChatQuote(mergedRow),
+      pinItem,
+    };
+  };
+
+  const buildUnifiedSupplementRows = (
+    row: QuoteDetailRow,
+    groupName: string,
+    cards?: readonly OpponentQuoteCard[],
+  ): UnifiedQuoteTableRow[] => {
+    const mergedRow = applyOverride(row);
+    const pinItem = pinnedQuoteFromRow(mergedRow, groupName, section);
+    return getVisibleOpponentCards(
+      mergedRow,
+      cards ?? buildOpponentCards(mergedRow, groupName),
+      supplementStatusFilter,
+    )
+      .filter((card) => matchAmount(card.amount))
+      .map((card) => ({
+        id: `${card.id}-supplement`,
+        kind: "supplement",
+        coreLabel: card.core ? "核心" : "",
+        replyStatus: formatUnifiedReplyStatus(card.status),
+        institution: formatInstitutionSender(card.institution, card.name),
+        sender: "",
+        tenor: normalizeUnifiedTenorValue(mergedRow.tenor),
+        amount: card.amount ?? "--",
+        rate: mergedRow.rate,
+        account: card.account ?? "",
+        pledge: card.pledge ?? "",
+        updatedAt: formatUnifiedUpdatedAt(card.updatedAt),
+        groupName,
+        chatQuote: buildOpponentChatQuote(card),
+        pinItem,
+      }));
+  };
+
+  const compareQuoteTableRows = (
+    a: Pick<UnifiedQuoteTableRow, "amount" | "rate">,
+    b: Pick<UnifiedQuoteTableRow, "amount" | "rate">,
+  ) => {
+    if (!sortState) return 0;
+    if (sortState.field === "amount") {
+      return compareOptionalSortNumbers(
+        parseAmountTextToYi(a.amount),
+        parseAmountTextToYi(b.amount),
+        sortState.direction,
+      );
+    }
+    return compareOptionalSortNumbers(
+      parseRatePercent(a.rate),
+      parseRatePercent(b.rate),
+      sortState.direction,
+    );
+  };
+
+  const sortUnifiedRows = (rows: UnifiedQuoteTableRow[]) =>
+    [...rows].sort((a, b) => {
+      const sortDiff = compareQuoteTableRows(a, b);
+      if (sortDiff !== 0) return sortDiff;
+
+      const tenorDiff = tenorSortValue(a.tenor) - tenorSortValue(b.tenor);
+      if (tenorDiff !== 0) return tenorDiff;
+
+      const aRate = parseRatePercent(a.rate) ?? 0;
+      const bRate = parseRatePercent(b.rate) ?? 0;
+      if (aRate !== bRate) {
+        return directionRateAscending ? aRate - bRate : bRate - aRate;
+      }
+
+      const aReplied = a.replyStatus === "已回复" ? 1 : 0;
+      const bReplied = b.replyStatus === "已回复" ? 1 : 0;
+      if (aReplied !== bReplied) return bReplied - aReplied;
+
+      const aCore = a.coreLabel === "核心" ? 1 : 0;
+      const bCore = b.coreLabel === "核心" ? 1 : 0;
+      if (aCore !== bCore) return bCore - aCore;
+
+      return a.institution.localeCompare(b.institution, "zh-CN");
+    });
+
+  const sortDetailRows = (rows: readonly QuoteDetailRow[]) =>
+    [...rows].sort((a, b) => {
+      const sortDiff = compareQuoteTableRows(
+        {
+          amount: displayAmountForRow(a) ?? "--",
+          rate: a.rate,
+        },
+        {
+          amount: displayAmountForRow(b) ?? "--",
+          rate: b.rate,
+        },
+      );
+      if (sortDiff !== 0) return sortDiff;
+
+      if (detailMode) {
+        const tenorDiff = tenorSortValue(a.tenor) - tenorSortValue(b.tenor);
+        if (tenorDiff !== 0) return tenorDiff;
+
+        const aRate = parseRatePercent(a.rate) ?? 0;
+        const bRate = parseRatePercent(b.rate) ?? 0;
+        if (aRate !== bRate) {
+          return directionRateAscending ? aRate - bRate : bRate - aRate;
+        }
+      } else {
+        const rankDiff = (rankPriority[a.rank] ?? 99) - (rankPriority[b.rank] ?? 99);
+        if (rankDiff !== 0) return rankDiff;
+
+        const tenorDiff = tenorSortValue(a.tenor) - tenorSortValue(b.tenor);
+        if (tenorDiff !== 0) return tenorDiff;
+      }
+
+      return a.institution.localeCompare(b.institution, "zh-CN");
+    });
+
+  const unifiedRows = detailMode
+    ? sortUnifiedRows(
+        detailCandidates.flatMap(({ row, groupName }) => {
+          const mergedRow = applyOverride(row);
+          const cards = buildOpponentCards(mergedRow, groupName);
+          const anchorCard = cards.find((card) => card.id === `${mergedRow.id}-anchor`);
+          const supplementRows = buildUnifiedSupplementRows(row, groupName, cards);
+          const result: UnifiedQuoteTableRow[] = [];
+          if (matchAmount(displayAmountForRow(row))) {
+            const primaryRow = buildUnifiedPrimaryRow(
+              row,
+              groupName,
+              anchorCard?.status ?? "unreplied",
+            );
+            const primaryMatchesStatus =
+              supplementStatusFilter === "all" || anchorCard?.status === supplementStatusFilter;
+            if (primaryMatchesStatus) result.push(primaryRow);
+          }
+          result.push(...supplementRows);
+          return result;
+        }),
+      )
+    : [];
+
+  const renderUnifiedTableRow = (item: UnifiedQuoteTableRow) => {
+    const rowPinned = pinnedKeys.has(item.pinItem.key);
+    return (
+      <div
+        key={item.id}
+        className="grid grid-cols-[0.5fr_1.45fr_0.6fr_0.75fr_0.75fr_0.8fr_0.8fr_0.8fr_0.7fr_0.9fr] items-center border-b border-[color:var(--tk-color-border-divider)] px-4 py-2 text-left text-xs text-slate-200 transition hover:bg-[var(--tk-color-surface-selected)]"
+      >
+        <span className="text-center text-micro text-emerald-300">{item.coreLabel}</span>
+        <span className="truncate text-slate-100">{item.institution}</span>
+        <span className="text-right">{item.tenor}</span>
+        <span className="text-right">{item.amount}</span>
+        <span className="text-right font-semibold text-amber-300">{item.rate}</span>
+        <span className="truncate pl-3 text-right text-xs text-slate-300" title={item.account}>
+          {item.account}
+        </span>
+        <span className="truncate pl-3 text-right text-xs text-slate-300" title={item.pledge}>
+          {item.pledge}
+        </span>
+        <span className="text-right text-xs text-slate-400">{item.replyStatus}</span>
+        <span className="text-right text-xs tabular-nums text-slate-400">{item.updatedAt}</span>
+        <span className="flex items-center justify-end gap-1">
+          <button
+            className={`inline-flex h-6 w-6 items-center justify-center rounded border transition ${
+              rowPinned
+                ? "border-amber-400/60 bg-amber-400/20 text-amber-200"
+                : "border-[color:var(--tk-color-border-panel)] bg-white/5 text-slate-500 hover:text-amber-200"
+            }`}
+            onClick={() => onTogglePin(item.pinItem)}
+            title={rowPinned ? "取消固定" : "固定行情"}
+            type="button"
+          >
+            <Pin size={12} fill={rowPinned ? "currentColor" : "none"} />
+          </button>
+          <button
+            className="tk-inline-action whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 text-blue-300"
+            onClick={() => onSend(item.chatQuote, item.groupName)}
+            type="button"
+          >
+            发送
+          </button>
+        </span>
+      </div>
+    );
   };
 
   const renderDetailRow = (
@@ -10356,66 +11249,121 @@ function RepoQuoteSectionBoard({
   ) => {
     const rowPin = pinnedQuoteFromRow(row, groupName, section);
     const rowPinned = pinnedKeys.has(rowPin.key);
+    const expanded = canExpandRows && expandedRowKey === rowPin.key;
+    const cards = buildOpponentCards(row, groupName);
+    const expandedStatus = supplementStatusFilter;
+    const inlineVisibleCards = getVisibleOpponentCards(
+      row,
+      cards,
+      supplementStatusFilter,
+    ).filter((card) => matchAmount(card.amount));
+
     return (
-      <div
-        key={`${keyPrefix}${row.id}`}
-        className={`grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-transparent ${
-          dense ? "py-1.5" : "py-1.5"
-        } pl-4 pr-4 text-left text-xs text-slate-200 transition hover:bg-[var(--tk-color-surface-selected)]`}
-      >
-        <div className="flex items-center gap-2">
-          {detailMode && collateralTab === "all" ? (
-            <span className="tk-badge shrink-0 rounded-full border px-1.5 py-0.5 text-micro text-cyan-200">
-              {groupName}
+      <div key={`${keyPrefix}${row.id}`} className="border-b border-[color:var(--tk-color-border-divider)] last:border-b-0">
+        <div
+          className={`grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] ${
+            expanded ? "border-[color:var(--tk-color-brand-cyan)] bg-[rgba(56,113,189,0.08)]" : "border-transparent"
+          } ${dense ? "py-1.5" : "py-1.5"} pl-4 pr-4 text-left text-xs text-slate-200 transition hover:bg-[var(--tk-color-surface-selected)]`}
+        >
+          <div className="flex items-center gap-2">
+            {canExpandRows ? (
+              <button
+                className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border transition ${
+                  expanded
+                    ? "border-[color:var(--tk-color-brand-cyan)] bg-[rgba(56,113,189,0.14)] text-[color:var(--tk-color-brand-cyan)]"
+                    : "border-[color:var(--tk-color-border-panel)] bg-white/5 text-slate-500 hover:text-slate-200"
+                }`}
+                onClick={() => toggleExpandedRow(row, groupName)}
+                title={expanded ? "收起同期限明细" : "展开同期限明细"}
+                type="button"
+              >
+                {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+              </button>
+            ) : (
+              <span className="inline-flex h-5 w-5 shrink-0" aria-hidden="true" />
+            )}
+            {!detailMode ? (
+              <span className="tk-badge shrink-0 rounded-full border px-1.5 py-0.5 text-micro text-cyan-200">
+                {groupName}
+              </span>
+            ) : null}
+            {!detailMode && (row.rank === "最优" || row.rank === "次优") ? <RankBadge rank={row.rank} /> : null}
+            <span className="truncate text-slate-100">
+              {formatInstitutionSender(row.institution, contactNameForInstitution(row.institution))}
             </span>
-          ) : null}
-          {row.rank === "最优" || row.rank === "次优" ? <RankBadge rank={row.rank} /> : null}
-          <span className="text-slate-100">{row.institution}</span>
+          </div>
+          <span className="text-right">{row.tenor}</span>
+          <span className="text-right">{displayAmountForRow(row) ?? "--"}</span>
+          <span className="text-right font-semibold text-amber-300">{row.rate}</span>
+          <span
+            className="truncate pl-3 text-right text-xs text-slate-300"
+            title={shouldShowAccountRequirement(row.id) ? normalizeAccountRequirement(row.accountType) : ""}
+          >
+            {shouldShowAccountRequirement(row.id) ? normalizeAccountRequirement(row.accountType) : ""}
+          </span>
+          <span
+            className="truncate pl-3 text-right text-xs text-slate-300"
+            title={`${row.collateral} / ${row.reason}`}
+          >
+            {row.collateral}
+          </span>
+          <span className="text-right text-xs tabular-nums text-slate-400">{row.updatedAt}</span>
+          <span className="flex items-center justify-end gap-1">
+            <button
+              className="hidden whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-micro font-medium text-amber-200"
+              onClick={() => onEdit(row, groupName)}
+              type="button"
+            >
+              修正
+            </button>
+            <button
+              className={`inline-flex h-6 w-6 items-center justify-center rounded border transition ${
+                rowPinned
+                  ? "border-amber-400/60 bg-amber-400/20 text-amber-200"
+                  : "border-[color:var(--tk-color-border-panel)] bg-white/5 text-slate-500 hover:text-amber-200"
+              }`}
+              onClick={() => onTogglePin(rowPin)}
+              title={rowPinned ? "取消固定" : "固定行情"}
+              type="button"
+            >
+              <Pin size={12} fill={rowPinned ? "currentColor" : "none"} />
+            </button>
+            <button
+              className="tk-inline-action whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 text-blue-300"
+              onClick={() => openRowChat(row, groupName)}
+              type="button"
+            >
+              发送
+            </button>
+          </span>
         </div>
-        <span className="text-right">{row.tenor}</span>
-        <span className="text-right">{showRowAmount(row.id) ? row.amount : "--"}</span>
-        <span className="text-right font-semibold text-amber-300">{row.rate}</span>
-        <span
-          className="truncate pl-3 text-right text-xs text-slate-300"
-          title={shouldShowAccountRequirement(row.id) ? normalizeAccountRequirement(row.accountType) : ""}
-        >
-          {shouldShowAccountRequirement(row.id) ? normalizeAccountRequirement(row.accountType) : ""}
-        </span>
-        <span
-          className="truncate pl-3 text-right text-xs text-slate-300"
-          title={`${row.collateral} / ${row.reason}`}
-        >
-          {row.collateral}
-        </span>
-        <span className="text-right text-xs tabular-nums text-slate-400">{row.updatedAt}</span>
-        <span className="flex items-center justify-end gap-1">
-          <button
-            className="hidden whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-micro font-medium text-amber-200"
-            onClick={() => onEdit(row, groupName)}
-            type="button"
-          >
-            修正
-          </button>
-          <button
-            className={`inline-flex h-6 w-6 items-center justify-center rounded border transition ${
-              rowPinned
-                ? "border-amber-400/60 bg-amber-400/20 text-amber-200"
-                : "border-[color:var(--tk-color-border-panel)] bg-white/5 text-slate-500 hover:text-amber-200"
-            }`}
-            onClick={() => onTogglePin(rowPin)}
-            title={rowPinned ? "取消固定" : "固定行情"}
-            type="button"
-          >
-            <Pin size={12} fill={rowPinned ? "currentColor" : "none"} />
-          </button>
-          <button
-            className="tk-inline-action whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 text-blue-300"
-            onClick={() => openRowChat(row, groupName)}
-            type="button"
-          >
-            发送
-          </button>
-        </span>
+        {expanded ? (
+          <OpponentExpandPanel
+            row={row}
+            groupName={groupName}
+            section={section}
+            cards={cards}
+            status={expandedStatus}
+            onStatusChange={(status) => setExpandedStatus(rowPin.key, status)}
+            pinnedKeys={pinnedKeys}
+            onTogglePin={onTogglePin}
+            onSend={(quote) => onSend(quote, groupName)}
+          />
+        ) : null}
+        {detailMode && inlineVisibleCards.length ? (
+          <OpponentExpandPanel
+            row={row}
+            groupName={groupName}
+            section={section}
+            cards={cards}
+            status={supplementStatusFilter}
+            onStatusChange={() => {}}
+            pinnedKeys={pinnedKeys}
+            onTogglePin={onTogglePin}
+            onSend={(quote) => onSend(quote, groupName)}
+            showColumnHeader={false}
+          />
+        ) : null}
       </div>
     );
   };
@@ -10427,16 +11375,55 @@ function RepoQuoteSectionBoard({
           detailMode ? "flex-1 overflow-y-auto" : "overflow-visible"
         }`}
       >
-        <div className="grid grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] border-y border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-4 py-1.5 text-mini font-medium tracking-[0.02em] text-slate-400">
-          <span>分组 / 机构</span>
-          <span className="text-right">期限</span>
-          <span className="text-right">金额(总量)</span>
-          <span className="text-right">利率(报价)</span>
-          <span className="text-right">账户要求</span>
-          <span className="text-right">质押要求</span>
-          <span className="text-right">获取时间</span>
-          <span className="text-right">操作</span>
-        </div>
+        {detailMode ? (
+          <div className="grid grid-cols-[0.5fr_1.45fr_0.6fr_0.75fr_0.75fr_0.8fr_0.8fr_0.8fr_0.7fr_0.9fr] border-y border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-4 py-1.5 text-mini font-medium tracking-[0.02em] text-slate-400">
+            <span className="text-center">核心</span>
+            <span>机构 / 发送人</span>
+            <span className="text-right">期限</span>
+            <span className="text-right">
+              <QuoteSortHeaderButton
+                label="金额"
+                activeDirection={amountSortDirection}
+                onToggle={() => toggleSort("amount", "desc")}
+              />
+            </span>
+            <span className="text-right">
+              <QuoteSortHeaderButton
+                label="利率(报价)"
+                activeDirection={rateSortDirection}
+                onToggle={() => toggleSort("rate", defaultRateSortDirection)}
+              />
+            </span>
+            <span className="text-right">账户要求</span>
+            <span className="text-right">质押要求</span>
+            <span className="text-right">回复状态</span>
+            <span className="text-right">报价时间</span>
+            <span className="text-right">操作</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] border-y border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-4 py-1.5 text-mini font-medium tracking-[0.02em] text-slate-400">
+            <span>分组 / 机构</span>
+            <span className="text-right">期限</span>
+            <span className="text-right">
+              <QuoteSortHeaderButton
+                label="金额"
+                activeDirection={amountSortDirection}
+                onToggle={() => toggleSort("amount", "desc")}
+              />
+            </span>
+            <span className="text-right">
+              <QuoteSortHeaderButton
+                label="利率(报价)"
+                activeDirection={rateSortDirection}
+                onToggle={() => toggleSort("rate", defaultRateSortDirection)}
+              />
+            </span>
+            <span className="text-right">账户要求</span>
+            <span className="text-right">质押要求</span>
+            <span className="text-right">获取时间</span>
+            <span className="text-right">操作</span>
+          </div>
+        )}
         {pinnedSectionQuotes.length ? (
           <div className="border-b-2 border-[rgba(234,179,8,0.35)]">
             <div className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-amber-400 bg-[rgba(234,179,8,0.08)] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(234,179,8,0.18)]">
@@ -10471,33 +11458,14 @@ function RepoQuoteSectionBoard({
           </div>
         ) : null}
         {detailMode ? (
-          <div className="divide-y divide-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-page)]">
-            {flatVisibleRows.map(({ row, groupName }) =>
-              renderDetailRow(row, groupName, true, `flat-${groupName}-`)
-            )}
+          <div className="bg-[var(--tk-color-surface-page)]">
+            {unifiedRows.map((item) => renderUnifiedTableRow(item))}
           </div>
         ) : (
           visibleGroups.map(({ group, rows }) => (
             <div key={group.id} className="border-b-2 border-[color:var(--tk-color-border-divider)]">
-              <div className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-[color:var(--tk-color-brand-cyan)] bg-[var(--tk-color-surface-selected)] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(56,113,189,0.25)]">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center gap-1 rounded-md border border-[color:rgba(0,207,232,0.55)] bg-[rgba(0,207,232,0.12)] px-2 py-0.5 text-micro font-semibold tracking-[0.08em] text-[color:var(--tk-color-brand-primary-deep)]">
-                    汇总
-                  </span>
-                  <div className="text-xs font-semibold text-slate-50">
-                    {group.name}
-                  </div>
-                </div>
-                <span aria-hidden="true" />
-                <span aria-hidden="true" />
-                <span aria-hidden="true" />
-                <span aria-hidden="true" />
-                <span aria-hidden="true" />
-                <span aria-hidden="true" />
-                <span />
-              </div>
               <div className="divide-y divide-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-page)]">
-                {rows.map((row) => renderDetailRow(row, group.name, false))}
+                {sortDetailRows(rows).map((row) => renderDetailRow(row, group.name, false))}
               </div>
             </div>
           ))
@@ -15997,7 +16965,7 @@ function SentimentPopoverPanel({
       onMouseLeave={onLeave}
     >
       <div className="flex items-center gap-2 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
-        <span className="text-xs font-semibold text-slate-200">资金情绪</span>
+        <span className="text-xs font-semibold text-slate-200">泰康资金情绪</span>
         <div className="flex gap-0.5 rounded-md bg-[var(--tk-color-surface-dark-deep)] p-0.5">
           {(["realtime", "trend"] as const).map((t) => (
             <button
@@ -16243,10 +17211,10 @@ function StatusBadgeWithPopover({ statusText }: { statusText: string }) {
         <TopToolValuePopover
           anchorRect={anchorRect}
           title={statusText}
-          subtitle="综合央行投放、DR007、匿名成交与资金情绪判断"
+          subtitle="综合央行投放、DR007、匿名成交与泰康资金情绪判断"
           metrics={[
             { label: "DR007", value: "2.15%", tone: "alert" },
-            { label: "资金情绪", value: "51", tone: "neutral" },
+            { label: "泰康资金情绪", value: "51", tone: "neutral" },
             { label: "R001", value: "1.58 / 1.66", tone: "good" },
             { label: "更新时间", value: "10:53:27" },
           ]}
