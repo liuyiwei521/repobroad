@@ -84,3 +84,54 @@ export function getSentimentState(score) {
     statusClass: "text-slate-600",
   };
 }
+
+export function buildChartDomain(
+  values,
+  { paddingRatio = 0.08, minSpan = 0.04, clampMin, clampMax } = {},
+) {
+  const finiteValues = values.filter((value) => Number.isFinite(value));
+  if (finiteValues.length === 0) {
+    return { min: 0, max: 1 };
+  }
+
+  let min = Math.min(...finiteValues);
+  let max = Math.max(...finiteValues);
+  const span = Math.max(max - min, minSpan);
+  const padding = span * paddingRatio;
+
+  if (min === max) {
+    min -= minSpan / 2;
+    max += minSpan / 2;
+  } else {
+    min -= padding;
+    max += padding;
+  }
+
+  if (typeof clampMin === "number") {
+    min = Math.max(clampMin, min);
+  }
+  if (typeof clampMax === "number") {
+    max = Math.min(clampMax, max);
+  }
+
+  if (min >= max) {
+    const center = finiteValues[0];
+    min = center - minSpan / 2;
+    max = center + minSpan / 2;
+  }
+
+  return {
+    min: Number(min.toFixed(4)),
+    max: Number(max.toFixed(4)),
+  };
+}
+
+export function buildLinearTicks(min, max, count, precision = 3) {
+  if (count <= 1) {
+    return [Number(max.toFixed(precision))];
+  }
+
+  return Array.from({ length: count }, (_, index) =>
+    Number((max - ((max - min) * index) / (count - 1)).toFixed(precision)),
+  );
+}

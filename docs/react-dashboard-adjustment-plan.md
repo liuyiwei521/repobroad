@@ -134,6 +134,14 @@
 - 更新总 Checklist 和里程碑 M1-M8 所有待办项为 `[x]`。
 - 验证结果：`npm run test:react-dashboard` 5/5 通过，`vite build` 通过，浏览器无控制台错误。
 
+### 本轮执行记录 R3（2026-06-23）
+
+- **图表空间收口**：为 `src/app/dashboardUtils.js` 新增 `buildChartDomain()` 与 `buildLinearTicks()`，统一处理窄波动行情的 y 轴最小跨度与刻度，避免图形贴边或出现大块空白。
+- **左侧预览交互修正**：左侧 `今天大行价格` 与 `XREPO` 预览卡不再在窄卡片内翻转展示历史图，改为行点击直接带当前机构 / 期限 / 合约打开大图，避免横纵坐标和图形在预览态相互挤压。
+- **大图布局修正**：`BigBankRateTrendPlot`、`BigBankSpreadDiffPlot`、`XrepoInlineHistoryChart`、`IntradayPanel` 调整绘图区宽高、边距、图例位置与柱体占比，确保坐标轴、图例、控制条与主图分层展示。
+- **匿名成交走势修正**：将今日 / 昨日 / 叠加品种图例移到图表头部控制区，释放主图上沿空间；同时按新纵轴范围工具收口折线高度，避免走势贴顶或压扁。
+- **验证结果**：`npm run test:react-dashboard` 7/7 通过，`npm run build:react` 通过；本地浏览器复核覆盖首页、`今天大行价格` 大图、`XREPO` 历史走势大图，确认预览卡不再内翻压缩历史图，且主要图表无明显坐标遮挡。
+
 验收：
 
 - 页面主题统一。

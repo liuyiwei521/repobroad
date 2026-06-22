@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import {
   XREPO_HISTORY_TABS,
+  buildChartDomain,
+  buildLinearTicks,
   buildXrepoTodayLabels,
   getSentimentState,
   getXrepoHistoryPointCount,
@@ -151,12 +153,14 @@ type ActiveFrame = {
   id: ModuleEntryId;
   title: string;
   bank?: string;
+  bankTenor?: string;
   contract?: string;
   cfetsPeriod?: CfetsInstPeriod;
   cfetsMetric?: CfetsMetricKey;
 } | null;
 type FrameOpenOptions = {
   bank?: string;
+  bankTenor?: string;
   contract?: string;
   cfetsPeriod?: CfetsInstPeriod;
   cfetsMetric?: CfetsMetricKey;
@@ -2279,6 +2283,7 @@ function App() {
           {activeFrame.id === "big-bank-price" ? (
             <BigBankPriceFrame
               initialBank={activeFrame.bank}
+              initialTenor={activeFrame.bankTenor}
             />
           ) : activeFrame.id === "weighted-price" ? (
             <div className="h-full min-h-0">
@@ -4804,6 +4809,7 @@ function bankHistorySessionLabel(tenor?: string) {
 
 function buildBankHistorySeries(bank: string) {
   const seed = bank.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  const labels = generateTradingDates(TODAY_STR, 28);
   return Array.from({ length: 28 }, (_, index) => {
     const wave = Math.sin((index + seed) * 0.42) * 0.035;
     const drift = index > 20 ? (index - 20) * 0.006 : index > 10 ? -0.018 : 0;
@@ -4811,7 +4817,7 @@ function buildBankHistorySeries(bank: string) {
     const bankRate = Number((nonBank - 0.055 + Math.cos(index * 0.55 + seed) * 0.014).toFixed(3));
     const spread = Math.max(1, Math.round((nonBank - bankRate) * 100));
     return {
-      date: `05-${String(index + 10).padStart(2, "0")}`,
+      date: labels[index] ?? `${index + 1}`,
       nonBank,
       bankRate,
       spread,
@@ -4862,9 +4868,7 @@ function bankTrendY(
 }
 
 function bankChartTicks(min: number, max: number, count = 4) {
-  return Array.from({ length: count }, (_, index) =>
-    Number((max - ((max - min) * index) / (count - 1)).toFixed(3)),
-  );
+  return buildLinearTicks(min, max, count).map((tick) => Number(tick.toFixed(3)));
 }
 
 function bankChartXTickIndices(count: number) {
@@ -4885,15 +4889,20 @@ function BigBankRateTrendPlot({
   const nonBank = data.map((item) => item.nonBank);
   const bankRates = data.map((item) => item.bankRate);
   const spread = data.map((item) => item.spread);
-  const minRate = Math.min(...nonBank, ...bankRates) - 0.03;
-  const maxRate = Math.max(...nonBank, ...bankRates) + 0.03;
+  const { min: minRate, max: maxRate } = buildChartDomain([...nonBank, ...bankRates], {
+    paddingRatio: 0.12,
+    minSpan: 0.08,
+    clampMin: 0,
+  });
   const maxSpread = Math.max(...spread, 1);
-  const width = 360;
-  const height = 150;
-  const margin = { left: 35, right: 22, top: 16, bottom: 25 };
+  const width = 420;
+  const height = 180;
+  const margin = { left: 42, right: 34, top: 20, bottom: 30 };
   const plotBottom = height - margin.bottom;
   const yTicks = bankChartTicks(minRate, maxRate);
   const xTickIndices = bankChartXTickIndices(data.length);
+  const spreadPlotHeight = (height - margin.top - margin.bottom) * 0.38;
+  const spreadTicks = [maxSpread, Math.round(maxSpread / 2), 0];
   const tooltipIndex = tooltipState?.index ?? null;
   const hoverX =
     tooltipIndex === null ? null : bankTrendX(tooltipIndex, data.length, width, margin);
@@ -4956,7 +4965,7 @@ function BigBankRateTrendPlot({
         })}
         {spread.map((value, index) => {
           const barWidth = Math.max(2, (width - margin.left - margin.right) / spread.length - 3);
-          const barHeight = (value / maxSpread) * ((height - margin.top - margin.bottom) * 0.42);
+          const barHeight = (value / maxSpread) * spreadPlotHeight;
           return (
             <rect
               key={`spread-${index}`}
@@ -4967,6 +4976,20 @@ function BigBankRateTrendPlot({
               fill="#f4dfaa"
               opacity="0.58"
             />
+          );
+        })}
+        {spreadTicks.map((tick) => {
+          const y = plotBottom - (tick / Math.max(maxSpread, 1)) * spreadPlotHeight;
+          return (
+            <text
+              key={`spread-tick-${tick}`}
+              x={width - margin.right + 6}
+              y={y + 3}
+              fill="#64748b"
+              fontSize="8"
+            >
+              {tick}
+            </text>
           );
         })}
         <path
@@ -5048,9 +5071,9 @@ function BigBankSpreadDiffPlot({
   ];
   const allValues = groups.flatMap((group) => group.values);
   const maxValue = Math.max(...allValues, 1);
-  const width = 360;
-  const height = 132;
-  const margin = { left: 35, right: 14, top: 12, bottom: 24 };
+  const width = 420;
+  const height = 150;
+  const margin = { left: 58, right: 16, top: 14, bottom: 28 };
   const rowHeight = (height - margin.top - margin.bottom - 10) / 2;
   const xTickIndices = bankChartXTickIndices(data.length);
   const tooltipIndex = tooltipState?.index ?? null;
@@ -5296,18 +5319,20 @@ function BigBankPriceFrame({
   embeddedPreview = false,
   onOpen,
   initialBank,
+  initialTenor,
   onFlippedChange,
 }: {
   embeddedPreview?: boolean;
   onOpen?: (options?: FrameOpenOptions) => void;
   initialBank?: string;
+  initialTenor?: string;
   onFlippedChange?: (flipped: boolean) => void;
 }) {
   const [flippedBank, setFlippedBank] = useState<string | null>(initialBank ?? null);
   useEffect(() => {
     onFlippedChange?.(flippedBank !== null);
   }, [flippedBank, onFlippedChange]);
-  const [flippedTenor, setFlippedTenor] = useState("");
+  const [flippedTenor, setFlippedTenor] = useState(initialTenor ?? "");
   const [whitelist, setWhitelist] = useState<string[]>([
     ...defaultBigBankWhitelist,
   ]);
@@ -5492,8 +5517,17 @@ function BigBankPriceFrame({
               adaptiveHeight={false}
               scrollY
               onRowClick={(row) => {
-                setFlippedBank(row[0] ?? null);
-                setFlippedTenor(row[1] ?? "");
+                const nextBank = row[0] ?? null;
+                const nextTenor = row[1] ?? "";
+                if (embeddedPreview && onOpen) {
+                  onOpen({
+                    bank: nextBank ?? undefined,
+                    bankTenor: nextTenor || undefined,
+                  });
+                  return;
+                }
+                setFlippedBank(nextBank);
+                setFlippedTenor(nextTenor);
               }}
             />
               </div>
@@ -5607,7 +5641,14 @@ function XrepoFrame({
                 compact={embeddedPreview}
                 flush
                 scrollY
-                onRowClick={(row) => openInlineHistory(row[0] ?? "R001")}
+                onRowClick={(row) => {
+                  const contractName = row[0] ?? "R001";
+                  if (embeddedPreview && onOpen) {
+                    onOpen({ contract: contractName });
+                    return;
+                  }
+                  openInlineHistory(contractName);
+                }}
               />
             </div>
             <div className="tk-flip-card__face tk-flip-card__face--back h-full min-h-0">
@@ -5761,30 +5802,33 @@ function XrepoInlineHistoryChart({
   const rateValues = data.compare
     ? [...data.current, ...data.compare]
     : data.current;
-  const minRate = Math.max(0, Math.min(...rateValues) - 0.035);
-  const maxRate = Math.max(...rateValues) + 0.035;
+  const { min: minRate, max: maxRate } = buildChartDomain(rateValues, {
+    paddingRatio: 0.12,
+    minSpan: 0.08,
+    clampMin: 0,
+  });
   const maxVolume = Math.max(...data.volume, 1);
   const maxSpread = Math.max(
     ...(data.spread ?? [0]).map((value) => Math.abs(value)),
     1,
   );
-  const width = 520;
-  const height = 138;
+  const width = 640;
+  const height = 204;
   const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
     useChartTooltip(data.labels.length);
   const tooltipIndex = tooltipState?.index ?? null;
-  const tickStep = Math.max(1, Math.ceil(data.labels.length / (compact ? 5 : 7)));
+  const xAxisLabels = buildAxisTickLabels(data.labels, compact ? 5 : 7);
 
   return (
     <div
-      className="relative h-full min-h-0 bg-[var(--tk-color-surface-dark-deep)]"
+      className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-2 bg-[var(--tk-color-surface-dark-deep)]"
       data-xrepo-history-chart
     >
       <div
-        className="absolute left-2 right-2 top-1 z-20 flex items-start justify-between gap-2 text-micro"
+        className="flex items-start justify-between gap-2 px-2 pt-1 text-micro"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="pointer-events-none flex min-w-0 flex-wrap items-center gap-2 rounded bg-[rgba(15,23,42,0.72)] px-2 py-0.5 text-slate-400">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-1 text-slate-500">
           <LegendDot color={chartPalette.blue} label={contractName} />
           {data.compare ? (
             <LegendDot color={chartPalette.violet} label={compareLabel} />
@@ -5794,7 +5838,7 @@ function XrepoInlineHistoryChart({
             label={data.spread ? "价差" : "成交量"}
           />
         </div>
-        <div className="flex shrink-0 items-center gap-1 rounded bg-[rgba(15,23,42,0.76)] px-1.5 py-0.5">
+        <div className="flex shrink-0 items-center gap-1 rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-1.5 py-1">
           <label className="flex items-center gap-1 whitespace-nowrap text-slate-400">
             <span>对比</span>
             <select
@@ -5825,9 +5869,10 @@ function XrepoInlineHistoryChart({
           </div>
         </div>
       </div>
-      <div className="grid h-full min-h-0 grid-cols-[2.5rem_1fr] px-2 pb-1 pt-1">
-        <div className="flex flex-col justify-between pb-5 pt-5 pr-1 text-right text-micro text-slate-500">
-          {buildAxisLabels(minRate, maxRate, 4).map((tick) => (
+      <div className="grid h-full min-h-0 grid-cols-[3.4rem_minmax(0,1fr)] px-2">
+        <div className="flex flex-col justify-between pb-6 pr-2 pt-2 text-right text-micro text-slate-500">
+          <div className="font-medium text-slate-400">利率(%)</div>
+          {buildLinearTicks(minRate, maxRate, 4).map((tick) => (
             <div key={tick}>{tick}</div>
           ))}
         </div>
@@ -5839,16 +5884,16 @@ function XrepoInlineHistoryChart({
             <div
               key={index}
               className="absolute inset-x-0 border-t border-[color:var(--tk-color-border-divider)] opacity-70"
-              style={{ top: `${(index / 3) * 82}%` }}
+              style={{ top: `${(index / 3) * 100}%` }}
             />
           ))}
           {data.spread ? (
-            <div className="absolute inset-x-1 bottom-5 top-[58%] flex items-stretch gap-[2px]">
+            <div className="absolute inset-x-1 bottom-6 top-[58%] flex items-stretch gap-[2px]">
               <div className="pointer-events-none absolute left-0 right-0 top-1/2 border-t border-dashed border-[color:var(--tk-color-border-divider)]" />
               {data.spread.map((value, index) => {
                 const barHeight = Math.max(
-                  4,
-                  (Math.abs(value) / maxSpread) * 48,
+                  8,
+                  (Math.abs(value) / maxSpread) * 92,
                 );
                 return (
                   <div
@@ -5873,18 +5918,18 @@ function XrepoInlineHistoryChart({
               })}
             </div>
           ) : (
-            <div className="absolute inset-x-1 bottom-5 top-1 flex items-end gap-[2px]">
+            <div className="absolute inset-x-1 bottom-6 top-1 flex items-end gap-[2px]">
               {data.volume.map((value, index) => (
                 <div
                   key={`${data.labels[index]}-volume`}
                   className="min-w-0 flex-1 rounded-t-[2px] bg-[rgba(94,163,255,0.28)]"
-                  style={{ height: `${(value / maxVolume) * 52}%` }}
+                  style={{ height: `${Math.max(10, (value / maxVolume) * 88)}%` }}
                 />
               ))}
             </div>
           )}
           <svg
-            className="absolute inset-x-1 bottom-5 top-1 h-[calc(100%-1.5rem)] w-[calc(100%-0.5rem)]"
+            className="absolute inset-x-1 bottom-6 top-1 h-[calc(100%-1.75rem)] w-[calc(100%-0.5rem)]"
             preserveAspectRatio="none"
             viewBox={`0 0 ${width} ${height}`}
           >
@@ -5910,18 +5955,24 @@ function XrepoInlineHistoryChart({
           </svg>
           {tooltipIndex !== null ? (
             <div
-              className="pointer-events-none absolute bottom-5 top-1 w-px bg-[var(--tk-color-brand-primary)]"
+              className="pointer-events-none absolute bottom-6 top-1 w-px bg-[var(--tk-color-brand-primary)]"
               style={{
                 left: `${(tooltipIndex / (data.labels.length - 1)) * 100}%`,
               }}
             />
           ) : null}
-          <div className="absolute inset-x-0 bottom-0 h-4">
-            {data.labels.map((label, index) =>
-              index % tickStep === 0 || index === data.labels.length - 1 ? (
+          <div className="absolute inset-x-0 bottom-0 h-5">
+            {xAxisLabels.map((label, index) =>
+              label ? (
                 <span
-                  key={label}
-                  className="absolute top-0 -translate-x-1/2 text-micro text-slate-500"
+                  key={`${label}-${index}`}
+                  className={`absolute top-0 text-micro text-slate-500 ${
+                    index === 0
+                      ? "translate-x-0"
+                      : index === data.labels.length - 1
+                        ? "-translate-x-full"
+                        : "-translate-x-1/2"
+                  }`}
                   style={{ left: `${(index / (data.labels.length - 1)) * 100}%` }}
                 >
                   {label}
@@ -5972,7 +6023,7 @@ function XrepoInlineHistoryChart({
           ) : null}
         </div>
       </div>
-      <div className="pointer-events-none absolute bottom-1 left-2 right-2 z-10 flex items-center justify-between rounded bg-[rgba(15,23,42,0.66)] px-2 py-0.5 text-micro text-slate-500">
+      <div className="flex items-center justify-between px-2 pb-1 text-micro text-slate-500">
         <span>点击返回 XRepo 表格</span>
         <span>{range === "5d" ? "近5日" : range === "1m" ? "近1M" : "近半年"} / {compareLabel}</span>
       </div>
@@ -11838,9 +11889,15 @@ function IntradayPanel({
         Number(((value - overlaySeries[index]) * 100).toFixed(1)),
       )
     : null;
-  const pad = 0.01;
-  const min = Math.min(...mainSeries, ...yesterdaySeries, ...(overlaySeries ?? [])) - pad;
-  const max = Math.max(...mainSeries, ...yesterdaySeries, ...(overlaySeries ?? [])) + pad;
+  const { min, max } = buildChartDomain(
+    [...mainSeries, ...yesterdaySeries, ...(overlaySeries ?? [])],
+    {
+      paddingRatio: 0.12,
+      minSpan: 0.05,
+      clampMin: 0,
+    },
+  );
+  const yTicks = buildLinearTicks(min, max, 4);
   const mainPath = buildLinePath(mainSeries, 680, 178, min, max);
   const yesterdayPath = buildLinePath(yesterdaySeries, 680, 178, min, max);
   const areaPath = buildAreaPath(mainSeries, 680, 178, min, max);
@@ -11877,11 +11934,21 @@ function IntradayPanel({
             onChange={onOverlayChange}
           />
         </div>
+        <div className="ml-auto flex flex-wrap items-center gap-3 text-micro text-slate-500">
+          <LegendDot color={chartPalette.blue} label={`今日${productLabel}`} />
+          <LegendDot color={chartPalette.violet} label={`昨日${productLabel}`} />
+          {overlaySeries ? (
+            <LegendDot
+              color={chartPalette.amber}
+              label={overlayProductLabel(overlayProduct)}
+            />
+          ) : null}
+        </div>
       </div>
       <div className="grid min-h-0 grid-rows-[minmax(0,1fr)_1.25rem] px-3 pb-2 pt-2">
-        <div className="grid min-h-0 grid-cols-[3rem_1fr]">
-            <div className="flex flex-col justify-between pb-6 pr-2 text-right text-micro text-slate-400">
-            {buildAxisLabels(min, max, 4).map((tick) => (
+        <div className="grid min-h-0 grid-cols-[3.4rem_1fr]">
+          <div className="flex flex-col justify-between pb-6 pr-2 text-right text-micro text-slate-400">
+            {yTicks.map((tick) => (
               <div key={tick}>{tick}</div>
             ))}
           </div>
@@ -12022,16 +12089,6 @@ function IntradayPanel({
                 ) : null}
               </ChartTooltip>
             )}
-            <div className="absolute right-2 top-1 flex flex-wrap items-center gap-3 text-micro text-slate-300">
-              <LegendDot color={chartPalette.blue} label={`今日${productLabel}`} />
-              <LegendDot color={chartPalette.violet} label={`昨日${productLabel}`} />
-              {overlaySeries ? (
-                <LegendDot
-                  color={chartPalette.amber}
-                  label={overlayProductLabel(overlayProduct)}
-                />
-              ) : null}
-            </div>
           </div>
         </div>
         <div className="grid grid-cols-[3rem_1fr] pt-1">
