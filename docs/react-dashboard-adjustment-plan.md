@@ -12,7 +12,7 @@
 
 ## 本轮新增待办与里程碑（2026-06-22）
 
-本轮调整聚焦当前 React 看板的顶部情绪与广播、中部 tab 重组、左侧入口交互、右侧机构热度走势增强，以及整页白板主题切换。
+本轮调整聚焦当前 React 看板的顶部情绪与广播、中部 tab 重组、左侧入口交互、右侧机构热度走势增强，以及整页 `tdxtheme` 终端主题对齐。
 
 ### Todolist
 
@@ -31,7 +31,7 @@
 - [x] `资金分机构统计` 下移到中下区域的 tab。
 - [x] 删除中上区域 `非银报价` 标题。
 - [x] 右侧区域按“机构热度走势”口径统一整理标题、图例和 tooltip。
-- [x] 全页切到白板主题。
+- [x] 全页切回 `tdxtheme` 终端主题。
 - [x] 完成后运行 `npm run build` 并做关键交互回归。
 
 ### 里程碑
@@ -102,21 +102,21 @@
 - 右侧图表至少包含价格、笔数、量三类表达。
 - 图例、单位和 tooltip 一致。
 
-#### M5：白板主题与联调验收
+#### M5：TDX 主题与联调验收
 
-目标：完成全页白板主题切换，并对主要交互做一次收口验证。
+目标：完成全页 `tdxtheme` 终端主题对齐，并对主要交互做一次收口验证。
 
 待办：
 
-- [x] 整页切换为白板主题。
-- [x] 检查表格、弹窗、tab、图表在白底下的层次。
+- [x] 整页切回 `tdxtheme` 终端主题。
+- [x] 检查表格、弹窗、tab、图表在深色终端底色下的层次。
 - [x] 运行 `npm run build`。
 - [x] 验证顶部广播、情绪条、大行价格弹窗、XREPO 弹窗、中部 tab、右侧走势。
 - [x] 记录未完成项和残留问题。
 
 ### 本轮执行记录 R1（2026-06-23）
 
-- 已完成 React 看板白板主题切换，新增 `src/styles/react-whiteboard.css` 并通过 `src/styles/index.css` 接入。
+- 上一版曾完成 React 看板白板主题切换，并新增 `src/styles/react-whiteboard.css` 通过 `src/styles/index.css` 接入。
 - 已将左侧 `大行价格`、`XREPO` 从翻转模式调整为表格选中 + 大弹窗/大图联动。
 - 已补齐 `XREPO` 的”当天”范围。
 - 已新增 `src/app/dashboardUtils.js` 与 `src/app/dashboardUtils.test.mjs`，覆盖期限标签、多选切换、`XREPO` 当天点位和情绪分级逻辑。
@@ -141,6 +141,13 @@
 - **大图布局修正**：`BigBankRateTrendPlot`、`BigBankSpreadDiffPlot`、`XrepoInlineHistoryChart`、`IntradayPanel` 调整绘图区宽高、边距、图例位置与柱体占比，确保坐标轴、图例、控制条与主图分层展示。
 - **匿名成交走势修正**：将今日 / 昨日 / 叠加品种图例移到图表头部控制区，释放主图上沿空间；同时按新纵轴范围工具收口折线高度，避免走势贴顶或压扁。
 - **验证结果**：`npm run test:react-dashboard` 7/7 通过，`npm run build:react` 通过；本地浏览器复核覆盖首页、`今天大行价格` 大图、`XREPO` 历史走势大图，确认预览卡不再内翻压缩历史图，且主要图表无明显坐标遮挡。
+
+### 本轮执行记录 R4（2026-06-23）
+
+- **主题冲突收口**：根据本轮“`tdxtheme` 作为开发主题”的新要求，确认当前页面与文档中“白板主题”口径存在业务冲突，已切分支 `codex/react-dashboard-tdx-theme-alignment` 处理。
+- **主题回切**：停止在 [`E:\code\repobroad\src\styles\index.css`](E:/code/repobroad/src/styles/index.css) 接入 `src/styles/react-whiteboard.css`，恢复 `tdx-react.css` 作为 React 看板实际运行主题。
+- **回归测试补充**：新增 `src/app/themeImports.test.mjs`，校验 React 样式入口继续保留 `tdx-react.css` 且不再叠加 `react-whiteboard.css`。
+- **视觉复核**：重新抓取 `1920x1080` 首页截图，确认顶部栏、左中右三栏、机构热度走势、匿名成交走势与 NCD 面板已回到深色终端风格，未出现坐标轴与图形遮挡。
 
 验收：
 
@@ -538,6 +545,7 @@ const [flippedBankId, setFlippedBankId] = useState<string | null>(null);
 - [x] 浏览器无明显运行时报错。
 - [x] 关键交互在桌面视口验证通过。
 - [x] 文案、表头、单位和 tooltip 口径一致。
+- [x] React 看板实际运行主题与 `tdxtheme` 要求一致。
 
 ## 里程碑待办
 
