@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { tenorLabel, type QuoteLevel, type Tenor } from '../../data/mockData';
 
+type AmountUnit = '亿' | '万';
+
 defineProps<{
   activeLevel: QuoteLevel;
   tenors: Tenor[];
@@ -8,6 +10,7 @@ defineProps<{
   maxTenor: Tenor | '';
   minAmount: string;
   maxAmount: string;
+  amountUnit: AmountUnit;
   minRate: string;
   maxRate: string;
   accountKeyword: string;
@@ -21,6 +24,7 @@ const emit = defineEmits<{
   'update:maxTenor': [value: Tenor | ''];
   'update:minAmount': [value: string];
   'update:maxAmount': [value: string];
+  'update:amountUnit': [value: AmountUnit];
   'update:minRate': [value: string];
   'update:maxRate': [value: string];
   'update:accountKeyword': [value: string];
@@ -32,12 +36,13 @@ const emit = defineEmits<{
 const inputValue = (event: Event) => (event.target as HTMLInputElement).value;
 const checkedValue = (event: Event) => (event.target as HTMLInputElement).checked;
 const selectTenorValue = (event: Event) => (event.target as HTMLSelectElement).value as Tenor | '';
+const selectAmountUnitValue = (event: Event) => (event.target as HTMLSelectElement).value as AmountUnit;
 </script>
 
 <template>
   <div class="market-filter-bar" aria-label="报价筛选">
     <div class="market-filter-row">
-      <label class="market-range-field">
+      <label class="market-range-field market-range-field--amount">
         <span>金额</span>
         <input
           :value="minAmount"
@@ -58,7 +63,10 @@ const selectTenorValue = (event: Event) => (event.target as HTMLSelectElement).v
           aria-label="最大金额"
           @input="emit('update:maxAmount', inputValue($event))"
         />
-        <small>亿</small>
+        <select :value="amountUnit" aria-label="金额单位" @change="emit('update:amountUnit', selectAmountUnitValue($event))">
+          <option value="亿">亿</option>
+          <option value="万">万</option>
+        </select>
       </label>
 
       <label class="market-range-field market-range-field--rate">

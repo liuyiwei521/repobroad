@@ -12,6 +12,7 @@ import { accountTypeOf, type TaskOverviewFilter } from '../composables/useTaskOv
 const { columnTemplate } = useQuoteColumns();
 
 type PopupAnchor = { x: number; y: number };
+type AmountUnit = '亿' | '万';
 
 const props = defineProps<{
   quotes: MarketQuote[];
@@ -42,6 +43,7 @@ const minTenor = ref<Tenor | ''>('');
 const maxTenor = ref<Tenor | ''>('');
 const minAmount = ref('');
 const maxAmount = ref('');
+const amountUnit = ref<AmountUnit>('亿');
 const minRate = ref('');
 const maxRate = ref('');
 const accountKeyword = ref('');
@@ -64,6 +66,17 @@ const parseOptionalNumber = (value: string) => {
   if (!trimmed) return null;
   const parsed = Number(trimmed);
   return Number.isFinite(parsed) ? parsed : null;
+};
+
+const amountUnitDivisor: Record<AmountUnit, number> = {
+  亿: 1,
+  万: 10000
+};
+
+const normalizeAmountFilterValue = (value: string) => {
+  const parsed = parseOptionalNumber(value);
+  if (parsed === null) return null;
+  return parsed / amountUnitDivisor[amountUnit.value];
 };
 
 const normalizeText = (value: string | undefined | null) => String(value ?? '').toLowerCase();
@@ -239,8 +252,8 @@ const waitMinutesOf = (chat: ChatThread) => {
 };
 
 const filteredOpponentItems = computed<OpponentThreadView[]>(() => {
-  const minAmountValue = parseOptionalNumber(minAmount.value);
-  const maxAmountValue = parseOptionalNumber(maxAmount.value);
+  const minAmountValue = normalizeAmountFilterValue(minAmount.value);
+  const maxAmountValue = normalizeAmountFilterValue(maxAmount.value);
   const minRateValue = parseOptionalNumber(minRate.value);
   const maxRateValue = parseOptionalNumber(maxRate.value);
   const accountKeywordValue = accountKeyword.value.trim().toLowerCase();
@@ -307,8 +320,8 @@ const isMatch = (quote: MarketQuote, tenor: Tenor, rate: number) => {
 };
 
 const quoteLines = computed<QuoteLine[]>(() => {
-  const minAmountValue = parseOptionalNumber(minAmount.value);
-  const maxAmountValue = parseOptionalNumber(maxAmount.value);
+  const minAmountValue = normalizeAmountFilterValue(minAmount.value);
+  const maxAmountValue = normalizeAmountFilterValue(maxAmount.value);
   const minRateValue = parseOptionalNumber(minRate.value);
   const maxRateValue = parseOptionalNumber(maxRate.value);
   const accountKeywordValue = accountKeyword.value.trim().toLowerCase();
@@ -499,6 +512,7 @@ const exportQuotes = () => {
       :max-tenor="maxTenor"
       :min-amount="minAmount"
       :max-amount="maxAmount"
+      :amount-unit="amountUnit"
       :min-rate="minRate"
       :max-rate="maxRate"
       :account-keyword="accountKeyword"
@@ -509,6 +523,7 @@ const exportQuotes = () => {
       @update:max-tenor="maxTenor = $event"
       @update:min-amount="minAmount = $event"
       @update:max-amount="maxAmount = $event"
+      @update:amount-unit="amountUnit = $event"
       @update:min-rate="minRate = $event"
       @update:max-rate="maxRate = $event"
       @update:account-keyword="accountKeyword = $event"

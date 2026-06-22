@@ -3634,6 +3634,10 @@ body.is-col-resizing .matrix-col-resizer::before {
   grid-template-columns: auto 82px auto 82px auto;
 }
 
+.market-range-field--amount {
+  grid-template-columns: auto 92px auto 92px 64px;
+}
+
 .market-range-field input,
 .market-tenor-field select,
 .quote-correction-popover input {
@@ -3644,6 +3648,17 @@ body.is-col-resizing .matrix-col-resizer::before {
   border: 1px solid var(--tk-color-border-default);
   border-radius: var(--tk-radius-sm);
   padding: 0 14px;
+  outline: none;
+}
+
+.market-range-field select {
+  height: 32px;
+  min-width: 0;
+  color: var(--market-text);
+  background: var(--tk-color-surface-page);
+  border: 1px solid var(--tk-color-border-default);
+  border-radius: var(--tk-radius-sm);
+  padding: 0 10px;
   outline: none;
 }
 
@@ -4230,6 +4245,10 @@ body.is-col-resizing .matrix-col-resizer::before {
 
   .market-range-field {
     grid-template-columns: auto 86px auto 86px auto;
+  }
+
+  .market-range-field--amount {
+    grid-template-columns: auto 82px auto 82px 58px;
   }
 }
 
@@ -5797,6 +5816,11 @@ textarea:focus-visible,
 .market-range-field input,
 .market-tenor-field select,
 .market-keyword-field input {
+  height: 26px;
+  padding: 0 8px;
+}
+
+.market-range-field select {
   height: 26px;
   padding: 0 8px;
 }
