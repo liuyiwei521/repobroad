@@ -1,0 +1,64 @@
+/* Whiteboard palette override for the React dashboard while retaining TDX component primitives. */
+:root {
+  --tdx-bg-page: #f4f6f8;
+  --tdx-bg-panel: #ffffff;
+  --tdx-bg-header: #f3f5f8;
+  --tdx-bg-control: #ffffff;
+  --tdx-bg-control-hover: #e7f1ff;
+  --tdx-bg-row-hover: #f6f8fb;
+
+  --tdx-border: #d8dde5;
+  --tdx-border-weak: #e3e7ed;
+  --tdx-border-active: #0067d9;
+  --tdx-scrollbar-track: #eef2f7;
+  --tdx-scrollbar-thumb: #c6d0de;
+  --tdx-scrollbar-thumb-hover: #aebdd1;
+
+  --tdx-text-main: #1f2933;
+  --tdx-text-muted: #6b7280;
+  --tdx-text-heading: #111827;
+  --tdx-text-inverse: #ffffff;
+  --tdx-text-disabled: rgba(31, 41, 55, 0.42);
+
+  --tdx-red: #0067d9;
+  --tdx-red-hover: #147cff;
+  --tdx-red-deep: #0058bd;
+  --tdx-green: #00a870;
+  --tdx-yellow: #ff8a00;
+  --tdx-blue: #1872f6;
+  --tdx-purple: #7a4aa1;
+  --tdx-orange: #c76a25;
+}
+
+html,
+body,
+#root {
+  background: var(--tdx-bg-page);
+  color: var(--tdx-text-main);
+}
+
+.tk-app-shell {
+  background:
+    radial-gradient(circle at top left, rgba(20, 124, 255, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(0, 103, 217, 0.05) 0%, transparent 28%),
+    var(--tdx-bg-page);
+  color: var(--tdx-text-main);
+}
+
+.tk-topbar {
+  box-shadow: inset 0 -1px 0 var(--tdx-border);
+}
+
+.tk-panel,
+.tk-modal {
+  box-shadow: 0 10px 26px rgba(17, 24, 39, 0.04);
+}
+
+.tk-table tbody tr:hover,
+.tdx-density-table tbody tr:hover {
+  background: var(--tdx-bg-control-hover);
+}
+
+.tdx-terminal-tooltip {
+  background: rgba(255, 255, 255, 0.97);
+}

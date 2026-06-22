@@ -7,7 +7,8 @@
     "build": "vite build",
     "build:react": "vite build --config vite.react.config.ts && node scripts/inline-react-dist.mjs",
     "dev": "vite --config vite.react.config.ts",
-    "dev:react": "vite --config vite.react.config.ts"
+    "dev:react": "vite --config vite.react.config.ts",
+    "test:react-dashboard": "node --test src/app/dashboardUtils.test.mjs"
   },
   "dependencies": {
     "vue": "^3.5.22",

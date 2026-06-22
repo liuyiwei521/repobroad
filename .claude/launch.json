@@ -4,8 +4,9 @@
     {
       "name": "dev",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "vite.react.config.ts", "--port", "5173"],
-      "port": 5173
+      "runtimeArgs": ["vite", "--config", "vite.react.config.ts", "--port", "5713"],
+      "port": 5713,
+      "autoPort": false
     },
     {
       "name": "vue-workbench",

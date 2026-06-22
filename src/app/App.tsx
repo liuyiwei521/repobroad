@@ -20,6 +20,14 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import {
+  XREPO_HISTORY_TABS,
+  buildXrepoTodayLabels,
+  getSentimentState,
+  getXrepoHistoryPointCount,
+  quoteTenorDisplayLabel,
+  toggleMultiSelect,
+} from "./dashboardUtils.js";
 
 type TrendMode = "intraday" | "history" | "comparison";
 type SentimentTab = "realtime" | "trend";
@@ -27,6 +35,7 @@ type BaseTrendProduct = "r001" | "r007";
 type OverlayProduct = "none" | "dr007" | "gc007" | "r007";
 type RightLowerTab = "matrix" | "inst" | "bond";
 type HistoryRange = "5d" | "1m" | "6m";
+type XrepoHistoryRange = "today" | HistoryRange;
 type SpreadProduct = "dr001" | "dr007" | "gc007" | "r007";
 type CompareProduct = "none" | SpreadProduct;
 type CfetsMetricKey =
@@ -2233,6 +2242,12 @@ function App() {
     setActiveFrame({ id: entry.id, title: entry.title, ...options });
   }
 
+  function openFrameById(id: ModuleEntryId, options: FrameOpenOptions = {}) {
+    const entry = moduleEntries.find((item) => item.id === id);
+    if (!entry) return;
+    openFrame(entry, options);
+  }
+
   const gridTemplate = `${columns[0]}% 6px ${columns[1]}% 6px ${columns[2]}%`;
   return (
     <div className="tk-app-shell h-screen w-screen overflow-hidden">
@@ -2246,7 +2261,7 @@ function App() {
           className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] overflow-hidden px-2 pb-1.5 pt-1"
           style={{ gridTemplateColumns: gridTemplate, columnGap: 0 }}
         >
-          <LeftInfoColumn />
+          <LeftInfoColumn onOpenFrame={openFrameById} />
           <ColumnSplitter onMouseDown={(e) => startDragSplitter(e, 0)} />
           <CenterColumn
             tenorFilter={quoteTenorFilter}
@@ -5284,7 +5299,7 @@ function BigBankPriceFrame({
   onFlippedChange,
 }: {
   embeddedPreview?: boolean;
-  onOpen?: () => void;
+  onOpen?: (options?: FrameOpenOptions) => void;
   initialBank?: string;
   onFlippedChange?: (flipped: boolean) => void;
 }) {
@@ -5518,7 +5533,7 @@ function XrepoFrame({
   onFlippedChange,
 }: {
   embeddedPreview?: boolean;
-  onOpen?: () => void;
+  onOpen?: (options?: FrameOpenOptions) => void;
   initialContract?: string;
   tenorFilter?: QuoteTenorFilter;
   onFlippedChange?: (flipped: boolean) => void;
@@ -5547,7 +5562,7 @@ function XrepoFrame({
       {embeddedPreview ? (
         <IntegratedPreviewHeader
           id="xrepo"
-          onOpen={() => openInlineHistory()}
+          onOpen={onOpen}
           tenorFilter={tenorFilter}
           actions={
             <button
@@ -7430,7 +7445,7 @@ type DemandMatrix = {
   grandTotal: DemandAmount;
 };
 type BarometerRange = "overnight" | "7d";
-type BarometerMetric = "count" | "volume";
+type BarometerMetric = "price" | "count" | "volume";
 type BarometerLineStyle = "solid" | "dashed";
 type BarometerPoint = { t: string; value: number };
 type BarometerSeries = {
@@ -7562,6 +7577,7 @@ const barometerRangeOptions: Array<{ value: BarometerRange; label: string }> = [
 ];
 
 const barometerMetricOptions: Array<{ value: BarometerMetric; label: string }> = [
+  { value: "price", label: "价" },
   { value: "count", label: "笔数" },
   { value: "volume", label: "量" },
 ];
@@ -7821,8 +7837,27 @@ const barometerTodayInCount = buildBarometerShape(4, 8, 64, 48, 1.3);
 const barometerYesterdayOutCount = buildBarometerShape(4, 8, 198, 132, 2.1);
 const barometerYesterdayInCount = buildBarometerShape(4, 8, 58, 42, 3.4);
 
+const barometerPriceSeries = (base: number): BarometerSeries[] => {
+  const makePoints = (offset: number, wobble: number): BarometerPoint[] =>
+    barometerTimeline.map((t, i) => ({
+      t,
+      value: Number((base + offset + Math.sin(i * 0.42 + wobble) * 0.015 - (i > 12 ? 0.008 : 0)).toFixed(3)),
+    }));
+  return [
+    { key: "todayOut", label: "今日正回购", color: barometerOutColor, lineStyle: "solid", points: makePoints(0.02, 0) },
+    { key: "todayIn", label: "今日逆回购", color: barometerInColor, lineStyle: "solid", points: makePoints(-0.01, 1.3) },
+    { key: "yesterdayOut", label: "昨日正回购", color: barometerOutColor, lineStyle: "dashed", points: makePoints(0.025, 2.1) },
+    { key: "yesterdayIn", label: "昨日逆回购", color: barometerInColor, lineStyle: "dashed", points: makePoints(-0.015, 3.4) },
+  ];
+};
+
 const barometerData: Record<BarometerRange, Record<BarometerMetric, BarometerSlice>> = {
   overnight: {
+    price: {
+      yUnit: "%",
+      yLabel: "利率（%）",
+      series: barometerPriceSeries(1.58),
+    },
     count: {
       yUnit: "笔",
       yLabel: "成交（笔）",
@@ -7845,6 +7880,11 @@ const barometerData: Record<BarometerRange, Record<BarometerMetric, BarometerSli
     },
   },
   "7d": {
+    price: {
+      yUnit: "%",
+      yLabel: "利率（%）",
+      series: barometerPriceSeries(1.85),
+    },
     count: {
       yUnit: "笔",
       yLabel: "成交（笔）",
@@ -7870,30 +7910,36 @@ const barometerData: Record<BarometerRange, Record<BarometerMetric, BarometerSli
 
 function BarometerMatrixCard() {
   const [range, setRange] = useState<BarometerRange>("overnight");
-  const [metric, setMetric] = useState<BarometerMetric>("count");
+  const [metric, setMetric] = useState<BarometerMetric>("price");
   const [institutionType, setInstitutionType] = useState<QtInstitutionType>("all");
   const institutionProfile = qtInstitutionProfiles[institutionType] ?? qtInstitutionProfiles.all;
   const rawSlice = barometerData[range][metric];
   const currentSlice: BarometerSlice = {
     ...rawSlice,
-    series: rawSlice.series.map((series) => ({
-      ...series,
-      points: buildInstitutionBarometerPoints(
-        series.points,
-        institutionProfile,
-        series.key,
-      ),
-    })),
+    series: metric === "price"
+      ? rawSlice.series
+      : rawSlice.series.map((series) => ({
+          ...series,
+          points: buildInstitutionBarometerPoints(
+            series.points,
+            institutionProfile,
+            series.key,
+          ),
+        })),
   };
   const allValues = currentSlice.series.flatMap((series) =>
     series.points.map((point) => point.value),
   );
-  const max = Math.max(...allValues, 1);
-  const min = 0;
+  const isPrice = metric === "price";
+  const rawMax = Math.max(...allValues, 1);
+  const rawMin = isPrice ? Math.min(...allValues) : 0;
+  const pad = isPrice ? 0.01 : 0;
+  const max = rawMax + pad;
+  const min = isPrice ? rawMin - pad : 0;
   const width = 320;
   const height = 110;
-  const yTicks = [max, max * 0.66, max * 0.33, 0].map((value) =>
-    Math.round(value),
+  const yTicks = [max, min + (max - min) * 0.66, min + (max - min) * 0.33, min].map((value) =>
+    isPrice ? Number(value.toFixed(3)) : Math.round(value),
   );
   const visibleTimeLabels = new Set(["08:15", "09:15", "10:15", "11:15", "15:00", "16:00"]);
   const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
@@ -7903,7 +7949,7 @@ function BarometerMatrixCard() {
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_auto_minmax(0,1fr)_auto] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
       <div className="flex items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2.5">
-        <div className="tk-matrix-card-title shrink-0 whitespace-nowrap">机构报价热度</div>
+        <div className="tk-matrix-card-title shrink-0 whitespace-nowrap">机构热度走势</div>
       </div>
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-[color:var(--tk-color-border-divider)] px-3 py-2.5 text-xs">
@@ -8009,7 +8055,7 @@ function BarometerMatrixCard() {
                     />
                     <span className="text-slate-400">{series.label}</span>
                     <span className="font-medium text-slate-100">
-                      {series.points[tooltipIndex].value}
+                      {typeof series.points[tooltipIndex].value === "number" && currentSlice.yUnit === "%" ? series.points[tooltipIndex].value.toFixed(3) : series.points[tooltipIndex].value}
                       {currentSlice.yUnit}
                     </span>
                   </div>
@@ -9276,7 +9322,7 @@ function PersonalInstitutionCompareCard() {
 }
 
 const DEFAULT_TRADING_STATUS_TEXT = "市场宽松";
-const DEFAULT_TRADING_NOTICE_TEXT = "交易提示：央行逆回购净投放，预计今日整体市场宽松";
+const DEFAULT_TRADING_NOTICE_TEXT = "【资金交易提示】：早盘资金面整体宽松，存款类机构融出充裕，非银融出价格上升5-10bp。目前质押信用债的价格，隔夜R001+8bp，7天1.85%，14天1.90%，最新国际货币资金面情绪指数51。";
 const AI_TRADING_NOTICE_TEXT =
   "AI提示：央行逆回购净投放带动资金面偏宽松，建议关注R001/R007边际变化及尾盘跨期需求。";
 
@@ -9438,17 +9484,30 @@ function TradingNoticeEditorModal({
   );
 }
 
-function LeftInfoColumn() {
+function LeftInfoColumn({
+  onOpenFrame,
+}: {
+  onOpenFrame: (id: ModuleEntryId, options?: FrameOpenOptions) => void;
+}) {
   return (
-    <aside className="flex h-full min-h-0 min-w-0 flex-col gap-1 overflow-hidden pr-1 brightness-[0.92]">
+    <aside className="flex h-full min-h-0 min-w-0 flex-col gap-1 overflow-hidden pr-1">
       <div className="min-h-0 flex-[1.4]">
-        <BigBankPriceFrame embeddedPreview />
+        <BigBankPriceFrame
+          embeddedPreview
+          onOpen={(options) => onOpenFrame("big-bank-price", options)}
+        />
       </div>
       <div className="min-h-0 flex-[1.1]">
-        <XrepoFrame embeddedPreview />
+        <XrepoFrame
+          embeddedPreview
+          onOpen={(options) => onOpenFrame("xrepo", options)}
+        />
       </div>
       <div className="min-h-0 flex-[0.8]">
-        <ExchangeRepoFrame embeddedPreview />
+        <ExchangeRepoFrame
+          embeddedPreview
+          onOpen={() => onOpenFrame("exchange-repo")}
+        />
       </div>
     </aside>
   );
@@ -9856,9 +9915,6 @@ function MainQuoteBoard({
         <div className="tk-panel-header border-b px-4 py-2">
           <div className="flex flex-nowrap items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="tk-title-lg shrink-0 whitespace-nowrap">
-                非银报价
-              </div>
               <div className="flex items-center gap-0.5 border-r border-[color:var(--tk-color-border-divider-dark)] pr-3">
                 {repoQuoteSections.map((s) => (
                   <button
@@ -9903,22 +9959,6 @@ function MainQuoteBoard({
                   </button>
                 ))}
               </div>
-              <div className="flex items-center gap-0.5">
-                {([
-                  { key: "all" as SupplementStatusFilter, label: "全部" },
-                  { key: "replied" as SupplementStatusFilter, label: "已回复" },
-                  { key: "unreplied" as SupplementStatusFilter, label: "未回复" },
-                ]).map((tab) => (
-                  <button
-                    key={tab.key}
-                    className={miniChipClass(supplementStatusFilter === tab.key)}
-                    onClick={() => setSupplementStatusFilter(tab.key)}
-                    type="button"
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
               <button
@@ -9947,7 +9987,7 @@ function MainQuoteBoard({
                     onClick={() => onTenorFilterChange(t)}
                     type="button"
                   >
-                    {t}
+                    {quoteTenorDisplayLabel(t)}
                   </button>
                 ))}
               </div>
@@ -17285,6 +17325,9 @@ function SentimentChipWithPopover({
 }: {
   label?: string;
 }) {
+  const score = 51;
+  const sentiment = getSentimentState(score);
+  const updatedAt = "10:53";
   const {
     visible,
     anchorRect,
@@ -17293,13 +17336,24 @@ function SentimentChipWithPopover({
     scheduleHide,
     cancelHide,
   } = useHoverPopover();
+  const statusColorClass =
+    sentiment.tone === "good"
+      ? "text-emerald-500"
+      : sentiment.tone === "alert"
+        ? "text-amber-500"
+        : "text-slate-400";
   return (
     <div
       ref={anchorRef}
       onMouseEnter={scheduleShow}
       onMouseLeave={scheduleHide}
     >
-      <InfoChip label={label} value="51 / 47 / 50 / 49" tone="neutral" />
+      <div className="tk-info-chip flex items-center gap-1.5 rounded-full border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-2.5 py-1 text-xs">
+        <span className="tk-muted">{label}</span>
+        <span className="font-semibold text-slate-100">{score}</span>
+        <span className="text-slate-500">{updatedAt}</span>
+        <span className={`font-semibold ${statusColorClass}`}>{sentiment.status}</span>
+      </div>
       {visible && anchorRect && (
         <SentimentPopoverPanel
           anchorRect={anchorRect}
