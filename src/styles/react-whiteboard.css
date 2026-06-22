@@ -28,6 +28,73 @@
   --tdx-blue: #1872f6;
   --tdx-purple: #7a4aa1;
   --tdx-orange: #c76a25;
+
+  /* Override tk-color-* from tdx-theme.css for light whiteboard */
+  --tk-color-brand-primary: #0067d9;
+  --tk-color-brand-primary-pressed: #0058bd;
+  --tk-color-brand-primary-hover: #147cff;
+  --tk-color-brand-primary-deep: #0058bd;
+  --tk-color-brand-cyan: #ff8a00;
+
+  --tk-color-success: #00a870;
+  --tk-color-warning: #ff8a00;
+  --tk-color-warning-strong: #e6a817;
+  --tk-color-danger: #e7353a;
+  --tk-color-danger-deep: #c91f32;
+  --tk-color-neutral: #6b7280;
+
+  --tk-color-text-primary: #1f2933;
+  --tk-color-text-heading: #111827;
+  --tk-color-text-secondary: #6b7280;
+  --tk-color-text-tertiary: #9ca3af;
+  --tk-color-text-inverse: #111827;
+  --tk-color-text-inverse-secondary: #374151;
+  --tk-color-text-disabled: rgba(31, 41, 55, 0.36);
+
+  --tk-color-surface-page: #f4f6f8;
+  --tk-color-surface-subtle: #ffffff;
+  --tk-color-surface-panel: #f3f5f8;
+  --tk-color-surface-selected: #e7f1ff;
+  --tk-color-surface-selected-strong: #d0e4ff;
+  --tk-color-surface-dark: #f4f6f8;
+  --tk-color-surface-dark-deep: #ffffff;
+  --tk-color-surface-dark-soft: #f3f5f8;
+  --tk-color-surface-dark-muted: #f8f9fb;
+
+  --tk-color-border-default: #d8dde5;
+  --tk-color-border-strong: #c5cdd8;
+  --tk-color-border-divider: #e3e7ed;
+  --tk-color-border-dark: #d8dde5;
+  --tk-color-border-panel: #d8dde5;
+  --tk-color-border-divider-dark: #e3e7ed;
+
+  --tk-color-chart-blue: #1872f6;
+  --tk-color-chart-purple: #7a4aa1;
+  --tk-color-chart-violet: #8b5cf6;
+  --tk-color-chart-indigo: #5664a8;
+  --tk-color-chart-gold: #ff8a00;
+  --tk-color-chart-teal: #00a870;
+
+  --tk-color-overlay-mask: rgba(17, 24, 39, 0.32);
+  --tk-color-overlay-mask-light: rgba(17, 24, 39, 0.16);
+  --tk-color-overlay-shadow: rgba(17, 24, 39, 0.06);
+  --tk-color-success-surface: rgba(0, 168, 112, 0.08);
+  --tk-color-warning-surface: rgba(255, 138, 0, 0.08);
+  --tk-color-danger-surface: rgba(231, 53, 58, 0.08);
+
+  /* Shadcn / tailwind token overrides */
+  --background: var(--tk-color-surface-dark);
+  --foreground: var(--tk-color-text-primary);
+  --card: var(--tk-color-surface-page);
+  --card-foreground: var(--tk-color-text-primary);
+  --secondary: var(--tk-color-surface-dark-soft);
+  --secondary-foreground: var(--tk-color-text-primary);
+  --muted: var(--tk-color-surface-dark-muted);
+  --muted-foreground: var(--tk-color-text-tertiary);
+  --border: var(--tk-color-border-panel);
+  --input-background: var(--tk-color-surface-page);
+
+  scrollbar-color: var(--tdx-scrollbar-thumb) var(--tdx-scrollbar-track);
 }
 
 html,
@@ -39,19 +106,27 @@ body,
 
 .tk-app-shell {
   background:
-    radial-gradient(circle at top left, rgba(20, 124, 255, 0.12), transparent 24%),
-    linear-gradient(180deg, rgba(0, 103, 217, 0.05) 0%, transparent 28%),
+    radial-gradient(circle at top left, rgba(20, 124, 255, 0.06), transparent 24%),
+    linear-gradient(180deg, rgba(0, 103, 217, 0.03) 0%, transparent 28%),
     var(--tdx-bg-page);
   color: var(--tdx-text-main);
 }
 
 .tk-topbar {
+  background: var(--tk-color-surface-dark-deep);
   box-shadow: inset 0 -1px 0 var(--tdx-border);
+  color: var(--tk-color-text-primary);
 }
 
 .tk-panel,
 .tk-modal {
-  box-shadow: 0 10px 26px rgba(17, 24, 39, 0.04);
+  background: var(--tk-color-surface-dark-deep);
+  box-shadow: 0 1px 4px rgba(17, 24, 39, 0.06);
+}
+
+.tk-panel-header {
+  background: var(--tk-color-surface-dark-soft);
+  border-color: var(--tk-color-border-panel);
 }
 
 .tk-table tbody tr:hover,
@@ -61,4 +136,66 @@ body,
 
 .tdx-terminal-tooltip {
   background: rgba(255, 255, 255, 0.97);
+  border: 1px solid var(--tk-color-border-panel);
+  box-shadow: 0 4px 16px rgba(17, 24, 39, 0.1);
+  color: var(--tk-color-text-primary);
+}
+
+/* Override chip styles for light theme */
+.tk-chip {
+  border-color: var(--tk-color-border-panel);
+  background: var(--tk-color-surface-page);
+  color: var(--tk-color-text-secondary);
+}
+
+.tk-chip-active,
+.tk-chip.tk-chip-active {
+  border-color: var(--tk-color-brand-primary);
+  background: var(--tk-color-brand-primary);
+  color: #ffffff;
+}
+
+/* Field inputs */
+.tk-field {
+  background: var(--tk-color-surface-page);
+  border: 1px solid var(--tk-color-border-panel);
+  color: var(--tk-color-text-primary);
+}
+
+/* Buttons */
+.tk-button {
+  border: 1px solid var(--tk-color-border-panel);
+  background: var(--tk-color-surface-page);
+  color: var(--tk-color-text-primary);
+}
+
+.tk-button:hover {
+  background: var(--tk-color-surface-dark-soft);
+}
+
+.tk-button-success {
+  border-color: var(--tk-color-success);
+  background: var(--tk-color-success);
+  color: #ffffff;
+}
+
+/* Titles */
+.tk-page-title,
+.tk-title-lg {
+  color: var(--tk-color-text-heading);
+}
+
+.tk-matrix-card-title {
+  color: var(--tk-color-text-heading);
+}
+
+.tk-muted {
+  color: var(--tk-color-text-secondary);
+}
+
+/* Info chip override for light theme */
+.tk-info-chip {
+  border-color: var(--tk-color-border-panel);
+  background: var(--tk-color-surface-page);
+  color: var(--tk-color-text-primary);
 }
