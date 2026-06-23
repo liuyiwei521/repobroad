@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { QuoteChatContext } from "../../types";
+import type { QuoteChatContext } from "./chat.types";
 
 export function QuoteChatDialog({
   context,
