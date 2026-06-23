@@ -184,7 +184,7 @@ function BigBankReferenceCardHeader({
         {title}
       </div>
       <div className="flex flex-wrap items-center gap-3 px-6 py-4">
-        <span className="shrink-0 text-[12px] text-slate-400">浠呬緵鍐呴儴鍙傝€?/span>
+        <span className="shrink-0 text-[12px] text-slate-400">仅供内部参考</span>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           {legends.map((legend) => (
             <LegendDot
@@ -246,10 +246,10 @@ export function BigBankReferenceTrendPlot({
     >
       <svg className="absolute inset-0 h-full w-full" viewBox={`0 0 ${width} ${height}`}>
         <text x={margin.left - 22} y={22} fill="#64748b" fontSize="10">
-          鍒╃巼(%)
+          利率(%)
         </text>
         <text x={width - margin.right + 36} y={22} textAnchor="end" fill="#64748b" fontSize="10">
-          浠峰樊(BP)
+          价差(BP)
         </text>
         {yTicks.map((tick) => {
           const y = bankTrendY(tick, height, minRate, maxRate, margin);
@@ -365,11 +365,11 @@ export function BigBankReferenceTrendPlot({
       {tooltipIndex !== null && tooltipState ? (
         <LightChartTooltip clientX={tooltipState.clientX} clientY={tooltipState.clientY}>
           <div className="mb-2 text-[12px] font-semibold text-slate-700">
-            {data[tooltipIndex].date} 路 {sessionLabel}
+            {data[tooltipIndex].date} · {sessionLabel}
           </div>
-          <LightTooltipValueRow color="#d97b84" label="鍑虹粰闈為摱浠锋牸" value={`${nonBank[tooltipIndex].toFixed(3)}%`} />
-          <LightTooltipValueRow color="#5b8cc9" label="鍑虹粰閾惰浠锋牸" value={`${bankRates[tooltipIndex].toFixed(3)}%`} />
-          <LightTooltipValueRow color="#f3e4b8" label="闈為摱-閾惰浠峰樊" value={`${spread[tooltipIndex]}BP`} />
+          <LightTooltipValueRow color="#d97b84" label="出给非银价格" value={`${nonBank[tooltipIndex].toFixed(3)}%`} />
+          <LightTooltipValueRow color="#5b8cc9" label="出给银行价格" value={`${bankRates[tooltipIndex].toFixed(3)}%`} />
+          <LightTooltipValueRow color="#f3e4b8" label="非银-银行价差" value={`${spread[tooltipIndex]}BP`} />
         </LightChartTooltip>
       ) : null}
     </div>
@@ -416,7 +416,7 @@ export function BigBankReferenceDiffPlot({
     >
       <svg className="absolute inset-0 h-full w-full" viewBox={`0 0 ${width} ${height}`}>
         <text x={margin.left - 20} y={22} fill="#64748b" fontSize="10">
-          浠峰樊(BP)
+          价差(BP)
         </text>
         {topTicks.map((tick) => {
           const y = lightChartY(tick, topMin, topMax, topStart, topEnd);
@@ -502,10 +502,10 @@ export function BigBankReferenceDiffPlot({
       {tooltipIndex !== null && tooltipState ? (
         <LightChartTooltip clientX={tooltipState.clientX} clientY={tooltipState.clientY}>
           <div className="mb-2 text-[12px] font-semibold text-slate-700">
-            {data[tooltipIndex].date} 路 {sessionLabel}
+            {data[tooltipIndex].date} · {sessionLabel}
           </div>
-          <LightTooltipValueRow color="#5b8cc9" label="缁欓摱琛屼环宸? value={`${bankDiff[tooltipIndex]}BP`} />
-          <LightTooltipValueRow color="#d97b84" label="缁欓潪閾朵环宸? value={`${nonBankDiff[tooltipIndex]}BP`} />
+          <LightTooltipValueRow color="#5b8cc9" label="给银行价差" value={`${bankDiff[tooltipIndex]}BP`} />
+          <LightTooltipValueRow color="#d97b84" label="给非银价差" value={`${nonBankDiff[tooltipIndex]}BP`} />
         </LightChartTooltip>
       ) : null}
     </div>
@@ -784,15 +784,15 @@ export function BigBankPricingTrendChart({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="tk-title">澶ц瀹氫环璧板娍</div>
+          <div className="tk-title">大行定价走势</div>
           <div className="mt-0.5 text-micro text-slate-500">
-            {bank} 路 {tenor || "鍏ㄩ儴鏈熼檺"} 路 {sessionLabel}
+            {bank} · {tenor || "全部期限"} · {sessionLabel}
           </div>
         </div>
         <div className="flex flex-wrap justify-end gap-x-3 gap-y-1 text-micro text-slate-400">
-          <LegendDot color="#cf6b74" label="鍑虹粰闈為摱浠锋牸(%)" />
-          <LegendDot color="#5b8cc9" label="鍑虹粰閾惰浠锋牸(%)" />
-          <LegendDot color="#f4dfaa" label="闈為摱-閾惰浠峰樊(BP)" />
+          <LegendDot color="#cf6b74" label="出给非银价格(%)" />
+          <LegendDot color="#5b8cc9" label="出给银行价格(%)" />
+          <LegendDot color="#f4dfaa" label="非银-银行价差(BP)" />
         </div>
       </div>
       <BigBankRateTrendRechartsPlot data={data} sessionLabel={sessionLabel} />

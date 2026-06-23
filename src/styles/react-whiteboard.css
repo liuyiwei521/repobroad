@@ -270,7 +270,6 @@ body,
   background: rgba(180, 47, 50, 0.08);
   border-color: #b42f32;
   color: #b42f32;
-  box-shadow: inset 2px 0 0 #b42f32;
 }
 
 .tk-button-primary:hover,
@@ -283,6 +282,103 @@ body,
   background: rgba(250, 118, 2, 0.06);
   border-color: rgba(250, 118, 2, 0.3);
   color: #fa7602;
+}
+
+.tk-market-toolbar-button {
+  background: #ffffff;
+  border: 1px solid #dddddd;
+  color: #999999;
+  box-shadow: none;
+}
+
+.tk-market-toolbar-button:hover {
+  background: #f5f5f5;
+  border-color: #b42f32;
+  color: #333333;
+}
+
+.tk-market-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid #dddddd;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #999999;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.tk-market-tab:hover {
+  background: #f5f5f5;
+  border-color: #b42f32;
+  color: #333333;
+}
+
+.tk-market-tab.is-active {
+  background: rgba(180, 47, 50, 0.08);
+  border-color: #b42f32;
+  color: #b42f32;
+}
+
+.tk-market-tab--compact {
+  min-height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
+.tk-market-tab--primary {
+  min-height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tk-market-subcard {
+  background: #ffffff;
+  border-color: #dddddd;
+  box-shadow: none;
+}
+
+.tk-market-chart-card {
+  background: #ffffff;
+}
+
+.tk-market-grid-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tk-market-grid-table th,
+.tk-market-grid-table td {
+  border-bottom: 1px solid #eeeeee;
+  border-right: 1px solid #eeeeee;
+}
+
+.tk-market-grid-table th:last-child,
+.tk-market-grid-table td:last-child {
+  border-right: 0;
+}
+
+.tk-market-grid-table thead th {
+  background: #f5f5f5;
+  color: #666666;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tk-market-grid-table tbody td {
+  background: #ffffff;
+  color: #333333;
+}
+
+.tk-market-grid-table tbody tr:nth-child(even) td {
+  background: #fafafa;
 }
 
 

@@ -237,7 +237,6 @@ body,
   background: color-mix(in srgb, var(--tdx-red-deep) 58%, var(--tdx-bg-control));
   border-color: var(--tdx-red);
   color: var(--tdx-text-heading);
-  box-shadow: inset 2px 0 0 var(--tdx-red);
 }
 
 .tk-badge {

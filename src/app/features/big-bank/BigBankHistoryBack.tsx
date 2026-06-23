@@ -31,9 +31,9 @@ export function BigBankHistoryBack({
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="tk-title">{bank} 澶氭棩鍘嗗彶</div>
+          <div className="tk-title">{bank} 多日历史</div>
           <div className="mt-0.5 text-xs text-slate-500">
-            {tenor || "鍏ㄩ儴鏈熼檺"} 路 {sessionLabel} 路 鎮诞鏌ョ湅鍗曟棩鏄庣粏
+            {tenor || "全部期限"} · {sessionLabel} · 悬浮查看单日明细
           </div>
         </div>
         <button
@@ -44,7 +44,7 @@ export function BigBankHistoryBack({
           }}
           type="button"
         >
-          杩斿洖
+          返回
         </button>
       </div>
       <div
@@ -57,11 +57,11 @@ export function BigBankHistoryBack({
           onClick={(event) => event.stopPropagation()}
         >
           <div className="flex items-center justify-between gap-2">
-            <div className="tk-title">澶ц瀹氫环璧板娍</div>
+            <div className="tk-title">大行定价走势</div>
             <div className="flex flex-wrap justify-end gap-x-3 gap-y-1 text-micro text-slate-400">
-              <LegendDot color="#cf6b74" label="鍑虹粰闈為摱浠锋牸(%)" />
-              <LegendDot color="#5b8cc9" label="鍑虹粰閾惰浠锋牸(%)" />
-              <LegendDot color="#f4dfaa" label="闈為摱-閾惰浠峰樊(BP)" />
+              <LegendDot color="#cf6b74" label="出给非银价格(%)" />
+              <LegendDot color="#5b8cc9" label="出给银行价格(%)" />
+              <LegendDot color="#f4dfaa" label="非银-银行价差(BP)" />
             </div>
           </div>
           <BigBankPricingTrendChart
@@ -77,10 +77,10 @@ export function BigBankHistoryBack({
           onClick={(event) => event.stopPropagation()}
         >
           <div className="flex items-center justify-between gap-2">
-            <div className="tk-title">澶ц瀹氫环涓庡姞鏉冧环宸?/div>
+            <div className="tk-title">大行定价与加权价差</div>
             <div className="flex flex-wrap justify-end gap-x-3 gap-y-1 text-micro text-slate-400">
-              <LegendDot color="#5b8cc9" label="缁欓摱琛屼环宸?BP)" />
-              <LegendDot color="#d76370" label="缁欓潪閾朵环宸?BP)" />
+              <LegendDot color="#5b8cc9" label="给银行价差(BP)" />
+              <LegendDot color="#d76370" label="给非银价差(BP)" />
             </div>
           </div>
           <BigBankSpreadDiffRechartsPlot data={data} sessionLabel={sessionLabel} />

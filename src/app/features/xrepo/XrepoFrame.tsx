@@ -291,7 +291,6 @@ export function XrepoFrame({
                 greenColumns={xrepoSummarySection.greenColumns}
                 redColumns={xrepoSummarySection.redColumns}
                 emphasisColumns={xrepoSummarySection.emphasisColumns}
-                buttonColumn={xrepoSummarySection.buttonColumn}
                 fitToWidth
                 columnWidths={xrepoSummarySection.columnWidths}
                 compact={embeddedPreview}

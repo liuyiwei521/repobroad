@@ -61,8 +61,8 @@ export function rateWithDelta(rate: string, refRate: string): string {
 }
 
 export function bankHistorySessionLabel(tenor?: string) {
-  if (!tenor) return "褰撴棩";
-  return /ON|001|闅斿|1澶?.test(tenor) ? "闅斿" : "褰撴棩";
+  if (!tenor) return "当日";
+  return /ON|001|隔夜|1天/.test(tenor) ? "隔夜" : "当日";
 }
 
 export function normalizeBankTenor(tenor?: string): BankTenor | undefined {
