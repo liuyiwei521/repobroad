@@ -1,12 +1,27 @@
-/* Whiteboard palette override for the React dashboard while retaining TDX component primitives. */
+/*
+ * Whiteboard (light) theme override for the React dashboard.
+ * Loaded AFTER tdx-react.css to flip the entire dark palette to a
+ * high-density white trading-terminal look that matches the reference
+ * screenshot (CFETS-style bond desk UI).
+ *
+ * Strategy: override CSS custom-properties at :root, then bulk-remap
+ * the ~380 hardcoded Tailwind slate-* / bg-[#…] utilities so we don't
+ * have to touch every JSX className.
+ */
+
+/* ═══════════════════════════════════════════════════════════════════
+   1. CUSTOM PROPERTY OVERRIDES
+   ═══════════════════════════════════════════════════════════════════ */
 :root {
+  /* ── page / panel backgrounds ────────────────────────────────── */
   --tdx-bg-page: #f4f6f8;
   --tdx-bg-panel: #ffffff;
   --tdx-bg-header: #f3f5f8;
   --tdx-bg-control: #ffffff;
   --tdx-bg-control-hover: #e7f1ff;
-  --tdx-bg-row-hover: #f6f8fb;
+  --tdx-bg-row-hover: #eef2f7;
 
+  /* ── borders ─────────────────────────────────────────────────── */
   --tdx-border: #d8dde5;
   --tdx-border-weak: #e3e7ed;
   --tdx-border-active: #0067d9;
@@ -14,22 +29,58 @@
   --tdx-scrollbar-thumb: #c6d0de;
   --tdx-scrollbar-thumb-hover: #aebdd1;
 
+  /* ── text ─────────────────────────────────────────────────────── */
   --tdx-text-main: #1f2933;
   --tdx-text-muted: #6b7280;
   --tdx-text-heading: #111827;
   --tdx-text-inverse: #ffffff;
   --tdx-text-disabled: rgba(31, 41, 55, 0.42);
 
-  --tdx-red: #0067d9;
-  --tdx-red-hover: #147cff;
-  --tdx-red-deep: #0058bd;
+  /* ── semantic (brand = blue in light mode, not red) ──────────── */
+  --tdx-red: #e7353a;
+  --tdx-red-hover: #ff494e;
+  --tdx-red-deep: #c91f32;
   --tdx-green: #00a870;
   --tdx-yellow: #ff8a00;
   --tdx-blue: #1872f6;
   --tdx-purple: #7a4aa1;
   --tdx-orange: #c76a25;
 
-  /* Override tk-color-* from tdx-theme.css for light whiteboard */
+  /* ── font stack (match reference: PingFang + tabular numbers) ── */
+  --tdx-font-family-base: "PingFang SC", "Microsoft YaHei", -apple-system, "Segoe UI", sans-serif;
+  --tdx-font-family-number: "DIN Alternate", "Helvetica Neue", Arial, sans-serif;
+
+  /* ── density: match reference ~28px rows, 12px base ──────────── */
+  --tdx-font-size-xs: 12px;
+  --tdx-font-size-sm: 13px;
+  --tdx-font-size-md: 13px;
+  --tdx-font-size-lg: 14px;
+  --tdx-font-size-micro: 10px;
+  --tdx-font-size-mini: 11px;
+  --tdx-line-height-tight: 16px;
+  --tdx-line-height-row: 28px;
+  --tdx-line-height-header: 28px;
+
+  /* ── spacing: tighter to match terminal density ──────────────── */
+  --tdx-space-xxs: 2px;
+  --tdx-space-xs: 3px;
+  --tdx-space-sm: 6px;
+  --tdx-space-md: 10px;
+  --tdx-space-lg: 14px;
+  --tdx-space-xl: 18px;
+  --tdx-space-xxl: 22px;
+
+  /* ── radius: nearly square like reference ────────────────────── */
+  --tdx-radius-none: 0;
+  --tdx-radius-xs: 1px;
+  --tdx-radius-sm: 2px;
+  --tdx-radius-md: 3px;
+  --tdx-radius-lg: 4px;
+  --tdx-radius-pill: 999px;
+
+  --tdx-shadow-popup: 0 4px 16px rgba(17, 24, 39, 0.12);
+
+  /* ── tk-color brand tokens (blue primary in light) ──────────── */
   --tk-color-brand-primary: #0067d9;
   --tk-color-brand-primary-pressed: #0058bd;
   --tk-color-brand-primary-hover: #147cff;
@@ -82,120 +133,515 @@
   --tk-color-warning-surface: rgba(255, 138, 0, 0.08);
   --tk-color-danger-surface: rgba(231, 53, 58, 0.08);
 
-  /* Shadcn / tailwind token overrides */
-  --background: var(--tk-color-surface-dark);
-  --foreground: var(--tk-color-text-primary);
-  --card: var(--tk-color-surface-page);
-  --card-foreground: var(--tk-color-text-primary);
-  --secondary: var(--tk-color-surface-dark-soft);
-  --secondary-foreground: var(--tk-color-text-primary);
-  --muted: var(--tk-color-surface-dark-muted);
-  --muted-foreground: var(--tk-color-text-tertiary);
-  --border: var(--tk-color-border-panel);
-  --input-background: var(--tk-color-surface-page);
+  /* ── Shadcn / tailwind token bridge ──────────────────────────── */
+  --background: #f4f6f8;
+  --foreground: #1f2933;
+  --card: #ffffff;
+  --card-foreground: #1f2933;
+  --popover: #ffffff;
+  --popover-foreground: #1f2933;
+  --primary: #0067d9;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f5f8;
+  --secondary-foreground: #1f2933;
+  --muted: #f8f9fb;
+  --muted-foreground: #9ca3af;
+  --accent: #eef2f7;
+  --accent-foreground: #111827;
+  --destructive: #e7353a;
+  --destructive-foreground: #ffffff;
+  --border: #d8dde5;
+  --input-background: #ffffff;
+  --ring: #0067d9;
 
   scrollbar-color: var(--tdx-scrollbar-thumb) var(--tdx-scrollbar-track);
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════
+   2. BASE ELEMENTS
+   ═══════════════════════════════════════════════════════════════════ */
 html,
 body,
 #root {
   background: var(--tdx-bg-page);
   color: var(--tdx-text-main);
+  font-family: var(--tdx-font-family-base);
+  font-size: 12px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════
+   3. STRUCTURAL COMPONENT OVERRIDES
+   ═══════════════════════════════════════════════════════════════════ */
 .tk-app-shell {
-  background:
-    radial-gradient(circle at top left, rgba(20, 124, 255, 0.06), transparent 24%),
-    linear-gradient(180deg, rgba(0, 103, 217, 0.03) 0%, transparent 28%),
-    var(--tdx-bg-page);
+  background: var(--tdx-bg-page);
   color: var(--tdx-text-main);
 }
 
 .tk-topbar {
-  background: var(--tk-color-surface-dark-deep);
-  box-shadow: inset 0 -1px 0 var(--tdx-border);
-  color: var(--tk-color-text-primary);
+  background: #ffffff;
+  border-bottom: 1px solid var(--tdx-border);
+  box-shadow: none;
+  color: var(--tdx-text-main);
 }
 
 .tk-panel,
 .tk-modal {
-  background: var(--tk-color-surface-dark-deep);
-  box-shadow: 0 1px 4px rgba(17, 24, 39, 0.06);
+  background: #ffffff;
+  border-color: var(--tdx-border);
+  box-shadow: none;
 }
 
-.tk-panel-header {
-  background: var(--tk-color-surface-dark-soft);
-  border-color: var(--tk-color-border-panel);
+.tk-panel-soft,
+.tk-field,
+.tk-table-shell {
+  background: #ffffff;
+  border-color: var(--tdx-border);
+}
+
+.tk-panel-header,
+.tk-table thead {
+  background: #f3f5f8;
+  border-color: var(--tdx-border);
+  color: var(--tdx-text-muted);
+}
+
+.tk-overlay {
+  background: rgba(17, 24, 39, 0.32);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   4. TYPOGRAPHY
+   ═══════════════════════════════════════════════════════════════════ */
+.tk-page-title {
+  color: var(--tdx-text-heading);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.tk-title,
+.tk-title-lg,
+.tk-strong {
+  color: var(--tdx-text-heading);
+}
+
+.tk-muted,
+.tk-table th {
+  color: var(--tdx-text-muted);
+}
+
+.tk-number,
+.tk-table td {
+  color: var(--tdx-text-main);
+}
+
+.tk-positive { color: #00a870; }
+.tk-negative { color: #e7353a; }
+.tk-warning  { color: #ff8a00; }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   5. BUTTONS & CHIPS
+   ═══════════════════════════════════════════════════════════════════ */
+.tk-button,
+.tk-chip {
+  background: #ffffff;
+  border-color: var(--tdx-border);
+  color: var(--tdx-text-muted);
+  box-shadow: none;
+}
+
+.tk-button:hover,
+.tk-chip:hover {
+  background: #eef2f7;
+  border-color: #c5cdd8;
+  color: var(--tdx-text-main);
+}
+
+.tk-button-primary,
+.tk-chip-active,
+.tk-selected {
+  background: #0067d9;
+  border-color: #0067d9;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.tk-button-primary:hover,
+.tk-chip-active:hover {
+  background: #147cff;
+  border-color: #147cff;
+}
+
+.tk-badge {
+  background: rgba(255, 138, 0, 0.08);
+  border-color: rgba(255, 138, 0, 0.3);
+  color: #c76a25;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   6. TABLES (tight density: 28px row, zebra, hover)
+   ═══════════════════════════════════════════════════════════════════ */
+.tk-table th,
+.tk-table td,
+.tdx-density-table th,
+.tdx-density-table td {
+  height: 28px;
+  line-height: 28px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.tk-table tbody tr:nth-child(even),
+.tdx-density-table tbody tr:nth-child(even) {
+  background: #fafbfc;
 }
 
 .tk-table tbody tr:hover,
 .tdx-density-table tbody tr:hover {
-  background: var(--tdx-bg-control-hover);
+  background: #e7f1ff;
 }
 
-.tdx-terminal-tooltip {
-  background: rgba(255, 255, 255, 0.97);
-  border: 1px solid var(--tk-color-border-panel);
-  box-shadow: 0 4px 16px rgba(17, 24, 39, 0.1);
-  color: var(--tk-color-text-primary);
-}
 
-/* Override chip styles for light theme */
-.tk-chip {
-  border-color: var(--tk-color-border-panel);
-  background: var(--tk-color-surface-page);
-  color: var(--tk-color-text-secondary);
-}
-
-.tk-chip-active,
-.tk-chip.tk-chip-active {
-  border-color: var(--tk-color-brand-primary);
-  background: var(--tk-color-brand-primary);
-  color: #ffffff;
-}
-
-/* Field inputs */
+/* ═══════════════════════════════════════════════════════════════════
+   7. INPUTS & FIELDS
+   ═══════════════════════════════════════════════════════════════════ */
 .tk-field {
-  background: var(--tk-color-surface-page);
-  border: 1px solid var(--tk-color-border-panel);
-  color: var(--tk-color-text-primary);
+  background: #ffffff;
+  border: 1px solid var(--tdx-border);
+  color: var(--tdx-text-main);
 }
 
-/* Buttons */
-.tk-button {
-  border: 1px solid var(--tk-color-border-panel);
-  background: var(--tk-color-surface-page);
-  color: var(--tk-color-text-primary);
+.tk-field:focus,
+.tk-field:focus-within {
+  border-color: #0067d9;
 }
 
-.tk-button:hover {
-  background: var(--tk-color-surface-dark-soft);
+
+/* ═══════════════════════════════════════════════════════════════════
+   8. TOOLTIPS & POPUPS
+   ═══════════════════════════════════════════════════════════════════ */
+.tdx-terminal-tooltip {
+  background: #ffffff;
+  border: 1px solid var(--tdx-border);
+  border-radius: 3px;
+  color: var(--tdx-text-main);
+  box-shadow: 0 4px 16px rgba(17, 24, 39, 0.1);
 }
 
-.tk-button-success {
-  border-color: var(--tk-color-success);
-  background: var(--tk-color-success);
+.tdx-terminal-float {
+  background: #0067d9;
+  border: 1px solid #147cff;
   color: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 103, 217, 0.2);
 }
 
-/* Titles */
-.tk-page-title,
-.tk-title-lg {
-  color: var(--tk-color-text-heading);
-}
 
-.tk-matrix-card-title {
-  color: var(--tk-color-text-heading);
-}
-
-.tk-muted {
-  color: var(--tk-color-text-secondary);
-}
-
-/* Info chip override for light theme */
+/* ═══════════════════════════════════════════════════════════════════
+   9. INFO CHIPS & STATUS BADGES
+   ═══════════════════════════════════════════════════════════════════ */
 .tk-info-chip {
-  border-color: var(--tk-color-border-panel);
-  background: var(--tk-color-surface-page);
-  color: var(--tk-color-text-primary);
+  background: #ffffff;
+  border-color: var(--tdx-border);
+  color: var(--tdx-text-main);
+}
+
+.tk-status-badge {
+  color: var(--tdx-text-main);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   10. SCROLLBARS (light)
+   ═══════════════════════════════════════════════════════════════════ */
+* {
+  scrollbar-color: #c6d0de #f4f6f8;
+}
+
+*::-webkit-scrollbar-track {
+  background: #f4f6f8;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 2px solid #f4f6f8;
+  background: #c6d0de;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #aebdd1;
+}
+
+*::-webkit-scrollbar-corner {
+  background: #f4f6f8;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   11. TAILWIND DARK-PALETTE BULK REMAP
+   Overrides the ~380 hardcoded slate-* / bg-[#hex] utilities from
+   App.tsx so they render correctly on the white background.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── text colors ───────────────────────────────────────────────── */
+/* Dark-on-dark text → dark-on-white equivalents */
+.text-slate-100 { color: #111827 !important; }
+.text-slate-200 { color: #1f2933 !important; }
+.text-slate-300 { color: #374151 !important; }
+.text-slate-400 { color: #6b7280 !important; }
+.text-slate-500 { color: #6b7280 !important; }
+.text-slate-600 { color: #374151 !important; }
+.text-slate-700 { color: #1f2933 !important; }
+.text-slate-800 { color: #111827 !important; }
+
+/* .text-white is NOT overridden globally — it's used on colored-bg badges/buttons that stay colored */
+
+/* Amber / emerald text stays as-is (semantic) but ensure readability */
+.text-amber-300,
+.text-amber-400 { color: #d97706 !important; }
+
+.text-emerald-300,
+.text-emerald-400 { color: #059669 !important; }
+
+.text-red-300,
+.text-red-400 { color: #e7353a !important; }
+
+.text-green-300,
+.text-green-400 { color: #00a870 !important; }
+
+/* Blue text references */
+.text-blue-100,
+.text-blue-200,
+.text-blue-300,
+.text-sky-200,
+.text-sky-300,
+.text-cyan-200,
+.text-cyan-300 { color: #0067d9 !important; }
+
+.text-blue-400 { color: #1872f6 !important; }
+
+
+/* ── background colors ─────────────────────────────────────────── */
+/* Dark panel backgrounds → white/light */
+.bg-slate-700,
+.bg-slate-800,
+.bg-slate-900 { background-color: #ffffff !important; }
+
+.bg-slate-600 { background-color: #f3f5f8 !important; }
+.bg-slate-500 { background-color: #e3e7ed !important; }
+
+.bg-slate-700\/50,
+.bg-slate-800\/50,
+.bg-slate-900\/50 { background-color: rgba(255, 255, 255, 0.5) !important; }
+
+.bg-slate-700\/60 { background-color: rgba(243, 245, 248, 0.6) !important; }
+.bg-slate-800\/60 { background-color: rgba(255, 255, 255, 0.6) !important; }
+.bg-slate-800\/80 { background-color: rgba(255, 255, 255, 0.8) !important; }
+.bg-slate-900\/80 { background-color: rgba(255, 255, 255, 0.8) !important; }
+.bg-slate-800\/90 { background-color: rgba(255, 255, 255, 0.9) !important; }
+.bg-slate-900\/90 { background-color: rgba(255, 255, 255, 0.9) !important; }
+.bg-slate-800\/95 { background-color: rgba(255, 255, 255, 0.95) !important; }
+
+/* Inline hex backgrounds used for dark panels */
+.bg-\[\#15151d\],
+.bg-\[\#0d0d13\],
+.bg-\[\#20202b\],
+.bg-\[\#1a1a24\],
+.bg-\[\#13131b\] { background-color: #ffffff !important; }
+
+.bg-\[\#292835\],
+.bg-\[\#2a2935\] { background-color: #f3f5f8 !important; }
+
+/* Semi-transparent dark overlays → light equivalents */
+.bg-black\/40,
+.bg-black\/50,
+.bg-black\/60 { background-color: rgba(17, 24, 39, 0.32) !important; }
+
+.bg-black\/20,
+.bg-black\/30 { background-color: rgba(17, 24, 39, 0.12) !important; }
+
+/* Blue/sky/cyan highlight backgrounds → blue-tinted light bg */
+.bg-blue-500\/20,
+.bg-blue-600\/60,
+.bg-sky-500\/20,
+.bg-cyan-500\/20 { background-color: rgba(0, 103, 217, 0.08) !important; }
+
+/* Emerald backgrounds */
+.bg-emerald-500\/10,
+.bg-emerald-500\/20 { background-color: rgba(0, 168, 112, 0.08) !important; }
+
+/* Red backgrounds */
+.bg-red-500\/10,
+.bg-red-500\/20 { background-color: rgba(231, 53, 58, 0.08) !important; }
+
+/* Amber backgrounds */
+.bg-amber-500\/10,
+.bg-amber-500\/20 { background-color: rgba(255, 138, 0, 0.08) !important; }
+
+/* White backgrounds (explicit) stay white */
+.bg-white { background-color: #ffffff !important; }
+.bg-white\/95 { background-color: rgba(255, 255, 255, 0.95) !important; }
+
+
+/* ── border colors ─────────────────────────────────────────────── */
+.border-slate-600,
+.border-slate-700,
+.border-slate-800 { border-color: #d8dde5 !important; }
+
+.border-slate-500 { border-color: #c5cdd8 !important; }
+
+.border-slate-600\/50,
+.border-slate-700\/50 { border-color: rgba(216, 221, 229, 0.5) !important; }
+
+.border-white\/10,
+.border-white\/20,
+.border-white\/5 { border-color: rgba(216, 221, 229, 0.4) !important; }
+
+.border-blue-500\/30,
+.border-sky-500\/30,
+.border-cyan-500\/30 { border-color: rgba(0, 103, 217, 0.3) !important; }
+
+.border-slate-200 { border-color: #e3e7ed !important; }
+
+/* Inline hex borders */
+.border-\[\#2f2e3a\] { border-color: #d8dde5 !important; }
+.border-\[\#24232d\] { border-color: #e3e7ed !important; }
+
+/* rgba borders from dark theme */
+.border-\[rgba\(255\,255\,255\,0\.1\)\],
+.border-\[rgba\(255\,255\,255\,0\.05\)\] { border-color: rgba(216, 221, 229, 0.6) !important; }
+
+
+/* ── divide colors ─────────────────────────────────────────────── */
+.divide-slate-700 > :not([hidden]) ~ :not([hidden]),
+.divide-slate-600 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #e3e7ed !important;
+}
+
+
+/* ── ring colors ───────────────────────────────────────────────── */
+.ring-slate-600,
+.ring-slate-700 { --tw-ring-color: #d8dde5 !important; }
+
+
+/* ── shadow overrides (no dark shadows) ────────────────────────── */
+.shadow,
+.shadow-lg,
+.shadow-xl,
+.shadow-2xl { box-shadow: 0 1px 3px rgba(17, 24, 39, 0.06) !important; }
+
+.shadow-\[0_1px_4px_rgba\(0\,0\,0\,0\.3\)\] {
+  box-shadow: 0 1px 3px rgba(17, 24, 39, 0.06) !important;
+}
+
+.shadow-\[0_18px_40px_rgba\(15\,23\,42\,0\.16\)\] {
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.1) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   12. SPECIFIC COMPONENT PATCHES
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* --- Topbar: white bg, no heavy shadow --- */
+.tk-topbar .tk-page-title {
+  color: #111827;
+}
+
+/* --- Sentiment chip: keep its own color scheme --- */
+.border-emerald-200 { border-color: #a7f3d0 !important; }
+.bg-emerald-50 { background-color: #ecfdf5 !important; }
+.text-emerald-700 { color: #047857 !important; }
+.text-emerald-600 { color: #059669 !important; }
+
+.border-amber-200 { border-color: #fde68a !important; }
+.bg-amber-50 { background-color: #fffbeb !important; }
+.text-amber-700 { color: #b45309 !important; }
+.text-amber-600 { color: #d97706 !important; }
+
+.border-slate-200 { border-color: #e3e7ed !important; }
+.bg-slate-50 { background-color: #f8f9fb !important; }
+
+
+/* --- Marquee notice bar --- */
+.tk-marquee {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+}
+
+
+/* --- Tag / label colors for brokers --- */
+.bg-red-600 { background-color: #e7353a !important; }
+.bg-green-600 { background-color: #00a870 !important; }
+.bg-blue-600 { background-color: #1872f6 !important; }
+.bg-amber-600 { background-color: #d97706 !important; }
+.bg-purple-600 { background-color: #7a4aa1 !important; }
+
+/* Make sure white text on colored badges stays white */
+.bg-red-600 .text-white,
+.bg-green-600 .text-white,
+.bg-blue-600 .text-white,
+.bg-amber-600 .text-white,
+.bg-purple-600 .text-white,
+.bg-red-600.text-white,
+.bg-green-600.text-white,
+.bg-blue-600.text-white {
+  color: #ffffff !important;
+}
+
+
+/* --- Rounded corners: minimal like reference --- */
+.rounded-lg,
+.rounded-xl,
+.rounded-2xl {
+  border-radius: 3px;
+}
+
+.rounded-md {
+  border-radius: 2px;
+}
+
+
+/* --- Placeholder text --- */
+::placeholder {
+  color: #9ca3af !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   13. GLOBAL DENSITY REFINEMENTS
+   Match the reference screenshot's ultra-tight spacing.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Tighter panel padding */
+.tk-panel > .p-3 { padding: 8px; }
+.tk-panel > .p-4 { padding: 10px; }
+.tk-panel > .p-5 { padding: 12px; }
+
+/* Panel header: compact */
+.tk-panel-header {
+  background: #f3f5f8;
+  border-color: #e3e7ed;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+/* Segmented tabs: compact */
+.tk-segmented-tab {
+  min-height: 26px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+/* Inline action buttons: compact */
+.tk-inline-action {
+  min-height: 22px;
+  padding: 0 6px;
+  font-size: 11px;
 }

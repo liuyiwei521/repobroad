@@ -2,9 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  buildBankHistorySeries,
   buildChartDomain,
   buildLinearTicks,
+  buildSeededWalk,
   buildXrepoTodayLabels,
+  generateTradingDates,
   getSentimentState,
   getXrepoHistoryPointCount,
   quoteTenorDisplayLabel,
@@ -26,8 +29,8 @@ test("toggleMultiSelect adds and removes values predictably", () => {
 });
 
 test("getXrepoHistoryPointCount covers today and compact long-range cases", () => {
-  assert.equal(getXrepoHistoryPointCount("today", true), 16);
-  assert.equal(getXrepoHistoryPointCount("today", false), 20);
+  assert.equal(getXrepoHistoryPointCount("today", true), 10);
+  assert.equal(getXrepoHistoryPointCount("today", false), 14);
   assert.equal(getXrepoHistoryPointCount("1m", false), 22);
   assert.equal(getXrepoHistoryPointCount("6m", true), 36);
 });
@@ -64,4 +67,59 @@ test("buildChartDomain keeps small spreads readable without oversized blanks", (
 test("buildLinearTicks returns evenly spaced axis ticks", () => {
   assert.deepEqual(buildLinearTicks(1.32, 1.36, 4), [1.36, 1.347, 1.333, 1.32]);
   assert.deepEqual(buildLinearTicks(10, 40, 3, 0), [40, 25, 10]);
+});
+
+test("buildSeededWalk stays reproducible and respects anchor bounds", () => {
+  const series = buildSeededWalk(2.1, 6, 0.03, 17, {
+    clampMin: 2,
+    clampMax: 2.2,
+    precision: 3,
+    anchorBand: 0.05,
+  });
+
+  assert.deepEqual(
+    series,
+    buildSeededWalk(2.1, 6, 0.03, 17, {
+      clampMin: 2,
+      clampMax: 2.2,
+      precision: 3,
+      anchorBand: 0.05,
+    }),
+  );
+  assert.equal(series.at(-1), 2.1);
+  assert.ok(series.every((value) => value >= 2.05 && value <= 2.15));
+});
+
+test("generateTradingDates skips weekends for market history", () => {
+  assert.deepEqual(generateTradingDates("2026-06-23", 5), [
+    "6/17",
+    "6/18",
+    "6/19",
+    "6/22",
+    "6/23",
+  ]);
+});
+
+test("buildBankHistorySeries anchors the latest point to the selected quote", () => {
+  const series = buildBankHistorySeries("工商银行", "2026-06-23", 8, {
+    anchorNonBank: 2.04,
+    anchorBank: 2.1,
+    referenceNonBank: 2.04,
+    referenceBank: 2.12,
+  });
+
+  assert.equal(series.length, 8);
+  assert.equal(series.at(-1)?.nonBank, 2.04);
+  assert.equal(series.at(-1)?.bankRate, 2.1);
+  assert.ok(series.every((point) => point.bankRate > point.nonBank));
+  assert.ok(series.every((point) => point.spread >= 1));
+  assert.deepEqual(
+    series,
+    buildBankHistorySeries("工商银行", "2026-06-23", 8, {
+      anchorNonBank: 2.04,
+      anchorBank: 2.1,
+      referenceNonBank: 2.04,
+      referenceBank: 2.12,
+    }),
+  );
 });

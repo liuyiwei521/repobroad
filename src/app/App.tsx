@@ -7,7 +7,9 @@ import {
   Banknote,
   ChevronDown,
   ChevronUp,
+  Columns2,
   Download,
+  Expand,
   Gauge,
   GripHorizontal,
   Landmark,
@@ -21,6 +23,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import {
+  buildBankHistorySeries as createBankHistorySeries,
   XREPO_HISTORY_TABS,
   buildChartDomain,
   buildLinearTicks,
@@ -34,6 +37,15 @@ import {
 type TrendMode = "intraday" | "history" | "comparison";
 type SentimentTab = "realtime" | "trend";
 type BaseTrendProduct = "r001" | "r007";
+type AnonymousTrendProduct =
+  | "all"
+  | "r001"
+  | "r002"
+  | "r007"
+  | "r014"
+  | "r030"
+  | "r180"
+  | "r365";
 type OverlayProduct = "none" | "dr007" | "gc007" | "r007";
 type RightLowerTab = "matrix" | "inst" | "bond";
 type HistoryRange = "5d" | "1m" | "6m";
@@ -165,6 +177,7 @@ type FrameOpenOptions = {
   cfetsPeriod?: CfetsInstPeriod;
   cfetsMetric?: CfetsMetricKey;
 };
+type FrameRenderMode = "panel" | "page";
 type ModuleEntryConfig = {
   id: ModuleEntryId;
   group: string;
@@ -287,22 +300,22 @@ const initialBankRateRows: readonly BankRateRow[] = [
     tenor: "ON",
     nonBankRate: "1.95%",
     refNonBankRate: "1.96%",
-    deltaNonBankBp: "",
+    deltaNonBankBp: "-1",
     bankRate: "2.00%",
-    refBankRate: "",
-    deltaBp: "",
+    refBankRate: "2.00%",
+    deltaBp: "0",
     updatedAt: "10:53:27",
     hasQuote: true,
   },
   {
     institution: "工商银行",
     tenor: "7D",
-    nonBankRate: "",
+    nonBankRate: "2.04%",
     refNonBankRate: "2.04%",
-    deltaNonBankBp: "",
+    deltaNonBankBp: "0",
     bankRate: "2.10%",
     refBankRate: "2.12%",
-    deltaBp: "",
+    deltaBp: "-2",
     updatedAt: "10:53:27",
     hasQuote: true,
   },
@@ -310,73 +323,73 @@ const initialBankRateRows: readonly BankRateRow[] = [
     institution: "建设银行",
     tenor: "ON",
     nonBankRate: "1.94%",
-    refNonBankRate: "",
-    deltaNonBankBp: "",
-    bankRate: "",
+    refNonBankRate: "1.94%",
+    deltaNonBankBp: "0",
+    bankRate: "1.99%",
     refBankRate: "2.00%",
-    deltaBp: "",
+    deltaBp: "-1",
     updatedAt: "10:53:27",
     hasQuote: true,
   },
   {
     institution: "建设银行",
     tenor: "7D",
-    nonBankRate: "",
-    refNonBankRate: "",
-    deltaNonBankBp: "",
-    bankRate: "",
-    refBankRate: "",
-    deltaBp: "",
-    updatedAt: "",
-    hasQuote: false,
+    nonBankRate: "2.06%",
+    refNonBankRate: "2.07%",
+    deltaNonBankBp: "-1",
+    bankRate: "2.11%",
+    refBankRate: "2.13%",
+    deltaBp: "-2",
+    updatedAt: "10:52:54",
+    hasQuote: true,
   },
   {
     institution: "农业银行",
     tenor: "ON",
-    nonBankRate: "",
+    nonBankRate: "1.96%",
     refNonBankRate: "1.96%",
-    deltaNonBankBp: "",
+    deltaNonBankBp: "0",
     bankRate: "2.01%",
     refBankRate: "2.00%",
-    deltaBp: "",
+    deltaBp: "+1",
     updatedAt: "10:53:27",
     hasQuote: true,
   },
   {
     institution: "农业银行",
     tenor: "7D",
-    nonBankRate: "",
-    refNonBankRate: "",
-    deltaNonBankBp: "",
-    bankRate: "",
-    refBankRate: "",
-    deltaBp: "",
-    updatedAt: "",
-    hasQuote: false,
+    nonBankRate: "2.05%",
+    refNonBankRate: "2.06%",
+    deltaNonBankBp: "-1",
+    bankRate: "2.09%",
+    refBankRate: "2.10%",
+    deltaBp: "-1",
+    updatedAt: "10:52:31",
+    hasQuote: true,
   },
   {
     institution: "中国银行",
     tenor: "ON",
-    nonBankRate: "",
+    nonBankRate: "1.93%",
     refNonBankRate: "1.94%",
-    deltaNonBankBp: "",
-    bankRate: "",
+    deltaNonBankBp: "-1",
+    bankRate: "1.98%",
     refBankRate: "2.00%",
-    deltaBp: "",
-    updatedAt: "",
-    hasQuote: false,
+    deltaBp: "-2",
+    updatedAt: "10:52:12",
+    hasQuote: true,
   },
   {
     institution: "中国银行",
     tenor: "7D",
-    nonBankRate: "",
+    nonBankRate: "2.05%",
     refNonBankRate: "2.05%",
-    deltaNonBankBp: "",
-    bankRate: "",
+    deltaNonBankBp: "0",
+    bankRate: "2.10%",
     refBankRate: "2.11%",
-    deltaBp: "",
-    updatedAt: "",
-    hasQuote: false,
+    deltaBp: "-1",
+    updatedAt: "10:51:58",
+    hasQuote: true,
   },
 ] as const;
 
@@ -1165,6 +1178,24 @@ const baseTrendProductOptions: Array<{ id: BaseTrendProduct; label: string }> = 
 const trendProductLabel = (product: BaseTrendProduct) =>
   baseTrendProductOptions.find((option) => option.id === product)?.label ?? "R001";
 
+const anonymousTrendProductOptions: Array<{
+  id: AnonymousTrendProduct;
+  label: string;
+}> = [
+  { id: "all", label: "所有种类" },
+  { id: "r001", label: "R001" },
+  { id: "r002", label: "R002" },
+  { id: "r007", label: "R007" },
+  { id: "r014", label: "R014" },
+  { id: "r030", label: "R030" },
+  { id: "r180", label: "R180" },
+  { id: "r365", label: "R365" },
+];
+
+const anonymousTrendProductLabel = (product: AnonymousTrendProduct) =>
+  anonymousTrendProductOptions.find((option) => option.id === product)?.label ??
+  "R001";
+
 const compareProductOptions: Array<{ id: CompareProduct; label: string }> = [
   { id: "none", label: "不对比" },
   { id: "dr001", label: "DR001" },
@@ -1225,10 +1256,20 @@ const intradayOverlaySeriesByProduct: Record<
   r007: clampRateAboveOne(randomWalk(2.058, 40, 0.052, 73)),
 };
 
-function getIntradayRateSeries(product: BaseTrendProduct) {
-  return product === "r001"
-    ? intradaySeries
-    : intradayOverlaySeriesByProduct.r007;
+const anonymousIntradaySeriesByProduct: Record<AnonymousTrendProduct, number[]> =
+  {
+    all: clampRateAboveOne(randomWalk(2.024, 40, 0.045, 69)),
+    r001: intradaySeries,
+    r002: clampRateAboveOne(randomWalk(2.002, 40, 0.049, 74)),
+    r007: intradayOverlaySeriesByProduct.r007,
+    r014: clampRateAboveOne(randomWalk(2.086, 40, 0.045, 75)),
+    r030: clampRateAboveOne(randomWalk(2.128, 40, 0.04, 76)),
+    r180: clampRateAboveOne(randomWalk(2.182, 40, 0.034, 77)),
+    r365: clampRateAboveOne(randomWalk(2.238, 40, 0.03, 78)),
+  };
+
+function getIntradayRateSeries(product: AnonymousTrendProduct) {
+  return anonymousIntradaySeriesByProduct[product];
 }
 
 const intradayTimeLabels = [
@@ -2172,6 +2213,8 @@ function App() {
   const [historyRange, setHistoryRange] = useState<HistoryRange>("5d");
   const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
   const [baseProduct, setBaseProduct] = useState<BaseTrendProduct>("r001");
+  const [anonymousProduct, setAnonymousProduct] =
+    useState<AnonymousTrendProduct>("r001");
   const [quoteTenorFilter, setQuoteTenorFilter] =
     useState<QuoteTenorFilter>("all");
   const mainRef = useRef<HTMLDivElement>(null);
@@ -2300,9 +2343,9 @@ function App() {
           ) : activeFrame.id === "anonymous-trade" ? (
             <div className="h-full min-h-0">
               <IntradayPanel
-                baseProduct={baseProduct}
+                product={anonymousProduct}
                 overlayProduct={overlayProduct}
-                onBaseProductChange={setBaseProduct}
+                onProductChange={setAnonymousProduct}
                 onOverlayChange={setOverlayProduct}
               />
             </div>
@@ -2314,12 +2357,37 @@ function App() {
               />
             </div>
           ) : activeFrame.id === "xrepo" ? (
-            <XrepoFrame
+            activeFrame.contract ? (
+              <XrepoHistoryBack
+                contractName={activeFrame.contract}
+                standalone
+                onBack={() =>
+                  setActiveFrame((current) =>
+                    current && current.id === "xrepo"
+                      ? { ...current, contract: undefined }
+                      : current,
+                  )
+                }
+              />
+            ) : (
+              <XrepoFrame
+                frameMode="page"
+                tenorFilter={quoteTenorFilter}
+                onOpenHistory={(contractName) =>
+                  setActiveFrame((current) =>
+                    current && current.id === "xrepo"
+                      ? { ...current, contract: contractName }
+                      : current,
+                  )
+                }
+              />
+            )
+          ) : activeFrame.id === "exchange-repo" ? (
+            <ExchangeRepoFrame
+              frameMode="page"
               initialContract={activeFrame.contract}
               tenorFilter={quoteTenorFilter}
             />
-          ) : activeFrame.id === "exchange-repo" ? (
-            <ExchangeRepoFrame tenorFilter={quoteTenorFilter} />
           ) : activeFrame.id === "ncd" ? (
             <LeftNcdCard tenorFilter={quoteTenorFilter} />
           ) : activeFrame.id === "global-filter" ? (
@@ -4047,13 +4115,14 @@ function WeightedPriceEntryPreview() {
 
 function AnonymousTradeEntryPreview() {
   const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
-  const [baseProduct, setBaseProduct] = useState<BaseTrendProduct>("r001");
+  const [anonymousProduct, setAnonymousProduct] =
+    useState<AnonymousTrendProduct>("r001");
   return (
     <RichPreviewFrame heightClassName="h-[235px]">
       <IntradayPanel
-        baseProduct={baseProduct}
+        product={anonymousProduct}
         overlayProduct={overlayProduct}
-        onBaseProductChange={setBaseProduct}
+        onProductChange={setAnonymousProduct}
         onOverlayChange={setOverlayProduct}
       />
     </RichPreviewFrame>
@@ -4807,27 +4876,56 @@ function bankHistorySessionLabel(tenor?: string) {
   return /ON|001|隔夜|1天/.test(tenor) ? "隔夜" : "当日";
 }
 
-function buildBankHistorySeries(bank: string) {
-  const seed = bank.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  const labels = generateTradingDates(TODAY_STR, 28);
-  return Array.from({ length: 28 }, (_, index) => {
-    const wave = Math.sin((index + seed) * 0.42) * 0.035;
-    const drift = index > 20 ? (index - 20) * 0.006 : index > 10 ? -0.018 : 0;
-    const nonBank = Number((1.36 + wave + drift + (index % 7 === 0 ? 0.018 : 0)).toFixed(3));
-    const bankRate = Number((nonBank - 0.055 + Math.cos(index * 0.55 + seed) * 0.014).toFixed(3));
-    const spread = Math.max(1, Math.round((nonBank - bankRate) * 100));
-    return {
-      date: labels[index] ?? `${index + 1}`,
-      nonBank,
-      bankRate,
-      spread,
-      bankDiff: Math.max(-1, Math.round((bankRate - 1.31) * 100)),
-      nonBankDiff: Math.max(0, Math.round((nonBank - 1.30) * 100)),
-    };
+function normalizeBankTenor(tenor?: string): BankTenor | undefined {
+  if (!tenor) return undefined;
+  if (tenor === "ON" || tenor === BANK_TENOR_LABEL.ON || tenor === "R001") {
+    return "ON";
+  }
+  if (tenor === "7D" || tenor === BANK_TENOR_LABEL["7D"] || tenor === "R007") {
+    return "7D";
+  }
+  if (/ON|001/i.test(tenor)) return "ON";
+  if (/7D|007/i.test(tenor)) return "7D";
+  return undefined;
+}
+
+function findBankQuoteAnchor(
+  rows: readonly BankRateRow[],
+  bank: string,
+  tenor?: string,
+) {
+  const matchingRows = rows.filter((row) => row.institution === bank);
+  const normalizedTenor = normalizeBankTenor(tenor);
+  if (normalizedTenor) {
+    const exact = matchingRows.find(
+      (row) => row.tenor === normalizedTenor && row.hasQuote,
+    );
+    if (exact) return exact;
+  }
+  return matchingRows.find((row) => row.hasQuote) ?? matchingRows[0] ?? null;
+}
+
+function buildAnchoredBankHistorySeries(
+  bank: string,
+  rows: readonly BankRateRow[],
+  tenor?: string,
+) {
+  const anchorRow = findBankQuoteAnchor(rows, bank, tenor);
+  return createBankHistorySeries(bank, TODAY_STR, 28, {
+    anchorNonBank:
+      anchorRow ? (parseRatePercent(anchorRow.nonBankRate) ?? undefined) : undefined,
+    anchorBank:
+      anchorRow ? (parseRatePercent(anchorRow.bankRate) ?? undefined) : undefined,
+    referenceNonBank:
+      anchorRow
+        ? (parseRatePercent(anchorRow.refNonBankRate) ?? undefined)
+        : undefined,
+    referenceBank:
+      anchorRow ? (parseRatePercent(anchorRow.refBankRate) ?? undefined) : undefined,
   });
 }
 
-type BankHistoryPoint = ReturnType<typeof buildBankHistorySeries>[number];
+type BankHistoryPoint = ReturnType<typeof createBankHistorySeries>[number];
 
 function bankTrendPath(
   values: readonly number[],
@@ -4874,6 +4972,485 @@ function bankChartTicks(min: number, max: number, count = 4) {
 function bankChartXTickIndices(count: number) {
   return Array.from(
     new Set([0, Math.floor((count - 1) / 3), Math.floor(((count - 1) * 2) / 3), count - 1]),
+  );
+}
+
+type BigBankReferencePoint = {
+  date: string;
+  nonBank: number;
+  bankRate: number;
+  spread: number;
+  bankDiff: number;
+  nonBankDiff: number;
+};
+
+function formatBigBankReferenceDate(value: string) {
+  const [month, day] = value.split("/").map(Number);
+  if (!month || !day) return value;
+  return `${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function buildBigBankReferenceSeries(data: readonly BankHistoryPoint[]): BigBankReferencePoint[] {
+  const nonBankValues = data.map((item) => Math.max(item.nonBank, item.bankRate));
+  const bankValues = data.map((item) => Math.min(item.nonBank, item.bankRate));
+  const bankBaseline = bankValues[0] ?? 0;
+  const nonBankBaseline = Math.min(...nonBankValues) - 0.01;
+
+  return data.map((item, index) => ({
+    date: formatBigBankReferenceDate(item.date),
+    nonBank: nonBankValues[index],
+    bankRate: bankValues[index],
+    spread: Math.max(1, Math.round((nonBankValues[index] - bankValues[index]) * 100)),
+    bankDiff: Math.round((bankValues[index] - bankBaseline) * 100),
+    nonBankDiff: Math.max(1, Math.round((nonBankValues[index] - nonBankBaseline) * 100)),
+  }));
+}
+
+function bankReferenceXTickIndices(count: number) {
+  const steps = 5;
+  return Array.from(
+    new Set(
+      Array.from({ length: steps + 1 }, (_, index) =>
+        Math.round((index / steps) * Math.max(0, count - 1)),
+      ),
+    ),
+  );
+}
+
+function lightChartY(
+  value: number,
+  min: number,
+  max: number,
+  top: number,
+  bottom: number,
+) {
+  if (max === min) return (top + bottom) / 2;
+  return top + ((max - value) / (max - min)) * (bottom - top);
+}
+
+function LightChartTooltip({
+  clientX,
+  clientY,
+  children,
+}: {
+  clientX: number;
+  clientY: number;
+  children: React.ReactNode;
+}) {
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState(() => ({
+    left: clientX + 14,
+    top: clientY - 10,
+  }));
+
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    const tooltip = tooltipRef.current;
+    const width = tooltip?.offsetWidth ?? 220;
+    const height = tooltip?.offsetHeight ?? 120;
+    const padding = 12;
+    let left = clientX + 14;
+    let top = clientY - 10;
+
+    if (left + width + padding > window.innerWidth) {
+      left = clientX - width - 14;
+    }
+    if (top + height + padding > window.innerHeight) {
+      top = clientY - height - 14;
+    }
+
+    left = Math.max(padding, Math.min(left, window.innerWidth - width - padding));
+    top = Math.max(padding, Math.min(top, window.innerHeight - height - padding));
+    setPosition({ left, top });
+  }, [clientX, clientY, children]);
+
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      ref={tooltipRef}
+      className="pointer-events-none fixed z-[200] rounded-xl border border-slate-200 bg-white/95 px-3 py-2 text-xs text-slate-600 shadow-[0_18px_40px_rgba(15,23,42,0.16)] backdrop-blur-sm"
+      style={{ left: position.left, top: position.top }}
+    >
+      {children}
+    </div>,
+    document.body,
+  );
+}
+
+function LightTooltipValueRow({
+  color,
+  label,
+  value,
+}: {
+  color: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 py-0.5">
+      <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+      <span className="text-slate-500">{label}</span>
+      <span className="ml-auto pl-4 font-mono font-semibold text-slate-800">{value}</span>
+    </div>
+  );
+}
+
+function BigBankReferenceToolbar() {
+  const tools: readonly LucideIcon[] = [Expand, Columns2, Download, RefreshCcw];
+  return (
+    <div className="flex items-center gap-1 text-slate-500">
+      {tools.map((Icon, index) => (
+        <button
+          key={`${Icon.displayName ?? "tool"}-${index}`}
+          className="inline-flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-slate-100 hover:text-slate-700"
+          type="button"
+        >
+          <Icon size={14} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function BigBankReferenceCardHeader({
+  title,
+  legends,
+}: {
+  title: string;
+  legends: readonly { color: string; label: string }[];
+}) {
+  return (
+    <div className="border-b border-slate-200">
+      <div className="px-6 pt-6 text-[18px] font-semibold tracking-[-0.02em] text-slate-800">
+        {title}
+      </div>
+      <div className="flex flex-wrap items-center gap-3 px-6 py-4">
+        <span className="shrink-0 text-[12px] text-slate-400">仅供内部参考</span>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          {legends.map((legend) => (
+            <LegendDot
+              key={`${title}-${legend.label}`}
+              color={legend.color}
+              label={legend.label}
+              className="px-0 text-[13px] text-slate-600"
+            />
+          ))}
+        </div>
+        <div className="ml-auto shrink-0">
+          <BigBankReferenceToolbar />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BigBankReferenceTrendPlot({
+  data,
+  sessionLabel,
+}: {
+  data: readonly BigBankReferencePoint[];
+  sessionLabel: string;
+}) {
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(data.length);
+  const nonBank = data.map((item) => item.nonBank);
+  const bankRates = data.map((item) => item.bankRate);
+  const spread = data.map((item) => item.spread);
+  const { min: minRate, max: maxRate } = buildChartDomain([...nonBank, ...bankRates], {
+    paddingRatio: 0.12,
+    minSpan: 0.08,
+    clampMin: 0,
+  });
+  const maxSpread = Math.max(...spread, 1);
+  const width = 860;
+  const height = 430;
+  const margin = { left: 66, right: 58, top: 46, bottom: 44 };
+  const plotBottom = height - margin.bottom;
+  const yTicks = bankChartTicks(minRate, maxRate, 6);
+  const xTickIndices = bankReferenceXTickIndices(data.length);
+  const spreadPlotHeight = (height - margin.top - margin.bottom) * 0.46;
+  const spreadTicks = [maxSpread, Math.round(maxSpread / 2), 0];
+  const tooltipIndex = tooltipState?.index ?? null;
+  const hoverX =
+    tooltipIndex === null ? null : bankTrendX(tooltipIndex, data.length, width, margin);
+  const lastIndex = data.length - 1;
+  const lastX = bankTrendX(lastIndex, data.length, width, margin);
+  const lastNonBankY = bankTrendY(nonBank[lastIndex], height, minRate, maxRate, margin);
+  const lastBankY = bankTrendY(bankRates[lastIndex], height, minRate, maxRate, margin);
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative h-full min-h-[430px] cursor-crosshair"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      <svg className="absolute inset-0 h-full w-full" viewBox={`0 0 ${width} ${height}`}>
+        <text x={margin.left - 22} y={22} fill="#64748b" fontSize="10">
+          利率(%)
+        </text>
+        <text x={width - margin.right + 36} y={22} textAnchor="end" fill="#64748b" fontSize="10">
+          价差(BP)
+        </text>
+        {yTicks.map((tick) => {
+          const y = bankTrendY(tick, height, minRate, maxRate, margin);
+          return (
+            <g key={tick}>
+              <line
+                x1={margin.left}
+                x2={width - margin.right}
+                y1={y}
+                y2={y}
+                stroke="#e5e7eb"
+              />
+              <text x={margin.left - 10} y={y + 4} textAnchor="end" fill="#64748b" fontSize="10">
+                {tick.toFixed(2)}
+              </text>
+            </g>
+          );
+        })}
+        <line x1={margin.left} x2={margin.left} y1={margin.top} y2={plotBottom} stroke="#cbd5e1" />
+        <line x1={margin.left} x2={width - margin.right} y1={plotBottom} y2={plotBottom} stroke="#cbd5e1" />
+        {xTickIndices.map((index) => {
+          const x = bankTrendX(index, data.length, width, margin);
+          return (
+            <g key={index}>
+              <line x1={x} x2={x} y1={plotBottom} y2={plotBottom + 4} stroke="#94a3b8" />
+              <text x={x} y={height - 12} textAnchor="middle" fill="#64748b" fontSize="10">
+                {data[index].date}
+              </text>
+            </g>
+          );
+        })}
+        {spread.map((value, index) => {
+          const barWidth = Math.max(5, (width - margin.left - margin.right) / spread.length - 4);
+          const barHeight = (value / Math.max(maxSpread, 1)) * spreadPlotHeight;
+          return (
+            <rect
+              key={`ref-spread-${index}`}
+              x={bankTrendX(index, data.length, width, margin) - barWidth / 2}
+              y={plotBottom - barHeight}
+              width={barWidth}
+              height={barHeight}
+              rx="1.5"
+              fill="#f3e4b8"
+              opacity="0.88"
+            />
+          );
+        })}
+        {spreadTicks.map((tick) => {
+          const y = plotBottom - (tick / Math.max(maxSpread, 1)) * spreadPlotHeight;
+          return (
+            <text
+              key={`ref-spread-tick-${tick}`}
+              x={width - margin.right + 12}
+              y={y + 4}
+              fill="#64748b"
+              fontSize="10"
+            >
+              {tick}
+            </text>
+          );
+        })}
+        <path
+          d={bankTrendPath(nonBank, width, height, minRate, maxRate, margin)}
+          fill="none"
+          stroke="#d97b84"
+          strokeWidth="2.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d={bankTrendPath(bankRates, width, height, minRate, maxRate, margin)}
+          fill="none"
+          stroke="#5b8cc9"
+          strokeWidth="2.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {hoverX !== null && tooltipIndex !== null ? (
+          <>
+            <line
+              x1={hoverX}
+              x2={hoverX}
+              y1={margin.top}
+              y2={plotBottom}
+              stroke="#94a3b8"
+              strokeDasharray="4 4"
+            />
+            <circle
+              cx={hoverX}
+              cy={bankTrendY(nonBank[tooltipIndex], height, minRate, maxRate, margin)}
+              r="4"
+              fill="#d97b84"
+              stroke="#ffffff"
+              strokeWidth="2"
+            />
+            <circle
+              cx={hoverX}
+              cy={bankTrendY(bankRates[tooltipIndex], height, minRate, maxRate, margin)}
+              r="4"
+              fill="#5b8cc9"
+              stroke="#ffffff"
+              strokeWidth="2"
+            />
+          </>
+        ) : null}
+        <text x={lastX + 10} y={lastNonBankY - 8} fill="#1e293b" fontSize="13" fontWeight="700">
+          {nonBank[lastIndex].toFixed(2)}
+        </text>
+        <text x={lastX + 10} y={lastBankY + 4} fill="#1e293b" fontSize="13" fontWeight="700">
+          {bankRates[lastIndex].toFixed(2)}
+        </text>
+      </svg>
+      {tooltipIndex !== null && tooltipState ? (
+        <LightChartTooltip clientX={tooltipState.clientX} clientY={tooltipState.clientY}>
+          <div className="mb-2 text-[12px] font-semibold text-slate-700">
+            {data[tooltipIndex].date} · {sessionLabel}
+          </div>
+          <LightTooltipValueRow color="#d97b84" label="出给非银价格" value={`${nonBank[tooltipIndex].toFixed(3)}%`} />
+          <LightTooltipValueRow color="#5b8cc9" label="出给银行价格" value={`${bankRates[tooltipIndex].toFixed(3)}%`} />
+          <LightTooltipValueRow color="#f3e4b8" label="非银-银行价差" value={`${spread[tooltipIndex]}BP`} />
+        </LightChartTooltip>
+      ) : null}
+    </div>
+  );
+}
+
+function BigBankReferenceDiffPlot({
+  data,
+  sessionLabel,
+}: {
+  data: readonly BigBankReferencePoint[];
+  sessionLabel: string;
+}) {
+  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
+    useChartTooltip(data.length);
+  const bankDiff = data.map((item) => item.bankDiff);
+  const nonBankDiff = data.map((item) => item.nonBankDiff);
+  const width = 860;
+  const height = 430;
+  const margin = { left: 60, right: 18, top: 44, bottom: 46 };
+  const groupGap = 42;
+  const groupHeight = (height - margin.top - margin.bottom - groupGap) / 2;
+  const topStart = margin.top;
+  const topEnd = topStart + groupHeight;
+  const bottomStart = topEnd + groupGap;
+  const bottomEnd = bottomStart + groupHeight;
+  const topMax = Math.max(8, Math.ceil(Math.max(...bankDiff, 0) / 2) * 2);
+  const topMin = Math.min(-2, Math.floor(Math.min(...bankDiff, 0) / 2) * 2);
+  const bottomMax = Math.max(8, Math.ceil(Math.max(...nonBankDiff, 0) / 2) * 2);
+  const topTicks = Array.from({ length: Math.floor((topMax - topMin) / 2) + 1 }, (_, index) => topMax - index * 2);
+  const bottomTicks = Array.from({ length: Math.floor(bottomMax / 2) + 1 }, (_, index) => bottomMax - index * 2);
+  const xTickIndices = bankReferenceXTickIndices(data.length);
+  const tooltipIndex = tooltipState?.index ?? null;
+  const hoverX =
+    tooltipIndex === null ? null : bankTrendX(tooltipIndex, data.length, width, margin);
+  const topZeroY = lightChartY(0, topMin, topMax, topStart, topEnd);
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative h-full min-h-[430px] cursor-crosshair"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      <svg className="absolute inset-0 h-full w-full" viewBox={`0 0 ${width} ${height}`}>
+        <text x={margin.left - 20} y={22} fill="#64748b" fontSize="10">
+          价差(BP)
+        </text>
+        {topTicks.map((tick) => {
+          const y = lightChartY(tick, topMin, topMax, topStart, topEnd);
+          return (
+            <g key={`top-${tick}`}>
+              <line x1={margin.left} x2={width - margin.right} y1={y} y2={y} stroke="#e5e7eb" />
+              <text x={margin.left - 10} y={y + 4} textAnchor="end" fill="#64748b" fontSize="10">
+                {tick}
+              </text>
+            </g>
+          );
+        })}
+        {bottomTicks.map((tick) => {
+          const y = lightChartY(tick, 0, bottomMax, bottomStart, bottomEnd);
+          return (
+            <g key={`bottom-${tick}`}>
+              <line x1={margin.left} x2={width - margin.right} y1={y} y2={y} stroke="#e5e7eb" />
+              <text x={margin.left - 10} y={y + 4} textAnchor="end" fill="#64748b" fontSize="10">
+                {tick}
+              </text>
+            </g>
+          );
+        })}
+        <line x1={margin.left} x2={margin.left} y1={topStart} y2={bottomEnd} stroke="#cbd5e1" />
+        <line x1={margin.left} x2={width - margin.right} y1={topZeroY} y2={topZeroY} stroke="#cbd5e1" />
+        <line x1={margin.left} x2={width - margin.right} y1={bottomEnd} y2={bottomEnd} stroke="#cbd5e1" />
+        {bankDiff.map((value, index) => {
+          const barWidth = Math.max(6, (width - margin.left - margin.right) / bankDiff.length - 4);
+          const x = bankTrendX(index, data.length, width, margin) - barWidth / 2;
+          const valueY = lightChartY(value, topMin, topMax, topStart, topEnd);
+          return (
+            <rect
+              key={`bank-diff-${index}`}
+              x={x}
+              y={Math.min(valueY, topZeroY)}
+              width={barWidth}
+              height={Math.max(2, Math.abs(valueY - topZeroY))}
+              rx="1.5"
+              fill="#5b8cc9"
+              opacity="0.92"
+            />
+          );
+        })}
+        {nonBankDiff.map((value, index) => {
+          const barWidth = Math.max(6, (width - margin.left - margin.right) / nonBankDiff.length - 4);
+          const x = bankTrendX(index, data.length, width, margin) - barWidth / 2;
+          const valueY = lightChartY(value, 0, bottomMax, bottomStart, bottomEnd);
+          return (
+            <rect
+              key={`non-bank-diff-${index}`}
+              x={x}
+              y={valueY}
+              width={barWidth}
+              height={Math.max(2, bottomEnd - valueY)}
+              rx="1.5"
+              fill="#d97b84"
+              opacity="0.92"
+            />
+          );
+        })}
+        {xTickIndices.map((index) => {
+          const x = bankTrendX(index, data.length, width, margin);
+          return (
+            <g key={`ref-diff-x-${index}`}>
+              <line x1={x} x2={x} y1={bottomEnd} y2={bottomEnd + 4} stroke="#94a3b8" />
+              <text x={x} y={height - 12} textAnchor="middle" fill="#64748b" fontSize="10">
+                {data[index].date}
+              </text>
+            </g>
+          );
+        })}
+        {hoverX !== null ? (
+          <line
+            x1={hoverX}
+            x2={hoverX}
+            y1={topStart}
+            y2={bottomEnd}
+            stroke="#94a3b8"
+            strokeDasharray="4 4"
+          />
+        ) : null}
+      </svg>
+      {tooltipIndex !== null && tooltipState ? (
+        <LightChartTooltip clientX={tooltipState.clientX} clientY={tooltipState.clientY}>
+          <div className="mb-2 text-[12px] font-semibold text-slate-700">
+            {data[tooltipIndex].date} · {sessionLabel}
+          </div>
+          <LightTooltipValueRow color="#5b8cc9" label="给银行价差" value={`${bankDiff[tooltipIndex]}BP`} />
+          <LightTooltipValueRow color="#d97b84" label="给非银价差" value={`${nonBankDiff[tooltipIndex]}BP`} />
+        </LightChartTooltip>
+      ) : null}
+    </div>
   );
 }
 
@@ -5208,15 +5785,17 @@ function TooltipValueRow({
 function BigBankPricingTrendChart({
   bank,
   tenor,
+  rows = initialBankRateRows,
   className = "",
   compact = false,
 }: {
   bank: string;
   tenor?: string;
+  rows?: readonly BankRateRow[];
   className?: string;
   compact?: boolean;
 }) {
-  const data = buildBankHistorySeries(bank);
+  const data = buildAnchoredBankHistorySeries(bank, rows, tenor);
   const sessionLabel = bankHistorySessionLabel(tenor);
 
   return (
@@ -5246,15 +5825,17 @@ function BigBankPricingTrendChart({
 function BigBankHistoryBack({
   bank,
   tenor,
+  rows = initialBankRateRows,
   compact = false,
   onBack,
 }: {
   bank: string;
   tenor?: string;
+  rows?: readonly BankRateRow[];
   compact?: boolean;
   onBack: () => void;
 }) {
-  const data = buildBankHistorySeries(bank);
+  const data = buildAnchoredBankHistorySeries(bank, rows, tenor);
   const sessionLabel = bankHistorySessionLabel(tenor);
 
   return (
@@ -5565,12 +6146,16 @@ function XrepoFrame({
   initialContract,
   tenorFilter = "all",
   onFlippedChange,
+  frameMode = "panel",
+  onOpenHistory,
 }: {
   embeddedPreview?: boolean;
   onOpen?: (options?: FrameOpenOptions) => void;
   initialContract?: string;
   tenorFilter?: QuoteTenorFilter;
   onFlippedChange?: (flipped: boolean) => void;
+  frameMode?: FrameRenderMode;
+  onOpenHistory?: (contractName: string) => void;
 }) {
   const [flippedContract, setFlippedContract] = useState<string | null>(initialContract ?? null);
   useEffect(() => {
@@ -5586,12 +6171,23 @@ function XrepoFrame({
     tenorFilter,
     [0],
   );
-  const openInlineHistory = (contractName = rows[0]?.[0] ?? (tenorFilter === "all" ? "R001" : tenorFilter)) =>
+  const openInlineHistory = (
+    contractName = rows[0]?.[0] ?? (tenorFilter === "all" ? "R001" : tenorFilter),
+  ) => {
+    if (onOpenHistory) {
+      onOpenHistory(contractName);
+      return;
+    }
     setFlippedContract(contractName);
+  };
 
   return (
     <section
-      className="tk-panel flex h-full min-h-0 flex-col overflow-hidden border"
+      className={
+        frameMode === "page"
+          ? "flex h-full min-h-0 flex-col overflow-hidden"
+          : "tk-panel flex h-full min-h-0 flex-col overflow-hidden border"
+      }
     >
       {embeddedPreview ? (
         <IntegratedPreviewHeader
@@ -5607,7 +6203,7 @@ function XrepoFrame({
             </button>
           }
         />
-      ) : (
+      ) : frameMode === "panel" ? (
         <div className="tk-panel-header border-b px-4 py-2.5">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -5624,8 +6220,8 @@ function XrepoFrame({
             </button>
           </div>
         </div>
-      )}
-      <div className="min-h-0 flex-1">
+      ) : null}
+      <div className={frameMode === "page" ? "min-h-0 flex-1" : "min-h-0 flex-1"}>
         <div className={`tk-flip-card h-full min-h-0 ${flippedContract ? "is-flipped" : ""}`}>
           <div className="tk-flip-card__inner h-full min-h-0">
             <div className="tk-flip-card__face h-full min-h-0">
@@ -5671,21 +6267,27 @@ function XrepoHistoryBack({
   contractName,
   compact = false,
   onBack,
+  standalone = false,
 }: {
   contractName: string;
   compact?: boolean;
   onBack: () => void;
+  standalone?: boolean;
 }) {
   return (
     <div
       className={`grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden ${
-        compact ? "" : "gap-2 p-3"
+        standalone ? "gap-2" : compact ? "" : "gap-2 p-3"
       }`}
-      onClick={onBack}
+      onClick={standalone ? undefined : onBack}
     >
       <div
-        className={`flex items-center justify-between gap-3 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] ${
-          compact ? "px-2 py-0.5" : "rounded-md px-3 py-1"
+        className={`flex items-center justify-between gap-3 ${
+          standalone
+            ? "border-b border-[color:var(--tk-color-border-divider)] px-1 pb-2"
+            : "border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)]"
+        } ${
+          standalone ? "" : compact ? "px-2 py-0.5" : "rounded-md px-3 py-1"
         }`}
         onClick={(event) => event.stopPropagation()}
       >
@@ -5709,7 +6311,9 @@ function XrepoHistoryBack({
         </button>
       </div>
       <div
-        className={`h-full min-h-0 overflow-hidden ${compact ? "" : "rounded-md"}`}
+        className={`h-full min-h-0 overflow-hidden ${
+          standalone ? "" : compact ? "" : "rounded-md"
+        }`}
         onClick={(event) => event.stopPropagation()}
       >
         <XrepoInlineHistoryChart contractName={contractName} compact={compact} />
@@ -5718,12 +6322,6 @@ function XrepoHistoryBack({
   );
 }
 
-const xrepoHistoryRangeCounts: Record<HistoryRange, number> = {
-  "5d": 5,
-  "1m": 22,
-  "6m": 78,
-};
-
 const xrepoCompareAnchors: Record<SpreadProduct, number> = {
   dr001: 1.26,
   dr007: 1.31,
@@ -5731,9 +6329,14 @@ const xrepoCompareAnchors: Record<SpreadProduct, number> = {
   r007: 1.39,
 };
 
-function xrepoHistoryPointCount(range: HistoryRange, compact: boolean) {
-  const count = xrepoHistoryRangeCounts[range];
-  return compact && range === "6m" ? 36 : count;
+function xrepoHistoryPointCount(range: XrepoHistoryRange, compact: boolean) {
+  return getXrepoHistoryPointCount(range, compact);
+}
+
+function buildXrepoHistoryLabels(range: XrepoHistoryRange, count: number) {
+  return range === "today"
+    ? buildXrepoTodayLabels(count)
+    : generateTradingDates(TODAY_STR, count);
 }
 
 function xrepoCompareLabel(compareProduct: CompareProduct) {
@@ -5747,28 +6350,43 @@ function buildXrepoHistoryComparison(
   contractName: string,
   count: number,
   compareProduct: CompareProduct,
-  range: HistoryRange,
+  range: XrepoHistoryRange,
 ) {
   const seed = contractName
     .split("")
     .reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  const labels = generateTradingDates(TODAY_STR, count);
-  const rangeSeed = range === "5d" ? 11 : range === "1m" ? 29 : 61;
+  const labels = buildXrepoHistoryLabels(range, count);
+  const rangeSeed =
+    range === "today" ? 7 : range === "5d" ? 11 : range === "1m" ? 29 : 61;
+  const drift = range === "today" ? 0.008 : 0.014;
+  const compareDrift = range === "today" ? 0.007 : 0.012;
   const anchor = contractName.includes("mini")
     ? 1.38
     : 1.34 + (seed % 8) * 0.006;
-  const current = randomWalk(anchor, count, 0.014, seed + rangeSeed);
+  const current = randomWalk(anchor, count, drift, seed + rangeSeed).map(
+    (value, index) =>
+      Number(
+        (
+          value +
+          (range === "today" ? Math.sin((index + seed) * 0.72) * 0.004 : 0)
+        ).toFixed(4),
+      ),
+  );
   const compare =
     compareProduct === "none"
       ? null
       : randomWalk(
           xrepoCompareAnchors[compareProduct] + (seed % 3) * 0.004,
           count,
-          0.012,
+          compareDrift,
           seed + rangeSeed + compareProduct.length * 17,
         ).map((value, index) =>
           Number(
-            (value + Math.sin((index + seed) * 0.55) * 0.006).toFixed(4),
+            (
+              value +
+              Math.sin((index + seed) * (range === "today" ? 0.82 : 0.55)) *
+                (range === "today" ? 0.004 : 0.006)
+            ).toFixed(4),
           ),
         );
   const spread = compare
@@ -5776,8 +6394,15 @@ function buildXrepoHistoryComparison(
         Number(((value - compare[index]) * 100).toFixed(1)),
       )
     : null;
-  const volume = randomWalk(contractName.includes("mini") ? 72 : 680, count, contractName.includes("mini") ? 18 : 145, seed + 9)
-    .map((value) => Math.max(8, Math.round(value)));
+  const volumeBase = contractName.includes("mini") ? 72 : 680;
+  const volumeSwing = contractName.includes("mini") ? 18 : 145;
+  const volumeScale = range === "today" ? 0.72 : 1;
+  const volume = randomWalk(
+    volumeBase * volumeScale,
+    count,
+    volumeSwing * volumeScale,
+    seed + 9,
+  ).map((value) => Math.max(8, Math.round(value)));
   return { labels, current, compare, spread, volume };
 }
 
@@ -5790,7 +6415,7 @@ function XrepoInlineHistoryChart({
 }) {
   const [compareProduct, setCompareProduct] =
     useState<CompareProduct>("dr007");
-  const [range, setRange] = useState<HistoryRange>("1m");
+  const [range, setRange] = useState<XrepoHistoryRange>("1m");
   const pointCount = xrepoHistoryPointCount(range, compact);
   const [data, setData] = useState(() =>
     buildXrepoHistoryComparison(contractName, pointCount, compareProduct, range),
@@ -5856,11 +6481,11 @@ function XrepoInlineHistoryChart({
             </select>
           </label>
           <div className="flex items-center gap-0.5">
-            {historyRangeTabs.map((tab) => (
+            {XREPO_HISTORY_TABS.map((tab) => (
               <button
                 key={tab.id}
                 className={miniChipClass(tab.id === range)}
-                onClick={() => setRange(tab.id)}
+                onClick={() => setRange(tab.id as XrepoHistoryRange)}
                 type="button"
               >
                 {tab.label}
@@ -6025,7 +6650,16 @@ function XrepoInlineHistoryChart({
       </div>
       <div className="flex items-center justify-between px-2 pb-1 text-micro text-slate-500">
         <span>点击返回 XRepo 表格</span>
-        <span>{range === "5d" ? "近5日" : range === "1m" ? "近1M" : "近半年"} / {compareLabel}</span>
+        <span>
+          {range === "today"
+            ? "当日"
+            : range === "5d"
+              ? "近5日"
+              : range === "1m"
+                ? "近1M"
+                : "近半年"}{" "}
+          / {compareLabel}
+        </span>
       </div>
     </div>
   );
@@ -6034,11 +6668,15 @@ function XrepoInlineHistoryChart({
 function ExchangeRepoFrame({
   embeddedPreview = false,
   onOpen,
+  initialContract,
   tenorFilter = "all",
+  frameMode = "panel",
 }: {
   embeddedPreview?: boolean;
-  onOpen?: () => void;
+  onOpen?: (options?: FrameOpenOptions) => void;
+  initialContract?: string;
   tenorFilter?: QuoteTenorFilter;
+  frameMode?: FrameRenderMode;
 }) {
   const section = leftSections.find(
     (item): item is ExchangeMarketSplitSection =>
@@ -6046,13 +6684,51 @@ function ExchangeRepoFrame({
   );
   if (!section) return <ReservedModuleFrame />;
 
+  const defaultContract =
+    initialContract ?? exchangeRepoDefaultContract(section.markets);
+  const [selectedContract, setSelectedContract] = useState(defaultContract);
+
+  useEffect(() => {
+    setSelectedContract(defaultContract);
+  }, [defaultContract]);
+
+  function handleSelectContract(contractName: string) {
+    if (embeddedPreview && onOpen) {
+      onOpen({ contract: contractName });
+      return;
+    }
+    setSelectedContract(contractName);
+  }
+
+  if (frameMode === "page") {
+    return (
+      <div className="grid h-full min-h-0 gap-3 xl:grid-cols-[minmax(360px,0.92fr)_minmax(0,1.28fr)]">
+        <div className="min-h-0 overflow-hidden">
+          <ExchangeRepoCard
+            title={section.title}
+            markets={section.markets}
+            onOpen={onOpen}
+            onSelectContract={handleSelectContract}
+            selectedContract={selectedContract}
+            tenorFilter={tenorFilter}
+          />
+        </div>
+        <div className="min-h-0 overflow-hidden">
+          <ExchangeRepoTrendPanel contractName={selectedContract} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ExchangeRepoCard
       title={section.title}
       markets={section.markets}
       embeddedPreview={embeddedPreview}
-      tenorFilter={tenorFilter}
       onOpen={onOpen}
+      onSelectContract={handleSelectContract}
+      selectedContract={selectedContract}
+      tenorFilter={tenorFilter}
     />
   );
 }
@@ -6345,6 +7021,7 @@ function LeftSummaryPanel() {
                           <BigBankPricingTrendChart
                             bank={flippedBigBankName ?? "大行"}
                             tenor={flippedBigBankTenor}
+                            rows={bankRateRows}
                             className="h-full"
                             compact
                           />
@@ -6830,16 +7507,22 @@ function ExchangeRepoCard({
   markets,
   embeddedPreview = false,
   onOpen,
+  onSelectContract,
+  selectedContract,
   tenorFilter = "all",
 }: {
   title: string;
   markets: ExchangeMarketSplitSection["markets"];
   embeddedPreview?: boolean;
-  onOpen?: () => void;
+  onOpen?: (options?: FrameOpenOptions) => void;
+  onSelectContract?: (contractName: string) => void;
+  selectedContract?: string;
   tenorFilter?: QuoteTenorFilter;
 }) {
   void tenorFilter;
-  const [activeView, setActiveView] = useState<"core" | "sse" | "szse">("core");
+  const [activeView, setActiveView] = useState<"core" | "sse" | "szse">(() =>
+    exchangeRepoDefaultView(selectedContract),
+  );
   const filteredMarkets =
     activeView === "core"
       ? markets
@@ -6921,6 +7604,8 @@ function ExchangeRepoCard({
           <ExchangeCoreCompactBoard
             markets={displayedMarkets}
             embeddedPreview={embeddedPreview}
+            onSelectContract={onSelectContract}
+            selectedContract={selectedContract}
           />
         ) : (
           <div
@@ -6936,6 +7621,8 @@ function ExchangeRepoCard({
                 market={market}
                 rows={market.rows}
                 embeddedPreview={embeddedPreview}
+                onSelectContract={onSelectContract}
+                selectedContract={selectedContract}
               />
             ))}
           </div>
@@ -6975,12 +7662,38 @@ function exchangeRepoOneMonthRows(
   return marketRows.slice(0, 5);
 }
 
+function exchangeRepoDefaultContract(
+  markets: ExchangeMarketSplitSection["markets"],
+) {
+  return (
+    markets.flatMap((market) => exchangeRepoOneMonthRows(market))[0]?.[1] ??
+    "GC001"
+  );
+}
+
+function exchangeRepoDefaultView(contractName?: string): "core" | "sse" | "szse" {
+  if (!contractName) return "core";
+  if (
+    contractName === "GC001" ||
+    contractName === "GC007" ||
+    contractName === "R-001" ||
+    contractName === "R-007"
+  ) {
+    return "core";
+  }
+  return contractName.startsWith("GC") ? "sse" : "szse";
+}
+
 function ExchangeCoreCompactBoard({
   markets,
   embeddedPreview = false,
+  onSelectContract,
+  selectedContract,
 }: {
   markets: ExchangeMarketSplitSection["markets"];
   embeddedPreview?: boolean;
+  onSelectContract?: (contractName: string) => void;
+  selectedContract?: string;
 }) {
   const coreRows = markets.flatMap((market) => market.rows.slice(0, 2));
   return (
@@ -6989,6 +7702,8 @@ function ExchangeCoreCompactBoard({
         rows={coreRows}
         rowCount={4}
         embeddedPreview={embeddedPreview}
+        onSelectContract={onSelectContract}
+        selectedContract={selectedContract}
       />
     </div>
   );
@@ -6998,10 +7713,14 @@ function ExchangeCoreCompactBlock({
   rows,
   rowCount = 2,
   embeddedPreview = false,
+  onSelectContract,
+  selectedContract,
 }: {
   rows: readonly (readonly string[])[];
   rowCount?: number;
   embeddedPreview?: boolean;
+  onSelectContract?: (contractName: string) => void;
+  selectedContract?: string;
 }) {
   const paddedRows = Array.from(
     { length: rowCount },
@@ -7034,9 +7753,20 @@ function ExchangeCoreCompactBlock({
             {paddedRows.map((row, rowIndex) => (
               <tr
                 key={row ? `${row[1]}-${rowIndex}` : `empty-${rowIndex}`}
-                className={`text-xs ${
+                className={`text-xs transition-colors ${
                   rowIndex > 0 ? "border-t border-[color:var(--tk-color-border-divider)]" : ""
+                } ${
+                  row && onSelectContract
+                    ? "cursor-pointer hover:bg-[rgba(94,163,255,0.08)]"
+                    : ""
+                } ${
+                  row && selectedContract === row[1]
+                    ? "bg-[rgba(56,113,189,0.18)]"
+                    : ""
                 }`}
+                onClick={
+                  row && onSelectContract ? () => onSelectContract(row[1] ?? "GC001") : undefined
+                }
               >
                 {row ? (
                   <>
@@ -7074,10 +7804,14 @@ function ExchangeMarketTable({
   market,
   rows,
   embeddedPreview = false,
+  onSelectContract,
+  selectedContract,
 }: {
   market: ExchangeMarketSplitSection["markets"][number];
   rows?: readonly (readonly string[])[];
   embeddedPreview?: boolean;
+  onSelectContract?: (contractName: string) => void;
+  selectedContract?: string;
 }) {
   const displayRows = rows ?? market.rows;
 
@@ -7121,9 +7855,16 @@ function ExchangeMarketTable({
             {displayRows.map((row, rowIndex) => (
               <tr
                 key={`${market.title}-${row[0]}-${rowIndex}`}
-                className={`border-b border-[color:var(--tk-color-border-divider)] text-xs ${
-                  rowIndex % 2 === 0 ? "bg-transparent" : "bg-[rgba(255,255,255,0.025)]"
+                className={`border-b border-[color:var(--tk-color-border-divider)] text-xs transition-colors ${
+                  selectedContract === row[1]
+                    ? "bg-[rgba(56,113,189,0.18)]"
+                    : rowIndex % 2 === 0
+                      ? "bg-transparent"
+                      : "bg-[rgba(255,255,255,0.025)]"
+                } ${
+                  onSelectContract ? "cursor-pointer hover:bg-[rgba(94,163,255,0.08)]" : ""
                 }`}
+                onClick={() => onSelectContract?.(row[1] ?? "GC001")}
               >
                 {row.map((cell, cellIndex) => (
                   <td
@@ -7161,6 +7902,27 @@ function ExchangeMarketTable({
         </table>
       </div>
     </div>
+  );
+}
+
+function ExchangeRepoTrendPanel({ contractName }: { contractName: string }) {
+  return (
+    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="flex items-center justify-between gap-3 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
+        <div className="min-w-0">
+          <div className="tk-matrix-card-title truncate">交易所回购折线图大图</div>
+          <div className="mt-0.5 text-micro text-slate-500">
+            点击左侧品种切换走势
+          </div>
+        </div>
+        <div className="shrink-0 rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] px-2 py-1 text-xs font-semibold text-slate-200">
+          {contractName}
+        </div>
+      </div>
+      <div className="min-h-0 overflow-hidden p-2">
+        <XrepoInlineHistoryChart contractName={contractName} />
+      </div>
+    </section>
   );
 }
 
@@ -7888,17 +8650,100 @@ const barometerTodayInCount = buildBarometerShape(4, 8, 64, 48, 1.3);
 const barometerYesterdayOutCount = buildBarometerShape(4, 8, 198, 132, 2.1);
 const barometerYesterdayInCount = buildBarometerShape(4, 8, 58, 42, 3.4);
 
+type BarometerPriceAnchor = {
+  index: number;
+  offset: number;
+};
+
+function buildBarometerPriceAnchors(
+  offsets: readonly number[],
+): BarometerPriceAnchor[] {
+  return offsets.map((offset, index) => ({ index, offset }));
+}
+
+const barometerPriceAnchors = {
+  todayOut: buildBarometerPriceAnchors([
+    0.014, 0.026, 0.019, 0.034, 0.028, 0.041, 0.036, 0.024, 0.029, 0.018,
+    0.013, 0.020, 0.006, -0.002, 0.010, 0.004, 0.018, 0.012, 0.028, 0.021,
+    0.031, 0.019, 0.025, 0.011, 0.004,
+  ]),
+  todayIn: buildBarometerPriceAnchors([
+    0.007, 0.001, 0.009, -0.004, -0.011, -0.002, -0.016, -0.009, -0.022, -0.014,
+    -0.024, -0.017, -0.020, -0.006, 0.003, -0.004, 0.011, 0.006, 0.017, 0.009,
+    0.013, -0.001, -0.010, -0.014, -0.018,
+  ]),
+  yesterdayOut: buildBarometerPriceAnchors([
+    0.041, 0.031, 0.036, 0.022, 0.028, 0.014, 0.019, 0.008, 0.014, 0.006,
+    0.011, 0.017, 0.013, 0.025, 0.033, 0.041, 0.034, 0.038, 0.029, 0.021,
+    0.014, 0.007, 0.001, 0.009, 0.012,
+  ]),
+  yesterdayIn: buildBarometerPriceAnchors([
+    -0.013, -0.022, -0.017, -0.029, -0.024, -0.034, -0.028, -0.018, -0.024, -0.011,
+    -0.015, -0.006, -0.002, -0.010, -0.006, -0.016, -0.026, -0.019, -0.032, -0.024,
+    -0.039, -0.030, -0.034, -0.020, -0.013,
+  ]),
+} as const satisfies Record<string, readonly BarometerPriceAnchor[]>;
+
+function buildBarometerPricePoints(
+  base: number,
+  anchors: readonly BarometerPriceAnchor[],
+): BarometerPoint[] {
+  return barometerTimeline.map((t, index) => {
+    const first = anchors[0];
+    const last = anchors[anchors.length - 1];
+
+    if (index <= first.index) {
+      return { t, value: Number((base + first.offset).toFixed(3)) };
+    }
+
+    if (index >= last.index) {
+      return { t, value: Number((base + last.offset).toFixed(3)) };
+    }
+
+    let rightIndex = 1;
+    while (rightIndex < anchors.length && anchors[rightIndex].index < index) {
+      rightIndex += 1;
+    }
+
+    const left = anchors[rightIndex - 1];
+    const right = anchors[rightIndex];
+    const progress = (index - left.index) / Math.max(right.index - left.index, 1);
+    const offset = left.offset + (right.offset - left.offset) * progress;
+
+    return { t, value: Number((base + offset).toFixed(3)) };
+  });
+}
+
 const barometerPriceSeries = (base: number): BarometerSeries[] => {
-  const makePoints = (offset: number, wobble: number): BarometerPoint[] =>
-    barometerTimeline.map((t, i) => ({
-      t,
-      value: Number((base + offset + Math.sin(i * 0.42 + wobble) * 0.015 - (i > 12 ? 0.008 : 0)).toFixed(3)),
-    }));
   return [
-    { key: "todayOut", label: "今日正回购", color: barometerOutColor, lineStyle: "solid", points: makePoints(0.02, 0) },
-    { key: "todayIn", label: "今日逆回购", color: barometerInColor, lineStyle: "solid", points: makePoints(-0.01, 1.3) },
-    { key: "yesterdayOut", label: "昨日正回购", color: barometerOutColor, lineStyle: "dashed", points: makePoints(0.025, 2.1) },
-    { key: "yesterdayIn", label: "昨日逆回购", color: barometerInColor, lineStyle: "dashed", points: makePoints(-0.015, 3.4) },
+    {
+      key: "todayOut",
+      label: "今日正回购",
+      color: barometerOutColor,
+      lineStyle: "solid",
+      points: buildBarometerPricePoints(base, barometerPriceAnchors.todayOut),
+    },
+    {
+      key: "todayIn",
+      label: "今日逆回购",
+      color: barometerInColor,
+      lineStyle: "solid",
+      points: buildBarometerPricePoints(base, barometerPriceAnchors.todayIn),
+    },
+    {
+      key: "yesterdayOut",
+      label: "昨日正回购",
+      color: barometerOutColor,
+      lineStyle: "dashed",
+      points: buildBarometerPricePoints(base, barometerPriceAnchors.yesterdayOut),
+    },
+    {
+      key: "yesterdayIn",
+      label: "昨日逆回购",
+      color: barometerInColor,
+      lineStyle: "dashed",
+      points: buildBarometerPricePoints(base, barometerPriceAnchors.yesterdayIn),
+    },
   ];
 };
 
@@ -8070,8 +8915,8 @@ function BarometerMatrixCard() {
                 fill="none"
                 stroke={series.color}
                 strokeDasharray={series.lineStyle === "dashed" ? "7 5" : undefined}
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                strokeLinecap="square"
+                strokeLinejoin="miter"
                 strokeWidth={series.lineStyle === "dashed" ? 1.7 : 2.1}
               />
             ))}
@@ -8295,7 +9140,7 @@ function MatrixPlaceholderCard({
   );
 }
 
-type DemandBottomTab = "demand" | "gap" | "inflight";
+type DemandBottomTab = "demand" | "execution";
 
 const fundGapRows = [
   { account: "泰康稳健增利A", breakEvenRate: "1.42%", gap: "-3.2 / 15.0", accountReq: "利率债质押", collateralReq: "国债/政金债" },
@@ -8332,6 +9177,35 @@ const inflightRows = [
   { account: "泰康长江经济带", gap: "-1.0 / 5.5", progress: 20, accountReq: "不限", collateralReq: "利率债优先", issuedAt: "10:35" },
 ] as const;
 
+const fundGapRowsByAccount = new Map(fundGapRows.map((row) => [row.account, row]));
+const inflightRowsByAccount = new Map(inflightRows.map((row) => [row.account, row]));
+
+const executionRows = [
+  ...fundGapRows.map((row) => {
+    const inflightRow = inflightRowsByAccount.get(row.account);
+    return {
+      account: row.account,
+      breakEvenRate: row.breakEvenRate,
+      gap: row.gap,
+      accountReq: row.accountReq,
+      collateralReq: row.collateralReq,
+      progress: inflightRow?.progress ?? null,
+      issuedAt: inflightRow?.issuedAt ?? null,
+    };
+  }),
+  ...inflightRows
+    .filter((row) => !fundGapRowsByAccount.has(row.account))
+    .map((row) => ({
+      account: row.account,
+      breakEvenRate: "--",
+      gap: row.gap,
+      accountReq: row.accountReq,
+      collateralReq: row.collateralReq,
+      progress: row.progress,
+      issuedAt: row.issuedAt,
+    })),
+];
+
 function CombinedDemandMatrixCard() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [bottomTab, setBottomTab] = useState<DemandBottomTab>("demand");
@@ -8342,8 +9216,7 @@ function CombinedDemandMatrixCard() {
 
   const tabItems: { key: DemandBottomTab; label: string }[] = [
     { key: "demand", label: "正/逆回购需求" },
-    { key: "gap", label: "资金缺口" },
-    { key: "inflight", label: "在途指令" },
+    { key: "execution", label: "资金缺口 / 在途指令" },
   ];
 
   return (
@@ -8406,54 +9279,54 @@ function CombinedDemandMatrixCard() {
                 <DemandCompactCell amount={reverseTotal} strong accent="var(--tk-color-brand-cyan)" />
               </div>
             </div>
-          ) : bottomTab === "gap" ? (
-            <table className="tk-table w-full border-separate border-spacing-0 text-xs">
-              <thead className="sticky top-0 z-10 bg-[var(--tk-color-surface-dark-soft)] text-slate-400">
-                <tr>
-                  {["账户", "保本利率", "资金缺口/可用额度", "账户要求", "质押要求"].map((col) => (
-                    <th key={col} className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-left text-mini font-medium tracking-[0]">{col}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {fundGapRows.map((row) => (
-                  <tr key={row.account} className="hover:bg-[rgba(255,255,255,0.03)]">
-                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 font-medium text-slate-200">{row.account}</td>
-                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-amber-300">{row.breakEvenRate}</td>
-                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 font-semibold text-red-300">{row.gap}</td>
-                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-slate-400">{row.accountReq}</td>
-                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-slate-400">{row.collateralReq}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           ) : (
             <table className="tk-table w-full border-separate border-spacing-0 text-xs">
               <thead className="sticky top-0 z-10 bg-[var(--tk-color-surface-dark-soft)] text-slate-400">
                 <tr>
-                  {["账户", "资金缺口/可用额度", "完成度", "账户要求", "质押要求", "下达时间"].map((col) => (
+                  {["账户", "保本利率", "资金缺口/可用额度", "在途状态", "下达时间", "账户要求", "质押要求"].map((col) => (
                     <th key={col} className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-left text-mini font-medium tracking-[0]">{col}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {inflightRows.map((row) => (
-                  <tr key={row.account} className="hover:bg-[rgba(255,255,255,0.03)]">
-                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 font-medium text-slate-200">{row.account}</td>
-                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 font-semibold text-red-300">{row.gap}</td>
-                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <div className="h-1 w-12 overflow-hidden rounded-full bg-slate-700">
-                          <div className={`h-full rounded-full ${row.progress >= 100 ? "bg-emerald-500" : "bg-[var(--tdx-red)]"}`} style={{ width: `${Math.min(row.progress, 100)}%` }} />
+                {executionRows.map((row) => {
+                  const hasInflight = row.progress !== null;
+                  const isCompleted = hasInflight && row.progress >= 100;
+                  const statusLabel = !hasInflight ? "未下达" : isCompleted ? "已完成" : "进行中";
+                  const statusClassName = !hasInflight
+                    ? "border-[rgba(148,163,184,0.2)] bg-[rgba(148,163,184,0.12)] text-slate-400"
+                    : isCompleted
+                      ? "border-[rgba(16,185,129,0.28)] bg-[rgba(16,185,129,0.14)] text-emerald-200"
+                      : "border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.14)] text-red-200";
+
+                  return (
+                    <tr key={row.account} className="hover:bg-[rgba(255,255,255,0.03)]">
+                      <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 font-medium text-slate-200">{row.account}</td>
+                      <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-amber-300">{row.breakEvenRate}</td>
+                      <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 font-semibold text-red-300">{row.gap}</td>
+                      <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`rounded border px-1.5 py-0.5 text-micro font-medium ${statusClassName}`}>
+                            {statusLabel}
+                          </span>
+                          {hasInflight ? (
+                            <div className="flex items-center gap-1.5">
+                              <div className="h-1 w-12 overflow-hidden rounded-full bg-slate-700">
+                                <div className={`h-full rounded-full ${isCompleted ? "bg-emerald-500" : "bg-[var(--tdx-red)]"}`} style={{ width: `${Math.min(row.progress, 100)}%` }} />
+                              </div>
+                              <span className={isCompleted ? "text-emerald-400" : "text-slate-300"}>
+                                {row.progress}%
+                              </span>
+                            </div>
+                          ) : null}
                         </div>
-                        <span className={`${row.progress >= 100 ? "text-emerald-400" : "text-slate-300"}`}>{row.progress}%</span>
-                      </div>
-                    </td>
-                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-slate-400">{row.accountReq}</td>
-                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-slate-400">{row.collateralReq}</td>
-                    <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-slate-300">{row.issuedAt}</td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-slate-300">{row.issuedAt ?? "--"}</td>
+                      <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-slate-400">{row.accountReq}</td>
+                      <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-slate-400">{row.collateralReq}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -9557,7 +10430,7 @@ function LeftInfoColumn({
       <div className="min-h-0 flex-[0.8]">
         <ExchangeRepoFrame
           embeddedPreview
-          onOpen={() => onOpenFrame("exchange-repo")}
+          onOpen={(options) => onOpenFrame("exchange-repo", options)}
         />
       </div>
     </aside>
@@ -9639,7 +10512,8 @@ function CenterColumn({
 
 function RightChartColumn() {
   const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
-  const [baseProduct, setBaseProduct] = useState<BaseTrendProduct>("r001");
+  const [anonymousProduct, setAnonymousProduct] =
+    useState<AnonymousTrendProduct>("r001");
 
   return (
     <aside className="flex h-full min-h-0 min-w-0 flex-col gap-1 overflow-hidden px-1 brightness-[0.92]">
@@ -9648,9 +10522,9 @@ function RightChartColumn() {
       </div>
       <div className="min-h-0 flex-[1.2]">
         <IntradayPanel
-          baseProduct={baseProduct}
+          product={anonymousProduct}
           overlayProduct={overlayProduct}
-          onBaseProductChange={setBaseProduct}
+          onProductChange={setAnonymousProduct}
           onOverlayChange={setOverlayProduct}
         />
       </div>
@@ -9663,7 +10537,8 @@ function RightChartColumn() {
 
 function MiddleMatrixColumn() {
   const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
-  const [baseProduct, setBaseProduct] = useState<BaseTrendProduct>("r001");
+  const [anonymousProduct, setAnonymousProduct] =
+    useState<AnonymousTrendProduct>("r001");
   const [bottomTab, setBottomTab] = useState<"intraday" | "institution">("intraday");
 
   return (
@@ -9706,9 +10581,9 @@ function MiddleMatrixColumn() {
             <div className="min-h-0 overflow-hidden p-1.5">
               <div className={bottomTab === "intraday" ? "h-full min-h-0" : "hidden"}>
                 <IntradayPanel
-                  baseProduct={baseProduct}
+                  product={anonymousProduct}
                   overlayProduct={overlayProduct}
-                  onBaseProductChange={setBaseProduct}
+                  onProductChange={setAnonymousProduct}
                   onOverlayChange={setOverlayProduct}
                 />
               </div>
@@ -11792,6 +12667,8 @@ function RightSidebar() {
   const [rightLowerTab, setRightLowerTab] = useState<RightLowerTab>("inst");
   const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
   const [baseProduct, setBaseProduct] = useState<BaseTrendProduct>("r001");
+  const [anonymousProduct, setAnonymousProduct] =
+    useState<AnonymousTrendProduct>("r001");
 
   return (
     <aside
@@ -11814,9 +12691,9 @@ function RightSidebar() {
 
       <div className="min-h-0 overflow-hidden">
         <IntradayPanel
-          baseProduct={baseProduct}
+          product={anonymousProduct}
           overlayProduct={overlayProduct}
-          onBaseProductChange={setBaseProduct}
+          onProductChange={setAnonymousProduct}
           onOverlayChange={setOverlayProduct}
         />
       </div>
@@ -11865,21 +12742,18 @@ function RightLowerPanel({
 }
 
 function IntradayPanel({
-  baseProduct,
+  product,
   overlayProduct,
-  onBaseProductChange,
+  onProductChange,
   onOverlayChange,
 }: {
-  baseProduct: BaseTrendProduct;
+  product: AnonymousTrendProduct;
   overlayProduct: OverlayProduct;
-  onBaseProductChange: (product: BaseTrendProduct) => void;
+  onProductChange: (product: AnonymousTrendProduct) => void;
   onOverlayChange: (product: OverlayProduct) => void;
 }) {
-  const productLabel = trendProductLabel(baseProduct);
-  const mainSeries = getIntradayRateSeries(baseProduct);
-  const yesterdaySeries = mainSeries.map((value, index) =>
-    Number((value - 0.012 + Math.sin(index * 0.63) * 0.006).toFixed(3)),
-  );
+  const productLabel = anonymousTrendProductLabel(product);
+  const mainSeries = getIntradayRateSeries(product);
   const overlaySeries =
     overlayProduct === "none"
       ? null
@@ -11889,17 +12763,13 @@ function IntradayPanel({
         Number(((value - overlaySeries[index]) * 100).toFixed(1)),
       )
     : null;
-  const { min, max } = buildChartDomain(
-    [...mainSeries, ...yesterdaySeries, ...(overlaySeries ?? [])],
-    {
-      paddingRatio: 0.12,
-      minSpan: 0.05,
-      clampMin: 0,
-    },
-  );
+  const { min, max } = buildChartDomain([...mainSeries, ...(overlaySeries ?? [])], {
+    paddingRatio: 0.12,
+    minSpan: 0.05,
+    clampMin: 0,
+  });
   const yTicks = buildLinearTicks(min, max, 4);
   const mainPath = buildLinePath(mainSeries, 680, 178, min, max);
-  const yesterdayPath = buildLinePath(yesterdaySeries, 680, 178, min, max);
   const areaPath = buildAreaPath(mainSeries, 680, 178, min, max);
   const overlayPath = overlaySeries
     ? buildLinePath(overlaySeries, 680, 178, min, max)
@@ -11918,10 +12788,12 @@ function IntradayPanel({
           <span>产品</span>
           <select
             className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-1.5 py-0.5 text-xs text-slate-200 outline-none"
-            value={baseProduct}
-            onChange={(event) => onBaseProductChange(event.target.value as BaseTrendProduct)}
+            value={product}
+            onChange={(event) =>
+              onProductChange(event.target.value as AnonymousTrendProduct)
+            }
           >
-            {baseTrendProductOptions.map((option) => (
+            {anonymousTrendProductOptions.map((option) => (
               <option key={option.id} value={option.id}>
                 {option.label}
               </option>
@@ -11935,8 +12807,7 @@ function IntradayPanel({
           />
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-3 text-micro text-slate-500">
-          <LegendDot color={chartPalette.blue} label={`今日${productLabel}`} />
-          <LegendDot color={chartPalette.violet} label={`昨日${productLabel}`} />
+          <LegendDot color={chartPalette.blue} label={productLabel} />
           {overlaySeries ? (
             <LegendDot
               color={chartPalette.amber}
@@ -11997,16 +12868,6 @@ function IntradayPanel({
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
-                <path
-                  d={yesterdayPath}
-                  fill="none"
-                  stroke={chartPalette.violet}
-                  strokeWidth="2"
-                  strokeDasharray="7 5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeOpacity="0.9"
-                />
                 {overlayPath ? (
                   <path
                     d={overlayPath}
@@ -12048,18 +12909,6 @@ function IntradayPanel({
                   <span className="text-slate-400">{productLabel}</span>
                   <span className="ml-1 font-semibold text-slate-100">
                     {mainSeries[ti].toFixed(3)}%
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className="h-1.5 w-3"
-                    style={{
-                      borderTop: `2px dashed ${chartPalette.violet}`,
-                    }}
-                  />
-                  <span className="text-slate-400">昨日{productLabel}</span>
-                  <span className="ml-1 font-semibold text-slate-100">
-                    {yesterdaySeries[ti].toFixed(3)}%
                   </span>
                 </div>
                 {overlaySeries && (
