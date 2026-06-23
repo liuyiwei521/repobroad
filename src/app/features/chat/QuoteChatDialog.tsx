@@ -1,5 +1,38 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { QuoteChatContext } from "./chat.types";
+
+type LocalMessage = {
+  id: string;
+  from: "counterparty" | "trader";
+  text: string;
+  time: string;
+};
+
+function parseRateValue(rateText: string) {
+  const matched = rateText.match(/-?\d+(?:\.\d+)?/);
+  return matched ? Number(matched[0]) : null;
+}
+
+function formatAdjustedRate(rateText: string, basisPointDelta: number) {
+  const baseRate = parseRateValue(rateText);
+  if (baseRate === null) return rateText;
+
+  const decimalPartLength = rateText.match(/\.(\d+)/)?.[1]?.length ?? 2;
+  const nextRate = baseRate + basisPointDelta / 100;
+  return `${nextRate.toFixed(Math.max(decimalPartLength, 2))}%`;
+}
+
+function buildConfirmDraft(context: QuoteChatContext) {
+  return `确认，${context.quote.tenor} ${context.quote.rate}，${context.quote.amount}，${context.quote.collateral}，请发我方确认。`;
+}
+
+function buildCancelDraft(context: QuoteChatContext) {
+  return `这笔 ${context.quote.tenor} 先取消，后续有变化我再联系你。`;
+}
+
+function buildAdjustedRateDraft(context: QuoteChatContext, basisPointDelta: number) {
+  return `如果按 ${context.quote.tenor} ${formatAdjustedRate(context.quote.rate, basisPointDelta)}，${context.quote.amount}，${context.quote.collateral} 这个价格，可以继续沟通。`;
+}
 
 export function QuoteChatDialog({
   context,
@@ -9,15 +42,12 @@ export function QuoteChatDialog({
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState("");
-  const [localMessages, setLocalMessages] = useState<
-    Array<{ id: string; from: "counterparty" | "trader"; text: string; time: string }>
-  >([]);
+  const [localMessages, setLocalMessages] = useState<LocalMessage[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     if (!context) return;
-    setDraft(
-      `${context.quote.tenor} ${context.quote.rate}，${context.quote.amount}，${context.quote.collateral}。`,
-    );
+    setDraft("");
     setLocalMessages([
       {
         id: "quote",
@@ -27,6 +57,14 @@ export function QuoteChatDialog({
       },
     ]);
   }, [context]);
+
+  useEffect(() => {
+    const element = textareaRef.current;
+    if (!element) return;
+
+    element.style.height = "0px";
+    element.style.height = `${Math.min(element.scrollHeight, 96)}px`;
+  }, [draft]);
 
   if (!context) return null;
 
@@ -44,32 +82,34 @@ export function QuoteChatDialog({
     setDraft("");
   };
 
-  const quickReplies = [
+  const quickActions = [
     {
-      label: "确认可成交",
-      text: `这笔可以，${context.quote.tenor} ${context.quote.rate}，${context.quote.amount} 按这个要素发我方确认。`,
+      label: "确认",
+      onClick: () => setDraft(buildConfirmDraft(context)),
+      className:
+        "border-[rgba(231,53,58,0.32)] bg-[rgba(231,53,58,0.12)] text-red-100 hover:border-[rgba(231,53,58,0.56)]",
     },
     {
-      label: "价格可谈",
-      text: `${context.quote.tenor} 价格还能再谈一下吗？目前看到 ${context.quote.rate}。`,
+      label: "取消",
+      onClick: () => setDraft(buildCancelDraft(context)),
+      className:
+        "border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] text-slate-200 hover:border-[color:var(--tk-color-border-divider)]",
     },
     {
-      label: "金额多少",
-      text: `这边想确认一下 ${context.quote.tenor} 现在最多还能给多少量？`,
+      label: "价格+1bp",
+      onClick: () => setDraft(buildAdjustedRateDraft(context, 1)),
+      className:
+        "border-[rgba(251,191,36,0.28)] bg-[rgba(251,191,36,0.1)] text-amber-200 hover:border-[rgba(251,191,36,0.5)]",
     },
     {
-      label: "补充要素",
-      text: "麻烦补一下完整要素：期限、金额、利率、质押和账户要求。",
-    },
-    {
-      label: "稍后回复",
-      text: "收到，我这边确认一下账户和额度，稍后回复你。",
-    },
-    {
-      label: "改报利率",
-      text: `${context.quote.tenor} 如果按我方价格再调整一点，可以继续沟通。`,
+      label: "价格+2bp",
+      onClick: () => setDraft(buildAdjustedRateDraft(context, 2)),
+      className:
+        "border-[rgba(251,191,36,0.28)] bg-[rgba(251,191,36,0.1)] text-amber-200 hover:border-[rgba(251,191,36,0.5)]",
     },
   ];
+
+  const sendDisabled = draft.trim().length === 0;
 
   return (
     <div
@@ -77,7 +117,7 @@ export function QuoteChatDialog({
       onMouseDown={onClose}
     >
       <aside
-        className="grid h-[520px] w-full max-w-[560px] grid-rows-[auto_1fr_auto] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] shadow-2xl"
+        className="grid h-[560px] w-full max-w-[620px] grid-rows-[auto_1fr_auto] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] shadow-2xl"
         onMouseDown={(event) => event.stopPropagation()}
         aria-label="报价对话框"
       >
@@ -97,11 +137,21 @@ export function QuoteChatDialog({
 
         <div className="grid min-h-0 grid-rows-[auto_1fr] overflow-hidden">
           <div className="border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-page)] p-3">
-            <div className="grid grid-cols-4 gap-1.5 text-micro text-slate-400">
-              <span className="tk-field truncate px-2 py-1">{context.quote.amount}</span>
-              <span className="tk-field truncate px-2 py-1">{context.quote.rate}</span>
-              <span className="tk-field truncate px-2 py-1">{context.quote.collateral}</span>
-              <span className="tk-field truncate px-2 py-1">{context.quote.account}</span>
+            <div className="grid grid-cols-2 gap-2 text-micro text-slate-400 sm:grid-cols-4">
+              {[
+                { label: "金额", value: context.quote.amount },
+                { label: "利率", value: context.quote.rate },
+                { label: "券池", value: context.quote.collateral },
+                { label: "账户", value: context.quote.account },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.4)] px-2.5 py-2"
+                >
+                  <div className="text-[11px] text-slate-500">{item.label}</div>
+                  <div className="mt-1 truncate text-xs text-slate-100">{item.value}</div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -129,31 +179,46 @@ export function QuoteChatDialog({
         </div>
 
         <div className="border-t border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] p-3">
-          <div className="mb-2 flex flex-wrap gap-1.5">
-            {quickReplies.map((reply) => (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {quickActions.map((action) => (
               <button
-                key={reply.label}
-                className="tk-chip rounded border text-micro transition-colors hover:border-[color:var(--tdx-red)] hover:text-slate-100"
-                onClick={() => setDraft(reply.text)}
+                key={action.label}
+                className={`rounded-md border px-3 py-2 text-xs font-medium transition-colors ${action.className}`}
+                onClick={action.onClick}
                 type="button"
               >
-                {reply.label}
+                {action.label}
               </button>
             ))}
           </div>
-          <div className="flex gap-2">
-            <input
-              className="tk-field h-8 min-w-0 flex-1 px-3 text-xs text-slate-100 outline-none placeholder:text-slate-600"
+
+          <div className="mt-3 rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] p-2.5">
+            <textarea
+              ref={textareaRef}
+              className="min-h-[64px] max-h-24 w-full resize-none border-0 bg-transparent px-1 py-1 text-sm leading-6 text-slate-100 outline-none placeholder:text-slate-500"
               value={draft}
-              placeholder="输入消息，Enter 发送"
+              placeholder="输入消息，支持 2-3 行编辑"
+              rows={3}
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === "Enter") send();
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  send();
+                }
               }}
             />
-            <button className="tk-button tk-button-success" onClick={send} type="button">
-              发送
-            </button>
+
+            <div className="mt-2 flex items-center justify-between gap-2 border-t border-[color:var(--tk-color-border-divider-dark)] px-1 pt-2">
+              <div className="text-micro text-slate-500">Enter 发送，Shift+Enter 换行</div>
+              <button
+                className="tk-button tk-button-success min-w-[72px] disabled:cursor-not-allowed disabled:opacity-40"
+                disabled={sendDisabled}
+                onClick={send}
+                type="button"
+              >
+                发送
+              </button>
+            </div>
           </div>
         </div>
       </aside>
