@@ -14,6 +14,6 @@ export function FilterDivider({ compact = false }: { compact?: boolean }) {
 
 export function miniChipClass(active: boolean) {
   return active
-    ? "tk-chip tk-chip-active tk-segmented-tab--compact whitespace-nowrap text-mini"
-    : "tk-chip tk-segmented-tab--compact whitespace-nowrap text-mini";
+    ? "tk-chip tk-chip-active tk-segmented-tab--compact inline-flex h-6 items-center justify-center whitespace-nowrap text-mini align-middle"
+    : "tk-chip tk-segmented-tab--compact inline-flex h-6 items-center justify-center whitespace-nowrap text-mini align-middle";
 }

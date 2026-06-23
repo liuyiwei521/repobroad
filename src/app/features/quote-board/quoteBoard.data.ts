@@ -792,4 +792,14 @@ export const COLLATERAL_OPTIONS = [
   "AA+",
 ] as const;
 
+export const INSTITUTION_FILTER_OPTIONS = Array.from(
+  new Set(
+    Object.entries(quoteContactNames).flatMap(([institution, sender]) => [
+      institution,
+      sender,
+      `${institution} / ${sender}`,
+    ]),
+  ),
+).sort((left, right) => left.localeCompare(right, "zh-CN"));
+
 export const DEFAULT_AMOUNT_UNIT: AmountFilterUnit = "yi";

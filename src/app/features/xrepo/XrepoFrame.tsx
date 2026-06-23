@@ -245,7 +245,9 @@ export function XrepoFrame({
   return (
     <section
       className={
-        frameMode === "page"
+        embeddedPreview
+          ? "flex h-full min-h-0 flex-col overflow-hidden"
+          : frameMode === "page"
           ? "flex h-full min-h-0 flex-col overflow-hidden"
           : "tk-panel flex h-full min-h-0 flex-col overflow-hidden border"
       }

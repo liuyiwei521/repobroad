@@ -72,8 +72,8 @@ export function getSentimentState(score) {
       tone: "alert",
       status: "紧张",
       accentClass:
-        "border-amber-200 bg-amber-50 text-amber-700",
-      statusClass: "text-amber-600",
+        "border-red-200 bg-red-50 text-red-700",
+      statusClass: "text-red-600",
     };
   }
   return {

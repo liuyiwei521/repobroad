@@ -6,6 +6,7 @@ import type {
   FrameRenderMode,
   QuoteTenorFilter,
 } from "../../types";
+import { ExchangeRepoSingleTrendChart } from "./ExchangeRepoSingleTrendChart";
 
 type ExchangeRepoView = "core" | "sse" | "szse";
 
@@ -89,23 +90,11 @@ export function ExchangeRepoFrame({
 
   if (frameMode === "page") {
     return (
-      <div className="grid h-full min-h-0 gap-3 xl:grid-cols-[minmax(360px,0.92fr)_minmax(0,1.28fr)]">
-        <div className="min-h-0 overflow-hidden">
-          <ExchangeRepoCard
-            title={section.title}
-            markets={section.markets}
-            onOpen={onOpen}
-            onSelectContract={handleSelectContract}
-            selectedContract={selectedContract}
-            tenorFilter={tenorFilter}
-          />
-        </div>
-        <div className="min-h-0 overflow-hidden">
-          <ExchangeRepoTrendPanel
-            contractName={selectedContract}
-            renderHistoryChart={renderHistoryChart}
-          />
-        </div>
+      <div className="h-full min-h-0 overflow-hidden">
+        <ExchangeRepoTrendPanel
+          contractName={selectedContract}
+          renderHistoryChart={renderHistoryChart}
+        />
       </div>
     );
   }
@@ -155,31 +144,19 @@ export function ExchangeRepoCard({
   }));
 
   const headerActions = (
-    <>
-      {exchangeRepoViewTabs.map((tab) => (
-        <button
-          key={tab.id}
-          className={auxTabClass(tab.id === activeView)}
-          onClick={() => setActiveView(tab.id)}
-          type="button"
-        >
-          {tab.label}
-        </button>
-      ))}
-      <button
-        className="tk-button tk-button-success"
-        type="button"
-      >
-        下载
-      </button>
-    </>
+    <ExchangeRepoHeaderActions
+      activeView={activeView}
+      onViewChange={setActiveView}
+    />
   );
 
   return (
     <section
-      className={`tk-panel flex min-h-0 flex-col border ${
-        embeddedPreview ? "h-full overflow-hidden" : "h-full overflow-hidden"
-      }`}
+      className={
+        embeddedPreview
+          ? "flex h-full min-h-0 flex-col overflow-hidden"
+          : "tk-panel flex h-full min-h-0 flex-col overflow-hidden border"
+      }
     >
       {embeddedPreview ? (
         renderEmbeddedHeader ? (
@@ -192,17 +169,17 @@ export function ExchangeRepoCard({
         )
       ) : (
         <div className="tk-panel-header border-b px-4 py-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="tk-title">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="tk-title min-w-0 shrink truncate">
               {title}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="min-w-0 flex-1">
               {headerActions}
             </div>
           </div>
         </div>
       )}
-      <div className={embeddedPreview ? "min-h-0 flex-1 overflow-hidden p-2" : "min-h-0 flex-1 p-2"}>
+      <div className="min-h-0 flex-1 overflow-hidden">
         {activeView === "core" ? (
           <ExchangeCoreCompactBoard
             markets={displayedMarkets}
@@ -211,13 +188,7 @@ export function ExchangeRepoCard({
             selectedContract={selectedContract}
           />
         ) : (
-          <div
-            className={
-              embeddedPreview
-                ? "grid h-full min-h-0 grid-cols-1"
-                : "grid h-full min-h-0 grid-cols-1"
-            }
-          >
+          <div className="grid h-full min-h-0 grid-cols-1">
             {displayedMarkets.map((market) => (
               <ExchangeMarketTable
                 key={`${activeView}-${market.id}`}
@@ -245,15 +216,44 @@ function DefaultEmbeddedHeader({
   return (
     <div className="tk-panel-header border-b px-2.5 py-1.5">
       <div className="flex min-w-0 items-center gap-2">
-        <div className="min-w-0 flex-1 rounded-md px-1 py-0.5">
+        <div className="min-w-0 shrink rounded-md px-1 py-0.5">
           <span className="tk-title block truncate">
             {title}
           </span>
         </div>
-        <div className="ml-auto flex shrink-0 items-center gap-1.5">
+        <div className="ml-auto min-w-0 flex-1">
           {actions}
         </div>
       </div>
+    </div>
+  );
+}
+
+function ExchangeRepoHeaderActions({
+  activeView,
+  onViewChange,
+}: {
+  activeView: ExchangeRepoView;
+  onViewChange: (view: ExchangeRepoView) => void;
+}) {
+  return (
+    <div className="grid min-w-0 grid-cols-4 gap-1">
+      {exchangeRepoViewTabs.map((tab) => (
+        <button
+          key={tab.id}
+          className={`${auxTabClass(tab.id === activeView)} min-w-0 w-full truncate`}
+          onClick={() => onViewChange(tab.id)}
+          type="button"
+        >
+          {tab.label}
+        </button>
+      ))}
+      <button
+        className="tk-button inline-flex min-w-0 w-full items-center justify-center truncate px-2 text-mini"
+        type="button"
+      >
+        下载
+      </button>
     </div>
   );
 }
@@ -334,13 +334,13 @@ function ExchangeCoreCompactBlock({
   );
   return (
     <div
-      className={`flex min-h-0 flex-col rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] ${
+      className={`flex min-h-0 flex-col ${
         embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
       }`}
     >
-      <table className="w-full table-fixed shrink-0">
+      <table className="tk-sheet-table w-full table-fixed shrink-0">
         <thead>
-          <tr className="border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] text-mini font-medium tracking-[0.02em] text-slate-400">
+          <tr>
             <th className="w-[15%] px-2 py-1.5 text-left font-medium">期限</th>
             <th className="w-[25%] px-2 py-1.5 text-left font-medium">品种</th>
             <th className="w-[22%] px-2 py-1.5 text-right font-medium">最新</th>
@@ -354,21 +354,13 @@ function ExchangeCoreCompactBlock({
           embeddedPreview ? "min-h-0 overflow-visible" : "min-h-0 flex-1 overflow-y-auto"
         }
       >
-        <table className="w-full table-fixed">
+        <table className="tk-sheet-table w-full table-fixed">
           <tbody>
             {paddedRows.map((row, rowIndex) => (
               <tr
                 key={row ? `${row[1]}-${rowIndex}` : `empty-${rowIndex}`}
-                className={`text-xs transition-colors ${
-                  rowIndex > 0 ? "border-t border-[color:var(--tk-color-border-divider)]" : ""
-                } ${
-                  row && onSelectContract
-                    ? "cursor-pointer hover:bg-[rgba(94,163,255,0.08)]"
-                    : ""
-                } ${
-                  row && selectedContract === row[1]
-                    ? "bg-[rgba(56,113,189,0.18)]"
-                    : ""
+                className={`${row && onSelectContract ? "cursor-pointer" : ""} ${
+                  row && selectedContract === row[1] ? "tk-sheet-table__row--selected" : ""
                 }`}
                 onClick={
                   row && onSelectContract ? () => onSelectContract(row[1] ?? "GC001") : undefined
@@ -376,13 +368,13 @@ function ExchangeCoreCompactBlock({
               >
                 {row ? (
                   <>
-                    <td className="w-[15%] px-2 py-1.5 font-semibold text-slate-100">
+                    <td className="w-[15%] px-2 py-1.5 font-semibold text-slate-700">
                       {row[0]}
                     </td>
-                    <td className="w-[25%] px-2 py-1.5 font-semibold text-slate-100">
+                    <td className="w-[25%] px-2 py-1.5 font-semibold text-slate-700">
                       {row[1]}
                     </td>
-                    <td className="w-[22%] px-2 py-1.5 text-right font-semibold text-emerald-300">
+                    <td className="w-[22%] px-2 py-1.5 text-right font-semibold tk-negative">
                       {row[2]}
                     </td>
                     <td
@@ -390,7 +382,7 @@ function ExchangeCoreCompactBlock({
                     >
                       {row[3]}
                     </td>
-                    <td className="w-[18%] px-2 py-1.5 text-right text-slate-400">
+                    <td className="w-[18%] px-2 py-1.5 text-right text-slate-500">
                       {row[4] ?? "--"}
                     </td>
                   </>
@@ -423,13 +415,13 @@ function ExchangeMarketTable({
 
   return (
     <div
-      className={`flex min-h-0 flex-col rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] ${
+      className={`flex min-h-0 flex-col ${
         embeddedPreview ? "h-auto overflow-visible" : "h-full overflow-hidden"
       }`}
     >
-      <table className="w-full table-fixed shrink-0">
+      <table className="tk-sheet-table w-full table-fixed shrink-0">
         <thead>
-          <tr className="border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] text-mini font-medium tracking-[0.02em] text-slate-400">
+          <tr>
             {market.columns.map((column, index) => (
               <th
                 key={`${market.title}-${column}`}
@@ -456,19 +448,13 @@ function ExchangeMarketTable({
           embeddedPreview ? "min-h-0 overflow-visible" : "min-h-0 flex-1 overflow-y-auto"
         }
       >
-        <table className="w-full table-fixed">
+        <table className="tk-sheet-table w-full table-fixed">
           <tbody>
             {displayRows.map((row, rowIndex) => (
               <tr
                 key={`${market.title}-${row[0]}-${rowIndex}`}
-                className={`border-b border-[color:var(--tk-color-border-divider)] text-xs transition-colors ${
-                  selectedContract === row[1]
-                    ? "bg-[rgba(56,113,189,0.18)]"
-                    : rowIndex % 2 === 0
-                      ? "bg-transparent"
-                      : "bg-[rgba(255,255,255,0.025)]"
-                } ${
-                  onSelectContract ? "cursor-pointer hover:bg-[rgba(94,163,255,0.08)]" : ""
+                className={`${onSelectContract ? "cursor-pointer" : ""} ${
+                  selectedContract === row[1] ? "tk-sheet-table__row--selected" : ""
                 }`}
                 onClick={() => onSelectContract?.(row[1] ?? "GC001")}
               >
@@ -484,7 +470,7 @@ function ExchangeMarketTable({
                             ? "w-[22%] text-right"
                             : cellIndex === 3
                               ? "w-[20%] text-right"
-                              : "w-[18%] text-right text-slate-400"
+                              : "w-[18%] text-right text-slate-500"
                     }`}
                     title={cell}
                   >
@@ -519,20 +505,22 @@ function ExchangeRepoTrendPanel({
   renderHistoryChart?: (contractName: string) => ReactNode;
 }) {
   return (
-    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
-      <div className="flex items-center justify-between gap-3 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
+    <section className="tk-sheet-table__panel grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden">
+      <div className="flex items-center justify-between gap-3 border-b border-[color:var(--tk-color-border-divider)] bg-[#f5f5f5] px-3 py-2">
         <div className="min-w-0">
           <div className="tk-matrix-card-title truncate">交易所回购折线图大图</div>
           <div className="mt-0.5 text-micro text-slate-500">
             点击左侧品种切换走势
           </div>
         </div>
-        <div className="shrink-0 rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] px-2 py-1 text-xs font-semibold text-slate-200">
+        <div className="shrink-0 rounded border border-[color:var(--tk-color-border-panel)] bg-white px-2 py-1 text-xs font-semibold text-slate-700">
           {contractName}
         </div>
       </div>
       <div className="min-h-0 overflow-hidden p-2">
-        {renderHistoryChart ? renderHistoryChart(contractName) : null}
+        {renderHistoryChart ? renderHistoryChart(contractName) : (
+          <ExchangeRepoSingleTrendChart contractName={contractName} />
+        )}
       </div>
     </section>
   );
@@ -540,8 +528,8 @@ function ExchangeRepoTrendPanel({
 
 function auxTabClass(active: boolean) {
   return active
-    ? "tk-chip tk-chip-active tk-segmented-tab"
-    : "tk-chip tk-segmented-tab";
+    ? "tk-market-tab tk-market-tab--compact is-active"
+    : "tk-market-tab tk-market-tab--compact";
 }
 
 function cellClassName(

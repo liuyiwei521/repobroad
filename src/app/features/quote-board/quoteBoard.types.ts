@@ -2,7 +2,6 @@ import type { QuoteDetailRow, QuoteRank, RepoQuoteSection } from "../../types";
 import type { QuoteChatPayload } from "../chat/chat.types";
 
 export type AmountFilterUnit = "yi" | "wan";
-export type ExpandStatus = "unreplied" | "replied" | "all";
 export type SupplementGroupName = "利率地方" | "存单商金" | "信用";
 
 export type QuoteOverride = Partial<

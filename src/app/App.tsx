@@ -8,14 +8,12 @@ import {
   GripHorizontal,
   LineChart as LineChartIcon,
   SlidersHorizontal,
-  X,
 } from "lucide-react";
 import {
   buildSeededWalk as randomWalk,
   buildChartDomain,
   buildLinearTicks,
   getSentimentState,
-  toggleMultiSelect,
 } from "./dashboardUtils.js";
 import { useColumnLayout } from "./hooks/useColumnLayout";
 import { useCenterSplit } from "./hooks/useCenterSplit";
@@ -25,7 +23,6 @@ import { PageFrame as ShellPageFrame } from "./components/shell/PageFrame";
 import { BankRateEditorModal as ShellBankRateEditorModal } from "./components/dialogs/BankRateEditorModal";
 import {
   DEFAULT_TRADING_NOTICE_TEXT,
-  DEFAULT_TRADING_STATUS_TEXT,
   TradingNoticeEditorModal as ShellTradingNoticeEditorModal,
 } from "./components/dialogs/TradingNoticeEditorModal";
 import { useHoverPopover } from "./hooks/useHoverPopover";
@@ -93,8 +90,10 @@ import {
 } from "./features/execution";
 import {
   bankRateSpread,
-  BigBankHistoryBack,
   BigBankPricingTrendChart,
+  BigBankSpreadDiffRechartsPlot,
+  buildAnchoredBankHistorySeries,
+  bankHistorySessionLabel,
   defaultBigBankWhitelist,
   deriveHasQuote,
   initialBankRateRows,
@@ -123,7 +122,6 @@ import {
   buildXrepoMetric,
   XrepoFrame as XrepoFeatureFrame,
   XrepoHistoryBack as XrepoFeatureHistoryBack,
-  XrepoInlineHistoryChart as XrepoFeatureInlineHistoryChart,
   XrepoSummaryOverview as XrepoFeatureSummaryOverview,
   xrepoR001Rows,
 } from "./features/xrepo";
@@ -198,9 +196,15 @@ const exchangeRepoSection = shellLeftSections.find(
 
 const overlayProductOptions: Array<{ id: OverlayProduct; label: string }> = [
   { id: "none", label: "不叠加" },
+  { id: "dr001", label: "DR001" },
   { id: "dr007", label: "DR007" },
+  { id: "gc001", label: "GC001" },
   { id: "gc007", label: "GC007" },
+  { id: "r001", label: "R001" },
+  { id: "r002", label: "R002" },
   { id: "r007", label: "R007" },
+  { id: "r014", label: "R014" },
+  { id: "r030", label: "R030" },
 ];
 
 const baseTrendProductOptions: Array<{ id: BaseTrendProduct; label: string }> = [
@@ -215,7 +219,6 @@ const anonymousTrendProductOptions: Array<{
   id: AnonymousTrendProduct;
   label: string;
 }> = [
-  { id: "all", label: "所有种类" },
   { id: "r001", label: "R001" },
   { id: "r002", label: "R002" },
   { id: "r007", label: "R007" },
@@ -284,14 +287,19 @@ const intradayOverlaySeriesByProduct: Record<
   Exclude<OverlayProduct, "none">,
   number[]
 > = {
+  dr001: clampRateAboveOne(randomWalk(1.964, 40, 0.035, 70)),
   dr007: clampRateAboveOne(randomWalk(2.012, 40, 0.04, 71)),
+  gc001: clampRateAboveOne(randomWalk(1.836, 40, 0.05, 79)),
   gc007: clampRateAboveOne(randomWalk(1.852, 40, 0.062, 72)),
+  r001: clampRateAboveOne(randomWalk(1.986, 40, 0.046, 80)),
+  r002: clampRateAboveOne(randomWalk(2.004, 40, 0.048, 84)),
   r007: clampRateAboveOne(randomWalk(2.058, 40, 0.052, 73)),
+  r014: clampRateAboveOne(randomWalk(2.086, 40, 0.045, 85)),
+  r030: clampRateAboveOne(randomWalk(2.128, 40, 0.04, 86)),
 };
 
 const anonymousIntradaySeriesByProduct: Record<AnonymousTrendProduct, number[]> =
   {
-    all: clampRateAboveOne(randomWalk(2.024, 40, 0.045, 69)),
     r001: intradaySeries,
     r002: clampRateAboveOne(randomWalk(2.002, 40, 0.049, 74)),
     r007: intradayOverlaySeriesByProduct.r007,
@@ -387,6 +395,15 @@ const historicalProductAnchors: Record<
     seed: number;
   }
 > = {
+  gc001: {
+    anchor5d: 1.18,
+    anchor1m: 1.15,
+    anchor6m: 1.39,
+    vol5d: 0.14,
+    vol1m: 0.03,
+    vol6m: 0.015,
+    seed: 87,
+  },
   dr007: {
     anchor5d: 1.36,
     anchor1m: 1.31,
@@ -405,6 +422,24 @@ const historicalProductAnchors: Record<
     vol6m: 0.018,
     seed: 82,
   },
+  r001: {
+    anchor5d: 1.28,
+    anchor1m: 1.236,
+    anchor6m: 1.47,
+    vol5d: 0.17,
+    vol1m: 0.026,
+    vol6m: 0.013,
+    seed: 88,
+  },
+  r002: {
+    anchor5d: 1.31,
+    anchor1m: 1.26,
+    anchor6m: 1.5,
+    vol5d: 0.16,
+    vol1m: 0.027,
+    vol6m: 0.013,
+    seed: 89,
+  },
   r007: {
     anchor5d: 1.42,
     anchor1m: 1.36,
@@ -414,12 +449,36 @@ const historicalProductAnchors: Record<
     vol6m: 0.014,
     seed: 83,
   },
+  r014: {
+    anchor5d: 1.47,
+    anchor1m: 1.42,
+    anchor6m: 1.64,
+    vol5d: 0.15,
+    vol1m: 0.028,
+    vol6m: 0.014,
+    seed: 90,
+  },
+  r030: {
+    anchor5d: 1.52,
+    anchor1m: 1.46,
+    anchor6m: 1.7,
+    vol5d: 0.14,
+    vol1m: 0.026,
+    vol6m: 0.013,
+    seed: 91,
+  },
 };
 const historicalProductSeries: Record<
   HistoryRange,
   Record<Exclude<OverlayProduct | SpreadProduct, "none" | "dr001">, number[]>
 > = {
   "5d": {
+    gc001: randomWalk(
+      historicalProductAnchors.gc001.anchor5d,
+      historicalCloseDatasets["5d"].close.length,
+      historicalProductAnchors.gc001.vol5d,
+      historicalProductAnchors.gc001.seed,
+    ),
     dr007: randomWalk(
       historicalProductAnchors.dr007.anchor5d,
       historicalCloseDatasets["5d"].close.length,
@@ -432,14 +491,44 @@ const historicalProductSeries: Record<
       historicalProductAnchors.gc007.vol5d,
       historicalProductAnchors.gc007.seed,
     ),
+    r001: randomWalk(
+      historicalProductAnchors.r001.anchor5d,
+      historicalCloseDatasets["5d"].close.length,
+      historicalProductAnchors.r001.vol5d,
+      historicalProductAnchors.r001.seed,
+    ),
+    r002: randomWalk(
+      historicalProductAnchors.r002.anchor5d,
+      historicalCloseDatasets["5d"].close.length,
+      historicalProductAnchors.r002.vol5d,
+      historicalProductAnchors.r002.seed,
+    ),
     r007: randomWalk(
       historicalProductAnchors.r007.anchor5d,
       historicalCloseDatasets["5d"].close.length,
       historicalProductAnchors.r007.vol5d,
       historicalProductAnchors.r007.seed,
     ),
+    r014: randomWalk(
+      historicalProductAnchors.r014.anchor5d,
+      historicalCloseDatasets["5d"].close.length,
+      historicalProductAnchors.r014.vol5d,
+      historicalProductAnchors.r014.seed,
+    ),
+    r030: randomWalk(
+      historicalProductAnchors.r030.anchor5d,
+      historicalCloseDatasets["5d"].close.length,
+      historicalProductAnchors.r030.vol5d,
+      historicalProductAnchors.r030.seed,
+    ),
   },
   "1m": {
+    gc001: randomWalk(
+      historicalProductAnchors.gc001.anchor1m,
+      historicalCloseDatasets["1m"].close.length,
+      historicalProductAnchors.gc001.vol1m,
+      historicalProductAnchors.gc001.seed + 1,
+    ),
     dr007: randomWalk(
       historicalProductAnchors.dr007.anchor1m,
       historicalCloseDatasets["1m"].close.length,
@@ -452,14 +541,44 @@ const historicalProductSeries: Record<
       historicalProductAnchors.gc007.vol1m,
       historicalProductAnchors.gc007.seed + 1,
     ),
+    r001: randomWalk(
+      historicalProductAnchors.r001.anchor1m,
+      historicalCloseDatasets["1m"].close.length,
+      historicalProductAnchors.r001.vol1m,
+      historicalProductAnchors.r001.seed + 1,
+    ),
+    r002: randomWalk(
+      historicalProductAnchors.r002.anchor1m,
+      historicalCloseDatasets["1m"].close.length,
+      historicalProductAnchors.r002.vol1m,
+      historicalProductAnchors.r002.seed + 1,
+    ),
     r007: randomWalk(
       historicalProductAnchors.r007.anchor1m,
       historicalCloseDatasets["1m"].close.length,
       historicalProductAnchors.r007.vol1m,
       historicalProductAnchors.r007.seed + 1,
     ),
+    r014: randomWalk(
+      historicalProductAnchors.r014.anchor1m,
+      historicalCloseDatasets["1m"].close.length,
+      historicalProductAnchors.r014.vol1m,
+      historicalProductAnchors.r014.seed + 1,
+    ),
+    r030: randomWalk(
+      historicalProductAnchors.r030.anchor1m,
+      historicalCloseDatasets["1m"].close.length,
+      historicalProductAnchors.r030.vol1m,
+      historicalProductAnchors.r030.seed + 1,
+    ),
   },
   "6m": {
+    gc001: randomWalk(
+      historicalProductAnchors.gc001.anchor6m,
+      historicalCloseDatasets["6m"].close.length,
+      historicalProductAnchors.gc001.vol6m,
+      historicalProductAnchors.gc001.seed + 2,
+    ),
     dr007: randomWalk(
       historicalProductAnchors.dr007.anchor6m,
       historicalCloseDatasets["6m"].close.length,
@@ -472,11 +591,35 @@ const historicalProductSeries: Record<
       historicalProductAnchors.gc007.vol6m,
       historicalProductAnchors.gc007.seed + 2,
     ),
+    r001: randomWalk(
+      historicalProductAnchors.r001.anchor6m,
+      historicalCloseDatasets["6m"].close.length,
+      historicalProductAnchors.r001.vol6m,
+      historicalProductAnchors.r001.seed + 2,
+    ),
+    r002: randomWalk(
+      historicalProductAnchors.r002.anchor6m,
+      historicalCloseDatasets["6m"].close.length,
+      historicalProductAnchors.r002.vol6m,
+      historicalProductAnchors.r002.seed + 2,
+    ),
     r007: randomWalk(
       historicalProductAnchors.r007.anchor6m,
       historicalCloseDatasets["6m"].close.length,
       historicalProductAnchors.r007.vol6m,
       historicalProductAnchors.r007.seed + 2,
+    ),
+    r014: randomWalk(
+      historicalProductAnchors.r014.anchor6m,
+      historicalCloseDatasets["6m"].close.length,
+      historicalProductAnchors.r014.vol6m,
+      historicalProductAnchors.r014.seed + 2,
+    ),
+    r030: randomWalk(
+      historicalProductAnchors.r030.anchor6m,
+      historicalCloseDatasets["6m"].close.length,
+      historicalProductAnchors.r030.vol6m,
+      historicalProductAnchors.r030.seed + 2,
     ),
   },
 };
@@ -695,11 +838,22 @@ const sentimentRealtimeData: SentimentPoint[] = (() => {
 })();
 
 function LeftInfoColumn({
-  onOpenFrame: _onOpenFrame,
+  activeId,
+  onOpenFrame,
+  tenorFilter,
 }: {
+  activeId: ModuleEntryId | null;
   onOpenFrame: (id: ModuleEntryId, options?: FrameOpenOptions) => void;
+  tenorFilter: QuoteTenorFilter;
 }) {
-  return <LeftSummaryPanel />;
+  return (
+    <AdaptiveEntryRail
+      entries={leftRailEntries}
+      activeId={activeId}
+      onOpen={(entry, options) => onOpenFrame(entry.id, options)}
+      tenorFilter={tenorFilter}
+    />
+  );
 }
 
 function CenterColumn({
@@ -710,7 +864,6 @@ function CenterColumn({
   onTenorFilterChange: (tenor: QuoteTenorFilter) => void;
 }) {
   const { containerRef, topPct, startRowDrag } = useCenterSplit();
-  const [lowerTab, setLowerTab] = useState<"demand" | "institution">("demand");
 
   return (
     <div ref={containerRef} className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden px-1">
@@ -730,30 +883,15 @@ function CenterColumn({
       >
         <span className="pointer-events-none block h-[2px] w-full rounded bg-[var(--tk-color-border-panel)] group-hover:bg-[var(--tdx-red)]" />
       </div>
-      <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] gap-1 overflow-hidden">
-        <div className="flex items-center gap-1 px-1">
-          <button
-            className={auxTabClass(lowerTab === "demand")}
-            onClick={() => setLowerTab("demand")}
-            type="button"
-          >
-            需求
-          </button>
-          <button
-            className={auxTabClass(lowerTab === "institution")}
-            onClick={() => setLowerTab("institution")}
-            type="button"
-          >
-            机构期限
-          </button>
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <CombinedDemandMatrixCard />
+        <div className="hidden">
+          <div className="tk-panel h-full min-h-0 border p-3">
+            <CfetsInstPanel />
+          </div>
         </div>
-        <div className="min-h-0 overflow-hidden">
-          <div className={lowerTab === "demand" ? "h-full min-h-0" : "hidden"}>
-            <CombinedDemandMatrixCard />
-          </div>
-          <div className={lowerTab === "institution" ? "h-full min-h-0" : "hidden"}>
-            <InstitutionPeriodMatrixCard />
-          </div>
+        <div className="hidden">
+          <FundStructureSummaryCard />
         </div>
       </div>
     </div>
@@ -762,6 +900,11 @@ function CenterColumn({
 
 function RightChartColumn() {
   return <RightSidebar />;
+}
+
+function formatBigBankFrameTitle(bank?: string, tenor?: string) {
+  if (!bank) return "大行价格";
+  return tenor ? `大行价格 ${bank} ${tenor}` : `大行价格 ${bank}`;
 }
 
 function App() {
@@ -795,6 +938,14 @@ function App() {
     if (!entry) return;
     openFrame(entry, options);
   }
+
+  const activeFrameTitle =
+    activeFrame?.id === "big-bank-price"
+      ? formatBigBankFrameTitle(activeFrame.bank, activeFrame.bankTenor)
+      : activeFrame?.title ?? "";
+  const isXrepoHistoryPage =
+    activeFrame?.id === "xrepo" && Boolean(activeFrame.contract);
+
   return (
     <div className="tk-app-shell h-screen w-screen overflow-hidden">
       <div className="flex h-full flex-col">
@@ -807,7 +958,11 @@ function App() {
           className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] overflow-hidden px-2 pb-1.5 pt-1"
           style={{ gridTemplateColumns: gridTemplate, columnGap: 0 }}
         >
-          <LeftInfoColumn onOpenFrame={openFrameById} />
+          <LeftInfoColumn
+            activeId={activeFrame?.id ?? null}
+            onOpenFrame={openFrameById}
+            tenorFilter={quoteTenorFilter}
+          />
           <ShellColumnSplitter onMouseDown={(e) => startDragSplitter(e, 0)} />
           <CenterColumn
             tenorFilter={quoteTenorFilter}
@@ -819,7 +974,34 @@ function App() {
       </div>
       {activeFrame ? (
         <ShellPageFrame
-          title={activeFrame.title}
+          title={activeFrameTitle}
+          headerContent={
+            isXrepoHistoryPage ? (
+              <div className="flex min-w-0 items-center gap-4">
+                <div className="tk-title-lg shrink-0">XREPO</div>
+                <div className="min-w-0 truncate text-sm font-semibold text-slate-100">
+                  历史成交走势对比 - {activeFrame.contract}
+                </div>
+              </div>
+            ) : undefined
+          }
+          headerActions={
+            isXrepoHistoryPage ? (
+              <button
+                className="tk-button px-2.5 py-0.5 text-xs"
+                onClick={() =>
+                  setActiveFrame((current) =>
+                    current && current.id === "xrepo"
+                      ? { ...current, contract: undefined }
+                      : current,
+                  )
+                }
+                type="button"
+              >
+                返回
+              </button>
+            ) : undefined
+          }
           onClose={() => setActiveFrame(null)}
         >
           {activeFrame.id === "big-bank-price" ? (
@@ -860,6 +1042,7 @@ function App() {
               <XrepoFeatureHistoryBack
                 contractName={activeFrame.contract}
                 standalone
+                showHeader={false}
                 onBack={() =>
                   setActiveFrame((current) =>
                     current && current.id === "xrepo"
@@ -888,9 +1071,6 @@ function App() {
               section={exchangeRepoSection}
               tenorFilter={quoteTenorFilter}
               fallback={<ReservedModuleFrame />}
-              renderHistoryChart={(contractName) => (
-        <XrepoFeatureInlineHistoryChart contractName={contractName} />
-              )}
             />
           ) : activeFrame.id === "ncd" ? (
             <NcdFeatureCard tenorFilter={quoteTenorFilter} todayStr={TODAY_STR} />
@@ -955,9 +1135,9 @@ function AdaptiveEntryRail({
   return (
     <aside
       ref={railRef}
-      className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pr-1"
+      className="left-rail-square flex h-full min-h-0 min-w-0 flex-col overflow-hidden pr-1"
     >
-      <div className="tk-panel flex min-h-0 flex-1 flex-col overflow-hidden border">
+      <div className="left-rail-frame tk-panel flex min-h-0 flex-1 flex-col overflow-hidden border">
         <div
           className={`tk-panel-header border-b ${
             displayMode === "icon" ? "px-1.5 py-2" : "px-3 py-2.5"
@@ -1029,7 +1209,7 @@ function AdaptiveEntryRail({
   );
 }
 
-const LEFT_ENTRY_DELTA_KEY = "leftEntryDelta.v3";
+const LEFT_ENTRY_DELTA_KEY = "leftEntryDelta.v4";
 const LEFT_ENTRY_COLLAPSED_PX = 38;
 
 const NATURAL_MIN_BY_MODE: Record<EntryDisplayMode, number> = {
@@ -1044,7 +1224,8 @@ const NATURAL_MIN_OVERRIDES: Partial<
   Record<ModuleEntryId, Partial<Record<EntryDisplayMode, number>>>
 > = {
   ncd: { "wide-preview": 310, summary: 110, "narrow-summary": 130 },
-  xrepo: { "narrow-summary": 130 },
+  "big-bank-price": { "wide-preview": 300, summary: 190, "narrow-summary": 150 },
+  xrepo: { "wide-preview": 236, summary: 180, "narrow-summary": 130 },
   "institution-period": { "wide-preview": 260 },
 };
 
@@ -1087,13 +1268,15 @@ function persistEntryDeltas(deltas: Record<string, number>) {
   }
 }
 
-type EntryRuntimeState = { flipped?: boolean };
+type EntryRuntimeState = {
+  flipped?: boolean;
+  naturalHeights?: Partial<Record<EntryDisplayMode, number>>;
+};
 
 const FLIPPED_MIN_OVERRIDES: Partial<
   Record<ModuleEntryId, Partial<Record<EntryDisplayMode, number>>>
 > = {
-  "big-bank-price": { "wide-preview": 540, summary: 280, "narrow-summary": 240 },
-  xrepo: { "wide-preview": 360, summary: 260, "narrow-summary": 220 },
+  xrepo: { "wide-preview": 300, summary: 220, "narrow-summary": 220 },
 };
 
 function slotHeight(
@@ -1103,6 +1286,10 @@ function slotHeight(
   runtime: Record<string, EntryRuntimeState> = {},
 ) {
   let base = getNaturalMinHeight(id, mode);
+  const naturalHeight = runtime[id]?.naturalHeights?.[mode];
+  if (naturalHeight !== undefined) {
+    base = Math.max(base, naturalHeight);
+  }
   if (runtime[id]?.flipped) {
     const override = FLIPPED_MIN_OVERRIDES[id]?.[mode];
     if (override !== undefined) base = Math.max(base, override);
@@ -1135,6 +1322,26 @@ function ResizableEntryStack({
       setRuntime((current) => {
         if ((current[id]?.flipped ?? false) === flipped) return current;
         return { ...current, [id]: { ...current[id], flipped } };
+      });
+    },
+    [],
+  );
+  const handleNaturalHeightChange = useCallback(
+    (id: ModuleEntryId, mode: EntryDisplayMode) => (height: number) => {
+      if (!Number.isFinite(height) || height <= 0) return;
+      const nextHeight = Math.round(height);
+      setRuntime((current) => {
+        if (current[id]?.naturalHeights?.[mode] === nextHeight) return current;
+        return {
+          ...current,
+          [id]: {
+            ...current[id],
+            naturalHeights: {
+              ...current[id]?.naturalHeights,
+              [mode]: nextHeight,
+            },
+          },
+        };
       });
     },
     [],
@@ -1201,9 +1408,15 @@ function ResizableEntryStack({
         return (
         <Fragment key={entry.id}>
           <div
-            className={`group/entry relative ${collapsed ? "overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]" : ""}`}
+            className={`left-rail-card-shell group/entry relative ${collapsed ? "overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]" : ""}`}
             style={{
-              flex: "0 0 auto",
+              flex:
+                !collapsed &&
+                displayMode === "wide-preview" &&
+                entry.id === "big-bank-price"
+                  ? "1 0 auto"
+                  : "0 0 auto",
+              height: minH,
               minHeight: minH,
             }}
           >
@@ -1242,6 +1455,10 @@ function ResizableEntryStack({
                   tenorFilter={tenorFilter}
                   onOpen={(options) => onOpen(entry, options)}
                   onFlippedChange={handleFlipChange(entry.id)}
+                  onNaturalHeightChange={handleNaturalHeightChange(
+                    entry.id,
+                    displayMode,
+                  )}
                 />
               </>
             )}
@@ -1531,9 +1748,10 @@ function NarrowRailSummary({
         return (
           <Fragment key={item.id}>
             <div
-              className={`group/entry relative ${collapsed ? "overflow-hidden rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]" : ""}`}
+              className={`left-rail-card-shell group/entry relative ${collapsed ? "overflow-hidden rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]" : ""}`}
               style={{
                 flex: "0 0 auto",
+                height: minH,
                 minHeight: minH,
               }}
             >
@@ -1689,6 +1907,7 @@ function ModuleEntryItem({
   tenorFilter = "all",
   onOpen,
   onFlippedChange,
+  onNaturalHeightChange,
 }: {
   entry: ModuleEntryConfig;
   active: boolean;
@@ -1696,6 +1915,7 @@ function ModuleEntryItem({
   tenorFilter?: QuoteTenorFilter;
   onOpen: (options?: FrameOpenOptions) => void;
   onFlippedChange?: (flipped: boolean) => void;
+  onNaturalHeightChange?: (height: number) => void;
 }) {
   const Icon = entry.icon;
   const metric = getModuleEntryData(entry.id, tenorFilter);
@@ -1720,7 +1940,7 @@ function ModuleEntryItem({
           className={`flex h-full min-h-0 w-full flex-col overflow-hidden rounded-lg border transition-colors ${
             active
               ? "tk-selected"
-              : "tk-chip"
+              : "border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-subtle)]"
           }`}
         >
           <ModuleEntryPreview
@@ -1728,6 +1948,7 @@ function ModuleEntryItem({
             tenorFilter={tenorFilter}
             onOpen={onOpen}
             onFlippedChange={onFlippedChange}
+            onNaturalHeightChange={onNaturalHeightChange}
           />
         </div>
       );
@@ -2302,7 +2523,7 @@ function IntegratedPreviewHeader({
     <div className="tk-panel-header border-b px-2.5 py-1.5">
       <div className="flex min-w-0 items-center gap-2">
         <button
-          className="group flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-[rgba(231,53,58,0.12)]"
+          className="group flex min-w-0 shrink items-center gap-2 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-[rgba(231,53,58,0.12)]"
           onClick={() => onOpen?.()}
           type="button"
         >
@@ -2319,7 +2540,7 @@ function IntegratedPreviewHeader({
           {metric.badge}
         </span>
         {actions ? (
-          <div className="ml-auto flex shrink-0 items-center gap-1.5">
+          <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-1.5">
             {actions}
           </div>
         ) : null}
@@ -2333,11 +2554,13 @@ function ModuleEntryPreview({
   tenorFilter = "all",
   onOpen,
   onFlippedChange,
+  onNaturalHeightChange,
 }: {
   id: ModuleEntryId;
   tenorFilter?: QuoteTenorFilter;
   onOpen?: (options?: FrameOpenOptions) => void;
   onFlippedChange?: (flipped: boolean) => void;
+  onNaturalHeightChange?: (height: number) => void;
 }) {
   if (id === "big-bank-price") {
     return (
@@ -2346,6 +2569,7 @@ function ModuleEntryPreview({
           embeddedPreview
           onOpen={onOpen}
           onFlippedChange={onFlippedChange}
+          onNaturalHeightChange={onNaturalHeightChange}
         />
       </RichPreviewFrame>
     );
@@ -2702,7 +2926,7 @@ function TopBar({
 
   return (
     <header className="tk-topbar border-b px-3 py-2 shadow-[0_1px_4px_rgba(0,0,0,0.3)]">
-      <div className="grid grid-cols-[minmax(230px,320px)_minmax(320px,1fr)_auto] items-center gap-3">
+      <div className="grid grid-cols-[minmax(230px,320px)_minmax(320px,1fr)] items-center gap-3">
         <div className="flex items-center gap-2">
           <div className="tk-page-title whitespace-nowrap">
             资金实时行情看板
@@ -2718,6 +2942,11 @@ function TopBar({
         </div>
         <div className="flex min-w-0 items-center gap-2">
           <SentimentChipWithPopover />
+          <SentimentChipWithPopover
+            label="国际情绪指数"
+            detailText="31/42/31/33"
+            compact
+          />
           <div className="min-w-0 flex-1">
             <MiddleMatrixNoticeBar
               variant="inline"
@@ -2725,22 +2954,6 @@ function TopBar({
               onOpenEditor={() => setNoticeEditorOpen(true)}
             />
           </div>
-        </div>
-        <div className="flex items-center justify-end gap-3">
-          <TopToolMetricChip
-            label="DR007"
-            value="2.15%"
-            tone="alert"
-            title="DR007"
-            subtitle="银行间 7D 存款类机构质押式回购利率"
-            metrics={[
-              { label: "最新", value: "2.15%", tone: "alert" },
-              { label: "较昨日", value: "+1.0bp", tone: "alert" },
-              { label: "更新时间", value: "10:53:27" },
-            ]}
-          />
-          <SentimentChipWithPopover label="公开资金情绪" />
-          <StatusBadgeWithPopover statusText={DEFAULT_TRADING_STATUS_TEXT} />
         </div>
       </div>
       <ShellTradingNoticeEditorModal
@@ -2762,18 +2975,21 @@ function BigBankPriceFrame({
   initialBank,
   initialTenor,
   onFlippedChange,
+  onNaturalHeightChange,
 }: {
   embeddedPreview?: boolean;
   onOpen?: (options?: FrameOpenOptions) => void;
   initialBank?: string;
   initialTenor?: string;
   onFlippedChange?: (flipped: boolean) => void;
+  onNaturalHeightChange?: (height: number) => void;
 }) {
-  const [flippedBank, setFlippedBank] = useState<string | null>(initialBank ?? null);
-  useEffect(() => {
-    onFlippedChange?.(flippedBank !== null);
-  }, [flippedBank, onFlippedChange]);
-  const [flippedTenor, setFlippedTenor] = useState(initialTenor ?? "");
+  const [selectedBanks, setSelectedBanks] = useState<string[]>(() =>
+    initialBank ? [initialBank] : [defaultBigBankWhitelist[0]],
+  );
+  const [selectedBankTenors, setSelectedBankTenors] = useState<Record<string, string>>(() => ({
+    [initialBank ?? defaultBigBankWhitelist[0]]: initialTenor || "隔夜",
+  }));
   const [whitelist, setWhitelist] = useState<string[]>([
     ...defaultBigBankWhitelist,
   ]);
@@ -2784,6 +3000,48 @@ function BigBankPriceFrame({
     ...initialBankRateRows,
   ]);
   const [isBankEditorOpen, setIsBankEditorOpen] = useState(false);
+  const defaultBank = initialBank ?? defaultBigBankWhitelist[0];
+  const defaultTenor = initialTenor || "隔夜";
+
+  useEffect(() => {
+    onFlippedChange?.(false);
+  }, [onFlippedChange]);
+
+  useEffect(() => {
+    if (!initialBank) return;
+    setSelectedBanks([initialBank]);
+    setSelectedBankTenors({
+      [initialBank]: initialTenor || "隔夜",
+    });
+  }, [initialBank, initialTenor]);
+
+  useEffect(() => {
+    setSelectedBanks((current) => {
+      const currentBank = current[0];
+      if (currentBank && whitelist.includes(currentBank)) {
+        return [currentBank];
+      }
+      const fallback = whitelist[0] ?? defaultBank;
+      return fallback ? [fallback] : [];
+    });
+    setSelectedBankTenors((current) => {
+      const currentBank = selectedBanks[0];
+      if (currentBank && whitelist.includes(currentBank)) {
+        return {
+          [currentBank]: current[currentBank] || defaultTenor,
+        };
+      }
+      const fallback = whitelist[0] ?? defaultBank;
+      return fallback
+        ? {
+            [fallback]: current[fallback] || defaultTenor,
+          }
+        : {};
+    });
+  }, [defaultBank, defaultTenor, selectedBanks, whitelist]);
+  const selectedDetailBanks = selectedBanks.filter((institution) =>
+    whitelist.includes(institution),
+  );
 
   const rows = bankRateRows
     .filter(
@@ -2797,6 +3055,39 @@ function BigBankPriceFrame({
       bankRateSpread(row),
       row.updatedAt ? row.updatedAt.slice(0, 5) : "--",
     ]);
+  const institutionChars = rows.reduce(
+    (maxChars, row) => Math.max(maxChars, Array.from(row[0] ?? "").length),
+    Array.from("机构").length,
+  );
+  const tenorChars = rows.reduce(
+    (maxChars, row) => Math.max(maxChars, Array.from(row[1] ?? "").length),
+    Array.from("期限").length,
+  );
+  const institutionColumnWidth = `${Math.max(
+    7.8,
+    Math.min(10.8, institutionChars * 1.2 + 3),
+  )}em`;
+  const tenorColumnWidth = `${Math.max(
+    5.6,
+    Math.min(7.2, tenorChars * 1.1 + 2.8),
+  )}em`;
+  const bigBankColumnWidths = [institutionColumnWidth, tenorColumnWidth];
+
+  useLayoutEffect(() => {
+    if (!embeddedPreview || !onNaturalHeightChange) return;
+    const previewHeaderHeight = 42;
+    const tableHeaderHeight = 31;
+    const rowHeight = 29;
+    const frameBorderHeight = 4;
+    const visibleRows = Math.max(4, Math.min(rows.length, 8));
+    const naturalHeight =
+      previewHeaderHeight +
+      tableHeaderHeight +
+      visibleRows * rowHeight +
+      frameBorderHeight;
+    onNaturalHeightChange(naturalHeight);
+  }, [embeddedPreview, onNaturalHeightChange, rows.length]);
+
   function buildDraft(): BankRateRow[] {
     const byKey = new Map<string, BankRateRow>();
     for (const row of bankRateRows) {
@@ -2877,12 +3168,108 @@ function BigBankPriceFrame({
     setIsBankEditorOpen(false);
   }
 
+  function handleBankSelection(institution: string, tenorLabel: string) {
+    if (embeddedPreview) {
+      onOpen?.({
+        bank: institution,
+        bankTenor: tenorLabel || undefined,
+      });
+      return;
+    }
+
+    setSelectedBankTenors({
+      [institution]: tenorLabel,
+    });
+    setSelectedBanks([institution]);
+  }
+
+  function renderBankDetailCards({
+    fullHeight = false,
+  }: {
+    fullHeight?: boolean;
+  }) {
+    if (!selectedDetailBanks.length) {
+      return (
+        <div className="flex h-full min-h-[220px] items-center justify-center rounded-md border border-dashed border-[color:var(--tk-color-border-panel)] bg-white/72 px-6 text-sm text-slate-500">
+          鐐瑰嚮涓婃柟澶ц琛岄」鐩悗锛屽湪杩欓噷鏌ョ湅瀹氫环璧板娍涓庝环宸姣?
+        </div>
+      );
+    }
+
+    const singleDetail = fullHeight && selectedDetailBanks.length === 1;
+
+    return (
+      <div
+        className={
+          singleDetail
+            ? "grid h-full min-h-0"
+            : "grid gap-3 xl:grid-cols-2"
+        }
+      >
+        {selectedDetailBanks.map((bank) => {
+          const tenorLabel = selectedBankTenors[bank] ?? "闅斿";
+          const sessionLabel = bankHistorySessionLabel(tenorLabel);
+          const data = buildAnchoredBankHistorySeries(
+            bank,
+            bankRateRows,
+            tenorLabel,
+          );
+
+          return (
+            <div
+              key={bank}
+              className={
+                singleDetail
+                  ? "grid h-full min-h-0 grid-rows-[minmax(0,1fr)] rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] p-2"
+                  : "grid min-h-0 gap-2 rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] p-2"
+              }
+            >
+              <div
+                className={
+                  singleDetail
+                    ? "grid min-h-0 grid-rows-[minmax(0,1.35fr)_minmax(0,0.95fr)] gap-2"
+                    : "grid gap-2"
+                }
+              >
+                <BigBankPricingTrendChart
+                  bank={bank}
+                  tenor={tenorLabel}
+                  rows={bankRateRows}
+                  className={singleDetail ? "h-full min-h-0" : "min-h-[360px]"}
+                />
+                <div
+                  className={`grid grid-rows-[auto_1fr] rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-3 ${
+                    singleDetail ? "min-h-0" : "min-h-[280px]"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="tk-title">大行定价与加权价差</div>
+                    <div className="flex gap-3 text-micro text-slate-400">
+                      <LegendDot color="#5b8cc9" label="给银行价差(BP)" />
+                      <LegendDot color="#d76370" label="给非银价差(BP)" />
+                    </div>
+                  </div>
+                  <BigBankSpreadDiffRechartsPlot
+                    data={data}
+                    sessionLabel={sessionLabel}
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <>
       <section
-        className={`tk-panel flex min-h-0 flex-col border ${
-          embeddedPreview ? "h-full overflow-hidden" : "h-full overflow-hidden"
-        }`}
+        className={
+          embeddedPreview
+            ? "flex h-full min-h-0 flex-col overflow-hidden"
+            : "tk-panel flex h-full min-h-0 flex-col overflow-hidden border"
+        }
       >
         {embeddedPreview ? (
           <IntegratedPreviewHeader
@@ -2907,7 +3294,7 @@ function BigBankPriceFrame({
             }
           />
         ) : (
-          <div className="tk-panel-header border-b px-4 py-3">
+          <div className="hidden">
             <div className="flex min-w-0 items-center gap-2">
               <div>
                 <div className="tk-title">
@@ -2935,58 +3322,43 @@ function BigBankPriceFrame({
             </div>
           </div>
         )}
-        <div className="min-h-0 flex-1">
-          <div className={`tk-flip-card h-full min-h-0 ${flippedBank ? "is-flipped" : ""}`}>
-            <div className="tk-flip-card__inner h-full min-h-0">
-              <div className="tk-flip-card__face h-full min-h-0">
-            <StructuredTable
-              columns={[
-                "机构",
-                "期限",
-                "非银利率(涨跌)",
-                "银行利率(涨跌)",
-                "利差",
-                "时间",
-              ]}
-              rows={rows}
-              greenColumns={[2]}
-              redColumns={[3]}
-              nowrapHeader
-              fitToWidth
-              flush
-              compact={embeddedPreview}
-              adaptiveHeight={false}
-              scrollY
-              onRowClick={(row) => {
-                const nextBank = row[0] ?? null;
-                const nextTenor = row[1] ?? "";
-                if (embeddedPreview && onOpen) {
-                  onOpen({
-                    bank: nextBank ?? undefined,
-                    bankTenor: nextTenor || undefined,
-                  });
-                  return;
-                }
-                setFlippedBank(nextBank);
-                setFlippedTenor(nextTenor);
-              }}
-            />
-              </div>
-              <div className="tk-flip-card__face tk-flip-card__face--back h-full min-h-0">
-                <BigBankHistoryBack
-                  bank={flippedBank ?? rows[0]?.[0] ?? "大行"}
-                  tenor={flippedTenor || rows[0]?.[1]}
-                  rows={bankRateRows}
-                  compact={embeddedPreview}
-                  onBack={() => {
-                    setFlippedBank(null);
-                    setFlippedTenor("");
-                  }}
-                />
-              </div>
+        {embeddedPreview ? (
+          <div className="min-h-0 flex-1">
+            <div className="min-h-0 overflow-hidden">
+              <StructuredTable
+                columns={[
+                  "机构",
+                  "期限",
+                  "非银利率",
+                  "银行利率",
+                  "利差",
+                  "时间",
+                ]}
+                rows={rows}
+                greenColumns={[2]}
+                redColumns={[3]}
+                columnWidths={bigBankColumnWidths}
+                nowrapHeader
+                fitToWidth={false}
+                flush
+                compact
+                adaptiveHeight={false}
+                scrollY
+                scrollX
+                onRowClick={(row) => {
+                  const institution = row[0] ?? "";
+                  const tenorLabel = row[1] ?? "隔夜";
+                  if (!institution) return;
+                  handleBankSelection(institution, tenorLabel);
+                }}
+              />
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="min-h-0 flex-1 overflow-auto bg-[var(--tk-color-surface-dark-soft)] p-3">
+            {renderBankDetailCards({ fullHeight: true })}
+          </div>
+        )}
       </section>
       <ShellBankRateEditorModal
         open={isBankEditorOpen}
@@ -3052,6 +3424,13 @@ function ReservedModuleFrame() {
 }
 
 function LeftSummaryPanel() {
+  const leftSummaryCardHeights = {
+    bigBankFront: "h-[332px]",
+    bigBankBack: "h-[380px]",
+    xrepo: "h-[284px]",
+    exchange: "h-auto",
+    ncd: "h-[312px]",
+  } as const;
   const [whitelist, setWhitelist] = useState<string[]>([
     ...defaultBigBankWhitelist,
   ]);
@@ -3179,14 +3558,22 @@ function LeftSummaryPanel() {
 
   return (
     <>
-      <aside className="flex h-full min-h-0 min-w-0 flex-col gap-3 overflow-hidden pr-1">
+      <aside className="flex h-full min-h-0 min-w-0 flex-col gap-3 overflow-y-auto pr-1">
         {summarySections.map((section) => {
           const isBigBankPrice = section.title === moduleEntries[0].title;
+          const sectionHeightClass =
+            isBigBankPrice
+              ? flippedBigBankName
+                ? leftSummaryCardHeights.bigBankBack
+                : leftSummaryCardHeights.bigBankFront
+              : section.title === "XREPO"
+              ? leftSummaryCardHeights.xrepo
+              : leftSummaryCardHeights.bigBankFront;
           if (isBigBankPrice) {
             return (
               <div
                 key={section.title}
-                className={section.scrollable ? "min-h-0 flex-1" : "shrink-0"}
+                className={`min-h-0 shrink-0 ${sectionHeightClass}`}
               >
                 <div className={`tk-flip-card h-full min-h-0 ${flippedBigBankName ? "is-flipped" : ""}`}>
                   <div className="tk-flip-card__inner h-full min-h-0">
@@ -3275,7 +3662,7 @@ function LeftSummaryPanel() {
           return (
           <div
             key={section.title}
-            className={section.scrollable ? "min-h-0 flex-1" : "shrink-0"}
+            className={`min-h-0 shrink-0 ${sectionHeightClass}`}
           >
             <PanelCard
               title={section.title}
@@ -3331,14 +3718,14 @@ function LeftSummaryPanel() {
           );
         })}
         {exchangeRepoSection ? (
-          <div className="flex min-h-0 flex-1 flex-col gap-3">
-            <div className="h-[250px] shrink-0 overflow-hidden">
+          <div className="flex min-h-0 shrink-0 flex-col gap-3">
+            <div className={`${leftSummaryCardHeights.exchange} shrink-0 overflow-hidden`}>
               <ExchangeRepoCard
                 title={exchangeRepoSection.title}
                 markets={exchangeRepoSection.markets}
               />
             </div>
-            <div className="min-h-0 flex-1 overflow-hidden">
+            <div className={`${leftSummaryCardHeights.ncd} min-h-0 shrink-0 overflow-hidden`}>
               <NcdFeatureCard todayStr={TODAY_STR} />
             </div>
           </div>
@@ -3359,10 +3746,6 @@ function LeftSummaryPanel() {
 
 function RightSidebar() {
   const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
-  const [historyRange, setHistoryRange] = useState<HistoryRange>("5d");
-  const [rightLowerTab, setRightLowerTab] = useState<RightLowerTab>("inst");
-  const [compareProduct, setCompareProduct] = useState<CompareProduct>("none");
-  const [baseProduct, setBaseProduct] = useState<BaseTrendProduct>("r001");
   const [anonymousProduct, setAnonymousProduct] =
     useState<AnonymousTrendProduct>("r001");
 
@@ -3370,19 +3753,11 @@ function RightSidebar() {
     <aside
       className="grid min-h-0 min-w-0 gap-3 overflow-hidden"
       style={{
-        gridTemplateRows: "minmax(0, 10fr) minmax(0, 9fr) minmax(0, 11fr)",
+        gridTemplateRows: "minmax(0, 10fr) minmax(0, 10fr) minmax(0, 7fr)",
       }}
     >
       <div className="min-h-0 overflow-hidden">
-        <HistoryClosePanel
-          activeRange={historyRange}
-          baseProduct={baseProduct}
-          overlayProduct={overlayProduct}
-          compareProduct={compareProduct}
-          onRangeChange={setHistoryRange}
-          onBaseProductChange={setBaseProduct}
-          onCompareChange={setCompareProduct}
-        />
+        <BarometerMatrixCard />
       </div>
 
       <div className="min-h-0 overflow-hidden">
@@ -3395,45 +3770,9 @@ function RightSidebar() {
       </div>
 
       <div className="min-h-0 overflow-hidden">
-        <RightLowerPanel
-          activeTab={rightLowerTab}
-          activeRange={historyRange}
-          onTabChange={setRightLowerTab}
-        />
+        <InstitutionPeriodMatrixCard />
       </div>
     </aside>
-  );
-}
-
-function RightLowerPanel({
-  activeTab,
-  activeRange,
-  onTabChange,
-}: {
-  activeTab: RightLowerTab;
-  activeRange: HistoryRange;
-  onTabChange: (tab: RightLowerTab) => void;
-}) {
-  return (
-    <section className="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
-      <div className="flex items-center gap-2 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
-        {institutionRightLowerTabs.map((tab) => (
-          <button
-            key={tab.id}
-            className={auxTabClass(tab.id === activeTab)}
-            onClick={() => onTabChange(tab.id)}
-            type="button"
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-      <div className="min-h-0 overflow-hidden p-2">
-        {activeTab === "matrix" && <CfetsMatrixPanel includeDaily />}
-        {activeTab === "inst" && <CfetsInstPanel />}
-        {activeTab === "bond" && <CfetsBondPanel />}
-      </div>
-    </section>
   );
 }
 
@@ -4331,6 +4670,45 @@ function FundStructurePanel() {
   );
 }
 
+function FundStructureSummaryCard() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+        <div className="flex items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
+          <div className="min-w-0">
+            <div className="tk-matrix-card-title truncate">资金分机构统计</div>
+            <div className="tk-matrix-card-subtitle mt-0.5 truncate">
+              保留小图概览，点击打开完整大图
+            </div>
+          </div>
+          <button
+            className="tk-button shrink-0 text-micro"
+            onClick={() => setOpen(true)}
+            type="button"
+          >
+            打开大图
+          </button>
+        </div>
+        <div className="min-h-0 p-3">
+          <FundStructurePanel />
+        </div>
+      </div>
+      {open ? (
+        <ShellPageFrame
+          title="资金分机构统计"
+          onClose={() => setOpen(false)}
+        >
+          <div className="h-full min-h-0 p-1">
+            <FundStructurePanel />
+          </div>
+        </ShellPageFrame>
+      ) : null}
+    </>
+  );
+}
+
 function OverlayProductSelect({
   value,
   onChange,
@@ -5041,10 +5419,12 @@ const sentimentSeriesConfig = [
 
 function SentimentPopoverPanel({
   anchorRect,
+  label,
   onEnter,
   onLeave,
 }: {
   anchorRect: DOMRect;
+  label: string;
   onEnter: () => void;
   onLeave: () => void;
 }) {
@@ -5093,7 +5473,7 @@ function SentimentPopoverPanel({
       onMouseLeave={onLeave}
     >
       <div className="flex items-center gap-2 border-b border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2">
-        <span className="text-xs font-semibold text-slate-200">泰康资金情绪</span>
+        <span className="text-xs font-semibold text-slate-200">{label}</span>
         <div className="flex gap-0.5 rounded-md bg-[var(--tk-color-surface-dark-deep)] p-0.5">
           {(["realtime", "trend"] as const).map((t) => (
             <button
@@ -5115,9 +5495,12 @@ function SentimentPopoverPanel({
             2026-04-10 → 2026-05-10
           </span>
         )}
-        <span className="ml-auto cursor-default select-none text-mini text-slate-600">
-          ?
+        <span className="ml-auto cursor-default select-none text-mini text-slate-500">
+          全市场 / 大行 / 中小行 / 非银机构
         </span>
+      </div>
+      <div className="border-b border-[color:var(--tk-color-border-divider)] px-3 py-1.5 text-micro text-slate-500">
+        口径说明：大行曲线为纯大行样本，另含全市场、中小行与非银机构对比。
       </div>
 
       <div className="flex gap-4 px-3 pb-1 pt-2 text-mini text-slate-400">
@@ -5410,12 +5793,17 @@ function TopToolValuePopover({
 
 function SentimentChipWithPopover({
   label = "泰康资金情绪",
+  detailText,
+  compact = false,
 }: {
   label?: string;
+  detailText?: string;
+  compact?: boolean;
 }) {
   const score = 51;
   const sentiment = getSentimentState(score);
   const updatedAt = "10:53";
+  const detailParts = detailText?.split("/") ?? [];
   const {
     visible,
     anchorRect,
@@ -5424,27 +5812,58 @@ function SentimentChipWithPopover({
     scheduleHide,
     cancelHide,
   } = useHoverPopover();
-  const statusColorClass =
-    sentiment.tone === "good"
-      ? "text-emerald-500"
-      : sentiment.tone === "alert"
-        ? "text-amber-500"
-        : "text-slate-400";
   return (
     <div
       ref={anchorRef}
       onMouseEnter={scheduleShow}
       onMouseLeave={scheduleHide}
     >
-      <div className="tk-info-chip flex items-center gap-1.5 rounded-full border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-2.5 py-1 text-xs">
-        <span className="tk-muted">{label}</span>
-        <span className="font-semibold text-slate-100">{score}</span>
-        <span className="text-slate-500">{updatedAt}</span>
-        <span className={`font-semibold ${statusColorClass}`}>{sentiment.status}</span>
+      <div
+        className={`tk-info-chip flex items-center rounded-full border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-2.5 py-1 text-xs ${
+          compact ? "gap-0.5" : "gap-1.5"
+        }`}
+      >
+        {compact && detailParts.length === sentimentSeriesConfig.length ? (
+          <span className="inline-flex items-center gap-0.5">
+            <span className="text-black">{label}</span>
+            <span className="text-slate-500">(</span>
+            {detailParts.map((part, index) => (
+              <Fragment key={`${label}-${sentimentSeriesConfig[index].key}`}>
+                {index > 0 ? (
+                  <span className="text-slate-500">/</span>
+                ) : null}
+                <span
+                  className="font-semibold"
+                  style={{
+                    color:
+                      index === 0 ? "#000000" : sentimentSeriesConfig[index].color,
+                  }}
+                >
+                  {part}
+                </span>
+              </Fragment>
+            ))}
+            <span className="text-slate-500">)</span>
+          </span>
+        ) : (
+          <span className="text-black">
+            {detailText ? `${label}(${detailText})` : label}
+          </span>
+        )}
+        {!compact ? (
+          <>
+            <span className="font-semibold text-slate-100">{score}</span>
+            <span className="text-slate-500">{updatedAt}</span>
+            <span className={`font-semibold ${sentiment.statusClass}`}>
+              {sentiment.status}
+            </span>
+          </>
+        ) : null}
       </div>
       {visible && anchorRect && (
         <SentimentPopoverPanel
           anchorRect={anchorRect}
+          label={label}
           onEnter={cancelHide}
           onLeave={scheduleHide}
         />

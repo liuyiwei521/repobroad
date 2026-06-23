@@ -745,3 +745,120 @@ body,
   padding: 0 6px;
   font-size: 11px;
 }
+
+.tk-inline-action {
+  border: 1px solid #dddddd !important;
+  background: #ffffff !important;
+  color: #999999 !important;
+  box-shadow: none !important;
+}
+
+.tk-inline-action:hover {
+  border-color: #b42f32 !important;
+  background: #f5f5f5 !important;
+  color: #333333 !important;
+}
+
+.tk-sheet-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tk-sheet-table thead th {
+  height: 32px;
+  padding: 0 12px;
+  border-bottom: 1px solid #eeeeee;
+  background: #f5f5f5;
+  color: #666666;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 32px;
+}
+
+.tk-sheet-table tbody td {
+  height: 38px;
+  padding: 0 12px;
+  border-bottom: 1px solid #eeeeee;
+  background: #ffffff;
+  color: #333333;
+  font-size: 13px;
+  line-height: 38px;
+}
+
+.tk-sheet-table tbody tr:nth-child(even) td {
+  background: #fafafa;
+}
+
+.tk-sheet-table tbody tr:hover td {
+  background: #f5f5f5;
+}
+
+.tk-sheet-table__row--selected td {
+  background: rgba(180, 47, 50, 0.05) !important;
+}
+
+.tk-sheet-table__row--emphasis td {
+  background: #fff9ef !important;
+}
+
+.tk-sheet-table__panel {
+  border: 1px solid #dddddd;
+  border-radius: 10px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.tk-sheet-table__subpanel {
+  border-top: 1px solid #eeeeee;
+  background: #fcfcfc;
+}
+
+.tk-sheet-table__caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-bottom: 1px solid #eeeeee;
+  background: #ffffff;
+}
+
+.tk-sheet-table__caption-title {
+  color: #333333;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.tk-sheet-table__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 18px;
+  padding: 0 6px;
+  border: 1px solid #dddddd;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #999999;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.tk-sheet-table__badge--core {
+  border-color: rgba(20, 160, 20, 0.24);
+  background: rgba(20, 160, 20, 0.06);
+  color: #14a014;
+}
+
+.tk-sheet-table__badge--special {
+  border-color: rgba(250, 118, 2, 0.24);
+  background: rgba(250, 118, 2, 0.06);
+  color: #fa7602;
+}
+
+.tk-sheet-table__badge--pinned {
+  border-color: rgba(180, 47, 50, 0.24);
+  background: rgba(180, 47, 50, 0.06);
+  color: #b42f32;
+}

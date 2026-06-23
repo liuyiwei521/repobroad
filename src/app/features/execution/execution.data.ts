@@ -83,6 +83,21 @@ export const demandRowsByDirection: Record<DemandDirection, DemandRow[]> = {
   ],
 };
 
+const normalizedExecutionAccountRequirementMap = {
+  不限: "",
+  利率债质押: "专户",
+  信用债可用: "公募",
+} as const;
+
+function normalizeExecutionAccountRequirement(rawRequirement: string) {
+  // 在途指令按规范展示：不限留空，10% 口径显示专户，15% 口径显示公募。
+  return (
+    normalizedExecutionAccountRequirementMap[
+      rawRequirement as keyof typeof normalizedExecutionAccountRequirementMap
+    ] ?? rawRequirement
+  );
+}
+
 export const fundGapRows = [
   {
     account: "泰康稳健增利A",
@@ -311,11 +326,12 @@ const inflightRowsByAccount = new Map(inflightRows.map((row) => [row.account, ro
 export const executionRows: ExecutionRow[] = [
   ...fundGapRows.map((row) => {
     const inflightRow = inflightRowsByAccount.get(row.account);
+
     return {
       account: row.account,
       breakEvenRate: row.breakEvenRate,
       gap: row.gap,
-      accountReq: row.accountReq,
+      accountReq: normalizeExecutionAccountRequirement(row.accountReq),
       collateralReq: row.collateralReq,
       progress: inflightRow?.progress ?? null,
       issuedAt: inflightRow?.issuedAt ?? null,
@@ -323,13 +339,15 @@ export const executionRows: ExecutionRow[] = [
   }),
   ...inflightRows
     .filter((row) => !fundGapRowsByAccount.has(row.account))
-    .map((row) => ({
-      account: row.account,
-      breakEvenRate: "--",
-      gap: row.gap,
-      accountReq: row.accountReq,
-      collateralReq: row.collateralReq,
-      progress: row.progress,
-      issuedAt: row.issuedAt,
-    })),
+    .map((row) => {
+      return {
+        account: row.account,
+        breakEvenRate: "--",
+        gap: row.gap,
+        accountReq: normalizeExecutionAccountRequirement(row.accountReq),
+        collateralReq: row.collateralReq,
+        progress: row.progress,
+        issuedAt: row.issuedAt,
+      };
+    }),
 ];

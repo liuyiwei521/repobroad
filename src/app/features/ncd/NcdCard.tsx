@@ -70,22 +70,24 @@ function NcdPreviewHeader({
   const title = resolveEntryTitle(id);
   return (
     <div className="tk-panel-header border-b px-2.5 py-1.5">
-      <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-w-0 items-center gap-2 pr-4">
         <button
-          className="group flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-[rgba(231,53,58,0.12)]"
+          className="group flex min-w-0 shrink items-center gap-2 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-[rgba(231,53,58,0.12)]"
           onClick={() => onOpen?.()}
           type="button"
         >
           <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] text-[color:var(--tk-color-text-inverse-secondary)]">
             <Icon size={15} />
           </span>
-          <span className="min-w-0 flex-1">
+          <span className="min-w-0">
             <span className="tk-title block truncate">{title}</span>
           </span>
         </button>
-        <span className="tk-chip shrink-0 rounded border text-micro">{badge}</span>
+        <span className="tk-chip shrink-0 rounded border text-xs">{badge}</span>
         {actions ? (
-          <div className="ml-auto flex shrink-0 items-center gap-1.5">{actions}</div>
+          <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-1.5 pl-2">
+            {actions}
+          </div>
         ) : null}
       </div>
     </div>
@@ -717,8 +719,8 @@ function NcdPrimaryTable({ initialPeriod = "1M" }: { initialPeriod?: NcdPeriod }
   const maxRows = Math.max(...groups.map((group) => group.rows.length));
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
-      <div className="flex items-center gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-1.5">
+    <div className="ncd-primary-table flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+      <div className="ncd-primary-table__toolbar flex items-center gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-1.5">
         <div className="flex items-center gap-1">
           {ncdPrimaryPeriods.map((item) => (
             <button
@@ -743,7 +745,7 @@ function NcdPrimaryTable({ initialPeriod = "1M" }: { initialPeriod?: NcdPeriod }
         {groups.map((group) => (
           <div
             key={group.label}
-            className="border-b border-r border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-1 text-center text-mini font-medium text-slate-400 last:border-r-0"
+            className="ncd-primary-table__group border-b border-r border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-1 text-center text-mini font-medium text-slate-400 last:border-r-0"
           >
             {group.label}
           </div>
@@ -773,7 +775,9 @@ function NcdPrimaryTable({ initialPeriod = "1M" }: { initialPeriod?: NcdPeriod }
                         {row.rate}
                       </span>
                       {row.change ? (
-                        <span className="text-mini text-emerald-400">{row.change}</span>
+                        <span className="ncd-primary-table__change text-mini text-emerald-400">
+                          {row.change}
+                        </span>
                       ) : null}
                     </div>
                   </>
@@ -992,7 +996,13 @@ export function LeftNcdCard({
 
   return (
     <>
-      <section className="tk-panel flex h-full min-h-0 flex-col overflow-hidden border">
+      <section
+        className={
+          embeddedPreview
+            ? "flex h-full min-h-0 flex-col overflow-hidden"
+            : "tk-panel flex h-full min-h-0 flex-col overflow-hidden border"
+        }
+      >
         {embeddedPreview ? (
           <NcdPreviewHeader
             id="ncd"

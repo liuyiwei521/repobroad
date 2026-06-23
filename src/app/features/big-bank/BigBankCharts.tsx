@@ -524,8 +524,10 @@ function TooltipValueRow({
   return (
     <div className="flex items-center gap-2 py-0.5">
       <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-      <span className="text-slate-400">{label}</span>
-      <span className="ml-auto pl-4 font-mono font-semibold text-slate-100">{value}</span>
+      <span className="text-[color:var(--tk-color-text-secondary)]">{label}</span>
+      <span className="ml-auto pl-4 font-mono font-semibold text-[color:var(--tk-color-text-heading)]">
+        {value}
+      </span>
     </div>
   );
 }
@@ -545,10 +547,10 @@ function BigBankHistoryTooltipContent({
   if (!active || !point) return null;
 
   return (
-    <div className="rounded border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.96)] px-3 py-2 text-xs shadow-xl backdrop-blur-sm">
-      <div className="mb-1.5 flex items-center justify-between gap-4 font-semibold text-slate-100">
+    <div className="rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-3 py-2 text-xs text-[color:var(--tk-color-text-secondary)] shadow-lg">
+      <div className="mb-1.5 flex items-center justify-between gap-4 font-semibold text-[color:var(--tk-color-text-heading)]">
         <span>{point.date}</span>
-        <span className="rounded border border-[color:var(--tk-color-border-panel)] px-1.5 py-0.5 text-micro text-slate-300">
+        <span className="rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-panel)] px-1.5 py-0.5 text-micro text-[color:var(--tk-color-text-secondary)]">
           {sessionLabel}
         </span>
       </div>
@@ -591,7 +593,7 @@ export function BigBankRateTrendRechartsPlot({
   );
 
   return (
-    <div className="flex h-full min-h-[220px] min-w-0 flex-col">
+    <div className="flex h-full min-h-[320px] min-w-0 flex-col">
       <div className="mb-1 flex items-center justify-between gap-3 text-micro text-slate-500">
         <span>{"\u5229\u7387(%)"}</span>
         <div className="flex items-center gap-2">
@@ -695,7 +697,7 @@ export function BigBankSpreadDiffRechartsPlot({
   const syncId = "big-bank-diff";
 
   return (
-    <div className="flex h-full min-h-[220px] min-w-0 flex-col">
+    <div className="flex h-full min-h-[280px] min-w-0 flex-col">
       <div className="mb-1 flex items-center justify-between gap-3 text-micro text-slate-500">
         <span>BP</span>
         <span className="rounded border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.58)] px-1.5 py-0.5 text-slate-300">

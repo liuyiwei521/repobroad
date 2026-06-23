@@ -19,10 +19,10 @@ export function BarometerSegmentedControl<T extends string>({
           <button
             key={option.value}
             type="button"
-            className={`tk-chip tk-segmented-tab--compact rounded-none border-0 px-2 text-mini transition ${
+            className={`tk-chip tk-segmented-tab--compact rounded-none border border-transparent px-2 text-mini transition-colors ${
               option.value === value
-                ? "bg-[var(--tdx-red)] text-white"
-                : "text-slate-300 hover:bg-white/5"
+                ? "tk-chip-active"
+                : "text-slate-300 hover:border-[color:var(--tdx-red)] hover:bg-[rgba(180,47,50,0.04)] hover:text-slate-100"
             }`}
             onClick={() => onChange(option.value)}
           >

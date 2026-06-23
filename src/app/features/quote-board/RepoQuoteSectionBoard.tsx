@@ -21,6 +21,7 @@ import {
   nextQuoteTableSortState,
   normalizeAccountRequirement,
   normalizeAmountFilterToYi,
+  normalizeCollateralRequirement,
   normalizeUnifiedTenorValue,
   parseAmountTextToYi,
   pinnedQuoteFromRow,
@@ -32,7 +33,6 @@ import {
 } from "./quoteBoard.utils";
 import type {
   AmountFilterUnit,
-  ExpandStatus,
   OpponentQuoteCard,
   PinnedQuote,
   QuoteOverride,
@@ -52,15 +52,32 @@ const rankPriority: Record<string, number> = {
 function RankBadge({ rank }: { rank: QuoteDetailRow["rank"] }) {
   const styles =
     rank === "最优"
-      ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+      ? "tk-sheet-table__badge tk-sheet-table__badge--core"
       : rank === "次优"
-        ? "border-amber-500/40 bg-amber-500/15 text-amber-300"
-        : "border-slate-500/40 bg-slate-500/15 text-slate-300";
+        ? "tk-sheet-table__badge tk-sheet-table__badge--special"
+        : "tk-sheet-table__badge";
   return (
     <span
-      className={`inline-flex shrink-0 items-center rounded border px-1.5 py-0.5 text-micro font-medium ${styles}`}
+      className={`inline-flex shrink-0 items-center px-1.5 py-0.5 text-micro font-medium ${styles}`}
     >
       {rank}
+    </span>
+  );
+}
+
+function CoreLabelBadge({ label }: { label: string }) {
+  if (!label) return null;
+  return (
+    <span className="tk-sheet-table__badge tk-sheet-table__badge--core inline-flex shrink-0 items-center px-1.5 py-0.5 text-micro">
+      {label}
+    </span>
+  );
+}
+
+function PinnedRowBadge() {
+  return (
+    <span className="tk-sheet-table__badge tk-sheet-table__badge--pinned inline-flex shrink-0 items-center px-1.5 py-0.5 text-micro">
+      固定
     </span>
   );
 }
@@ -72,10 +89,10 @@ export function RepoQuoteSectionBoard({
   amountMin,
   amountMax,
   amountUnit,
+  institutionSearch,
   accountSearch,
   collateralSearch,
   collateralTab = "all",
-  supplementStatusFilter = "all",
   applyOverride,
   pinnedQuotes,
   pinnedKeys,
@@ -89,10 +106,10 @@ export function RepoQuoteSectionBoard({
   amountMin: string;
   amountMax: string;
   amountUnit: AmountFilterUnit;
+  institutionSearch: string;
   accountSearch: string;
   collateralSearch: string;
   collateralTab?: string;
-  supplementStatusFilter?: ExpandStatus;
   applyOverride: (row: QuoteDetailRow) => QuoteDetailRow;
   pinnedQuotes: readonly PinnedQuote[];
   pinnedKeys: ReadonlySet<string>;
@@ -107,7 +124,6 @@ export function RepoQuoteSectionBoard({
   const minAmountValue = normalizeAmountFilterToYi(amountMin, amountUnit);
   const maxAmountValue = normalizeAmountFilterToYi(amountMax, amountUnit);
   const [expandedRowKey, setExpandedRowKey] = useState<string | null>(null);
-  const [expandedStatusByKey, setExpandedStatusByKey] = useState<Record<string, ExpandStatus>>({});
 
   const toggleSort = (
     field: QuoteTableSortField,
@@ -134,13 +150,27 @@ export function RepoQuoteSectionBoard({
   const matchRowFilters = (row: QuoteDetailRow) =>
     matchTenor(row.tenor) &&
     matchAmount(displayAmountForRow(row)) &&
+    fuzzyTextMatch(
+      formatInstitutionSender(
+        row.institution,
+        contactNameForInstitution(row.institution),
+      ),
+      institutionSearch,
+    ) &&
     fuzzyTextMatch(`${normalizeAccountRequirement(row.accountType)} ${row.accountType}`, accountSearch) &&
-    fuzzyTextMatch(`${row.collateral} ${row.reason}`, collateralSearch);
+    fuzzyTextMatch(`${normalizeCollateralRequirement(row.collateral)} ${row.collateral} ${row.reason}`, collateralSearch);
 
   const matchNonAmountFilters = (row: QuoteDetailRow) =>
     matchTenor(row.tenor) &&
+    fuzzyTextMatch(
+      formatInstitutionSender(
+        row.institution,
+        contactNameForInstitution(row.institution),
+      ),
+      institutionSearch,
+    ) &&
     fuzzyTextMatch(`${normalizeAccountRequirement(row.accountType)} ${row.accountType}`, accountSearch) &&
-    fuzzyTextMatch(`${row.collateral} ${row.reason}`, collateralSearch);
+    fuzzyTextMatch(`${normalizeCollateralRequirement(row.collateral)} ${row.collateral} ${row.reason}`, collateralSearch);
 
   const getLogicalRows = (group: RepoQuoteSection["groups"][number]) => {
     const logicalRows = applyLogicalQuoteAmounts(
@@ -172,6 +202,16 @@ export function RepoQuoteSectionBoard({
     .map((item) => ({ ...item, row: applyOverride(item.row) }))
     .filter((item) => matchRowFilters(item.row));
 
+  const isPinnedDetailRow = (row: QuoteDetailRow, groupName: string) =>
+    pinnedKeys.has(pinnedQuoteKey(section.id, groupName, row.institution, row.tenor));
+
+  const visibleUnpinnedGroups = visibleGroups
+    .map(({ group, rows }) => ({
+      group,
+      rows: rows.filter((row) => !isPinnedDetailRow(row, group.name)),
+    }))
+    .filter(({ rows }) => rows.length > 0);
+
   const openRowChat = (row: QuoteDetailRow, groupName: string) => {
     onSend(
       buildPrimaryChatQuote(row, {
@@ -191,18 +231,6 @@ export function RepoQuoteSectionBoard({
     if (!canExpandRows) return;
     const key = pinnedQuoteKey(section.id, groupName, row.institution, row.tenor);
     setExpandedRowKey((current) => (current === key ? null : key));
-    setExpandedStatusByKey((current) =>
-      current[key]
-        ? current
-        : {
-            ...current,
-            [key]: "unreplied",
-          },
-    );
-  };
-
-  const setExpandedStatus = (rowKey: string, status: ExpandStatus) => {
-    setExpandedStatusByKey((current) => ({ ...current, [rowKey]: status }));
   };
 
   const buildUnifiedPrimaryRow = (
@@ -252,8 +280,13 @@ export function RepoQuoteSectionBoard({
     return getVisibleOpponentCards(
       mergedRow,
       cards ?? buildOpponentCards(mergedRow, groupName),
-      supplementStatusFilter,
     )
+      .filter((card) =>
+        fuzzyTextMatch(
+          formatInstitutionSender(card.institution, card.name),
+          institutionSearch,
+        ),
+      )
       .filter((card) => matchAmount(card.amount))
       .map((card) => ({
         id: `${card.id}-supplement`,
@@ -355,14 +388,13 @@ export function RepoQuoteSectionBoard({
           const supplementRows = buildUnifiedSupplementRows(row, groupName, cards);
           const result: UnifiedQuoteTableRow[] = [];
           if (matchAmount(displayAmountForRow(row))) {
-            const primaryRow = buildUnifiedPrimaryRow(
-              row,
-              groupName,
-              anchorCard?.status ?? "unreplied",
+            result.push(
+              buildUnifiedPrimaryRow(
+                row,
+                groupName,
+                anchorCard?.status ?? "unreplied",
+              ),
             );
-            const primaryMatchesStatus =
-              supplementStatusFilter === "all" || anchorCard?.status === supplementStatusFilter;
-            if (primaryMatchesStatus) result.push(primaryRow);
           }
           result.push(...supplementRows);
           return result;
@@ -370,32 +402,48 @@ export function RepoQuoteSectionBoard({
       )
     : [];
 
+  const visibleUnpinnedUnifiedRows = detailMode
+    ? unifiedRows.filter((item) => !(item.kind === "primary" && pinnedKeys.has(item.pinItem.key)))
+    : [];
+
+  const visiblePinnedUnifiedRows = detailMode
+    ? unifiedRows.filter((item) => item.kind === "primary" && pinnedKeys.has(item.pinItem.key))
+    : [];
+
   const renderUnifiedTableRow = (item: UnifiedQuoteTableRow) => {
-    const rowPinned = pinnedKeys.has(item.pinItem.key);
+    const rowPinned = item.kind === "primary" && pinnedKeys.has(item.pinItem.key);
     return (
       <div
         key={item.id}
-        className="grid grid-cols-[0.5fr_1.45fr_0.6fr_0.75fr_0.75fr_0.8fr_0.8fr_0.8fr_0.7fr_0.9fr] items-center border-b border-[color:var(--tk-color-border-divider)] px-4 py-2 text-left text-xs text-slate-200 transition hover:bg-[var(--tk-color-surface-selected)]"
+        className={`grid grid-cols-[0.5fr_1.45fr_0.6fr_0.75fr_0.75fr_0.8fr_0.8fr_0.8fr_0.9fr] items-center border-b border-[color:var(--tk-color-border-divider)] px-4 py-2 text-left text-[13px] text-slate-700 transition ${
+          rowPinned
+            ? "bg-[rgba(180,47,50,0.05)] hover:bg-[rgba(180,47,50,0.08)]"
+            : "bg-white hover:bg-[#f5f5f5]"
+        }`}
       >
-        <span className="text-center text-micro text-emerald-300">{item.coreLabel}</span>
-        <span className="truncate text-slate-100">{item.institution}</span>
+        <span className="flex justify-center">
+          <CoreLabelBadge label={item.coreLabel} />
+        </span>
+        <div className="flex min-w-0 items-center gap-2">
+          {rowPinned ? <PinnedRowBadge /> : null}
+          <span className="truncate font-semibold text-slate-700">{item.institution}</span>
+        </div>
         <span className="text-right">{item.tenor}</span>
         <span className="text-right">{item.amount}</span>
-        <span className="text-right font-semibold text-amber-300">{item.rate}</span>
-        <span className="truncate pl-3 text-right text-xs text-slate-300" title={item.account}>
+        <span className="text-right font-semibold tk-warning">{item.rate}</span>
+        <span className="truncate pl-3 text-right" title={item.account}>
           {item.account}
         </span>
-        <span className="truncate pl-3 text-right text-xs text-slate-300" title={item.pledge}>
+        <span className="truncate pl-3 text-right" title={item.pledge}>
           {item.pledge}
         </span>
-        <span className="text-right text-xs text-slate-400">{item.replyStatus}</span>
-        <span className="text-right text-xs tabular-nums text-slate-400">{item.updatedAt}</span>
+        <span className="text-right tabular-nums">{item.updatedAt}</span>
         <span className="flex items-center justify-end gap-1">
           <button
             className={`inline-flex h-6 w-6 items-center justify-center rounded border transition ${
               rowPinned
-                ? "border-amber-400/60 bg-amber-400/20 text-amber-200"
-                : "border-[color:var(--tk-color-border-panel)] bg-white/5 text-slate-500 hover:text-amber-200"
+                ? "border-[color:var(--tk-color-brand-primary)] bg-[rgba(180,47,50,0.08)] text-[color:var(--tk-color-brand-primary)]"
+                : "border-[color:var(--tk-color-border-panel)] bg-white text-slate-500 hover:border-[color:var(--tk-color-brand-primary)] hover:text-[color:var(--tk-color-brand-primary)]"
             }`}
             onClick={() => onTogglePin(item.pinItem)}
             title={rowPinned ? "取消固定" : "固定行情"}
@@ -404,7 +452,7 @@ export function RepoQuoteSectionBoard({
             <Pin size={12} fill={rowPinned ? "currentColor" : "none"} />
           </button>
           <button
-            className="tk-inline-action whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 text-blue-300"
+            className="tk-inline-action whitespace-nowrap rounded-md"
             onClick={() => onSend(item.chatQuote, item.groupName)}
             type="button"
           >
@@ -420,32 +468,42 @@ export function RepoQuoteSectionBoard({
     groupName: string,
     dense: boolean,
     keyPrefix = "",
+    options: {
+      suppressPanels?: boolean;
+      suppressGroupBadge?: boolean;
+      forcePinned?: boolean;
+    } = {},
   ) => {
+    const { suppressPanels = false, suppressGroupBadge = false, forcePinned = false } = options;
     const rowPin = pinnedQuoteFromRow(row, groupName, section);
-    const rowPinned = pinnedKeys.has(rowPin.key);
-    const expanded = canExpandRows && expandedRowKey === rowPin.key;
+    const rowPinned = forcePinned || isPinnedDetailRow(row, groupName);
+    const expanded = !suppressPanels && canExpandRows && expandedRowKey === rowPin.key;
     const cards = buildOpponentCards(row, groupName);
-    const expandedStatus = expandedStatusByKey[rowPin.key] ?? supplementStatusFilter;
     const inlineVisibleCards = getVisibleOpponentCards(
       row,
       cards,
-      supplementStatusFilter,
     ).filter((card) => matchAmount(card.amount));
 
     return (
       <div key={`${keyPrefix}${row.id}`} className="border-b border-[color:var(--tk-color-border-divider)] last:border-b-0">
         <div
-          className={`grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] ${
-            expanded ? "border-[color:var(--tk-color-brand-cyan)] bg-[rgba(56,113,189,0.08)]" : "border-transparent"
-          } ${dense ? "py-1.5" : "py-1.5"} pl-4 pr-4 text-left text-xs text-slate-200 transition hover:bg-[var(--tk-color-surface-selected)]`}
+          className={`grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.85fr_1.05fr] items-center border-l-[3px] ${
+            rowPinned || expanded
+              ? "border-[color:var(--tk-color-brand-primary)] bg-[rgba(180,47,50,0.05)]"
+              : "border-transparent bg-white"
+          } ${dense ? "py-1.5" : "py-1.5"} pl-4 pr-4 text-left text-[13px] text-slate-700 transition ${
+            rowPinned || expanded
+              ? "hover:bg-[rgba(180,47,50,0.08)]"
+              : "hover:bg-[#f5f5f5]"
+          }`}
         >
           <div className="flex items-center gap-2">
-            {canExpandRows ? (
+            {!suppressPanels && canExpandRows ? (
               <button
                 className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border transition ${
                   expanded
-                    ? "border-[color:var(--tk-color-brand-cyan)] bg-[rgba(56,113,189,0.14)] text-[color:var(--tk-color-brand-cyan)]"
-                    : "border-[color:var(--tk-color-border-panel)] bg-white/5 text-slate-500 hover:text-slate-200"
+                    ? "border-[color:var(--tk-color-brand-primary)] bg-[rgba(180,47,50,0.08)] text-[color:var(--tk-color-brand-primary)]"
+                    : "border-[color:var(--tk-color-border-panel)] bg-white text-slate-500 hover:border-[color:var(--tk-color-brand-primary)] hover:text-[color:var(--tk-color-brand-primary)]"
                 }`}
                 onClick={() => toggleExpandedRow(row, groupName)}
                 title={expanded ? "收起同期限明细" : "展开同期限明细"}
@@ -456,35 +514,35 @@ export function RepoQuoteSectionBoard({
             ) : (
               <span className="inline-flex h-5 w-5 shrink-0" aria-hidden="true" />
             )}
-            {!detailMode ? (
+            {!detailMode && !suppressGroupBadge ? (
               <span className="tk-badge shrink-0 rounded-full border px-1.5 py-0.5 text-micro text-cyan-200">
                 {groupName}
               </span>
             ) : null}
             {!detailMode && (row.rank === "最优" || row.rank === "次优") ? <RankBadge rank={row.rank} /> : null}
-            <span className="truncate text-slate-100">
+            <span className="truncate font-semibold text-slate-700">
               {formatInstitutionSender(row.institution, contactNameForInstitution(row.institution))}
             </span>
           </div>
           <span className="text-right">{row.tenor}</span>
           <span className="text-right">{displayAmountForRow(row) ?? "--"}</span>
-          <span className="text-right font-semibold text-amber-300">{row.rate}</span>
+          <span className="text-right font-semibold tk-warning">{row.rate}</span>
           <span
-            className="truncate pl-3 text-right text-xs text-slate-300"
+            className="truncate pl-3 text-right"
             title={shouldShowAccountRequirement(row.id) ? normalizeAccountRequirement(row.accountType) : ""}
           >
             {shouldShowAccountRequirement(row.id) ? normalizeAccountRequirement(row.accountType) : ""}
           </span>
           <span
-            className="truncate pl-3 text-right text-xs text-slate-300"
+            className="truncate pl-3 text-right"
             title={`${row.collateral} / ${row.reason}`}
           >
             {row.collateral}
           </span>
-          <span className="text-right text-xs tabular-nums text-slate-400">{row.updatedAt}</span>
+          <span className="text-right tabular-nums">{row.updatedAt}</span>
           <span className="flex items-center justify-end gap-1">
             <button
-              className="hidden whitespace-nowrap rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-micro font-medium text-amber-200"
+              className="hidden whitespace-nowrap rounded-md border border-[color:var(--tk-color-border-panel)] bg-white px-1.5 py-0.5 text-micro font-medium text-slate-500"
               onClick={() => onEdit(row, groupName)}
               type="button"
             >
@@ -493,8 +551,8 @@ export function RepoQuoteSectionBoard({
             <button
               className={`inline-flex h-6 w-6 items-center justify-center rounded border transition ${
                 rowPinned
-                  ? "border-amber-400/60 bg-amber-400/20 text-amber-200"
-                  : "border-[color:var(--tk-color-border-panel)] bg-white/5 text-slate-500 hover:text-amber-200"
+                  ? "border-[color:var(--tk-color-brand-primary)] bg-[rgba(180,47,50,0.08)] text-[color:var(--tk-color-brand-primary)]"
+                  : "border-[color:var(--tk-color-border-panel)] bg-white text-slate-500 hover:border-[color:var(--tk-color-brand-primary)] hover:text-[color:var(--tk-color-brand-primary)]"
               }`}
               onClick={() => onTogglePin(rowPin)}
               title={rowPinned ? "取消固定" : "固定行情"}
@@ -503,7 +561,7 @@ export function RepoQuoteSectionBoard({
               <Pin size={12} fill={rowPinned ? "currentColor" : "none"} />
             </button>
             <button
-              className="tk-inline-action whitespace-nowrap rounded-md border border-blue-500/30 bg-blue-500/20 text-blue-300"
+              className="tk-inline-action whitespace-nowrap rounded-md"
               onClick={() => openRowChat(row, groupName)}
               type="button"
             >
@@ -511,27 +569,23 @@ export function RepoQuoteSectionBoard({
             </button>
           </span>
         </div>
-        {expanded ? (
+        {!suppressPanels && expanded ? (
           <OpponentExpandPanel
             row={row}
             groupName={groupName}
             section={section}
             cards={cards}
-            status={expandedStatus}
-            onStatusChange={(status) => setExpandedStatus(rowPin.key, status)}
             pinnedKeys={pinnedKeys}
             onTogglePin={onTogglePin}
             onSend={(quote) => onSend(quote, groupName)}
           />
         ) : null}
-        {detailMode && inlineVisibleCards.length ? (
+        {!suppressPanels && detailMode && inlineVisibleCards.length ? (
           <OpponentExpandPanel
             row={row}
             groupName={groupName}
             section={section}
             cards={cards}
-            status={supplementStatusFilter}
-            onStatusChange={() => {}}
             pinnedKeys={pinnedKeys}
             onTogglePin={onTogglePin}
             onSend={(quote) => onSend(quote, groupName)}
@@ -543,10 +597,10 @@ export function RepoQuoteSectionBoard({
   };
 
   return (
-    <div className="flex min-h-0 flex-col">
-      <div className={`min-h-0 ${detailMode ? "flex-1 overflow-y-auto" : "overflow-visible"}`}>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         {detailMode ? (
-          <div className="grid grid-cols-[0.5fr_1.45fr_0.6fr_0.75fr_0.75fr_0.8fr_0.8fr_0.8fr_0.7fr_0.9fr] border-y border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-4 py-1.5 text-mini font-medium tracking-[0.02em] text-slate-400">
+          <div className="sticky top-0 z-10 grid grid-cols-[0.5fr_1.45fr_0.6fr_0.75fr_0.75fr_0.8fr_0.8fr_0.8fr_0.9fr] border-y border-[color:var(--tk-color-border-divider-dark)] bg-[#f5f5f5] px-4 py-1.5 text-mini font-medium tracking-[0.02em] text-slate-500 shadow-[0_1px_0_rgba(221,221,221,0.95)]">
             <span className="text-center">核心</span>
             <span>机构 / 发送人</span>
             <span className="text-right">期限</span>
@@ -566,12 +620,11 @@ export function RepoQuoteSectionBoard({
             </span>
             <span className="text-right">账户要求</span>
             <span className="text-right">质押要求</span>
-            <span className="text-right">回复状态</span>
             <span className="text-right">报价时间</span>
             <span className="text-right">操作</span>
           </div>
         ) : (
-          <div className="grid grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] border-y border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-4 py-1.5 text-mini font-medium tracking-[0.02em] text-slate-400">
+          <div className="sticky top-0 z-10 grid grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.85fr_1.05fr] border-y border-[color:var(--tk-color-border-divider-dark)] bg-[#f5f5f5] px-4 py-1.5 text-mini font-medium tracking-[0.02em] text-slate-500 shadow-[0_1px_0_rgba(221,221,221,0.95)]">
             <span>分组 / 机构</span>
             <span className="text-right">期限</span>
             <span className="text-right">
@@ -595,37 +648,26 @@ export function RepoQuoteSectionBoard({
           </div>
         )}
         {pinnedSectionQuotes.length ? (
-          <div className="border-b-2 border-[rgba(234,179,8,0.35)]">
-            <div className="grid w-full grid-cols-[1.4fr_0.55fr_0.7fr_0.75fr_0.9fr_0.85fr_0.7fr_1.05fr] items-center border-l-[3px] border-amber-400 bg-[rgba(234,179,8,0.08)] px-4 py-2 text-left shadow-[inset_0_-1px_0_rgba(234,179,8,0.18)]">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-1 rounded-md border border-amber-400/60 bg-amber-400/15 px-2 py-0.5 text-micro font-semibold tracking-[0.08em] text-amber-200">
-                  固定
-                </span>
-                <div className="text-xs font-semibold text-slate-50">固定报价</div>
-              </div>
-              <span aria-hidden="true" />
-              <span aria-hidden="true" />
-              <span aria-hidden="true" />
-              <span aria-hidden="true" />
-              <span aria-hidden="true" />
-              <span className="text-right text-mini text-amber-200">
-                {pinnedSectionQuotes.length} 条
-              </span>
-              <span />
-            </div>
+          <div className="border-b border-[color:var(--tk-color-border-divider)]">
             <div className="divide-y divide-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-page)]">
-              {pinnedSectionQuotes.map((item) =>
-                renderDetailRow(item.row, item.groupName, detailMode, `pinned-${item.key}-`),
-              )}
+              {detailMode
+                ? visiblePinnedUnifiedRows.map((item) => renderUnifiedTableRow(item))
+                : pinnedSectionQuotes.map((item) =>
+                    renderDetailRow(item.row, item.groupName, detailMode, `pinned-${item.key}-`, {
+                      suppressPanels: true,
+                      suppressGroupBadge: true,
+                      forcePinned: true,
+                    }),
+                  )}
             </div>
           </div>
         ) : null}
         {detailMode ? (
           <div className="bg-[var(--tk-color-surface-page)]">
-            {unifiedRows.map((item) => renderUnifiedTableRow(item))}
+            {visibleUnpinnedUnifiedRows.map((item) => renderUnifiedTableRow(item))}
           </div>
         ) : (
-          visibleGroups.map(({ group, rows }) => (
+          visibleUnpinnedGroups.map(({ group, rows }) => (
             <div key={group.id} className="border-b-2 border-[color:var(--tk-color-border-divider)]">
               <div className="divide-y divide-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-page)]">
                 {sortDetailRows(rows).map((row) => renderDetailRow(row, group.name, false))}

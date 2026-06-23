@@ -132,6 +132,49 @@ export function buildInstitutionBarometerPoints(
   });
 }
 
+export function buildInstitutionBarometerPricePoints(
+  points: BarometerPoint[],
+  profile: BarometerInstitutionProfile,
+  seriesKey: string,
+): BarometerPoint[] {
+  if (profile.seed === 0 && profile.factor === 1 && profile.drift === 0) {
+    return points.map((point) => ({ ...point }));
+  }
+
+  const values = points.map((point) => point.value);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = Math.max(max - min, 0.001);
+  const seed = profile.seed + barometerSeriesSeed(seriesKey);
+  const isReverse = seriesKey.toLowerCase().includes("in");
+  const isYesterday = seriesKey.toLowerCase().includes("yesterday");
+  const directionBias = isReverse ? -1 : 1;
+  const dayBias = isYesterday ? -1 : 1;
+  const amLength = barometerAmSlots.length;
+
+  return points.map((point, index) => {
+    const normalized = (point.value - min) / span - 0.5;
+    const isAm = index < amLength;
+    const sessionShift =
+      (isAm ? profile.amPeakShift : profile.pmPeakShift) * 0.004;
+    const sessionScale = isAm ? profile.amPeakScale : profile.pmPeakScale;
+    const wobble =
+      Math.sin((index + seed) * 0.61) * 0.0045 * profile.wobble +
+      Math.cos(index * 0.31 + seed * 0.7) * 0.0028 * profile.wobble;
+    const drift = (profile.factor - 1) * 0.03 + profile.drift * 0.01;
+    const curveBias =
+      normalized * 0.02 * sessionScale +
+      directionBias * normalized * 0.004 +
+      dayBias * 0.002;
+    const value = point.value + curveBias + sessionShift + drift + wobble;
+
+    return {
+      ...point,
+      value: Number(value.toFixed(3)),
+    };
+  });
+}
+
 export function buildBarometerSeries(
   todayOut: BarometerPoint[],
   todayIn: BarometerPoint[],

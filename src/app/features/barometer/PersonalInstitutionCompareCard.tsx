@@ -168,7 +168,7 @@ export function PersonalInstitutionCompareCard() {
         </div>
         <LegendDot
           color="var(--tk-color-chart-blue)"
-          label="\u4e2a\u4eba"
+          label="个人"
           interactive
           className="h-5 w-[4.5rem]"
           onMouseEnter={() => setHoveredSeriesKind("personal")}
@@ -176,7 +176,7 @@ export function PersonalInstitutionCompareCard() {
         />
         <LegendDot
           color="var(--tk-color-chart-gold)"
-          label="\u673a\u6784\u52a0\u6743"
+          label="机构加权"
           interactive
           className="h-5 w-[4.5rem]"
           onMouseEnter={() => setHoveredSeriesKind("institution")}

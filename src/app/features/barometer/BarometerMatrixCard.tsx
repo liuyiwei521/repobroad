@@ -21,7 +21,10 @@ import type {
   BarometerSlice,
   QtInstitutionType,
 } from "./barometer.types";
-import { buildInstitutionBarometerPoints } from "./barometer.utils";
+import {
+  buildInstitutionBarometerPoints,
+  buildInstitutionBarometerPricePoints,
+} from "./barometer.utils";
 
 const visibleTimeLabels = new Set([
   "08:15",
@@ -34,7 +37,7 @@ const visibleTimeLabels = new Set([
 
 export function BarometerMatrixCard() {
   const [range, setRange] = useState<BarometerRange>("overnight");
-  const [metric, setMetric] = useState<BarometerMetric>("price");
+  const [metric, setMetric] = useState<BarometerMetric>("volume");
   const [institutionType, setInstitutionType] =
     useState<QtInstitutionType>("all");
 
@@ -43,17 +46,21 @@ export function BarometerMatrixCard() {
   const rawSlice = barometerData[range][metric];
   const currentSlice: BarometerSlice = {
     ...rawSlice,
-    series:
-      metric === "price"
-        ? rawSlice.series
-        : rawSlice.series.map((series) => ({
-            ...series,
-            points: buildInstitutionBarometerPoints(
+    series: rawSlice.series.map((series) => ({
+      ...series,
+      points:
+        metric === "price"
+          ? buildInstitutionBarometerPricePoints(
+              series.points,
+              institutionProfile,
+              series.key,
+            )
+          : buildInstitutionBarometerPoints(
               series.points,
               institutionProfile,
               series.key,
             ),
-          })),
+    })),
   };
   const allValues = currentSlice.series.flatMap((series) =>
     series.points.map((point) => point.value),
@@ -82,11 +89,14 @@ export function BarometerMatrixCard() {
         <div className="tk-matrix-card-title shrink-0 whitespace-nowrap">
           {"\u673a\u6784\u70ed\u5ea6\u8d70\u52bf"}
         </div>
+        <div className="text-micro text-slate-500">
+          {"\u622a\u81f3 16:00"}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-[color:var(--tk-color-border-divider)] px-3 py-2.5 text-xs">
         <label className="flex items-center gap-1.5 text-mini text-slate-400">
-          {"\u5206\u673a\u6784\u7edf\u8ba1"}
+          {"\u5206\u673a\u6784"}
           <select
             className="tk-field tk-field--compact min-w-[104px] rounded px-2 text-mini text-slate-100 outline-none"
             value={institutionType}
@@ -102,13 +112,13 @@ export function BarometerMatrixCard() {
           </select>
         </label>
         <BarometerSegmentedControl
-          label="\u671f\u9650"
+          label="期限"
           options={barometerRangeOptions}
           value={range}
           onChange={setRange}
         />
         <BarometerSegmentedControl
-          label="\u53e3\u5f84"
+          label="指标"
           options={barometerMetricOptions}
           value={metric}
           onChange={setMetric}

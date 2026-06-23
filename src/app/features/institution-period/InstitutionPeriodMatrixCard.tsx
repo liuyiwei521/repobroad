@@ -25,9 +25,12 @@ function InstitutionPeriodMatrixCard() {
 
   return (
     <>
-      <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
-        <div className="flex flex-wrap items-center gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2 text-xs">
-          <label className="flex items-center gap-1.5 text-slate-400">
+      <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-3 py-2 text-xs">
+          <div className="tk-matrix-card-title shrink-0 whitespace-nowrap">
+            机构分期限统计
+          </div>
+          <label className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-slate-400">
             期限
             <select
               className="tk-field h-6 rounded px-2 text-mini text-slate-100 outline-none"
@@ -41,10 +44,10 @@ function InstitutionPeriodMatrixCard() {
               ))}
             </select>
           </label>
-          <label className="flex min-w-0 flex-1 items-center gap-1.5 text-slate-400">
+          <label className="flex min-w-0 items-center gap-1.5 whitespace-nowrap text-slate-400">
             指标
             <select
-              className="tk-field h-6 min-w-0 rounded px-2 text-mini text-slate-100 outline-none"
+              className="tk-field h-6 min-w-[8rem] rounded px-2 text-mini text-slate-100 outline-none"
               value={metricKey}
               onChange={(event) => setMetricKey(event.target.value as CfetsMetricKey)}
             >
@@ -56,7 +59,7 @@ function InstitutionPeriodMatrixCard() {
             </select>
           </label>
           <button
-            className="tk-button ml-auto text-micro"
+            className="tk-button ml-auto shrink-0 text-micro"
             onClick={() => setOpen(true)}
             type="button"
           >

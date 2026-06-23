@@ -10,7 +10,6 @@ import {
 } from "./quoteBoard.data";
 import type {
   AmountFilterUnit,
-  ExpandStatus,
   OpponentQuoteCard,
   PinnedQuote,
   QuoteOverride,
@@ -23,7 +22,7 @@ import type {
 } from "./quoteBoard.types";
 
 export { buildOpponentChatQuote, buildPrimaryChatQuote, DEFAULT_AMOUNT_UNIT };
-export type { AmountFilterUnit, ExpandStatus, OpponentQuoteCard, PinnedQuote, QuoteOverride, QuoteTableSortDirection, QuoteTableSortField, QuoteTableSortState, SupplementGroupName, UnifiedQuoteTableRow, QuoteChatPayload };
+export type { AmountFilterUnit, OpponentQuoteCard, PinnedQuote, QuoteOverride, QuoteTableSortDirection, QuoteTableSortField, QuoteTableSortState, SupplementGroupName, UnifiedQuoteTableRow, QuoteChatPayload };
 
 const BLANK_AMOUNT_IDS = (() => {
   const ids: string[] = [];
@@ -113,6 +112,27 @@ const rankPriority: RankPriorityMap = {
 
 export function formatInstitutionSender(institution: string, sender: string) {
   return `${institution} / ${sender}`;
+}
+
+export function normalizeCollateralRequirement(collateral: string) {
+  const normalized = collateral.trim();
+  if (!normalized) return "";
+  if (normalized.includes("利率") || normalized.includes("国债") || normalized.includes("地方")) {
+    return "国债地方";
+  }
+  if (normalized.includes("存单") || normalized.includes("商金")) {
+    return "存单商金";
+  }
+  if (
+    normalized.includes("信用") ||
+    normalized.includes("AAA") ||
+    normalized.includes("AA+") ||
+    normalized.includes("年金") ||
+    normalized.includes("PPN")
+  ) {
+    return "信用";
+  }
+  return normalized;
 }
 
 export function parseOptionalFilterNumber(value: string) {
@@ -420,12 +440,11 @@ export function buildOpponentCards(row: QuoteDetailRow, groupName: string): Oppo
 export function getVisibleOpponentCards(
   row: QuoteDetailRow,
   cards: readonly OpponentQuoteCard[],
-  status: ExpandStatus,
   includeAnchor = false,
 ) {
-  const filtered =
-    status === "all" ? cards : cards.filter((card) => card.status === status || card.special);
-  return includeAnchor ? filtered : filtered.filter((card) => card.id !== `${row.id}-anchor`);
+  return includeAnchor
+    ? [...cards]
+    : cards.filter((card) => card.id !== `${row.id}-anchor`);
 }
 
 export function sortOpponentCardsForDisplay(

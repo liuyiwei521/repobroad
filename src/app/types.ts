@@ -4,7 +4,6 @@ export type TrendMode = "intraday" | "history" | "comparison";
 export type SentimentTab = "realtime" | "trend";
 export type BaseTrendProduct = "r001" | "r007";
 export type AnonymousTrendProduct =
-  | "all"
   | "r001"
   | "r002"
   | "r007"
@@ -12,7 +11,17 @@ export type AnonymousTrendProduct =
   | "r030"
   | "r180"
   | "r365";
-export type OverlayProduct = "none" | "dr007" | "gc007" | "r007";
+export type OverlayProduct =
+  | "none"
+  | "dr001"
+  | "dr007"
+  | "gc001"
+  | "gc007"
+  | "r001"
+  | "r002"
+  | "r007"
+  | "r014"
+  | "r030";
 export type RightLowerTab = "matrix" | "inst" | "bond";
 export type HistoryRange = "5d" | "1m" | "6m";
 export type XrepoHistoryRange = "today" | HistoryRange;

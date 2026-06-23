@@ -4,10 +4,14 @@ import { Download, RefreshCcw, X } from "lucide-react";
 export function PageFrame({
   title,
   onClose,
+  headerContent,
+  headerActions,
   children,
 }: {
   title: string;
   onClose: () => void;
+  headerContent?: React.ReactNode;
+  headerActions?: React.ReactNode;
   children: React.ReactNode;
 }) {
   useEffect(() => {
@@ -20,19 +24,23 @@ export function PageFrame({
 
   return (
     <div
-      className="tk-overlay fixed inset-0 z-[40] flex items-center justify-center px-5 py-5"
+      className="tk-overlay fixed inset-0 z-[40] flex items-center justify-center px-3 py-3"
       onMouseDown={onClose}
     >
       <section
-        className="tk-modal grid h-[86vh] w-[min(1380px,calc(100vw-40px))] grid-rows-[auto_1fr] overflow-hidden border"
+        className="tk-modal grid h-[94vh] w-[min(1560px,calc(100vw-24px))] grid-rows-[auto_1fr] overflow-hidden border"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="tk-panel-header flex items-center justify-between gap-3 border-b px-4 py-3">
-          <div className="min-w-0">
-            <div className="tk-title-lg truncate">{title}</div>
-            <div className="tk-muted mt-0.5 text-xs">入口页框 / Esc 关闭</div>
-          </div>
+          {headerContent ? (
+            <div className="min-w-0 flex-1">{headerContent}</div>
+          ) : (
+            <div className="min-w-0">
+              <div className="tk-title-lg truncate">{title}</div>
+            </div>
+          )}
           <div className="flex shrink-0 items-center gap-2">
+            {headerActions}
             <button
               className="tk-button inline-flex items-center gap-1.5 opacity-60"
               disabled
@@ -61,7 +69,7 @@ export function PageFrame({
             </button>
           </div>
         </div>
-        <div className="min-h-0 overflow-hidden p-3">{children}</div>
+        <div className="min-h-0 overflow-hidden p-2">{children}</div>
       </section>
     </div>
   );

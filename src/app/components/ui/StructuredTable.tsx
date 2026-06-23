@@ -13,6 +13,7 @@ type StructuredTableProps = {
   nowrapHeader?: boolean;
   adaptiveHeight?: boolean;
   scrollY?: boolean;
+  scrollX?: boolean;
   onRowClick?: (row: readonly string[], rowIndex: number) => void;
 };
 
@@ -52,13 +53,16 @@ export function StructuredTable({
   nowrapHeader = false,
   adaptiveHeight = false,
   scrollY = false,
+  scrollX = false,
   onRowClick,
 }: StructuredTableProps) {
   return (
     <div
       className={`tk-table-shell ${adaptiveHeight ? "" : "h-full min-h-0"} ${
         scrollY
-          ? "overflow-y-auto overflow-x-hidden"
+          ? scrollX
+            ? "overflow-auto"
+            : "overflow-y-auto overflow-x-hidden"
           : fitToWidth || adaptiveHeight
             ? "overflow-hidden"
             : "overflow-auto"
@@ -68,7 +72,7 @@ export function StructuredTable({
         className={`tk-table border-separate border-spacing-0 text-xs ${
           fitToWidth
             ? "w-full table-fixed"
-            : "min-w-full whitespace-nowrap"
+            : "w-max min-w-full whitespace-nowrap"
         }`}
       >
         {columnWidths ? (

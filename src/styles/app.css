@@ -5813,6 +5813,23 @@ textarea:focus-visible,
   height: 30px;
 }
 
+.left-rail-square .left-rail-frame,
+.left-rail-square .left-rail-card-shell,
+.left-rail-square .left-rail-card-shell > button,
+.left-rail-square .left-rail-card-shell > div,
+.left-rail-square .tk-panel,
+.left-rail-square .tk-panel-soft,
+.left-rail-square .tk-table-shell,
+.left-rail-square .tk-selected {
+  border-radius: 0 !important;
+}
+
+.left-rail-square .tk-panel,
+.left-rail-square .tk-panel-soft,
+.left-rail-square .tk-table-shell {
+  height: 100%;
+}
+
 .market-range-field input,
 .market-tenor-field select,
 .market-keyword-field input {

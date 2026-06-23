@@ -291,6 +291,25 @@ body,
   line-height: 16px;
 }
 
+.ncd-primary-table .tk-chip,
+.ncd-primary-table__toolbar > span,
+.ncd-primary-table__group,
+.ncd-primary-table__change {
+  font-size: var(--tk-font-size-xs);
+  line-height: 16px;
+}
+
+.ncd-primary-table__group {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.ncd-primary-table .truncate.text-xs,
+.ncd-primary-table .font-mono.text-xs {
+  font-size: var(--tk-font-size-xs);
+  line-height: 16px;
+}
+
 .tk-field {
   min-height: 28px;
   font-size: var(--tk-font-size-xs);
@@ -301,6 +320,13 @@ body,
   min-height: 24px;
   font-size: var(--tk-font-size-mini);
   line-height: 16px;
+}
+
+select.tk-field.tk-field--compact {
+  height: 24px;
+  min-height: 24px;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .tk-overlay {

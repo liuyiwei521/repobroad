@@ -35,9 +35,15 @@ const clampRateAboveOne = (series: number[]) =>
 
 export const overlayProductOptions: Array<{ id: OverlayProduct; label: string }> = [
   { id: "none", label: "涓嶅彔鍔?" },
+  { id: "dr001", label: "DR001" },
   { id: "dr007", label: "DR007" },
+  { id: "gc001", label: "GC001" },
   { id: "gc007", label: "GC007" },
+  { id: "r001", label: "R001" },
+  { id: "r002", label: "R002" },
   { id: "r007", label: "R007" },
+  { id: "r014", label: "R014" },
+  { id: "r030", label: "R030" },
 ];
 
 export const baseTrendProductOptions: Array<{
@@ -52,7 +58,6 @@ export const anonymousTrendProductOptions: Array<{
   id: AnonymousTrendProduct;
   label: string;
 }> = [
-  { id: "all", label: "鎵€鏈夌绫?" },
   { id: "r001", label: "R001" },
   { id: "r002", label: "R002" },
   { id: "r007", label: "R007" },
@@ -110,16 +115,21 @@ export const intradayOverlaySeriesByProduct: Record<
   Exclude<OverlayProduct, "none">,
   number[]
 > = {
+  dr001: clampRateAboveOne(randomWalk(1.964, 40, 0.035, 70)),
   dr007: clampRateAboveOne(randomWalk(2.012, 40, 0.04, 71)),
+  gc001: clampRateAboveOne(randomWalk(1.836, 40, 0.05, 79)),
   gc007: clampRateAboveOne(randomWalk(1.852, 40, 0.062, 72)),
+  r001: clampRateAboveOne(randomWalk(1.986, 40, 0.046, 80)),
+  r002: clampRateAboveOne(randomWalk(2.004, 40, 0.048, 84)),
   r007: clampRateAboveOne(randomWalk(2.058, 40, 0.052, 73)),
+  r014: clampRateAboveOne(randomWalk(2.086, 40, 0.045, 85)),
+  r030: clampRateAboveOne(randomWalk(2.128, 40, 0.04, 86)),
 };
 
 export const anonymousIntradaySeriesByProduct: Record<
   AnonymousTrendProduct,
   number[]
 > = {
-  all: clampRateAboveOne(randomWalk(2.024, 40, 0.045, 69)),
   r001: intradaySeries,
   r002: clampRateAboveOne(randomWalk(2.002, 40, 0.049, 74)),
   r007: intradayOverlaySeriesByProduct.r007,
@@ -255,6 +265,15 @@ const historicalProductAnchors: Record<
     seed: number;
   }
 > = {
+  gc001: {
+    anchor5d: 1.18,
+    anchor1m: 1.15,
+    anchor6m: 1.39,
+    vol5d: 0.14,
+    vol1m: 0.03,
+    vol6m: 0.015,
+    seed: 87,
+  },
   dr007: {
     anchor5d: 1.36,
     anchor1m: 1.31,
@@ -273,6 +292,24 @@ const historicalProductAnchors: Record<
     vol6m: 0.018,
     seed: 82,
   },
+  r001: {
+    anchor5d: 1.28,
+    anchor1m: 1.236,
+    anchor6m: 1.47,
+    vol5d: 0.17,
+    vol1m: 0.026,
+    vol6m: 0.013,
+    seed: 88,
+  },
+  r002: {
+    anchor5d: 1.31,
+    anchor1m: 1.26,
+    anchor6m: 1.5,
+    vol5d: 0.16,
+    vol1m: 0.027,
+    vol6m: 0.013,
+    seed: 89,
+  },
   r007: {
     anchor5d: 1.42,
     anchor1m: 1.36,
@@ -282,6 +319,24 @@ const historicalProductAnchors: Record<
     vol6m: 0.014,
     seed: 83,
   },
+  r014: {
+    anchor5d: 1.47,
+    anchor1m: 1.42,
+    anchor6m: 1.64,
+    vol5d: 0.15,
+    vol1m: 0.028,
+    vol6m: 0.014,
+    seed: 90,
+  },
+  r030: {
+    anchor5d: 1.52,
+    anchor1m: 1.46,
+    anchor6m: 1.7,
+    vol5d: 0.14,
+    vol1m: 0.026,
+    vol6m: 0.013,
+    seed: 91,
+  },
 };
 
 export const historicalProductSeries: Record<
@@ -289,6 +344,12 @@ export const historicalProductSeries: Record<
   Record<Exclude<OverlayProduct | CompareProduct, "none" | "dr001">, number[]>
 > = {
   "5d": {
+    gc001: randomWalk(
+      historicalProductAnchors.gc001.anchor5d,
+      historicalCloseDatasets["5d"].close.length,
+      historicalProductAnchors.gc001.vol5d,
+      historicalProductAnchors.gc001.seed,
+    ),
     dr007: randomWalk(
       historicalProductAnchors.dr007.anchor5d,
       historicalCloseDatasets["5d"].close.length,
@@ -301,14 +362,44 @@ export const historicalProductSeries: Record<
       historicalProductAnchors.gc007.vol5d,
       historicalProductAnchors.gc007.seed,
     ),
+    r001: randomWalk(
+      historicalProductAnchors.r001.anchor5d,
+      historicalCloseDatasets["5d"].close.length,
+      historicalProductAnchors.r001.vol5d,
+      historicalProductAnchors.r001.seed,
+    ),
+    r002: randomWalk(
+      historicalProductAnchors.r002.anchor5d,
+      historicalCloseDatasets["5d"].close.length,
+      historicalProductAnchors.r002.vol5d,
+      historicalProductAnchors.r002.seed,
+    ),
     r007: randomWalk(
       historicalProductAnchors.r007.anchor5d,
       historicalCloseDatasets["5d"].close.length,
       historicalProductAnchors.r007.vol5d,
       historicalProductAnchors.r007.seed,
     ),
+    r014: randomWalk(
+      historicalProductAnchors.r014.anchor5d,
+      historicalCloseDatasets["5d"].close.length,
+      historicalProductAnchors.r014.vol5d,
+      historicalProductAnchors.r014.seed,
+    ),
+    r030: randomWalk(
+      historicalProductAnchors.r030.anchor5d,
+      historicalCloseDatasets["5d"].close.length,
+      historicalProductAnchors.r030.vol5d,
+      historicalProductAnchors.r030.seed,
+    ),
   },
   "1m": {
+    gc001: randomWalk(
+      historicalProductAnchors.gc001.anchor1m,
+      historicalCloseDatasets["1m"].close.length,
+      historicalProductAnchors.gc001.vol1m,
+      historicalProductAnchors.gc001.seed + 1,
+    ),
     dr007: randomWalk(
       historicalProductAnchors.dr007.anchor1m,
       historicalCloseDatasets["1m"].close.length,
@@ -321,14 +412,44 @@ export const historicalProductSeries: Record<
       historicalProductAnchors.gc007.vol1m,
       historicalProductAnchors.gc007.seed + 1,
     ),
+    r001: randomWalk(
+      historicalProductAnchors.r001.anchor1m,
+      historicalCloseDatasets["1m"].close.length,
+      historicalProductAnchors.r001.vol1m,
+      historicalProductAnchors.r001.seed + 1,
+    ),
+    r002: randomWalk(
+      historicalProductAnchors.r002.anchor1m,
+      historicalCloseDatasets["1m"].close.length,
+      historicalProductAnchors.r002.vol1m,
+      historicalProductAnchors.r002.seed + 1,
+    ),
     r007: randomWalk(
       historicalProductAnchors.r007.anchor1m,
       historicalCloseDatasets["1m"].close.length,
       historicalProductAnchors.r007.vol1m,
       historicalProductAnchors.r007.seed + 1,
     ),
+    r014: randomWalk(
+      historicalProductAnchors.r014.anchor1m,
+      historicalCloseDatasets["1m"].close.length,
+      historicalProductAnchors.r014.vol1m,
+      historicalProductAnchors.r014.seed + 1,
+    ),
+    r030: randomWalk(
+      historicalProductAnchors.r030.anchor1m,
+      historicalCloseDatasets["1m"].close.length,
+      historicalProductAnchors.r030.vol1m,
+      historicalProductAnchors.r030.seed + 1,
+    ),
   },
   "6m": {
+    gc001: randomWalk(
+      historicalProductAnchors.gc001.anchor6m,
+      historicalCloseDatasets["6m"].close.length,
+      historicalProductAnchors.gc001.vol6m,
+      historicalProductAnchors.gc001.seed + 2,
+    ),
     dr007: randomWalk(
       historicalProductAnchors.dr007.anchor6m,
       historicalCloseDatasets["6m"].close.length,
@@ -341,11 +462,36 @@ export const historicalProductSeries: Record<
       historicalProductAnchors.gc007.vol6m,
       historicalProductAnchors.gc007.seed + 2,
     ),
+    r001: randomWalk(
+      historicalProductAnchors.r001.anchor6m,
+      historicalCloseDatasets["6m"].close.length,
+      historicalProductAnchors.r001.vol6m,
+      historicalProductAnchors.r001.seed + 2,
+    ),
+    r002: randomWalk(
+      historicalProductAnchors.r002.anchor6m,
+      historicalCloseDatasets["6m"].close.length,
+      historicalProductAnchors.r002.vol6m,
+      historicalProductAnchors.r002.seed + 2,
+    ),
     r007: randomWalk(
       historicalProductAnchors.r007.anchor6m,
       historicalCloseDatasets["6m"].close.length,
       historicalProductAnchors.r007.vol6m,
       historicalProductAnchors.r007.seed + 2,
     ),
+    r014: randomWalk(
+      historicalProductAnchors.r014.anchor6m,
+      historicalCloseDatasets["6m"].close.length,
+      historicalProductAnchors.r014.vol6m,
+      historicalProductAnchors.r014.seed + 2,
+    ),
+    r030: randomWalk(
+      historicalProductAnchors.r030.anchor6m,
+      historicalCloseDatasets["6m"].close.length,
+      historicalProductAnchors.r030.vol6m,
+      historicalProductAnchors.r030.seed + 2,
+    ),
   },
 };
+

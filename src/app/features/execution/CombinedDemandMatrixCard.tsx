@@ -1,214 +1,171 @@
-import { Fragment, useState } from "react";
-
 import {
   DEFAULT_TRADING_NOTICE_TEXT,
   DEFAULT_TRADING_STATUS_TEXT,
 } from "../../components/dialogs/TradingNoticeEditorModal";
-import { PageFrame as ShellPageFrame } from "../../components/shell/PageFrame";
 import {
   demandRowsByDirection,
   demandTenors,
   executionRows,
 } from "./execution.data";
-import { DemandGapDetailFrame } from "./DemandGapDetailFrame";
-import {
-  buildDemandMatrix,
-  demandProgress,
-} from "./execution.utils";
-import type { DemandAmount, DemandBottomTab } from "./execution.types";
+import { buildDemandMatrix } from "./execution.utils";
+import type { DemandAmount, ExecutionRow } from "./execution.types";
 
 export function CombinedDemandMatrixCard() {
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [bottomTab, setBottomTab] = useState<DemandBottomTab>("demand");
   const repoMatrix = buildDemandMatrix(demandRowsByDirection.repo, demandTenors);
   const reverseMatrix = buildDemandMatrix(
     demandRowsByDirection.reverse,
     demandTenors,
   );
-  const reverseByTenor = demandTenors.map(
-    (tenor) => reverseMatrix.columnTotals[tenor],
-  );
-  const reverseTotal = reverseMatrix.grandTotal;
 
-  const tabItems: { key: DemandBottomTab; label: string }[] = [
-    { key: "demand", label: "正/逆回购需求" },
-    { key: "execution", label: "资金缺口 / 在途指令" },
-  ];
+  const demandBuckets = [
+    {
+      key: "1d",
+      label: "1d",
+      repo: repoMatrix.columnTotals.R001,
+      reverse: reverseMatrix.columnTotals.R001,
+    },
+    {
+      key: "7d",
+      label: "7d",
+      repo: repoMatrix.columnTotals.R007,
+      reverse: reverseMatrix.columnTotals.R007,
+    },
+    {
+      key: "14d",
+      label: "14d",
+      repo: { need: 18.6, done: 12.1 },
+      reverse: { need: 13.7, done: 9.5 },
+    },
+    {
+      key: "21d",
+      label: "21d",
+      repo: { need: 10.2, done: 6.4 },
+      reverse: { need: 8.4, done: 4.9 },
+    },
+    {
+      key: "other",
+      label: "其他",
+      repo: { need: 6.1, done: 3.0 },
+      reverse: { need: 4.8, done: 2.3 },
+    },
+  ] as const;
+
+  const demandSummaryRows = [
+    {
+      key: "repo",
+      label: "正回购总计",
+      accent: "var(--tdx-red)",
+      amounts: demandBuckets.map((bucket) => bucket.repo),
+    },
+    {
+      key: "reverse",
+      label: "逆回购总计",
+      accent: "var(--tk-color-brand-cyan)",
+      amounts: demandBuckets.map((bucket) => bucket.reverse),
+    },
+  ].map((row) => ({
+    ...row,
+    total: sumDemandAmounts(row.amounts),
+  }));
 
   return (
-    <>
-      <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-md border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]">
-        <div className="flex items-center justify-between gap-2 border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)] px-2.5 py-1.5">
-          <div className="flex min-w-0 items-center gap-1.5">
-            {tabItems.map((tab) => (
-              <button
-                key={tab.key}
-                className={`tk-chip tk-segmented-tab transition-colors ${
-                  bottomTab === tab.key
-                    ? "bg-[rgba(248,113,113,0.18)] text-red-200"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-                onClick={() => setBottomTab(tab.key)}
-                type="button"
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-          {bottomTab === "demand" && (
-            <div className="flex shrink-0 gap-1">
-              {demandTenors.map((tenor) => (
-                <span key={tenor} className="tk-matrix-tag rounded border px-1 py-0.5">
-                  {tenor}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="min-h-0 overflow-auto">
-          {bottomTab === "demand" ? (
-            <div className="h-full min-h-0 p-1">
-              <div className="grid h-full min-h-0 grid-cols-[4.2rem_repeat(3,minmax(0,1fr))] grid-rows-[1.55rem_repeat(5,minmax(0,1fr))] gap-px text-micro">
-                <DemandTableHeader label="正回购需求" />
-                {demandTenors.map((tenor) => (
-                  <DemandTableHeader key={tenor} label={tenor} align="right" />
-                ))}
-                <DemandTableHeader label="合计" align="right" />
-                {repoMatrix.rows.map((row) => (
-                  <Fragment key={row.label}>
-                    <DemandRowHeader row={row} />
-                    {demandTenors.map((tenor) => (
-                      <DemandCompactCell
-                        key={`${row.label}-${tenor}`}
-                        amount={row.cells[tenor]}
-                      />
-                    ))}
-                    <DemandCompactCell amount={repoMatrix.rowTotals[row.label]} strong />
-                  </Fragment>
-                ))}
-                <DemandTableHeader label="合计" />
-                {demandTenors.map((tenor) => (
-                  <DemandCompactCell
-                    key={`repo-total-${tenor}`}
-                    amount={repoMatrix.columnTotals[tenor]}
-                    strong
-                  />
-                ))}
-                <DemandCompactCell amount={repoMatrix.grandTotal} strong />
-                <DemandTableHeader label="逆回购需求" />
-                {reverseByTenor.map((amount, index) => (
-                  <DemandCompactCell
-                    key={`reverse-${demandTenors[index]}`}
-                    amount={amount}
-                    accent="var(--tk-color-brand-cyan)"
-                  />
-                ))}
-                <DemandCompactCell
-                  amount={reverseTotal}
-                  strong
-                  accent="var(--tk-color-brand-cyan)"
-                />
-              </div>
-            </div>
-          ) : (
-            <table className="tk-table w-full border-separate border-spacing-0 text-xs">
-              <thead className="sticky top-0 z-10 bg-[var(--tk-color-surface-dark-soft)] text-slate-400">
-                <tr>
-                  {[
-                    "账户",
-                    "保本利率",
-                    "资金缺口/可用额度",
-                    "在途状态",
-                    "下达时间",
-                    "账户要求",
-                    "质押要求",
-                  ].map((col) => (
-                    <th
-                      key={col}
-                      className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-left text-mini font-medium tracking-[0]"
-                    >
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {executionRows.map((row) => {
-                  const hasInflight = row.progress !== null;
-                  const isCompleted = hasInflight && row.progress >= 100;
-                  const statusLabel = !hasInflight
-                    ? "未下达"
-                    : isCompleted
-                      ? "已完成"
-                      : "进行中";
-                  const statusClassName = !hasInflight
-                    ? "border-[rgba(148,163,184,0.2)] bg-[rgba(148,163,184,0.12)] text-slate-400"
-                    : isCompleted
-                      ? "border-[rgba(16,185,129,0.28)] bg-[rgba(16,185,129,0.14)] text-emerald-200"
-                      : "border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.14)] text-red-200";
-
-                  return (
-                    <tr key={row.account} className="hover:bg-[rgba(255,255,255,0.03)]">
-                      <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 font-medium text-slate-200">
-                        {row.account}
-                      </td>
-                      <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-amber-300">
-                        {row.breakEvenRate}
-                      </td>
-                      <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 font-semibold text-red-300">
-                        {row.gap}
-                      </td>
-                      <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className={`rounded border px-1.5 py-0.5 text-micro font-medium ${statusClassName}`}
-                          >
-                            {statusLabel}
-                          </span>
-                          {hasInflight ? (
-                            <div className="flex items-center gap-1.5">
-                              <div className="h-1 w-12 overflow-hidden rounded-full bg-slate-700">
-                                <div
-                                  className={`h-full rounded-full ${
-                                    isCompleted ? "bg-emerald-500" : "bg-[var(--tdx-red)]"
-                                  }`}
-                                  style={{ width: `${Math.min(row.progress, 100)}%` }}
-                                />
-                              </div>
-                              <span
-                                className={
-                                  isCompleted ? "text-emerald-400" : "text-slate-300"
-                                }
-                              >
-                                {row.progress}%
-                              </span>
-                            </div>
-                          ) : null}
-                        </div>
-                      </td>
-                      <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-slate-300">
-                        {row.issuedAt ?? "--"}
-                      </td>
-                      <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-slate-400">
-                        {row.accountReq}
-                      </td>
-                      <td className="border-b border-[color:var(--tk-color-border-divider)] px-2 py-1.5 text-slate-400">
-                        {row.collateralReq}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
+    <section className="tk-panel grid h-full min-h-0 grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden border">
+      <div className="tk-panel-header border-b px-3 py-2">
+        <div className="tk-title">资金缺口 / 在途指令</div>
       </div>
-      {detailOpen ? (
-        <ShellPageFrame title="IMS 指令" onClose={() => setDetailOpen(false)}>
-          <DemandGapDetailFrame onClose={() => setDetailOpen(false)} />
-        </ShellPageFrame>
-      ) : null}
-    </>
+
+      <div className="overflow-hidden border-b border-[color:var(--tk-color-border-panel)] px-1.5 py-1">
+        <table className="tk-table w-full border-separate border-spacing-0 text-xs">
+          <thead>
+            <tr>
+              <DemandTableHeader label="方向" />
+              {demandBuckets.map((bucket) => (
+                <DemandTableHeader
+                  key={bucket.key}
+                  label={bucket.label}
+                  align="right"
+                />
+              ))}
+              <DemandTableHeader label="合计" align="right" />
+            </tr>
+          </thead>
+          <tbody>
+            {demandSummaryRows.map((row) => (
+              <tr key={row.key}>
+                <DemandRowHeader label={row.label} color={row.accent} />
+                {row.amounts.map((amount, index) => (
+                  <DemandCompactCell
+                    key={`${row.key}-${demandBuckets[index].key}`}
+                    amount={amount}
+                  />
+                ))}
+                <DemandCompactCell amount={row.total} strong />
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="min-h-0 overflow-auto">
+        <table className="tk-table w-full border-separate border-spacing-0 text-xs">
+          <thead className="sticky top-0 z-10">
+            <tr>
+              <TableHeaderCell label="账户" />
+              <TableHeaderCell label="保本利率" align="right" />
+              <TableHeaderCell label="已分配额度 / 任务额度" align="right" />
+              <TableHeaderCell label="在途状态" />
+              <TableHeaderCell label="下达时间" align="right" />
+              <TableHeaderCell label="账户要求" />
+              <TableHeaderCell label="质押要求" />
+            </tr>
+          </thead>
+          <tbody>
+            {executionRows.map((row) => {
+              const status = resolveExecutionStatus(row);
+
+              return (
+                <tr key={row.account}>
+                  <td className="border-b px-3 py-1.5">
+                    <span className="tk-strong font-semibold">{row.account}</span>
+                  </td>
+                  <td className="border-b px-3 py-1.5 text-right">
+                    <span className="whitespace-nowrap text-[color:var(--tdx-orange)]">
+                      {row.breakEvenRate}
+                    </span>
+                  </td>
+                  <td className="border-b px-3 py-1.5 text-right">
+                    <span className="whitespace-nowrap font-medium text-[color:var(--tdx-red)]">
+                      {row.gap}
+                    </span>
+                  </td>
+                  <td className="border-b px-3 py-1.5">
+                    <div className="flex items-center gap-2 whitespace-nowrap">
+                      <span className={executionStatusChipClass(status.tone)}>
+                        {status.label}
+                      </span>
+                      <span className={executionStatusValueClass(status.tone)}>
+                        {status.value}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="border-b px-3 py-1.5 text-right">
+                    <span className="whitespace-nowrap tk-strong">
+                      {row.issuedAt ?? "--"}
+                    </span>
+                  </td>
+                  <td className="border-b px-3 py-1.5">
+                    <span className="tk-muted">{row.accountReq}</span>
+                  </td>
+                  <td className="border-b px-3 py-1.5">
+                    <span className="tk-muted">{row.collateralReq}</span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
 
@@ -250,13 +207,13 @@ export function MiddleMatrixNoticeBar({
       <div className="min-w-0">
         <div className="tk-muted truncate">提示信息</div>
         <div className="mt-0.5 truncate font-semibold text-slate-200">
-          R001 活跃度上升，关注正/逆需求缺口
+          1d 需求仍偏活跃，优先关注正逆方向的缺口补齐。
         </div>
       </div>
       <div className="min-w-0">
         <div className="tk-muted truncate">最新动作</div>
         <div className="mt-0.5 truncate text-amber-300">
-          加权价格与匿名成交已移入底部矩阵
+          中间下方区域已收成单一需求矩阵，只保留正逆回购汇总内容。
         </div>
       </div>
       <div className="flex items-center gap-1.5">
@@ -276,61 +233,116 @@ function DemandTableHeader({
   align?: "left" | "right";
 }) {
   return (
-    <div
-      className={`flex min-w-0 items-center overflow-hidden rounded-sm border border-[color:var(--tk-color-border-panel)] bg-[rgba(30,41,59,0.82)] px-1 text-micro font-semibold text-slate-300 ${
-        align === "right" ? "justify-end text-right" : ""
+    <th
+      className={`border-b bg-[var(--tdx-bg-panel)] px-2 py-1.5 text-[12px] font-medium tracking-[0] text-[color:var(--tdx-text-muted)] ${
+        align === "right" ? "text-right" : "text-left"
       }`}
     >
-      <span className="truncate">{label}</span>
-    </div>
+      {label}
+    </th>
   );
 }
 
 function DemandCompactCell({
   amount,
   strong = false,
-  accent = "var(--tdx-red)",
 }: {
   amount: DemandAmount;
   strong?: boolean;
-  accent?: string;
 }) {
-  const progress = demandProgress(amount);
   const empty = amount.need <= 0;
+
   return (
-    <div
-      className={`grid min-w-0 content-center overflow-hidden rounded-sm border px-1 py-[1px] text-right ${
-        strong
-          ? "border-[rgba(231,53,58,0.32)] bg-[rgba(30,41,59,0.86)]"
-          : "border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.66)]"
-      } ${empty ? "opacity-40" : ""}`}
-    >
-      <div className="truncate text-micro font-semibold text-slate-200">
+    <td className="border-b bg-[var(--tdx-bg-panel)] px-2 py-1.5 text-right">
+      <span
+        className={`inline-flex min-w-[5.75rem] justify-end whitespace-nowrap px-1 tabular-nums ${
+          strong ? "font-medium tk-strong" : empty ? "tk-muted" : "tk-strong"
+        } ${empty ? "opacity-45" : ""}`}
+      >
         {amount.need.toFixed(1)} / {amount.done.toFixed(1)}
-      </div>
-      <div className="mt-0.5 h-0.5 overflow-hidden rounded-full bg-slate-800">
-        <div
-          className="h-full rounded-full"
-          style={{ width: `${progress}%`, backgroundColor: accent }}
-        />
-      </div>
-    </div>
+      </span>
+    </td>
   );
 }
 
-function DemandRowHeader({
-  row,
+function DemandRowHeader({ label, color }: { label: string; color: string }) {
+  return (
+    <td className="border-b bg-[var(--tdx-bg-panel)] px-2 py-1.5 text-left">
+      <span className="inline-flex items-center gap-2">
+        <span
+          className="h-4 w-0.5 shrink-0 rounded-full"
+          style={{ backgroundColor: color }}
+        />
+        <span className="tk-strong font-medium">{label}</span>
+      </span>
+    </td>
+  );
+}
+
+function TableHeaderCell({
+  label,
+  align = "left",
 }: {
-  row: (typeof demandRowsByDirection.repo)[number];
+  label: string;
+  align?: "left" | "right";
 }) {
   return (
-    <div
-      className="flex min-w-0 items-center overflow-hidden rounded-sm border border-[color:var(--tk-color-border-panel)] bg-[rgba(30,41,59,0.74)] px-1 py-[1px]"
-      style={{ borderLeft: `2px solid ${row.color}` }}
+    <th
+      className={`border-b px-3 py-2 text-mini font-medium tracking-[0] ${
+        align === "right" ? "text-right" : "text-left"
+      }`}
     >
-      <div className="text-micro font-semibold leading-none text-slate-200">
-        {row.label}
-      </div>
-    </div>
+      {label}
+    </th>
+  );
+}
+
+function resolveExecutionStatus(row: ExecutionRow): {
+  label: string;
+  value: string;
+  tone: "idle" | "active" | "done";
+} {
+  if (row.progress == null) {
+    return { label: "未下达", value: "--", tone: "idle" };
+  }
+
+  if (row.progress >= 100) {
+    return { label: "已完成", value: `${row.progress}%`, tone: "done" };
+  }
+
+  return { label: "进行中", value: `${row.progress}%`, tone: "active" };
+}
+
+function executionStatusChipClass(tone: "idle" | "active" | "done") {
+  if (tone === "done") {
+    return "rounded border border-[rgba(20,160,20,0.28)] bg-[rgba(20,160,20,0.08)] px-1.5 py-0.5 text-[color:var(--tdx-green)]";
+  }
+
+  if (tone === "active") {
+    return "rounded border border-[rgba(231,53,58,0.22)] bg-[rgba(231,53,58,0.08)] px-1.5 py-0.5 text-[color:var(--tdx-red)]";
+  }
+
+  return "rounded border border-[rgba(148,163,184,0.24)] bg-[rgba(148,163,184,0.08)] px-1.5 py-0.5 text-[color:var(--tdx-text-muted)]";
+}
+
+function executionStatusValueClass(tone: "idle" | "active" | "done") {
+  if (tone === "done") {
+    return "text-[color:var(--tdx-green)]";
+  }
+
+  if (tone === "active") {
+    return "text-[color:var(--tdx-red)]";
+  }
+
+  return "tk-muted";
+}
+
+function sumDemandAmounts(amounts: readonly DemandAmount[]): DemandAmount {
+  return amounts.reduce(
+    (total, amount) => ({
+      need: Number((total.need + amount.need).toFixed(1)),
+      done: Number((total.done + amount.done).toFixed(1)),
+    }),
+    { need: 0, done: 0 },
   );
 }
