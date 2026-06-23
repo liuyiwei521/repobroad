@@ -23,6 +23,17 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
   buildBankHistorySeries as createBankHistorySeries,
   XREPO_HISTORY_TABS,
   buildChartDomain,
@@ -4975,6 +4986,15 @@ function bankChartXTickIndices(count: number) {
   );
 }
 
+function buildRoundedTicks(max: number, count = 3) {
+  return Array.from(
+    new Set(
+      buildLinearTicks(0, Math.max(1, max), count).map((tick) => Math.round(tick)),
+    ),
+  ).sort((left, right) => left - right);
+}
+
+
 type BigBankReferencePoint = {
   date: string;
   nonBank: number;
@@ -5782,6 +5802,236 @@ function TooltipValueRow({
   );
 }
 
+function BigBankHistoryTooltipContent({
+  active,
+  payload,
+  sessionLabel,
+  mode,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload?: BankHistoryPoint }>;
+  sessionLabel: string;
+  mode: "trend" | "diff";
+}) {
+  const point = payload?.[0]?.payload;
+  if (!active || !point) return null;
+
+  return (
+    <div className="rounded border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.96)] px-3 py-2 text-xs shadow-xl backdrop-blur-sm">
+      <div className="mb-1.5 flex items-center justify-between gap-4 font-semibold text-slate-100">
+        <span>{point.date}</span>
+        <span className="rounded border border-[color:var(--tk-color-border-panel)] px-1.5 py-0.5 text-micro text-slate-300">
+          {sessionLabel}
+        </span>
+      </div>
+      {mode === "trend" ? (
+        <>
+          <TooltipValueRow color="#cf6b74" label={"\u51fa\u7ed9\u975e\u94f6"} value={`${point.nonBank.toFixed(3)}%`} />
+          <TooltipValueRow color="#5b8cc9" label={"\u51fa\u7ed9\u94f6\u884c"} value={`${point.bankRate.toFixed(3)}%`} />
+          <TooltipValueRow color="#f4dfaa" label={"\u975e\u94f6-\u94f6\u884c\u4ef7\u5dee"} value={`${point.spread}BP`} />
+        </>
+      ) : (
+        <>
+          <TooltipValueRow color="#5b8cc9" label={"\u7ed9\u94f6\u884c\u4ef7\u5dee"} value={`${point.bankDiff}BP`} />
+          <TooltipValueRow color="#d76370" label={"\u7ed9\u975e\u94f6\u4ef7\u5dee"} value={`${point.nonBankDiff}BP`} />
+        </>
+      )}
+    </div>
+  );
+}
+
+function BigBankRateTrendRechartsPlot({
+  data,
+  sessionLabel,
+}: {
+  data: readonly BankHistoryPoint[];
+  sessionLabel: string;
+}) {
+  const nonBank = data.map((item) => item.nonBank);
+  const bankRates = data.map((item) => item.bankRate);
+  const spread = data.map((item) => item.spread);
+  const { min: minRate, max: maxRate } = buildChartDomain([...nonBank, ...bankRates], {
+    paddingRatio: 0.12,
+    minSpan: 0.08,
+    clampMin: 0,
+  });
+  const maxSpread = Math.max(...spread, 1);
+  const yTicks = bankChartTicks(minRate, maxRate);
+  const spreadTicks = buildRoundedTicks(maxSpread);
+  const visibleDates = new Set(
+    bankChartXTickIndices(data.length).map((index) => data[index]?.date),
+  );
+
+  return (
+    <div className="flex h-full min-h-[220px] min-w-0 flex-col">
+      <div className="mb-1 flex items-center justify-between gap-3 text-micro text-slate-500">
+        <span>{"\u5229\u7387(%)"}</span>
+        <div className="flex items-center gap-2">
+          <span>{"\u4ef7\u5dee(BP)"}</span>
+          <span className="rounded border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.58)] px-1.5 py-0.5 text-slate-300">
+            {sessionLabel}
+          </span>
+        </div>
+      </div>
+      <div className="min-h-0 flex-1">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={data} margin={{ top: 6, right: 6, bottom: 6, left: 6 }}>
+            <CartesianGrid stroke="rgba(148,163,184,0.16)" strokeDasharray="3 3" vertical={false} />
+            <XAxis
+              dataKey="date"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: "#64748b", fontSize: 10 }}
+              tickMargin={8}
+              minTickGap={24}
+              tickFormatter={(value) => (visibleDates.has(value) ? value : "")}
+            />
+            <YAxis
+              yAxisId="rate"
+              domain={[minRate, maxRate]}
+              ticks={yTicks}
+              width={46}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: "#64748b", fontSize: 10 }}
+              tickFormatter={(value: number) => value.toFixed(3)}
+            />
+            <YAxis
+              yAxisId="spread"
+              orientation="right"
+              domain={[0, Math.max(...spreadTicks, maxSpread)]}
+              ticks={spreadTicks}
+              width={34}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: "#64748b", fontSize: 10 }}
+            />
+            <Tooltip
+              cursor={{ stroke: "#7aa2d6", strokeDasharray: "3 3", strokeWidth: 1 }}
+              content={<BigBankHistoryTooltipContent mode="trend" sessionLabel={sessionLabel} />}
+            />
+            <Bar
+              yAxisId="spread"
+              dataKey="spread"
+              fill="#f4dfaa"
+              opacity={0.56}
+              radius={[3, 3, 0, 0]}
+              maxBarSize={16}
+              isAnimationActive={false}
+            />
+            <Line
+              yAxisId="rate"
+              type="monotone"
+              dataKey="nonBank"
+              stroke="#cf6b74"
+              strokeWidth={2.4}
+              dot={false}
+              activeDot={{ r: 4, stroke: "#0b1020", strokeWidth: 1.5 }}
+              isAnimationActive={false}
+            />
+            <Line
+              yAxisId="rate"
+              type="monotone"
+              dataKey="bankRate"
+              stroke="#5b8cc9"
+              strokeWidth={2.4}
+              dot={false}
+              activeDot={{ r: 4, stroke: "#0b1020", strokeWidth: 1.5 }}
+              isAnimationActive={false}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+function BigBankSpreadDiffRechartsPlot({
+  data,
+  sessionLabel,
+}: {
+  data: readonly BankHistoryPoint[];
+  sessionLabel: string;
+}) {
+  const bankMax = Math.max(
+    6,
+    Math.ceil(Math.max(...data.map((item) => item.bankDiff), 1) / 2) * 2,
+  );
+  const nonBankMax = Math.max(
+    6,
+    Math.ceil(Math.max(...data.map((item) => item.nonBankDiff), 1) / 2) * 2,
+  );
+  const visibleDates = new Set(
+    bankChartXTickIndices(data.length).map((index) => data[index]?.date),
+  );
+  const syncId = "big-bank-diff";
+
+  return (
+    <div className="flex h-full min-h-[220px] min-w-0 flex-col">
+      <div className="mb-1 flex items-center justify-between gap-3 text-micro text-slate-500">
+        <span>BP</span>
+        <span className="rounded border border-[color:var(--tk-color-border-panel)] bg-[rgba(15,23,42,0.58)] px-1.5 py-0.5 text-slate-300">
+          {sessionLabel}
+        </span>
+      </div>
+      <div className="grid min-h-0 flex-1 grid-cols-[88px_minmax(0,1fr)] grid-rows-2 gap-x-3 gap-y-3">
+        <div className="flex items-center justify-end pr-1 text-xs text-slate-400">{"\u7ed9\u94f6\u884c\u4ef7\u5dee"}</div>
+        <div className="min-h-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} syncId={syncId} margin={{ top: 4, right: 6, bottom: 0, left: 6 }}>
+              <CartesianGrid stroke="rgba(148,163,184,0.16)" strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="date" hide />
+              <YAxis
+                domain={[0, bankMax]}
+                ticks={buildRoundedTicks(bankMax)}
+                width={34}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#64748b", fontSize: 10 }}
+              />
+              <Tooltip
+                cursor={{ fill: "rgba(122,162,214,0.08)" }}
+                content={<BigBankHistoryTooltipContent mode="diff" sessionLabel={sessionLabel} />}
+              />
+              <Bar dataKey="bankDiff" fill="#5b8cc9" radius={[3, 3, 0, 0]} maxBarSize={18} isAnimationActive={false} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="flex items-center justify-end pr-1 text-xs text-slate-400">{"\u7ed9\u975e\u94f6\u4ef7\u5dee"}</div>
+        <div className="min-h-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} syncId={syncId} margin={{ top: 4, right: 6, bottom: 6, left: 6 }}>
+              <CartesianGrid stroke="rgba(148,163,184,0.16)" strokeDasharray="3 3" vertical={false} />
+              <XAxis
+                dataKey="date"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#64748b", fontSize: 10 }}
+                tickMargin={8}
+                minTickGap={24}
+                tickFormatter={(value) => (visibleDates.has(value) ? value : "")}
+              />
+              <YAxis
+                domain={[0, nonBankMax]}
+                ticks={buildRoundedTicks(nonBankMax)}
+                width={34}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#64748b", fontSize: 10 }}
+              />
+              <Tooltip
+                cursor={{ fill: "rgba(215,99,112,0.08)" }}
+                content={<BigBankHistoryTooltipContent mode="diff" sessionLabel={sessionLabel} />}
+              />
+              <Bar dataKey="nonBankDiff" fill="#d76370" radius={[3, 3, 0, 0]} maxBarSize={18} isAnimationActive={false} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function BigBankPricingTrendChart({
   bank,
   tenor,
@@ -5817,7 +6067,7 @@ function BigBankPricingTrendChart({
           <LegendDot color="#f4dfaa" label="非银-银行价差(BP)" />
         </div>
       </div>
-      <BigBankRateTrendPlot data={data} sessionLabel={sessionLabel} />
+      <BigBankRateTrendRechartsPlot data={data} sessionLabel={sessionLabel} />
     </div>
   );
 }
@@ -5863,33 +6113,37 @@ function BigBankHistoryBack({
           返回
         </button>
       </div>
-      <div className={`grid min-h-0 grid-rows-2 ${compact ? "gap-1.5" : "gap-3"}`}>
+      <div
+        className={`grid min-h-0 flex-1 grid-rows-[minmax(0,1.08fr)_minmax(0,0.92fr)] ${
+          compact ? "gap-1.5" : "gap-3"
+        }`}
+      >
         <div
-          className="grid min-h-0 grid-rows-[auto_1fr] rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-3"
+          className="grid min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-3"
           onClick={(event) => event.stopPropagation()}
         >
           <div className="flex items-center justify-between gap-2">
             <div className="tk-title">大行定价走势</div>
-            <div className="flex gap-3 text-micro text-slate-400">
+            <div className="flex flex-wrap justify-end gap-x-3 gap-y-1 text-micro text-slate-400">
               <LegendDot color="#cf6b74" label="出给非银价格(%)" />
               <LegendDot color="#5b8cc9" label="出给银行价格(%)" />
               <LegendDot color="#f4dfaa" label="非银-银行价差(BP)" />
             </div>
           </div>
-          <BigBankRateTrendPlot data={data} sessionLabel={sessionLabel} />
+          <BigBankRateTrendRechartsPlot data={data} sessionLabel={sessionLabel} />
         </div>
         <div
-          className="grid min-h-0 grid-rows-[auto_1fr] rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-3"
+          className="grid min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] p-3"
           onClick={(event) => event.stopPropagation()}
         >
           <div className="flex items-center justify-between gap-2">
             <div className="tk-title">大行定价与加权价差</div>
-            <div className="flex gap-3 text-micro text-slate-400">
+            <div className="flex flex-wrap justify-end gap-x-3 gap-y-1 text-micro text-slate-400">
               <LegendDot color="#5b8cc9" label="给银行价差(BP)" />
               <LegendDot color="#d76370" label="给非银价差(BP)" />
             </div>
           </div>
-          <BigBankSpreadDiffPlot data={data} sessionLabel={sessionLabel} />
+          <BigBankSpreadDiffRechartsPlot data={data} sessionLabel={sessionLabel} />
         </div>
       </div>
     </div>
