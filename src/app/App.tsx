@@ -90,6 +90,10 @@ import {
   TODAY_STR,
 } from "./features/shell/shell.data";
 import {
+  LeftNcdCard as NcdFeatureCard,
+  getNcdModuleEntryData,
+} from "./features/ncd";
+import {
   CombinedDemandMatrixCard,
   MiddleMatrixNoticeBar,
 } from "./features/execution";
@@ -108,12 +112,20 @@ import {
 import { ExchangeRepoCard, ExchangeRepoFrame } from "./features/exchange-repo";
 import { BarometerMatrixCard } from "./features/barometer";
 import {
+  compareProductOptions,
+  historicalCloseDatasets,
+  HistoryClosePanel,
+  IntradayPanel,
+  intradaySeries,
+  intradayVolumeSeries,
+} from "./features/intraday";
+import {
   buildXrepoMetric,
   xrepoSummarySection,
-  XrepoFrame,
-  XrepoHistoryBack,
-  XrepoInlineHistoryChart,
-  XrepoSummaryOverview,
+  XrepoFrame as XrepoFeatureFrame,
+  XrepoHistoryBack as XrepoFeatureHistoryBack,
+  XrepoInlineHistoryChart as XrepoFeatureInlineHistoryChart,
+  XrepoSummaryOverview as XrepoFeatureSummaryOverview,
   xrepoR001Rows,
 } from "./features/xrepo";
 
@@ -2021,7 +2033,7 @@ function App() {
             </div>
           ) : activeFrame.id === "xrepo" ? (
             activeFrame.contract ? (
-              <XrepoHistoryBack
+              <XrepoFeatureHistoryBack
                 contractName={activeFrame.contract}
                 standalone
                 onBack={() =>
@@ -2033,7 +2045,7 @@ function App() {
                 }
               />
             ) : (
-              <XrepoFrame
+              <XrepoFeatureFrame
                 frameMode="page"
                 tenorFilter={quoteTenorFilter}
                 onOpenHistory={(contractName) =>
@@ -2053,11 +2065,11 @@ function App() {
               tenorFilter={quoteTenorFilter}
               fallback={<ReservedModuleFrame />}
               renderHistoryChart={(contractName) => (
-                <XrepoInlineHistoryChart contractName={contractName} />
+        <XrepoFeatureInlineHistoryChart contractName={contractName} />
               )}
             />
           ) : activeFrame.id === "ncd" ? (
-            <LeftNcdCard tenorFilter={quoteTenorFilter} />
+            <NcdFeatureCard tenorFilter={quoteTenorFilter} todayStr={TODAY_STR} />
           ) : activeFrame.id === "global-filter" ? (
             <GlobalFilterFrame />
           ) : activeFrame.id === "market-sentiment" ? (
@@ -2607,7 +2619,7 @@ function NarrowRailSummary({
                     : "border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)]"
                 }`}
               >
-                <XrepoHistoryBack
+                <XrepoFeatureHistoryBack
                   compact
                   contractName={inlineXrepoContract}
                   onBack={() => setInlineXrepoContract(null)}
@@ -3073,7 +3085,7 @@ function ModuleSummaryOverview({
   metric: ModuleEntryMetric;
   tenorFilter: QuoteTenorFilter;
 }) {
-  if (id === "xrepo") return <XrepoSummaryOverview tenorFilter={tenorFilter} />;
+  if (id === "xrepo") return <XrepoFeatureSummaryOverview tenorFilter={tenorFilter} />;
 
   return (
     <div className="mt-2 space-y-2 border-t border-[color:var(--tk-color-border-divider-dark)] pt-2">
@@ -3127,64 +3139,6 @@ function ModuleSummaryOverview({
           label={metric.trendLabel ?? "趋势"}
         />
       ) : null}
-    </div>
-  );
-}
-
-function XrepoSummaryOverview({
-  tenorFilter,
-}: {
-  tenorFilter: QuoteTenorFilter;
-}) {
-  const section = leftSections.find(
-    (item): item is SummaryTableSection =>
-      item.layout === "table" && item.title === "XREPO",
-  );
-  const rows = filterRowsByQuoteTenor(
-    xrepoR001Rows(section?.rows ?? []),
-    tenorFilter,
-    [0],
-  ).slice(0, 5);
-
-  return (
-    <div className="mt-1 border-t border-[color:var(--tk-color-border-divider-dark)] pt-1">
-      <div className="tk-table-shell overflow-hidden rounded border">
-        <div className="grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] border-b border-[color:var(--tk-color-border-divider-dark)] bg-[var(--tk-color-surface-dark-soft)] px-1.5 py-0.5 text-micro leading-tight text-[color:var(--tk-color-text-tertiary)]">
-          <span className="truncate">合约</span>
-          <span className="truncate text-right">正量</span>
-          <span className="truncate text-right">正利率</span>
-          <span className="truncate text-right">逆利率</span>
-          <span className="truncate text-right">逆量</span>
-        </div>
-        {rows.length ? rows.map((row, index) => (
-          <div
-            key={`${row[0]}-${index}`}
-            className={`grid grid-cols-[1.1fr_0.85fr_0.7fr_0.7fr_0.9fr] items-center gap-1 border-b border-[color:var(--tk-color-border-divider-dark)] px-1.5 py-0.5 text-micro leading-tight last:border-b-0 ${
-              index === 0 ? "bg-[rgba(143,32,38,0.24)]" : ""
-            }`}
-          >
-            <span className="tk-strong truncate font-semibold">
-              {row[0]}
-            </span>
-            <span className="tk-number tk-strong truncate text-right">
-              {row[1]}
-            </span>
-            <span className="tk-number tk-negative truncate text-right font-semibold">
-              {row[2]}
-            </span>
-            <span className="tk-number tk-positive truncate text-right font-semibold">
-              {row[3]}
-            </span>
-            <span className="tk-number tk-strong truncate text-right">
-              {row[4]}
-            </span>
-          </div>
-        )) : (
-          <div className="px-2 py-3 text-center text-micro text-slate-500">
-            当前期限暂无报价
-          </div>
-        )}
-      </div>
     </div>
   );
 }
@@ -3320,43 +3274,7 @@ function getModuleEntryData(
     };
   }
 
-  if (id === "xrepo") {
-    const section = leftSections.find(
-      (item): item is SummaryTableSection =>
-        item.layout === "table" && item.title === "XREPO",
-    );
-    const rows = filterRowsByQuoteTenor(
-      xrepoR001Rows(section?.rows ?? []),
-      tenorFilter,
-      [0],
-    );
-    const first = rows[0];
-    const mini = rows.find((row) => row[0]?.includes("mini"));
-    const label = tenorFilter === "all" ? first?.[0] ?? "XREPO" : tenorFilter;
-    return {
-      summary: first
-        ? `${label} 正 ${first[1]}@${first[2]} · 逆 ${first[4]}@${first[3]}`
-        : `${label} 相关报价待更新`,
-      badge: label,
-      rows: rows.length ? [
-        [label, first ? `正 ${first[1]}@${first[2]} / 逆 ${first[4]}@${first[3]}` : "-"],
-        [mini?.[0] ?? `${label}-mini`, mini ? `正 ${mini[1]}@${mini[2]} / 逆 ${mini[4]}@${mini[3]}` : "-"],
-      ] : [
-        [label, "暂无报价"],
-      ],
-      chips: [
-        { label: "正利率", value: first?.[2] ?? "-", tone: "alert" },
-        { label: "逆利率", value: first?.[3] ?? "-", tone: "good" },
-        { label: "逆量", value: first?.[4] ?? "-", tone: "neutral" },
-      ],
-      detailRows: rows.length ? [
-        [label, first ? `正 ${first[1]} / 逆 ${first[4]}` : "-", first ? `${first[2]} / ${first[3]}` : undefined],
-        [mini?.[0] ?? `${label}-mini`, mini ? `正 ${mini[1]} / 逆 ${mini[4]}` : "-", mini ? `${mini[2]} / ${mini[3]}` : undefined],
-      ] : [
-        [label, "暂无报价"],
-      ],
-    };
-  }
+  if (id === "xrepo") return buildXrepoMetric(tenorFilter);
 
   if (id === "exchange-repo") {
     const section = leftSections.find(
@@ -3399,45 +3317,7 @@ function getModuleEntryData(
   }
 
   if (id === "ncd") {
-    const ncdPeriod = quoteTenorToNcdPeriod(tenorFilter);
-    const periodIndex = ncdPrimaryPeriods.indexOf(ncdPeriod as NcdPeriod);
-    const oneMonth = ncdTrendSeries.at(-1) ?? 0;
-    const threeMonth = ncdThreeMonthSeries.at(-1) ?? 0;
-    const oneYear = ncdOneYearSeries.at(-1) ?? 0;
-    const mappedValue =
-      ncdPeriod === "1M"
-        ? oneMonth
-        : ncdPeriod === "3M"
-          ? threeMonth
-          : ncdPeriod === "1Y"
-            ? oneYear
-            : oneMonth + Math.max(periodIndex, 0) * 0.025;
-    return {
-      summary:
-        tenorFilter === "all"
-          ? `1M ${oneMonth.toFixed(3)}% · 3M ${threeMonth.toFixed(3)}% · 1Y ${oneYear.toFixed(3)}%`
-          : `${tenorFilter} 映射 ${ncdPeriod} ${mappedValue.toFixed(3)}%`,
-      badge: tenorFilter === "all" ? "近14日" : ncdPeriod,
-      rows: tenorFilter === "all" ? [
-        ["1M", `${oneMonth.toFixed(3)}%`],
-        ["3M", `${threeMonth.toFixed(3)}%`],
-        ["1Y", `${oneYear.toFixed(3)}%`],
-      ] : [
-        [ncdPeriod, `${mappedValue.toFixed(3)}%`],
-        ["映射筛选", tenorFilter],
-      ],
-      chips: tenorFilter === "all" ? [
-        { label: "1M", value: `${oneMonth.toFixed(3)}%`, tone: "neutral" },
-        { label: "3M", value: `${threeMonth.toFixed(3)}%`, tone: "neutral" },
-        { label: "1Y", value: `${oneYear.toFixed(3)}%`, tone: "neutral" },
-      ] : [
-        { label: ncdPeriod, value: `${mappedValue.toFixed(3)}%`, tone: "neutral" },
-        { label: "口径", value: "一级", tone: "muted" },
-      ],
-      trendValues: ncdTrendSeries,
-      trendColor: chartPalette.amber,
-      trendLabel: `一级 ${ncdPeriod}`,
-    };
+    return getNcdModuleEntryData(tenorFilter);
   }
 
   if (id === "weighted-price") {
@@ -3673,7 +3553,7 @@ function ModuleEntryPreview({
   if (id === "xrepo") {
     return (
       <RichPreviewFrame heightClassName="h-full">
-        <XrepoFrame
+        <XrepoFeatureFrame
           embeddedPreview
           tenorFilter={tenorFilter}
           onOpen={onOpen}
@@ -3708,10 +3588,11 @@ function ModuleEntryPreview({
   if (id === "ncd") {
     return (
       <RichPreviewFrame heightClassName="h-full">
-        <LeftNcdCard
+        <NcdFeatureCard
           embeddedPreview
           tenorFilter={tenorFilter}
           onOpen={onOpen}
+          todayStr={TODAY_STR}
         />
       </RichPreviewFrame>
     );
@@ -5644,531 +5525,6 @@ function BigBankPriceFrame({
   );
 }
 
-function XrepoFrame({
-  embeddedPreview = false,
-  onOpen,
-  initialContract,
-  tenorFilter = "all",
-  onFlippedChange,
-  frameMode = "panel",
-  onOpenHistory,
-}: {
-  embeddedPreview?: boolean;
-  onOpen?: (options?: FrameOpenOptions) => void;
-  initialContract?: string;
-  tenorFilter?: QuoteTenorFilter;
-  onFlippedChange?: (flipped: boolean) => void;
-  frameMode?: FrameRenderMode;
-  onOpenHistory?: (contractName: string) => void;
-}) {
-  const [flippedContract, setFlippedContract] = useState<string | null>(initialContract ?? null);
-  useEffect(() => {
-    onFlippedChange?.(flippedContract !== null);
-  }, [flippedContract, onFlippedChange]);
-  const section = leftSections.find(
-    (item): item is SummaryTableSection =>
-      item.layout === "table" && item.title === "XREPO",
-  );
-  if (!section) return <ReservedModuleFrame />;
-  const rows = filterRowsByQuoteTenor(
-    xrepoR001Rows(section.rows),
-    tenorFilter,
-    [0],
-  );
-  const openInlineHistory = (
-    contractName = rows[0]?.[0] ?? (tenorFilter === "all" ? "R001" : tenorFilter),
-  ) => {
-    if (onOpenHistory) {
-      onOpenHistory(contractName);
-      return;
-    }
-    setFlippedContract(contractName);
-  };
-
-  return (
-    <section
-      className={
-        frameMode === "page"
-          ? "flex h-full min-h-0 flex-col overflow-hidden"
-          : "tk-panel flex h-full min-h-0 flex-col overflow-hidden border"
-      }
-    >
-      {embeddedPreview ? (
-        <IntegratedPreviewHeader
-          id="xrepo"
-          onOpen={onOpen}
-          tenorFilter={tenorFilter}
-          actions={
-            <button
-              className="tk-button tk-button-success"
-              type="button"
-            >
-              下载
-            </button>
-          }
-        />
-      ) : frameMode === "panel" ? (
-        <div className="tk-panel-header border-b px-4 py-2.5">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <div className="tk-title">XREPO</div>
-              <div className="tk-muted mt-1 text-xs">
-                匿名回购报价、发送与下载
-              </div>
-            </div>
-            <button
-              className="tk-button tk-button-success"
-              type="button"
-            >
-              下载
-            </button>
-          </div>
-        </div>
-      ) : null}
-      <div className={frameMode === "page" ? "min-h-0 flex-1" : "min-h-0 flex-1"}>
-        <div className={`tk-flip-card h-full min-h-0 ${flippedContract ? "is-flipped" : ""}`}>
-          <div className="tk-flip-card__inner h-full min-h-0">
-            <div className="tk-flip-card__face h-full min-h-0">
-              <StructuredTable
-                columns={section.columns}
-                rows={rows}
-                greenColumns={section.greenColumns}
-                redColumns={section.redColumns}
-                emphasisColumns={section.emphasisColumns}
-                buttonColumn={section.buttonColumn}
-                fitToWidth
-                columnWidths={section.columnWidths}
-                compact={embeddedPreview}
-                flush
-                scrollY
-                onRowClick={(row) => {
-                  const contractName = row[0] ?? "R001";
-                  if (embeddedPreview && onOpen) {
-                    onOpen({ contract: contractName });
-                    return;
-                  }
-                  openInlineHistory(contractName);
-                }}
-              />
-            </div>
-            <div className="tk-flip-card__face tk-flip-card__face--back h-full min-h-0">
-              <XrepoHistoryBack
-                contractName={
-                  flippedContract ?? rows[0]?.[0] ?? (tenorFilter === "all" ? "R001" : tenorFilter)
-                }
-                compact={embeddedPreview}
-                onBack={() => setFlippedContract(null)}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function XrepoHistoryBack({
-  contractName,
-  compact = false,
-  onBack,
-  standalone = false,
-}: {
-  contractName: string;
-  compact?: boolean;
-  onBack: () => void;
-  standalone?: boolean;
-}) {
-  return (
-    <div
-      className={`grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden ${
-        standalone ? "gap-2" : compact ? "" : "gap-2 p-3"
-      }`}
-      onClick={standalone ? undefined : onBack}
-    >
-      <div
-        className={`flex items-center justify-between gap-3 ${
-          standalone
-            ? "border-b border-[color:var(--tk-color-border-divider)] px-1 pb-2"
-            : "border-b border-[color:var(--tk-color-border-divider)] bg-[var(--tk-color-surface-dark-soft)]"
-        } ${
-          standalone ? "" : compact ? "px-2 py-0.5" : "rounded-md px-3 py-1"
-        }`}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="min-w-0">
-          <div className={`${compact ? "text-xs" : "text-sm"} font-semibold text-slate-100`}>
-            历史成交走势对比 - {contractName}
-          </div>
-          <div className="mt-0.5 text-micro text-slate-500">
-            当前合约 / 品种对比 / 价差柱
-          </div>
-        </div>
-        <button
-          className={`tk-button ${compact ? "px-1.5 py-0.5 text-micro" : "px-2.5 py-0.5 text-xs"}`}
-          onClick={(event) => {
-            event.stopPropagation();
-            onBack();
-          }}
-          type="button"
-        >
-          返回
-        </button>
-      </div>
-      <div
-        className={`h-full min-h-0 overflow-hidden ${
-          standalone ? "" : compact ? "" : "rounded-md"
-        }`}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <XrepoInlineHistoryChart contractName={contractName} compact={compact} />
-      </div>
-    </div>
-  );
-}
-
-const xrepoCompareAnchors: Record<SpreadProduct, number> = {
-  dr001: 1.26,
-  dr007: 1.31,
-  gc007: 1.36,
-  r007: 1.39,
-};
-
-function xrepoHistoryPointCount(range: XrepoHistoryRange, compact: boolean) {
-  return getXrepoHistoryPointCount(range, compact);
-}
-
-function buildXrepoHistoryLabels(range: XrepoHistoryRange, count: number) {
-  return range === "today"
-    ? buildXrepoTodayLabels(count)
-    : generateTradingDates(TODAY_STR, count);
-}
-
-function xrepoCompareLabel(compareProduct: CompareProduct) {
-  return (
-    compareProductOptions.find((option) => option.id === compareProduct)
-      ?.label ?? "不对比"
-  );
-}
-
-function buildXrepoHistoryComparison(
-  contractName: string,
-  count: number,
-  compareProduct: CompareProduct,
-  range: XrepoHistoryRange,
-) {
-  const seed = contractName
-    .split("")
-    .reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  const labels = buildXrepoHistoryLabels(range, count);
-  const rangeSeed =
-    range === "today" ? 7 : range === "5d" ? 11 : range === "1m" ? 29 : 61;
-  const drift = range === "today" ? 0.008 : 0.014;
-  const compareDrift = range === "today" ? 0.007 : 0.012;
-  const anchor = contractName.includes("mini")
-    ? 1.38
-    : 1.34 + (seed % 8) * 0.006;
-  const current = randomWalk(anchor, count, drift, seed + rangeSeed).map(
-    (value, index) =>
-      Number(
-        (
-          value +
-          (range === "today" ? Math.sin((index + seed) * 0.72) * 0.004 : 0)
-        ).toFixed(4),
-      ),
-  );
-  const compare =
-    compareProduct === "none"
-      ? null
-      : randomWalk(
-          xrepoCompareAnchors[compareProduct] + (seed % 3) * 0.004,
-          count,
-          compareDrift,
-          seed + rangeSeed + compareProduct.length * 17,
-        ).map((value, index) =>
-          Number(
-            (
-              value +
-              Math.sin((index + seed) * (range === "today" ? 0.82 : 0.55)) *
-                (range === "today" ? 0.004 : 0.006)
-            ).toFixed(4),
-          ),
-        );
-  const spread = compare
-    ? current.map((value, index) =>
-        Number(((value - compare[index]) * 100).toFixed(1)),
-      )
-    : null;
-  const volumeBase = contractName.includes("mini") ? 72 : 680;
-  const volumeSwing = contractName.includes("mini") ? 18 : 145;
-  const volumeScale = range === "today" ? 0.72 : 1;
-  const volume = randomWalk(
-    volumeBase * volumeScale,
-    count,
-    volumeSwing * volumeScale,
-    seed + 9,
-  ).map((value) => Math.max(8, Math.round(value)));
-  return { labels, current, compare, spread, volume };
-}
-
-function XrepoInlineHistoryChart({
-  contractName,
-  compact = false,
-}: {
-  contractName: string;
-  compact?: boolean;
-}) {
-  const [compareProduct, setCompareProduct] =
-    useState<CompareProduct>("dr007");
-  const [range, setRange] = useState<XrepoHistoryRange>("1m");
-  const pointCount = xrepoHistoryPointCount(range, compact);
-  const [data, setData] = useState(() =>
-    buildXrepoHistoryComparison(contractName, pointCount, compareProduct, range),
-  );
-  useEffect(() => {
-    setData(buildXrepoHistoryComparison(contractName, pointCount, compareProduct, range));
-  }, [contractName, pointCount, compareProduct, range]);
-  const compareLabel = xrepoCompareLabel(compareProduct);
-  const rateValues = data.compare
-    ? [...data.current, ...data.compare]
-    : data.current;
-  const { min: minRate, max: maxRate } = buildChartDomain(rateValues, {
-    paddingRatio: 0.12,
-    minSpan: 0.08,
-    clampMin: 0,
-  });
-  const maxVolume = Math.max(...data.volume, 1);
-  const maxSpread = Math.max(
-    ...(data.spread ?? [0]).map((value) => Math.abs(value)),
-    1,
-  );
-  const width = 640;
-  const height = 204;
-  const { tooltipState, containerRef, handleMouseMove, handleMouseLeave } =
-    useChartTooltip(data.labels.length);
-  const tooltipIndex = tooltipState?.index ?? null;
-  const xAxisLabels = buildAxisTickLabels(data.labels, compact ? 5 : 7);
-
-  return (
-    <div
-      className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-2 bg-[var(--tk-color-surface-dark-deep)]"
-      data-xrepo-history-chart
-    >
-      <div
-        className="flex items-start justify-between gap-2 px-2 pt-1 text-micro"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex min-w-0 flex-wrap items-center gap-2 rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-2 py-1 text-slate-500">
-          <LegendDot color={chartPalette.blue} label={contractName} />
-          {data.compare ? (
-            <LegendDot color={chartPalette.violet} label={compareLabel} />
-          ) : null}
-          <LegendDot
-            color={data.spread ? chartPalette.green : "rgba(94,163,255,0.32)"}
-            label={data.spread ? "价差" : "成交量"}
-          />
-        </div>
-        <div className="flex shrink-0 items-center gap-1 rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-soft)] px-1.5 py-1">
-          <label className="flex items-center gap-1 whitespace-nowrap text-slate-400">
-            <span>对比</span>
-            <select
-              className="h-5 rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-page)] px-1 text-micro text-slate-100 outline-none"
-              value={compareProduct}
-              onChange={(event) =>
-                setCompareProduct(event.target.value as CompareProduct)
-              }
-            >
-              {compareProductOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="flex items-center gap-0.5">
-            {XREPO_HISTORY_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                className={miniChipClass(tab.id === range)}
-                onClick={() => setRange(tab.id as XrepoHistoryRange)}
-                type="button"
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="grid h-full min-h-0 grid-cols-[3.4rem_minmax(0,1fr)] px-2">
-        <div className="flex flex-col justify-between pb-6 pr-2 pt-2 text-right text-micro text-slate-500">
-          <div className="font-medium text-slate-400">利率(%)</div>
-          {buildLinearTicks(minRate, maxRate, 4).map((tick) => (
-            <div key={tick}>{tick}</div>
-          ))}
-        </div>
-        <div
-          ref={containerRef}
-          className="relative min-h-0 cursor-crosshair overflow-hidden rounded border border-dashed border-[color:var(--tk-color-border-panel)]"
-        >
-          {[0, 1, 2, 3].map((index) => (
-            <div
-              key={index}
-              className="absolute inset-x-0 border-t border-[color:var(--tk-color-border-divider)] opacity-70"
-              style={{ top: `${(index / 3) * 100}%` }}
-            />
-          ))}
-          {data.spread ? (
-            <div className="absolute inset-x-1 bottom-6 top-[58%] flex items-stretch gap-[2px]">
-              <div className="pointer-events-none absolute left-0 right-0 top-1/2 border-t border-dashed border-[color:var(--tk-color-border-divider)]" />
-              {data.spread.map((value, index) => {
-                const barHeight = Math.max(
-                  8,
-                  (Math.abs(value) / maxSpread) * 92,
-                );
-                return (
-                  <div
-                    key={`${data.labels[index]}-spread`}
-                    className="relative min-w-0 flex-1"
-                  >
-                    <div
-                      className={`absolute left-0 right-0 rounded-sm ${
-                        value >= 0
-                          ? "bg-[rgba(248,113,113,0.72)]"
-                          : "bg-[rgba(16,185,129,0.72)]"
-                      }`}
-                      style={{
-                        height: `${barHeight}%`,
-                        ...(value >= 0
-                          ? { bottom: "50%" }
-                          : { top: "50%" }),
-                      }}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="absolute inset-x-1 bottom-6 top-1 flex items-end gap-[2px]">
-              {data.volume.map((value, index) => (
-                <div
-                  key={`${data.labels[index]}-volume`}
-                  className="min-w-0 flex-1 rounded-t-[2px] bg-[rgba(94,163,255,0.28)]"
-                  style={{ height: `${Math.max(10, (value / maxVolume) * 88)}%` }}
-                />
-              ))}
-            </div>
-          )}
-          <svg
-            className="absolute inset-x-1 bottom-6 top-1 h-[calc(100%-1.75rem)] w-[calc(100%-0.5rem)]"
-            preserveAspectRatio="none"
-            viewBox={`0 0 ${width} ${height}`}
-          >
-            {data.compare ? (
-              <path
-                d={buildLinePath(data.compare, width, height, minRate, maxRate)}
-                fill="none"
-                stroke={chartPalette.violet}
-                strokeDasharray="6 5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-              />
-            ) : null}
-            <path
-              d={buildLinePath(data.current, width, height, minRate, maxRate)}
-              fill="none"
-              stroke={chartPalette.blue}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2.3"
-            />
-          </svg>
-          {tooltipIndex !== null ? (
-            <div
-              className="pointer-events-none absolute bottom-6 top-1 w-px bg-[var(--tk-color-brand-primary)]"
-              style={{
-                left: `${(tooltipIndex / (data.labels.length - 1)) * 100}%`,
-              }}
-            />
-          ) : null}
-          <div className="absolute inset-x-0 bottom-0 h-5">
-            {xAxisLabels.map((label, index) =>
-              label ? (
-                <span
-                  key={`${label}-${index}`}
-                  className={`absolute top-0 text-micro text-slate-500 ${
-                    index === 0
-                      ? "translate-x-0"
-                      : index === data.labels.length - 1
-                        ? "-translate-x-full"
-                        : "-translate-x-1/2"
-                  }`}
-                  style={{ left: `${(index / (data.labels.length - 1)) * 100}%` }}
-                >
-                  {label}
-                </span>
-              ) : null,
-            )}
-          </div>
-          <ChartHoverLayer
-            onMouseLeave={handleMouseLeave}
-            onMouseMove={handleMouseMove}
-          />
-          {tooltipState && tooltipIndex !== null ? (
-            <ChartTooltip
-              clientX={tooltipState.clientX}
-              clientY={tooltipState.clientY}
-            >
-              <div className="mb-1 font-semibold text-slate-200">
-                {data.labels[tooltipIndex]}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: chartPalette.blue }} />
-                <span className="text-slate-400">当前</span>
-                <span className="font-semibold text-slate-100">
-                  {data.current[tooltipIndex].toFixed(4)}%
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                {data.compare ? (
-                  <>
-                    <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: chartPalette.violet }} />
-                    <span className="text-slate-400">{compareLabel}</span>
-                    <span className="font-semibold text-slate-100">
-                      {data.compare[tooltipIndex].toFixed(4)}%
-                    </span>
-                  </>
-                ) : null}
-              </div>
-              {data.spread ? (
-                <div className="text-slate-400">
-                  价差 <span className="font-semibold text-slate-100">{data.spread[tooltipIndex]}bp</span>
-                </div>
-              ) : (
-                <div className="text-slate-400">
-                  成交量 <span className="font-semibold text-slate-100">{data.volume[tooltipIndex]}亿</span>
-                </div>
-              )}
-            </ChartTooltip>
-          ) : null}
-        </div>
-      </div>
-      <div className="flex items-center justify-between px-2 pb-1 text-micro text-slate-500">
-        <span>点击返回 XRepo 表格</span>
-        <span>
-          {range === "today"
-            ? "当日"
-            : range === "5d"
-              ? "近5日"
-              : range === "1m"
-                ? "近1M"
-                : "近半年"}{" "}
-          / {compareLabel}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 function GlobalFilterFrame() {
   return (
     <div className="tk-panel grid h-full min-h-0 place-items-center border">
@@ -6536,7 +5892,7 @@ function LeftSummaryPanel() {
               />
             </div>
             <div className="min-h-0 flex-1 overflow-hidden">
-              <LeftNcdCard />
+              <NcdFeatureCard todayStr={TODAY_STR} />
             </div>
           </div>
         ) : null}
@@ -6550,238 +5906,6 @@ function LeftSummaryPanel() {
         onReset={resetDraftRows}
         onSave={saveBankRateRows}
       />
-    </>
-  );
-}
-
-function LeftNcdCard({
-  embeddedPreview = false,
-  onOpen,
-  tenorFilter = "all",
-}: {
-  embeddedPreview?: boolean;
-  onOpen?: () => void;
-  tenorFilter?: QuoteTenorFilter;
-}) {
-  const [market, setMarket] = useState<"primary" | "secondary">("primary");
-  const [mode, setMode] = useState<"trend" | "table">("trend");
-  const [expanded, setExpanded] = useState(false);
-  const filteredPeriod = quoteTenorToNcdPeriod(tenorFilter);
-
-  const header = (onClose?: () => void) => (
-    <div className="flex items-center gap-2">
-      <div className="text-sm font-semibold tracking-[0.02em] text-slate-50">
-        NCD
-      </div>
-      <div className="flex items-center gap-1">
-        <button
-          className={auxTabClass(market === "primary")}
-          onClick={() => setMarket("primary")}
-          type="button"
-        >
-          一级
-        </button>
-        <button
-          className={auxTabClass(market === "secondary")}
-          onClick={() => setMarket("secondary")}
-          type="button"
-        >
-          二级
-        </button>
-      </div>
-      <div className="ml-auto flex items-center gap-1">
-        <button
-          className={auxTabClass(mode === "trend")}
-          onClick={() => setMode("trend")}
-          type="button"
-        >
-          趋势图
-        </button>
-        <button
-          className={auxTabClass(mode === "table")}
-          onClick={() => setMode("table")}
-          type="button"
-        >
-          表格
-        </button>
-        {onClose ? (
-          <button
-            onClick={onClose}
-            type="button"
-            className="ml-1 rounded p-0.5 text-slate-400 hover:bg-[var(--tk-color-surface-selected)] hover:text-slate-100"
-            title="收起"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path
-                d="M2 2l4 4M2 2h3M2 2v3M12 12l-4-4M12 12H9M12 12V9"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        ) : (
-          <button
-            onClick={() => setExpanded(true)}
-            type="button"
-            className="ml-1 rounded p-0.5 text-slate-400 hover:bg-[var(--tk-color-surface-selected)] hover:text-slate-100"
-            title="展开"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path
-                d="M5 2H2v3M2 2l4 4M9 12h3V9M12 12l-4-4"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        )}
-      </div>
-    </div>
-  );
-
-  const body =
-    market === "primary" ? (
-      mode === "trend" ? (
-        <NcdPrimaryTrendPanel period={filteredPeriod} />
-      ) : (
-        <NcdPrimaryTable initialPeriod={filteredPeriod} />
-      )
-    ) : mode === "trend" ? (
-      <NcdTrendPanel compact />
-    ) : (
-      <div className={embeddedPreview ? "min-h-0" : "h-full min-h-0"}>
-        <StructuredTable
-          columns={["期限", "最新", "涨跌bp", "参考收益", "更新时间"]}
-          rows={ncdTableRows}
-          greenColumns={[1]}
-          deltaColumns={[2]}
-          fitToWidth
-          columnWidths={["14%", "18%", "16%", "22%", "30%"]}
-          compact
-          flush={false}
-          adaptiveHeight={embeddedPreview}
-          scrollY={!embeddedPreview}
-        />
-      </div>
-    );
-
-  return (
-    <>
-      <section
-        className={`tk-panel flex min-h-0 flex-col border ${
-          embeddedPreview ? "h-full overflow-hidden" : "h-full overflow-hidden"
-        }`}
-      >
-        {embeddedPreview ? (
-          <IntegratedPreviewHeader
-            id="ncd"
-            onOpen={onOpen}
-            tenorFilter={tenorFilter}
-            actions={
-              <div className="flex items-center gap-1">
-                <button
-                  className={auxTabClass(market === "primary")}
-                  onClick={() => setMarket("primary")}
-                  type="button"
-                >
-                  一级
-                </button>
-                <button
-                  className={auxTabClass(market === "secondary")}
-                  onClick={() => setMarket("secondary")}
-                  type="button"
-                >
-                  二级
-                </button>
-                <button
-                  className={auxTabClass(mode === "trend")}
-                  onClick={() => setMode("trend")}
-                  type="button"
-                >
-                  趋势图
-                </button>
-                <button
-                  className={auxTabClass(mode === "table")}
-                  onClick={() => setMode("table")}
-                  type="button"
-                >
-                  表格
-                </button>
-                <button
-                  onClick={() => setExpanded(true)}
-                  type="button"
-                  className="rounded p-0.5 text-slate-400 hover:bg-[var(--tk-color-surface-selected)] hover:text-slate-100"
-                  title="展开"
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path
-                      d="M5 2H2v3M2 2l4 4M9 12h3V9M12 12l-4-4"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-              </div>
-            }
-          />
-        ) : (
-          <div className="tk-panel-header border-b px-4 py-2.5">
-            {header()}
-          </div>
-        )}
-        <div
-          className={
-            embeddedPreview
-              ? "flex min-h-0 flex-1 flex-col overflow-hidden p-2"
-              : "flex min-h-0 flex-1 flex-col overflow-hidden p-2"
-          }
-        >
-          {body}
-        </div>
-      </section>
-      {expanded && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(17,24,39,0.32)]"
-          onClick={() => setExpanded(false)}
-        >
-          <div
-            className="relative flex h-[85vh] w-[90vw] max-w-[1400px] flex-col overflow-hidden rounded-2xl border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] shadow-[0_12px_28px_rgba(17,24,39,0.12)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setExpanded(false)}
-              type="button"
-              className="absolute right-3 top-3 z-10 rounded p-1 text-slate-400 hover:bg-[var(--tk-color-surface-selected)] hover:text-slate-100"
-              title="收起"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M2 2l4 4M2 2h3M2 2v3M12 12l-4-4M12 12H9M12 12V9"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-            <div className="min-h-0 flex-1 overflow-hidden p-3">
-              {market === "primary" && mode === "table" ? (
-                <NcdPrimaryExpandedTable />
-              ) : market === "primary" && mode === "trend" ? (
-                <NcdExpandedDualView period={filteredPeriod} />
-              ) : (
-                body
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
@@ -7040,7 +6164,7 @@ function LeftInfoColumn({
         />
       </div>
       <div className="min-h-0 flex-[1.1]">
-        <XrepoFrame
+        <XrepoFeatureFrame
           embeddedPreview
           onOpen={(options) => onOpenFrame("xrepo", options)}
         />
@@ -7108,7 +6232,7 @@ function RightChartColumn() {
         />
       </div>
       <div className="min-h-0 flex-[0.8]">
-        <LeftNcdCard embeddedPreview />
+        <NcdFeatureCard embeddedPreview todayStr={TODAY_STR} />
       </div>
     </aside>
   );
