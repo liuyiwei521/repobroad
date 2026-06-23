@@ -44,6 +44,15 @@ import {
   quoteTenorDisplayLabel,
   toggleMultiSelect,
 } from "./dashboardUtils.js";
+import { useColumnLayout } from "./hooks/useColumnLayout";
+import { useCenterSplit } from "./hooks/useCenterSplit";
+import { ColumnSplitter as ShellColumnSplitter } from "./components/shell/ColumnSplitter";
+import { FloatingBall as ShellFloatingBall } from "./components/shell/FloatingBall";
+import { PageFrame as ShellPageFrame } from "./components/shell/PageFrame";
+import { BankRateEditorModal as ShellBankRateEditorModal } from "./components/dialogs/BankRateEditorModal";
+import { TradingNoticeEditorModal as ShellTradingNoticeEditorModal } from "./components/dialogs/TradingNoticeEditorModal";
+import { QuoteChatDialog as ShellQuoteChatDialog } from "./components/dialogs/QuoteChatDialog";
+import { QuoteEditorModal as ShellQuoteEditorModal } from "./components/dialogs/QuoteEditorModal";
 
 type TrendMode = "intraday" | "history" | "comparison";
 type SentimentTab = "realtime" | "trend";
@@ -2123,102 +2132,10 @@ const sentimentRealtimeData: SentimentPoint[] = (() => {
   }));
 })();
 
-function FloatingBall() {
-  const [pos, setPos] = useState({
-    x: window.innerWidth - 80,
-    y: window.innerHeight - 80,
-  });
-  const dragging = useRef(false);
-  const offset = useRef({ x: 0, y: 0 });
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    dragging.current = true;
-    offset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  };
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragging.current) return;
-    setPos({
-      x: e.clientX - offset.current.x,
-      y: e.clientY - offset.current.y,
-    });
-  };
-
-  const onPointerUp = () => {
-    dragging.current = false;
-  };
-
-  return (
-    <div
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      style={{ left: pos.x, top: pos.y }}
-      className="tdx-terminal-float fixed z-[30] flex h-14 w-14 cursor-grab select-none items-center justify-center active:cursor-grabbing"
-    >
-      <span className="tk-number text-lg font-bold">42</span>
-    </div>
-  );
-}
-
-const DEFAULT_COLUMN_RATIOS: [number, number, number] = [22, 45, 33];
-const COLUMN_RATIOS_KEY = "boardColumnRatios.v6";
-const COLUMN_MIN: [number, number, number] = [16, 32, 22];
-
-function clampColumns(
-  next: [number, number, number],
-): [number, number, number] {
-  let [l, m, r] = next;
-  // 让总和先归一为 100
-  const sum = l + m + r;
-  if (sum <= 0) return DEFAULT_COLUMN_RATIOS;
-  l = (l / sum) * 100;
-  m = (m / sum) * 100;
-  r = (r / sum) * 100;
-  // 应用最小值约束：缺多少从最大的那一栏借
-  const mins = COLUMN_MIN;
-  const arr = [l, m, r];
-  for (let i = 0; i < 3; i++) {
-    if (arr[i] < mins[i]) {
-      const need = mins[i] - arr[i];
-      arr[i] = mins[i];
-      const others = [0, 1, 2]
-        .filter((j) => j !== i)
-        .sort((a, b) => arr[b] - arr[a]);
-      let remaining = need;
-      for (const j of others) {
-        const avail = arr[j] - mins[j];
-        const take = Math.min(avail, remaining);
-        arr[j] -= take;
-        remaining -= take;
-        if (remaining <= 0) break;
-      }
-    }
-  }
-  return [arr[0], arr[1], arr[2]];
-}
-
 function App() {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [columns, setColumns] = useState<[number, number, number]>(() => {
-    if (typeof window === "undefined") return DEFAULT_COLUMN_RATIOS;
-    try {
-      const raw = window.localStorage.getItem(COLUMN_RATIOS_KEY);
-      if (!raw) return DEFAULT_COLUMN_RATIOS;
-      const parsed = JSON.parse(raw);
-      if (
-        Array.isArray(parsed) &&
-        parsed.length === 3 &&
-        parsed.every((v) => typeof v === "number" && Number.isFinite(v))
-      ) {
-        return clampColumns([parsed[0], parsed[1], parsed[2]]);
-      }
-    } catch {
-      /* ignore */
-    }
-    return DEFAULT_COLUMN_RATIOS;
-  });
+  const { mainRef, resetColumns, startDragSplitter, gridTemplate } =
+    useColumnLayout();
   const [activeFrame, setActiveFrame] = useState<ActiveFrame>(null);
   const [overlayProduct, setOverlayProduct] = useState<OverlayProduct>("none");
   const [historyRange, setHistoryRange] = useState<HistoryRange>("5d");
@@ -2228,7 +2145,6 @@ function App() {
     useState<AnonymousTrendProduct>("r001");
   const [quoteTenorFilter, setQuoteTenorFilter] =
     useState<QuoteTenorFilter>("all");
-  const mainRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -2237,64 +2153,6 @@ function App() {
 
     return () => window.clearInterval(timer);
   }, []);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(COLUMN_RATIOS_KEY, JSON.stringify(columns));
-    } catch {
-      /* ignore */
-    }
-  }, [columns]);
-
-  function startDragSplitter(
-    event: React.MouseEvent<HTMLDivElement>,
-    boundary: 0 | 1,
-  ) {
-    event.preventDefault();
-    const container = mainRef.current;
-    if (!container) return;
-    const startX = event.clientX;
-    const startCols: [number, number, number] = [...columns] as [
-      number,
-      number,
-      number,
-    ];
-    const totalWidth = container.getBoundingClientRect().width;
-    if (totalWidth <= 0) return;
-
-    function onMove(ev: MouseEvent) {
-      const deltaPct = ((ev.clientX - startX) / totalWidth) * 100;
-      const next: [number, number, number] = [...startCols] as [
-        number,
-        number,
-        number,
-      ];
-      if (boundary === 0) {
-        next[0] = startCols[0] + deltaPct;
-        next[1] = startCols[1] - deltaPct;
-      } else {
-        next[1] = startCols[1] + deltaPct;
-        next[2] = startCols[2] - deltaPct;
-      }
-      setColumns(clampColumns(next));
-    }
-
-    function onUp() {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-      document.body.style.userSelect = "";
-      document.body.style.cursor = "";
-    }
-
-    document.body.style.userSelect = "none";
-    document.body.style.cursor = "col-resize";
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-  }
-
-  function resetColumns() {
-    setColumns(DEFAULT_COLUMN_RATIOS);
-  }
 
   function openFrame(entry: ModuleEntryConfig, options: FrameOpenOptions = {}) {
     setActiveFrame({ id: entry.id, title: entry.title, ...options });
@@ -2305,8 +2163,6 @@ function App() {
     if (!entry) return;
     openFrame(entry, options);
   }
-
-  const gridTemplate = `${columns[0]}% 6px ${columns[1]}% 6px ${columns[2]}%`;
   return (
     <div className="tk-app-shell h-screen w-screen overflow-hidden">
       <div className="flex h-full flex-col">
@@ -2320,17 +2176,17 @@ function App() {
           style={{ gridTemplateColumns: gridTemplate, columnGap: 0 }}
         >
           <LeftInfoColumn onOpenFrame={openFrameById} />
-          <ColumnSplitter onMouseDown={(e) => startDragSplitter(e, 0)} />
+          <ShellColumnSplitter onMouseDown={(e) => startDragSplitter(e, 0)} />
           <CenterColumn
             tenorFilter={quoteTenorFilter}
             onTenorFilterChange={setQuoteTenorFilter}
           />
-          <ColumnSplitter onMouseDown={(e) => startDragSplitter(e, 1)} />
+          <ShellColumnSplitter onMouseDown={(e) => startDragSplitter(e, 1)} />
           <RightChartColumn />
         </main>
       </div>
       {activeFrame ? (
-        <PageFrame
+        <ShellPageFrame
           title={activeFrame.title}
           onClose={() => setActiveFrame(null)}
         >
@@ -2408,9 +2264,9 @@ function App() {
           ) : (
             <ReservedModuleFrame />
           )}
-        </PageFrame>
+        </ShellPageFrame>
       ) : null}
-      <FloatingBall />
+      <ShellFloatingBall />
     </div>
   );
 }
@@ -4811,7 +4667,7 @@ function TopBar({
           <StatusBadgeWithPopover statusText={DEFAULT_TRADING_STATUS_TEXT} />
         </div>
       </div>
-      <TradingNoticeEditorModal
+      <ShellTradingNoticeEditorModal
         open={noticeEditorOpen}
         value={tradingNotice}
         onClose={() => setNoticeEditorOpen(false)}
@@ -6381,7 +6237,7 @@ function BigBankPriceFrame({
           </div>
         </div>
       </section>
-      <BankRateEditorModal
+      <ShellBankRateEditorModal
         open={isBankEditorOpen}
         rows={draftBankRateRows}
         onChange={updateDraftRow}
@@ -7359,7 +7215,7 @@ function LeftSummaryPanel() {
           </div>
         ) : null}
       </aside>
-      <BankRateEditorModal
+      <ShellBankRateEditorModal
         open={isBankEditorOpen}
         rows={draftBankRateRows}
         onChange={updateDraftRow}
@@ -9310,11 +9166,11 @@ function InstitutionPeriodMatrixCard() {
         </div>
       </div>
       {open ? (
-        <PageFrame title="机构分期限统计大图" onClose={() => setOpen(false)}>
+        <ShellPageFrame title="机构分期限统计大图" onClose={() => setOpen(false)}>
           <div className="tk-panel h-full min-h-0 border p-3">
             <CfetsInstPanel initialPeriod={period} initialMetric={metricKey} />
           </div>
-        </PageFrame>
+        </ShellPageFrame>
       ) : null}
     </>
   );
@@ -9587,9 +9443,9 @@ function CombinedDemandMatrixCard() {
         </div>
       </div>
       {detailOpen ? (
-        <PageFrame title="IMS 指令" onClose={() => setDetailOpen(false)}>
+        <ShellPageFrame title="IMS 指令" onClose={() => setDetailOpen(false)}>
           <DemandGapDetailFrame onClose={() => setDetailOpen(false)} />
-        </PageFrame>
+        </ShellPageFrame>
       ) : null}
     </>
   );
@@ -10691,9 +10547,6 @@ function LeftInfoColumn({
   );
 }
 
-const CENTER_SPLIT_KEY = "centerSplitRatio.v1";
-const DEFAULT_CENTER_TOP = 78;
-
 function CenterColumn({
   tenorFilter,
   onTenorFilterChange,
@@ -10701,43 +10554,7 @@ function CenterColumn({
   tenorFilter: QuoteTenorFilter;
   onTenorFilterChange: (tenor: QuoteTenorFilter) => void;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [topPct, setTopPct] = useState(() => {
-    try {
-      const saved = localStorage.getItem(CENTER_SPLIT_KEY);
-      if (saved) {
-        const n = Number(saved);
-        if (n >= 30 && n <= 90) return n;
-      }
-    } catch {}
-    return DEFAULT_CENTER_TOP;
-  });
-
-  useEffect(() => {
-    try { localStorage.setItem(CENTER_SPLIT_KEY, String(topPct)); } catch {}
-  }, [topPct]);
-
-  function startRowDrag(e: React.MouseEvent) {
-    e.preventDefault();
-    const container = containerRef.current;
-    if (!container) return;
-    function onMove(ev: MouseEvent) {
-      const rect = container!.getBoundingClientRect();
-      if (rect.height <= 0) return;
-      const pct = ((ev.clientY - rect.top) / rect.height) * 100;
-      setTopPct(Math.max(30, Math.min(90, pct)));
-    }
-    function onUp() {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-      document.body.style.userSelect = "";
-      document.body.style.cursor = "";
-    }
-    document.body.style.userSelect = "none";
-    document.body.style.cursor = "row-resize";
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-  }
+  const { containerRef, topPct, startRowDrag } = useCenterSplit();
 
   return (
     <div ref={containerRef} className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden px-1">
@@ -11222,7 +11039,7 @@ function MainQuoteBoard({
             })}
         </div>
       </section>
-      <QuoteEditorModal
+      <ShellQuoteEditorModal
         row={editingRow}
         draft={editingDraft}
         onChange={(field, value) =>
@@ -11231,7 +11048,7 @@ function MainQuoteBoard({
         onClose={() => setEditingRow(null)}
         onSave={saveEditor}
       />
-      <QuoteChatDialog
+      <ShellQuoteChatDialog
         context={chatContext}
         onClose={() => setChatContext(null)}
       />
