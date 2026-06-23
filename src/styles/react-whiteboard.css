@@ -13,146 +13,146 @@
    1. CUSTOM PROPERTY OVERRIDES
    ═══════════════════════════════════════════════════════════════════ */
 :root {
-  /* ── page / panel backgrounds ────────────────────────────────── */
-  --tdx-bg-page: #f4f6f8;
+  /* ── page / panel backgrounds (tdx-pui white: --bkColorContent/#fff, --bkColorTag/#f5f5f5) ── */
+  --tdx-bg-page: #ffffff;
   --tdx-bg-panel: #ffffff;
-  --tdx-bg-header: #f3f5f8;
+  --tdx-bg-header: #f5f5f5;
   --tdx-bg-control: #ffffff;
-  --tdx-bg-control-hover: #e7f1ff;
-  --tdx-bg-row-hover: #eef2f7;
+  --tdx-bg-control-hover: #f5f5f5;
+  --tdx-bg-row-hover: #f5f5f5;
 
-  /* ── borders ─────────────────────────────────────────────────── */
-  --tdx-border: #d8dde5;
-  --tdx-border-weak: #e3e7ed;
-  --tdx-border-active: #0067d9;
-  --tdx-scrollbar-track: #eef2f7;
-  --tdx-scrollbar-thumb: #c6d0de;
-  --tdx-scrollbar-thumb-hover: #aebdd1;
+  /* ── borders (tdx-pui: --borderColorBase/#ddd, --dividerColorBase/#eee) ── */
+  --tdx-border: #dddddd;
+  --tdx-border-weak: #eeeeee;
+  --tdx-border-active: #b42f32;
+  --tdx-scrollbar-track: #f5f5f5;
+  --tdx-scrollbar-thumb: #cccccc;
+  --tdx-scrollbar-thumb-hover: #aaaaaa;
 
-  /* ── text ─────────────────────────────────────────────────────── */
-  --tdx-text-main: #1f2933;
-  --tdx-text-muted: #6b7280;
-  --tdx-text-heading: #111827;
+  /* ── text (tdx-pui: --colorBaseText/#333, --colorTextImportant/#666, --colorTextSecondary/#999) ── */
+  --tdx-text-main: #333333;
+  --tdx-text-muted: #999999;
+  --tdx-text-heading: #333333;
   --tdx-text-inverse: #ffffff;
-  --tdx-text-disabled: rgba(31, 41, 55, 0.42);
+  --tdx-text-disabled: #cccccc;
 
-  /* ── semantic (brand = blue in light mode, not red) ──────────── */
-  --tdx-red: #e7353a;
-  --tdx-red-hover: #ff494e;
-  --tdx-red-deep: #c91f32;
-  --tdx-green: #00a870;
-  --tdx-yellow: #ff8a00;
-  --tdx-blue: #1872f6;
-  --tdx-purple: #7a4aa1;
-  --tdx-orange: #c76a25;
+  /* ── semantic (tdx-pui: --brandPrimary/#b42f32, --colorTextUp/#f01414, --colorTextDown/#14a014) ── */
+  --tdx-red: #f01414;
+  --tdx-red-hover: #ff3333;
+  --tdx-red-deep: #b42f32;
+  --tdx-green: #14a014;
+  --tdx-yellow: #fa7602;
+  --tdx-blue: #4691f7;
+  --tdx-purple: #7c75cb;
+  --tdx-orange: #fa7602;
 
-  /* ── font stack (match reference: PingFang + tabular numbers) ── */
-  --tdx-font-family-base: "PingFang SC", "Microsoft YaHei", -apple-system, "Segoe UI", sans-serif;
-  --tdx-font-family-number: "DIN Alternate", "Helvetica Neue", Arial, sans-serif;
+  /* ── font stack (tdx-pui: --fontFamilyNormal / --fontFamilyNumber) ── */
+  --tdx-font-family-base: "Microsoft YaHei", 微软雅黑, Arial, 宋体, sans-serif;
+  --tdx-font-family-number: Arial, "Helvetica Neue", sans-serif;
 
-  /* ── density: match reference ~28px rows, 12px base ──────────── */
+  /* ── density (tdx-pui: --fontSizeBase/14px, --fontSizeCaption/12px, --fontSizeHead/16px) ── */
   --tdx-font-size-xs: 12px;
   --tdx-font-size-sm: 13px;
-  --tdx-font-size-md: 13px;
-  --tdx-font-size-lg: 14px;
+  --tdx-font-size-md: 14px;
+  --tdx-font-size-lg: 16px;
   --tdx-font-size-micro: 10px;
   --tdx-font-size-mini: 11px;
   --tdx-line-height-tight: 16px;
-  --tdx-line-height-row: 28px;
-  --tdx-line-height-header: 28px;
+  --tdx-line-height-row: 32px;
+  --tdx-line-height-header: 32px;
 
-  /* ── spacing: tighter to match terminal density ──────────────── */
-  --tdx-space-xxs: 2px;
-  --tdx-space-xs: 3px;
-  --tdx-space-sm: 6px;
+  /* ── spacing (tdx-pui: --hSpacing*, --vSpacing*) ──────────────── */
+  --tdx-space-xxs: 1px;
+  --tdx-space-xs: 4px;
+  --tdx-space-sm: 8px;
   --tdx-space-md: 10px;
-  --tdx-space-lg: 14px;
-  --tdx-space-xl: 18px;
-  --tdx-space-xxl: 22px;
+  --tdx-space-lg: 20px;
+  --tdx-space-xl: 30px;
+  --tdx-space-xxl: 40px;
 
-  /* ── radius: nearly square like reference ────────────────────── */
+  /* ── radius (tdx-pui: --radiusXs/2, --radiusSm/4, --radiusMd/6) ── */
   --tdx-radius-none: 0;
-  --tdx-radius-xs: 1px;
-  --tdx-radius-sm: 2px;
-  --tdx-radius-md: 3px;
-  --tdx-radius-lg: 4px;
+  --tdx-radius-xs: 2px;
+  --tdx-radius-sm: 4px;
+  --tdx-radius-md: 6px;
+  --tdx-radius-lg: 8px;
   --tdx-radius-pill: 999px;
 
-  --tdx-shadow-popup: 0 4px 16px rgba(17, 24, 39, 0.12);
+  --tdx-shadow-popup: 0 4px 16px rgba(0, 0, 0, 0.12);
 
-  /* ── tk-color brand tokens (blue primary in light) ──────────── */
-  --tk-color-brand-primary: #0067d9;
-  --tk-color-brand-primary-pressed: #0058bd;
-  --tk-color-brand-primary-hover: #147cff;
-  --tk-color-brand-primary-deep: #0058bd;
-  --tk-color-brand-cyan: #ff8a00;
+  /* ── tk-color brand tokens (tdx-pui: --brandPrimary/#b42f32) ── */
+  --tk-color-brand-primary: #b42f32;
+  --tk-color-brand-primary-pressed: #932628;
+  --tk-color-brand-primary-hover: #c93a3d;
+  --tk-color-brand-primary-deep: #932628;
+  --tk-color-brand-cyan: #fa7602;
 
-  --tk-color-success: #00a870;
-  --tk-color-warning: #ff8a00;
-  --tk-color-warning-strong: #e6a817;
-  --tk-color-danger: #e7353a;
-  --tk-color-danger-deep: #c91f32;
-  --tk-color-neutral: #6b7280;
+  --tk-color-success: #14a014;
+  --tk-color-warning: #fa7602;
+  --tk-color-warning-strong: #faba02;
+  --tk-color-danger: #f01414;
+  --tk-color-danger-deep: #b42f32;
+  --tk-color-neutral: #999999;
 
-  --tk-color-text-primary: #1f2933;
-  --tk-color-text-heading: #111827;
-  --tk-color-text-secondary: #6b7280;
-  --tk-color-text-tertiary: #9ca3af;
-  --tk-color-text-inverse: #111827;
-  --tk-color-text-inverse-secondary: #374151;
-  --tk-color-text-disabled: rgba(31, 41, 55, 0.36);
+  --tk-color-text-primary: #333333;
+  --tk-color-text-heading: #333333;
+  --tk-color-text-secondary: #666666;
+  --tk-color-text-tertiary: #999999;
+  --tk-color-text-inverse: #333333;
+  --tk-color-text-inverse-secondary: #666666;
+  --tk-color-text-disabled: #cccccc;
 
-  --tk-color-surface-page: #f4f6f8;
+  --tk-color-surface-page: #ffffff;
   --tk-color-surface-subtle: #ffffff;
-  --tk-color-surface-panel: #f3f5f8;
-  --tk-color-surface-selected: #e7f1ff;
-  --tk-color-surface-selected-strong: #d0e4ff;
-  --tk-color-surface-dark: #f4f6f8;
+  --tk-color-surface-panel: #f5f5f5;
+  --tk-color-surface-selected: rgba(180, 47, 50, 0.04);
+  --tk-color-surface-selected-strong: rgba(180, 47, 50, 0.08);
+  --tk-color-surface-dark: #ffffff;
   --tk-color-surface-dark-deep: #ffffff;
-  --tk-color-surface-dark-soft: #f3f5f8;
-  --tk-color-surface-dark-muted: #f8f9fb;
+  --tk-color-surface-dark-soft: #f5f5f5;
+  --tk-color-surface-dark-muted: #fafafa;
 
-  --tk-color-border-default: #d8dde5;
-  --tk-color-border-strong: #c5cdd8;
-  --tk-color-border-divider: #e3e7ed;
-  --tk-color-border-dark: #d8dde5;
-  --tk-color-border-panel: #d8dde5;
-  --tk-color-border-divider-dark: #e3e7ed;
+  --tk-color-border-default: #dddddd;
+  --tk-color-border-strong: #cccccc;
+  --tk-color-border-divider: #eeeeee;
+  --tk-color-border-dark: #dddddd;
+  --tk-color-border-panel: #dddddd;
+  --tk-color-border-divider-dark: #eeeeee;
 
-  --tk-color-chart-blue: #1872f6;
-  --tk-color-chart-purple: #7a4aa1;
+  --tk-color-chart-blue: #4691f7;
+  --tk-color-chart-purple: #7c75cb;
   --tk-color-chart-violet: #8b5cf6;
   --tk-color-chart-indigo: #5664a8;
-  --tk-color-chart-gold: #ff8a00;
-  --tk-color-chart-teal: #00a870;
+  --tk-color-chart-gold: #faba02;
+  --tk-color-chart-teal: #14a014;
 
-  --tk-color-overlay-mask: rgba(17, 24, 39, 0.32);
-  --tk-color-overlay-mask-light: rgba(17, 24, 39, 0.16);
-  --tk-color-overlay-shadow: rgba(17, 24, 39, 0.06);
-  --tk-color-success-surface: rgba(0, 168, 112, 0.08);
-  --tk-color-warning-surface: rgba(255, 138, 0, 0.08);
-  --tk-color-danger-surface: rgba(231, 53, 58, 0.08);
+  --tk-color-overlay-mask: rgba(0, 0, 0, 0.3);
+  --tk-color-overlay-mask-light: rgba(0, 0, 0, 0.15);
+  --tk-color-overlay-shadow: rgba(0, 0, 0, 0.06);
+  --tk-color-success-surface: rgba(20, 160, 20, 0.06);
+  --tk-color-warning-surface: rgba(250, 118, 2, 0.06);
+  --tk-color-danger-surface: rgba(240, 20, 20, 0.06);
 
   /* ── Shadcn / tailwind token bridge ──────────────────────────── */
-  --background: #f4f6f8;
-  --foreground: #1f2933;
+  --background: #ffffff;
+  --foreground: #333333;
   --card: #ffffff;
-  --card-foreground: #1f2933;
+  --card-foreground: #333333;
   --popover: #ffffff;
-  --popover-foreground: #1f2933;
-  --primary: #0067d9;
+  --popover-foreground: #333333;
+  --primary: #b42f32;
   --primary-foreground: #ffffff;
-  --secondary: #f3f5f8;
-  --secondary-foreground: #1f2933;
-  --muted: #f8f9fb;
-  --muted-foreground: #9ca3af;
-  --accent: #eef2f7;
-  --accent-foreground: #111827;
-  --destructive: #e7353a;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #333333;
+  --muted: #fafafa;
+  --muted-foreground: #999999;
+  --accent: #f5f5f5;
+  --accent-foreground: #333333;
+  --destructive: #f01414;
   --destructive-foreground: #ffffff;
-  --border: #d8dde5;
+  --border: #dddddd;
   --input-background: #ffffff;
-  --ring: #0067d9;
+  --ring: #b42f32;
 
   scrollbar-color: var(--tdx-scrollbar-thumb) var(--tdx-scrollbar-track);
 }
@@ -167,7 +167,7 @@ body,
   background: var(--tdx-bg-page);
   color: var(--tdx-text-main);
   font-family: var(--tdx-font-family-base);
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.5;
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
@@ -184,15 +184,15 @@ body,
 
 .tk-topbar {
   background: #ffffff;
-  border-bottom: 1px solid var(--tdx-border);
+  border-bottom: 1px solid #dddddd;
   box-shadow: none;
-  color: var(--tdx-text-main);
+  color: #333333;
 }
 
 .tk-panel,
 .tk-modal {
   background: #ffffff;
-  border-color: var(--tdx-border);
+  border-color: #dddddd;
   box-shadow: none;
 }
 
@@ -200,18 +200,18 @@ body,
 .tk-field,
 .tk-table-shell {
   background: #ffffff;
-  border-color: var(--tdx-border);
+  border-color: #dddddd;
 }
 
 .tk-panel-header,
 .tk-table thead {
-  background: #f3f5f8;
-  border-color: var(--tdx-border);
-  color: var(--tdx-text-muted);
+  background: #f5f5f5;
+  border-color: #eeeeee;
+  color: #666666;
 }
 
 .tk-overlay {
-  background: rgba(17, 24, 39, 0.32);
+  background: rgba(0, 0, 0, 0.3);
 }
 
 
@@ -219,10 +219,10 @@ body,
    4. TYPOGRAPHY
    ═══════════════════════════════════════════════════════════════════ */
 .tk-page-title {
-  color: var(--tdx-text-heading);
-  font-size: 14px;
+  color: #333333;
+  font-size: 16px;
   font-weight: 600;
-  line-height: 22px;
+  line-height: 24px;
 }
 
 .tk-title,
@@ -241,9 +241,9 @@ body,
   color: var(--tdx-text-main);
 }
 
-.tk-positive { color: #00a870; }
-.tk-negative { color: #e7353a; }
-.tk-warning  { color: #ff8a00; }
+.tk-positive { color: #f01414; }
+.tk-negative { color: #14a014; }
+.tk-warning  { color: #fa7602; }
 
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -252,37 +252,37 @@ body,
 .tk-button,
 .tk-chip {
   background: #ffffff;
-  border-color: var(--tdx-border);
-  color: var(--tdx-text-muted);
+  border-color: #dddddd;
+  color: #999999;
   box-shadow: none;
 }
 
 .tk-button:hover,
 .tk-chip:hover {
-  background: #eef2f7;
-  border-color: #c5cdd8;
-  color: var(--tdx-text-main);
+  background: #f5f5f5;
+  border-color: #b42f32;
+  color: #333333;
 }
 
 .tk-button-primary,
 .tk-chip-active,
 .tk-selected {
-  background: #0067d9;
-  border-color: #0067d9;
-  color: #ffffff;
-  box-shadow: none;
+  background: rgba(180, 47, 50, 0.08);
+  border-color: #b42f32;
+  color: #b42f32;
+  box-shadow: inset 2px 0 0 #b42f32;
 }
 
 .tk-button-primary:hover,
 .tk-chip-active:hover {
-  background: #147cff;
-  border-color: #147cff;
+  background: rgba(180, 47, 50, 0.14);
+  border-color: #b42f32;
 }
 
 .tk-badge {
-  background: rgba(255, 138, 0, 0.08);
-  border-color: rgba(255, 138, 0, 0.3);
-  color: #c76a25;
+  background: rgba(250, 118, 2, 0.06);
+  border-color: rgba(250, 118, 2, 0.3);
+  color: #fa7602;
 }
 
 
@@ -293,20 +293,26 @@ body,
 .tk-table td,
 .tdx-density-table th,
 .tdx-density-table td {
-  height: 28px;
-  line-height: 28px;
-  padding: 0 8px;
+  height: 32px;
+  line-height: 32px;
+  padding: 0 10px;
+  font-size: 14px;
+}
+
+.tk-table th,
+.tdx-density-table th {
   font-size: 12px;
+  color: #666666;
 }
 
 .tk-table tbody tr:nth-child(even),
 .tdx-density-table tbody tr:nth-child(even) {
-  background: #fafbfc;
+  background: #fafafa;
 }
 
 .tk-table tbody tr:hover,
 .tdx-density-table tbody tr:hover {
-  background: #e7f1ff;
+  background: #f5f5f5;
 }
 
 
@@ -315,13 +321,13 @@ body,
    ═══════════════════════════════════════════════════════════════════ */
 .tk-field {
   background: #ffffff;
-  border: 1px solid var(--tdx-border);
-  color: var(--tdx-text-main);
+  border: 1px solid #dddddd;
+  color: #333333;
 }
 
 .tk-field:focus,
 .tk-field:focus-within {
-  border-color: #0067d9;
+  border-color: #b42f32;
 }
 
 
@@ -330,17 +336,17 @@ body,
    ═══════════════════════════════════════════════════════════════════ */
 .tdx-terminal-tooltip {
   background: #ffffff;
-  border: 1px solid var(--tdx-border);
-  border-radius: 3px;
-  color: var(--tdx-text-main);
-  box-shadow: 0 4px 16px rgba(17, 24, 39, 0.1);
+  border: 1px solid #dddddd;
+  border-radius: 4px;
+  color: #333333;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .tdx-terminal-float {
-  background: #0067d9;
-  border: 1px solid #147cff;
+  background: #b42f32;
+  border: 1px solid #c93a3d;
   color: #ffffff;
-  box-shadow: 0 4px 16px rgba(0, 103, 217, 0.2);
+  box-shadow: 0 4px 16px rgba(180, 47, 50, 0.2);
 }
 
 
@@ -349,12 +355,12 @@ body,
    ═══════════════════════════════════════════════════════════════════ */
 .tk-info-chip {
   background: #ffffff;
-  border-color: var(--tdx-border);
-  color: var(--tdx-text-main);
+  border-color: #dddddd;
+  color: #333333;
 }
 
 .tk-status-badge {
-  color: var(--tdx-text-main);
+  color: #333333;
 }
 
 
@@ -362,24 +368,24 @@ body,
    10. SCROLLBARS (light)
    ═══════════════════════════════════════════════════════════════════ */
 * {
-  scrollbar-color: #c6d0de #f4f6f8;
+  scrollbar-color: #cccccc #f5f5f5;
 }
 
 *::-webkit-scrollbar-track {
-  background: #f4f6f8;
+  background: #f5f5f5;
 }
 
 *::-webkit-scrollbar-thumb {
-  border: 2px solid #f4f6f8;
-  background: #c6d0de;
+  border: 2px solid #f5f5f5;
+  background: #cccccc;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: #aebdd1;
+  background: #aaaaaa;
 }
 
 *::-webkit-scrollbar-corner {
-  background: #f4f6f8;
+  background: #f5f5f5;
 }
 
 
@@ -389,42 +395,41 @@ body,
    App.tsx so they render correctly on the white background.
    ═══════════════════════════════════════════════════════════════════ */
 
-/* ── text colors ───────────────────────────────────────────────── */
-/* Dark-on-dark text → dark-on-white equivalents */
-.text-slate-100 { color: #111827 !important; }
-.text-slate-200 { color: #1f2933 !important; }
-.text-slate-300 { color: #374151 !important; }
-.text-slate-400 { color: #6b7280 !important; }
-.text-slate-500 { color: #6b7280 !important; }
-.text-slate-600 { color: #374151 !important; }
-.text-slate-700 { color: #1f2933 !important; }
-.text-slate-800 { color: #111827 !important; }
+/* ── text colors (tdx-pui: #333/#666/#999/#ccc) ────────────────── */
+.text-slate-100 { color: #333333 !important; }
+.text-slate-200 { color: #333333 !important; }
+.text-slate-300 { color: #666666 !important; }
+.text-slate-400 { color: #999999 !important; }
+.text-slate-500 { color: #999999 !important; }
+.text-slate-600 { color: #666666 !important; }
+.text-slate-700 { color: #333333 !important; }
+.text-slate-800 { color: #333333 !important; }
 
-/* .text-white is NOT overridden globally — it's used on colored-bg badges/buttons that stay colored */
+/* .text-white is NOT overridden globally — used on colored-bg badges */
 
-/* Amber / emerald text stays as-is (semantic) but ensure readability */
+/* Amber / emerald → tdx-pui semantic */
 .text-amber-300,
-.text-amber-400 { color: #d97706 !important; }
+.text-amber-400 { color: #fa7602 !important; }
 
 .text-emerald-300,
-.text-emerald-400 { color: #059669 !important; }
+.text-emerald-400 { color: #14a014 !important; }
 
 .text-red-300,
-.text-red-400 { color: #e7353a !important; }
+.text-red-400 { color: #f01414 !important; }
 
 .text-green-300,
-.text-green-400 { color: #00a870 !important; }
+.text-green-400 { color: #14a014 !important; }
 
-/* Blue text references */
+/* Blue text → tdx-pui --brandAuxiliary2/#4691f7 */
 .text-blue-100,
 .text-blue-200,
 .text-blue-300,
 .text-sky-200,
 .text-sky-300,
 .text-cyan-200,
-.text-cyan-300 { color: #0067d9 !important; }
+.text-cyan-300 { color: #4691f7 !important; }
 
-.text-blue-400 { color: #1872f6 !important; }
+.text-blue-400 { color: #4691f7 !important; }
 
 
 /* ── background colors ─────────────────────────────────────────── */
@@ -433,14 +438,14 @@ body,
 .bg-slate-800,
 .bg-slate-900 { background-color: #ffffff !important; }
 
-.bg-slate-600 { background-color: #f3f5f8 !important; }
-.bg-slate-500 { background-color: #e3e7ed !important; }
+.bg-slate-600 { background-color: #f5f5f5 !important; }
+.bg-slate-500 { background-color: #eeeeee !important; }
 
 .bg-slate-700\/50,
 .bg-slate-800\/50,
 .bg-slate-900\/50 { background-color: rgba(255, 255, 255, 0.5) !important; }
 
-.bg-slate-700\/60 { background-color: rgba(243, 245, 248, 0.6) !important; }
+.bg-slate-700\/60 { background-color: rgba(245, 245, 245, 0.6) !important; }
 .bg-slate-800\/60 { background-color: rgba(255, 255, 255, 0.6) !important; }
 .bg-slate-800\/80 { background-color: rgba(255, 255, 255, 0.8) !important; }
 .bg-slate-900\/80 { background-color: rgba(255, 255, 255, 0.8) !important; }
@@ -456,7 +461,7 @@ body,
 .bg-\[\#13131b\] { background-color: #ffffff !important; }
 
 .bg-\[\#292835\],
-.bg-\[\#2a2935\] { background-color: #f3f5f8 !important; }
+.bg-\[\#2a2935\] { background-color: #f5f5f5 !important; }
 
 /* Semi-transparent dark overlays → light equivalents */
 .bg-black\/40,
@@ -466,23 +471,23 @@ body,
 .bg-black\/20,
 .bg-black\/30 { background-color: rgba(17, 24, 39, 0.12) !important; }
 
-/* Blue/sky/cyan highlight backgrounds → blue-tinted light bg */
+/* Blue/sky/cyan highlight backgrounds → brand red tint */
 .bg-blue-500\/20,
 .bg-blue-600\/60,
 .bg-sky-500\/20,
-.bg-cyan-500\/20 { background-color: rgba(0, 103, 217, 0.08) !important; }
+.bg-cyan-500\/20 { background-color: rgba(180, 47, 50, 0.08) !important; }
 
 /* Emerald backgrounds */
 .bg-emerald-500\/10,
-.bg-emerald-500\/20 { background-color: rgba(0, 168, 112, 0.08) !important; }
+.bg-emerald-500\/20 { background-color: rgba(20, 160, 20, 0.06) !important; }
 
 /* Red backgrounds */
 .bg-red-500\/10,
-.bg-red-500\/20 { background-color: rgba(231, 53, 58, 0.08) !important; }
+.bg-red-500\/20 { background-color: rgba(240, 20, 20, 0.06) !important; }
 
 /* Amber backgrounds */
 .bg-amber-500\/10,
-.bg-amber-500\/20 { background-color: rgba(255, 138, 0, 0.08) !important; }
+.bg-amber-500\/20 { background-color: rgba(250, 118, 2, 0.06) !important; }
 
 /* White backgrounds (explicit) stay white */
 .bg-white { background-color: #ffffff !important; }
@@ -492,56 +497,56 @@ body,
 /* ── border colors ─────────────────────────────────────────────── */
 .border-slate-600,
 .border-slate-700,
-.border-slate-800 { border-color: #d8dde5 !important; }
+.border-slate-800 { border-color: #dddddd !important; }
 
-.border-slate-500 { border-color: #c5cdd8 !important; }
+.border-slate-500 { border-color: #cccccc !important; }
 
 .border-slate-600\/50,
-.border-slate-700\/50 { border-color: rgba(216, 221, 229, 0.5) !important; }
+.border-slate-700\/50 { border-color: rgba(221, 221, 221, 0.5) !important; }
 
 .border-white\/10,
 .border-white\/20,
-.border-white\/5 { border-color: rgba(216, 221, 229, 0.4) !important; }
+.border-white\/5 { border-color: rgba(221, 221, 221, 0.4) !important; }
 
 .border-blue-500\/30,
 .border-sky-500\/30,
-.border-cyan-500\/30 { border-color: rgba(0, 103, 217, 0.3) !important; }
+.border-cyan-500\/30 { border-color: rgba(180, 47, 50, 0.3) !important; }
 
-.border-slate-200 { border-color: #e3e7ed !important; }
+.border-slate-200 { border-color: #eeeeee !important; }
 
 /* Inline hex borders */
-.border-\[\#2f2e3a\] { border-color: #d8dde5 !important; }
-.border-\[\#24232d\] { border-color: #e3e7ed !important; }
+.border-\[\#2f2e3a\] { border-color: #dddddd !important; }
+.border-\[\#24232d\] { border-color: #eeeeee !important; }
 
 /* rgba borders from dark theme */
 .border-\[rgba\(255\,255\,255\,0\.1\)\],
-.border-\[rgba\(255\,255\,255\,0\.05\)\] { border-color: rgba(216, 221, 229, 0.6) !important; }
+.border-\[rgba\(255\,255\,255\,0\.05\)\] { border-color: rgba(221, 221, 221, 0.6) !important; }
 
 
 /* ── divide colors ─────────────────────────────────────────────── */
 .divide-slate-700 > :not([hidden]) ~ :not([hidden]),
 .divide-slate-600 > :not([hidden]) ~ :not([hidden]) {
-  border-color: #e3e7ed !important;
+  border-color: #eeeeee !important;
 }
 
 
 /* ── ring colors ───────────────────────────────────────────────── */
 .ring-slate-600,
-.ring-slate-700 { --tw-ring-color: #d8dde5 !important; }
+.ring-slate-700 { --tw-ring-color: #dddddd !important; }
 
 
 /* ── shadow overrides (no dark shadows) ────────────────────────── */
 .shadow,
 .shadow-lg,
 .shadow-xl,
-.shadow-2xl { box-shadow: 0 1px 3px rgba(17, 24, 39, 0.06) !important; }
+.shadow-2xl { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important; }
 
 .shadow-\[0_1px_4px_rgba\(0\,0\,0\,0\.3\)\] {
-  box-shadow: 0 1px 3px rgba(17, 24, 39, 0.06) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
 }
 
 .shadow-\[0_18px_40px_rgba\(15\,23\,42\,0\.16\)\] {
-  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.1) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
 }
 
 
@@ -549,9 +554,9 @@ body,
    12. SPECIFIC COMPONENT PATCHES
    ═══════════════════════════════════════════════════════════════════ */
 
-/* --- Topbar: white bg, no heavy shadow --- */
+/* --- Topbar --- */
 .tk-topbar .tk-page-title {
-  color: #111827;
+  color: #333333;
 }
 
 /* --- Sentiment chip: keep its own color scheme --- */
@@ -565,8 +570,7 @@ body,
 .text-amber-700 { color: #b45309 !important; }
 .text-amber-600 { color: #d97706 !important; }
 
-.border-slate-200 { border-color: #e3e7ed !important; }
-.bg-slate-50 { background-color: #f8f9fb !important; }
+.bg-slate-50 { background-color: #fafafa !important; }
 
 
 /* --- Marquee notice bar --- */
@@ -596,21 +600,21 @@ body,
 }
 
 
-/* --- Rounded corners: minimal like reference --- */
+/* --- Rounded corners (tdx-pui: --radiusSm/4px, --radiusMd/6px) --- */
 .rounded-lg,
 .rounded-xl,
 .rounded-2xl {
-  border-radius: 3px;
+  border-radius: 6px;
 }
 
 .rounded-md {
-  border-radius: 2px;
+  border-radius: 4px;
 }
 
 
-/* --- Placeholder text --- */
+/* --- Placeholder text (tdx-pui: --colorTextHint/#ccc) --- */
 ::placeholder {
-  color: #9ca3af !important;
+  color: #cccccc !important;
 }
 
 
@@ -624,10 +628,10 @@ body,
 .tk-panel > .p-4 { padding: 10px; }
 .tk-panel > .p-5 { padding: 12px; }
 
-/* Panel header: compact */
+/* Panel header */
 .tk-panel-header {
-  background: #f3f5f8;
-  border-color: #e3e7ed;
+  background: #f5f5f5;
+  border-color: #eeeeee;
   padding-top: 4px;
   padding-bottom: 4px;
 }
