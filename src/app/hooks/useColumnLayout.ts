@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 const DEFAULT_COLUMN_RATIOS: [number, number, number] = [22, 45, 33];
 const COLUMN_RATIOS_KEY = "boardColumnRatios.v6";
-const COLUMN_MIN: [number, number, number] = [16, 32, 22];
+const COLUMN_MIN: [number, number, number] = [2, 32, 22];
 
 function clampColumns(next: [number, number, number]): [number, number, number] {
   let [l, m, r] = next;

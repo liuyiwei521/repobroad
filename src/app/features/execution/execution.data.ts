@@ -5,6 +5,7 @@ import type {
   ExecutionRow,
   FundGapRow,
   InflightRow,
+  CounterpartyTag,
 } from "./execution.types";
 
 export const demandTenors: DemandTenor[] = ["R001", "R007"];
@@ -83,241 +84,39 @@ export const demandRowsByDirection: Record<DemandDirection, DemandRow[]> = {
   ],
 };
 
-const normalizedExecutionAccountRequirementMap = {
-  不限: "",
-  利率债质押: "专户",
-  信用债可用: "公募",
-} as const;
-
-function normalizeExecutionAccountRequirement(rawRequirement: string) {
-  // 在途指令按规范展示：不限留空，10% 口径显示专户，15% 口径显示公募。
-  return (
-    normalizedExecutionAccountRequirementMap[
-      rawRequirement as keyof typeof normalizedExecutionAccountRequirementMap
-    ] ?? rawRequirement
-  );
-}
-
 export const fundGapRows = [
-  {
-    account: "泰康稳健增利A",
-    breakEvenRate: "1.42%",
-    gap: "-3.2 / 15.0",
-    accountReq: "利率债质押",
-    collateralReq: "国债/政金债",
-  },
-  {
-    account: "泰康丰盈债券",
-    breakEvenRate: "1.55%",
-    gap: "-1.8 / 8.5",
-    accountReq: "不限",
-    collateralReq: "利率债优先",
-  },
-  {
-    account: "泰康沪港深精选",
-    breakEvenRate: "1.38%",
-    gap: "0.0 / 5.0",
-    accountReq: "信用债可用",
-    collateralReq: "AA+以上",
-  },
-  {
-    account: "泰康颐年混合",
-    breakEvenRate: "1.60%",
-    gap: "-2.5 / 12.0",
-    accountReq: "利率债质押",
-    collateralReq: "国债",
-  },
-  {
-    account: "泰康安益纯债",
-    breakEvenRate: "1.48%",
-    gap: "-0.6 / 6.0",
-    accountReq: "不限",
-    collateralReq: "政金债",
-  },
-  {
-    account: "泰康裕泰回报",
-    breakEvenRate: "1.52%",
-    gap: "-4.1 / 20.0",
-    accountReq: "利率债质押",
-    collateralReq: "国债/地方债",
-  },
-  {
-    account: "泰康策略配置7号",
-    breakEvenRate: "1.35%",
-    gap: "-1.5 / 10.0",
-    accountReq: "利率债质押",
-    collateralReq: "国债/政金债",
-  },
-  {
-    account: "泰康宏观回报",
-    breakEvenRate: "1.62%",
-    gap: "-5.3 / 25.0",
-    accountReq: "不限",
-    collateralReq: "利率债优先",
-  },
-  {
-    account: "泰康鑫选利90天",
-    breakEvenRate: "1.45%",
-    gap: "-0.8 / 4.0",
-    accountReq: "信用债可用",
-    collateralReq: "AA+以上",
-  },
-  {
-    account: "泰康添润6个月",
-    breakEvenRate: "1.58%",
-    gap: "-2.0 / 9.5",
-    accountReq: "利率债质押",
-    collateralReq: "政金债",
-  },
-  {
-    account: "泰康恒泰回报",
-    breakEvenRate: "1.40%",
-    gap: "0.0 / 3.0",
-    accountReq: "不限",
-    collateralReq: "国债",
-  },
-  {
-    account: "泰康均衡优选",
-    breakEvenRate: "1.50%",
-    gap: "-1.2 / 7.0",
-    accountReq: "利率债质押",
-    collateralReq: "国债/地方债",
-  },
-  {
-    account: "泰康瑞坤纯债",
-    breakEvenRate: "1.43%",
-    gap: "-3.8 / 18.0",
-    accountReq: "不限",
-    collateralReq: "政金债",
-  },
-  {
-    account: "泰康稳固收益A",
-    breakEvenRate: "1.56%",
-    gap: "-0.4 / 2.5",
-    accountReq: "信用债可用",
-    collateralReq: "AA+以上",
-  },
-  {
-    account: "泰康新机遇",
-    breakEvenRate: "1.65%",
-    gap: "-6.0 / 30.0",
-    accountReq: "利率债质押",
-    collateralReq: "国债/政金债",
-  },
-  {
-    account: "泰康长江经济带",
-    breakEvenRate: "1.47%",
-    gap: "-1.0 / 5.5",
-    accountReq: "不限",
-    collateralReq: "利率债优先",
-  },
+  { account: "泰康稳健增利A", total: 15.0 },
+  { account: "泰康丰盈债券", total: 8.5 },
+  { account: "泰康沪港深精选", total: 5.0 },
+  { account: "泰康颐年混合", total: 12.0 },
+  { account: "泰康安益纯债", total: 6.0 },
+  { account: "泰康裕泰回报", total: 20.0 },
+  { account: "泰康策略配置7号", total: 10.0 },
+  { account: "泰康宏观回报", total: 25.0 },
+  { account: "泰康鑫选利90天", total: 4.0 },
+  { account: "泰康添润6个月", total: 9.5 },
+  { account: "泰康恒泰回报", total: 3.0 },
+  { account: "泰康均衡优选", total: 7.0 },
+  { account: "泰康瑞坤纯债", total: 18.0 },
+  { account: "泰康稳固收益A", total: 2.5 },
+  { account: "泰康新机遇", total: 30.0 },
+  { account: "泰康长江经济带", total: 5.5 },
 ] as const satisfies readonly FundGapRow[];
 
 export const inflightRows = [
-  {
-    account: "泰康稳健增利A",
-    gap: "-3.2 / 15.0",
-    progress: 78,
-    accountReq: "利率债质押",
-    collateralReq: "国债/政金债",
-    issuedAt: "09:32",
-  },
-  {
-    account: "泰康丰盈债券",
-    gap: "-1.8 / 8.5",
-    progress: 45,
-    accountReq: "不限",
-    collateralReq: "利率债优先",
-    issuedAt: "09:45",
-  },
-  {
-    account: "泰康颐年混合",
-    gap: "-2.5 / 12.0",
-    progress: 12,
-    accountReq: "利率债质押",
-    collateralReq: "国债",
-    issuedAt: "10:05",
-  },
-  {
-    account: "泰康裕泰回报",
-    gap: "-4.1 / 20.0",
-    progress: 60,
-    accountReq: "利率债质押",
-    collateralReq: "国债/地方债",
-    issuedAt: "10:18",
-  },
-  {
-    account: "泰康安益纯债",
-    gap: "-0.6 / 6.0",
-    progress: 100,
-    accountReq: "不限",
-    collateralReq: "政金债",
-    issuedAt: "10:22",
-  },
-  {
-    account: "泰康宏观回报",
-    gap: "-5.3 / 25.0",
-    progress: 32,
-    accountReq: "不限",
-    collateralReq: "利率债优先",
-    issuedAt: "09:28",
-  },
-  {
-    account: "泰康策略配置7号",
-    gap: "-1.5 / 10.0",
-    progress: 90,
-    accountReq: "利率债质押",
-    collateralReq: "国债/政金债",
-    issuedAt: "09:35",
-  },
-  {
-    account: "泰康新机遇",
-    gap: "-6.0 / 30.0",
-    progress: 8,
-    accountReq: "利率债质押",
-    collateralReq: "国债/政金债",
-    issuedAt: "10:30",
-  },
-  {
-    account: "泰康瑞坤纯债",
-    gap: "-3.8 / 18.0",
-    progress: 55,
-    accountReq: "不限",
-    collateralReq: "政金债",
-    issuedAt: "09:50",
-  },
-  {
-    account: "泰康添润6个月",
-    gap: "-2.0 / 9.5",
-    progress: 100,
-    accountReq: "利率债质押",
-    collateralReq: "政金债",
-    issuedAt: "09:40",
-  },
-  {
-    account: "泰康均衡优选",
-    gap: "-1.2 / 7.0",
-    progress: 68,
-    accountReq: "利率债质押",
-    collateralReq: "国债/地方债",
-    issuedAt: "10:12",
-  },
-  {
-    account: "泰康鑫选利90天",
-    gap: "-0.8 / 4.0",
-    progress: 100,
-    accountReq: "信用债可用",
-    collateralReq: "AA+以上",
-    issuedAt: "10:08",
-  },
-  {
-    account: "泰康长江经济带",
-    gap: "-1.0 / 5.5",
-    progress: 20,
-    accountReq: "不限",
-    collateralReq: "利率债优先",
-    issuedAt: "10:35",
-  },
+  { account: "泰康稳健增利A", total: 15.0, done: 11.7, progress: 78, issuedAt: "09:32", tradeNote: "R001质押回购", investNote: "利率债配置", counterpartyTag: "稳定出钱" as CounterpartyTag },
+  { account: "泰康丰盈债券", total: 8.5, done: 3.8, progress: 45, issuedAt: "09:45", tradeNote: "R007逆回购", investNote: "", counterpartyTag: null },
+  { account: "泰康颐年混合", total: 12.0, done: 1.4, progress: 12, issuedAt: "10:05", tradeNote: "R001正回购", investNote: "久期匹配", counterpartyTag: null },
+  { account: "泰康裕泰回报", total: 20.0, done: 12.0, progress: 60, issuedAt: "10:18", tradeNote: "", investNote: "", counterpartyTag: "保险/保障" as CounterpartyTag },
+  { account: "泰康安益纯债", total: 6.0, done: 6.0, progress: 100, issuedAt: "10:22", tradeNote: "已全部成交", investNote: "", counterpartyTag: null },
+  { account: "泰康宏观回报", total: 25.0, done: 8.0, progress: 32, issuedAt: "09:28", tradeNote: "R007质押回购", investNote: "流动性备付", counterpartyTag: null },
+  { account: "泰康策略配置7号", total: 10.0, done: 9.0, progress: 90, issuedAt: "09:35", tradeNote: "", investNote: "", counterpartyTag: null },
+  { account: "泰康新机遇", total: 30.0, done: 2.4, progress: 8, issuedAt: "10:30", tradeNote: "R001逆回购", investNote: "大额待匹配", counterpartyTag: "券商自营" as CounterpartyTag },
+  { account: "泰康瑞坤纯债", total: 18.0, done: 9.9, progress: 55, issuedAt: "09:50", tradeNote: "", investNote: "", counterpartyTag: null },
+  { account: "泰康添润6个月", total: 9.5, done: 9.5, progress: 100, issuedAt: "09:40", tradeNote: "已全部成交", investNote: "", counterpartyTag: null },
+  { account: "泰康均衡优选", total: 7.0, done: 4.8, progress: 68, issuedAt: "10:12", tradeNote: "", investNote: "", counterpartyTag: null },
+  { account: "泰康鑫选利90天", total: 4.0, done: 4.0, progress: 100, issuedAt: "10:08", tradeNote: "已全部成交", investNote: "", counterpartyTag: null },
+  { account: "泰康长江经济带", total: 5.5, done: 1.1, progress: 20, issuedAt: "10:35", tradeNote: "R001正回购", investNote: "", counterpartyTag: null },
 ] as const satisfies readonly InflightRow[];
 
 const fundGapRowsByAccount = new Map(fundGapRows.map((row) => [row.account, row]));
@@ -325,29 +124,33 @@ const inflightRowsByAccount = new Map(inflightRows.map((row) => [row.account, ro
 
 export const executionRows: ExecutionRow[] = [
   ...fundGapRows.map((row) => {
-    const inflightRow = inflightRowsByAccount.get(row.account);
+    const inflight = inflightRowsByAccount.get(row.account);
+    const total = row.total;
+    const done = inflight?.done ?? 0;
 
     return {
       account: row.account,
-      breakEvenRate: row.breakEvenRate,
-      gap: row.gap,
-      accountReq: normalizeExecutionAccountRequirement(row.accountReq),
-      collateralReq: row.collateralReq,
-      progress: inflightRow?.progress ?? null,
-      issuedAt: inflightRow?.issuedAt ?? null,
+      total,
+      done,
+      remaining: Number((total - done).toFixed(1)),
+      progress: inflight?.progress ?? null,
+      issuedAt: inflight?.issuedAt ?? null,
+      tradeNote: inflight?.tradeNote ?? "",
+      investNote: inflight?.investNote ?? "",
+      counterpartyTag: inflight?.counterpartyTag ?? null,
     };
   }),
   ...inflightRows
     .filter((row) => !fundGapRowsByAccount.has(row.account))
-    .map((row) => {
-      return {
-        account: row.account,
-        breakEvenRate: "--",
-        gap: row.gap,
-        accountReq: normalizeExecutionAccountRequirement(row.accountReq),
-        collateralReq: row.collateralReq,
-        progress: row.progress,
-        issuedAt: row.issuedAt,
-      };
-    }),
+    .map((row) => ({
+      account: row.account,
+      total: row.total,
+      done: row.done,
+      remaining: Number((row.total - row.done).toFixed(1)),
+      progress: row.progress,
+      issuedAt: row.issuedAt,
+      tradeNote: row.tradeNote,
+      investNote: row.investNote,
+      counterpartyTag: row.counterpartyTag,
+    })),
 ];

@@ -33,29 +33,32 @@ export type DemandMatrix = {
 
 export type DemandBottomTab = "demand" | "execution";
 
+export type CounterpartyTag = "保险/保障" | "稳定出钱" | "出散量" | "应急" | "券商自营";
+
 export type ExecutionRow = {
   account: string;
-  breakEvenRate: string;
-  gap: string;
-  accountReq: string;
-  collateralReq: string;
+  total: number;
+  done: number;
+  remaining: number;
   progress: number | null;
   issuedAt: string | null;
+  tradeNote: string;
+  investNote: string;
+  counterpartyTag: CounterpartyTag | null;
 };
 
 export type FundGapRow = {
   account: string;
-  breakEvenRate: string;
-  gap: string;
-  accountReq: string;
-  collateralReq: string;
+  total: number;
 };
 
 export type InflightRow = {
   account: string;
-  gap: string;
+  total: number;
+  done: number;
   progress: number;
-  accountReq: string;
-  collateralReq: string;
   issuedAt: string;
+  tradeNote: string;
+  investNote: string;
+  counterpartyTag: CounterpartyTag | null;
 };

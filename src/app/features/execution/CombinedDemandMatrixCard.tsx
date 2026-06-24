@@ -111,12 +111,14 @@ export function CombinedDemandMatrixCard() {
           <thead className="sticky top-0 z-10">
             <tr>
               <TableHeaderCell label="账户" />
-              <TableHeaderCell label="保本利率" align="right" />
-              <TableHeaderCell label="已分配额度 / 任务额度" align="right" />
-              <TableHeaderCell label="在途状态" />
+              <TableHeaderCell label="总额" align="right" />
+              <TableHeaderCell label="完成" align="right" />
+              <TableHeaderCell label="剩余" align="right" />
+              <TableHeaderCell label="完成百分比" />
               <TableHeaderCell label="下达时间" align="right" />
-              <TableHeaderCell label="账户要求" />
-              <TableHeaderCell label="质押要求" />
+              <TableHeaderCell label="交易备注" />
+              <TableHeaderCell label="投资备注" />
+              <TableHeaderCell label="对手标签" />
             </tr>
           </thead>
           <tbody>
@@ -129,13 +131,18 @@ export function CombinedDemandMatrixCard() {
                     <span className="tk-strong font-semibold">{row.account}</span>
                   </td>
                   <td className="border-b px-3 py-1.5 text-right">
-                    <span className="whitespace-nowrap text-[color:var(--tdx-orange)]">
-                      {row.breakEvenRate}
+                    <span className="whitespace-nowrap font-medium tk-strong">
+                      {row.total.toFixed(1)}
                     </span>
                   </td>
                   <td className="border-b px-3 py-1.5 text-right">
-                    <span className="whitespace-nowrap font-medium text-[color:var(--tdx-red)]">
-                      {row.gap}
+                    <span className="whitespace-nowrap font-medium text-[color:var(--tdx-green)]">
+                      {row.done.toFixed(1)}
+                    </span>
+                  </td>
+                  <td className="border-b px-3 py-1.5 text-right">
+                    <span className={`whitespace-nowrap font-medium ${row.remaining > 0 ? "text-[color:var(--tdx-red)]" : "tk-muted"}`}>
+                      {row.remaining.toFixed(1)}
                     </span>
                   </td>
                   <td className="border-b px-3 py-1.5">
@@ -154,10 +161,23 @@ export function CombinedDemandMatrixCard() {
                     </span>
                   </td>
                   <td className="border-b px-3 py-1.5">
-                    <span className="tk-muted">{row.accountReq}</span>
+                    <span className="tk-muted max-w-[8rem] truncate inline-block" title={row.tradeNote || undefined}>
+                      {row.tradeNote || "--"}
+                    </span>
                   </td>
                   <td className="border-b px-3 py-1.5">
-                    <span className="tk-muted">{row.collateralReq}</span>
+                    <span className="tk-muted max-w-[8rem] truncate inline-block" title={row.investNote || undefined}>
+                      {row.investNote || "--"}
+                    </span>
+                  </td>
+                  <td className="border-b px-3 py-1.5">
+                    {row.counterpartyTag ? (
+                      <span className="rounded border border-[rgba(59,130,246,0.28)] bg-[rgba(59,130,246,0.08)] px-1.5 py-0.5 text-[color:var(--tk-color-brand-cyan)] whitespace-nowrap">
+                        {row.counterpartyTag}
+                      </span>
+                    ) : (
+                      <span className="tk-muted">--</span>
+                    )}
                   </td>
                 </tr>
               );

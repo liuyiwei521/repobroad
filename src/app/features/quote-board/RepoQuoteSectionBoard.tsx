@@ -5,6 +5,7 @@ import { QUOTE_TENOR_OPTIONS, type QuoteDetailRow, type QuoteTenorFilter, type R
 import { QuoteSortHeaderButton } from "./QuoteSortHeaderButton";
 import { OpponentExpandPanel } from "./OpponentExpandPanel";
 import {
+  TAG_COLOR_MAP,
   applyLogicalQuoteAmounts,
   applyLogicalQuoteRanks,
   buildOpponentCards,
@@ -17,7 +18,10 @@ import {
   formatUnifiedReplyStatus,
   formatUnifiedUpdatedAt,
   fuzzyTextMatch,
+  getInstitutionDisplayTags,
   getVisibleOpponentCards,
+  matchBrokerFilter,
+  matchCounterpartyTags,
   nextQuoteTableSortState,
   normalizeAccountRequirement,
   normalizeAmountFilterToYi,
@@ -65,11 +69,19 @@ function RankBadge({ rank }: { rank: QuoteDetailRow["rank"] }) {
   );
 }
 
-function CoreLabelBadge({ label }: { label: string }) {
-  if (!label) return null;
+function TagBadges({ tags }: { tags: readonly string[] }) {
+  if (!tags.length) return null;
   return (
-    <span className="tk-sheet-table__badge tk-sheet-table__badge--core inline-flex shrink-0 items-center px-1.5 py-0.5 text-micro">
-      {label}
+    <span className="flex flex-wrap gap-0.5" title={tags.join("、")}>
+      {tags.map((tag) => (
+        <span
+          key={tag}
+          className="inline-flex shrink-0 items-center rounded-sm px-1 py-px text-[10px] font-medium leading-tight text-white"
+          style={{ backgroundColor: TAG_COLOR_MAP[tag] ?? "#64748b" }}
+        >
+          {tag}
+        </span>
+      ))}
     </span>
   );
 }
@@ -93,6 +105,8 @@ export function RepoQuoteSectionBoard({
   accountSearch,
   collateralSearch,
   collateralTab = "all",
+  brokerFilter,
+  counterpartyTags,
   applyOverride,
   pinnedQuotes,
   pinnedKeys,
@@ -110,6 +124,8 @@ export function RepoQuoteSectionBoard({
   accountSearch: string;
   collateralSearch: string;
   collateralTab?: string;
+  brokerFilter: string;
+  counterpartyTags: readonly string[];
   applyOverride: (row: QuoteDetailRow) => QuoteDetailRow;
   pinnedQuotes: readonly PinnedQuote[];
   pinnedKeys: ReadonlySet<string>;
@@ -150,6 +166,8 @@ export function RepoQuoteSectionBoard({
   const matchRowFilters = (row: QuoteDetailRow) =>
     matchTenor(row.tenor) &&
     matchAmount(displayAmountForRow(row)) &&
+    matchBrokerFilter(row.institution, brokerFilter) &&
+    matchCounterpartyTags(row.institution, counterpartyTags) &&
     fuzzyTextMatch(
       formatInstitutionSender(
         row.institution,
@@ -162,6 +180,8 @@ export function RepoQuoteSectionBoard({
 
   const matchNonAmountFilters = (row: QuoteDetailRow) =>
     matchTenor(row.tenor) &&
+    matchBrokerFilter(row.institution, brokerFilter) &&
+    matchCounterpartyTags(row.institution, counterpartyTags) &&
     fuzzyTextMatch(
       formatInstitutionSender(
         row.institution,
@@ -243,7 +263,7 @@ export function RepoQuoteSectionBoard({
     return {
       id: `${mergedRow.id}-primary`,
       kind: "primary",
-      coreLabel: "",
+      tags: [...getInstitutionDisplayTags(mergedRow.institution)],
       replyStatus: formatUnifiedReplyStatus(primaryStatus),
       institution: formatInstitutionSender(
         mergedRow.institution,
@@ -291,7 +311,10 @@ export function RepoQuoteSectionBoard({
       .map((card) => ({
         id: `${card.id}-supplement`,
         kind: "supplement",
-        coreLabel: card.core ? "核心" : "",
+        tags: [
+          ...(card.core ? ["核心"] : []),
+          ...getInstitutionDisplayTags(card.institution),
+        ],
         replyStatus: formatUnifiedReplyStatus(card.status),
         institution: formatInstitutionSender(card.institution, card.name),
         sender: "",
@@ -344,8 +367,8 @@ export function RepoQuoteSectionBoard({
       const bReplied = b.replyStatus === "已回复" ? 1 : 0;
       if (aReplied !== bReplied) return bReplied - aReplied;
 
-      const aCore = a.coreLabel === "核心" ? 1 : 0;
-      const bCore = b.coreLabel === "核心" ? 1 : 0;
+      const aCore = a.tags.includes("核心") ? 1 : 0;
+      const bCore = b.tags.includes("核心") ? 1 : 0;
       if (aCore !== bCore) return bCore - aCore;
 
       return a.institution.localeCompare(b.institution, "zh-CN");
@@ -415,14 +438,14 @@ export function RepoQuoteSectionBoard({
     return (
       <div
         key={item.id}
-        className={`grid grid-cols-[0.5fr_1.45fr_0.6fr_0.75fr_0.75fr_0.8fr_0.8fr_0.8fr_0.9fr] items-center border-b border-[color:var(--tk-color-border-divider)] px-4 py-2 text-left text-[13px] text-slate-700 transition ${
+        className={`grid grid-cols-[0.9fr_1.35fr_0.6fr_0.7fr_0.7fr_0.75fr_0.75fr_0.75fr_0.85fr] items-center border-b border-[color:var(--tk-color-border-divider)] px-4 py-2 text-left text-[13px] text-slate-700 transition ${
           rowPinned
             ? "bg-[rgba(180,47,50,0.05)] hover:bg-[rgba(180,47,50,0.08)]"
             : "bg-white hover:bg-[#f5f5f5]"
         }`}
       >
         <span className="flex justify-center">
-          <CoreLabelBadge label={item.coreLabel} />
+          <TagBadges tags={item.tags} />
         </span>
         <div className="flex min-w-0 items-center gap-2">
           {rowPinned ? <PinnedRowBadge /> : null}
@@ -600,8 +623,8 @@ export function RepoQuoteSectionBoard({
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto">
         {detailMode ? (
-          <div className="sticky top-0 z-10 grid grid-cols-[0.5fr_1.45fr_0.6fr_0.75fr_0.75fr_0.8fr_0.8fr_0.8fr_0.9fr] border-y border-[color:var(--tk-color-border-divider-dark)] bg-[#f5f5f5] px-4 py-1.5 text-mini font-medium tracking-[0.02em] text-slate-500 shadow-[0_1px_0_rgba(221,221,221,0.95)]">
-            <span className="text-center">核心</span>
+          <div className="sticky top-0 z-10 grid grid-cols-[0.9fr_1.35fr_0.6fr_0.7fr_0.7fr_0.75fr_0.75fr_0.75fr_0.85fr] border-y border-[color:var(--tk-color-border-divider-dark)] bg-[#f5f5f5] px-4 py-1.5 text-mini font-medium tracking-[0.02em] text-slate-500 shadow-[0_1px_0_rgba(221,221,221,0.95)]">
+            <span className="text-center">标签</span>
             <span>机构 / 发送人</span>
             <span className="text-right">期限</span>
             <span className="text-right">

@@ -1,9 +1,18 @@
-import { QUOTE_TENOR_OPTIONS, type QuoteDetailRow, type QuoteGroup, type QuoteRank, type RepoQuoteSection } from "../../types";
+import {
+  QUOTE_TENOR_OPTIONS,
+  type QuoteDetailRow,
+  type QuoteGroup,
+  type QuoteRank,
+  type RepoQuoteSection,
+} from "../../types";
 import { parseRatePercent } from "../big-bank";
 import { buildOpponentChatQuote, buildPrimaryChatQuote, type QuoteChatPayload } from "../chat";
 import {
   ACCOUNT_TYPE_OPTIONS,
   DEFAULT_AMOUNT_UNIT,
+  TAG_COLOR_MAP,
+  institutionBrokerMap,
+  institutionTagsMap,
   opponentInstitutions,
   quoteContactNames,
   repoQuoteSections,
@@ -21,7 +30,7 @@ import type {
   UnifiedQuoteTableRow,
 } from "./quoteBoard.types";
 
-export { buildOpponentChatQuote, buildPrimaryChatQuote, DEFAULT_AMOUNT_UNIT };
+export { buildOpponentChatQuote, buildPrimaryChatQuote, DEFAULT_AMOUNT_UNIT, TAG_COLOR_MAP };
 export type { AmountFilterUnit, OpponentQuoteCard, PinnedQuote, QuoteOverride, QuoteTableSortDirection, QuoteTableSortField, QuoteTableSortState, SupplementGroupName, UnifiedQuoteTableRow, QuoteChatPayload };
 
 const BLANK_AMOUNT_IDS = (() => {
@@ -516,6 +525,22 @@ export function fuzzyTextMatch(text: string, query: string) {
     textIndex += 1;
   }
   return true;
+}
+
+export function matchBrokerFilter(institution: string, broker: string) {
+  if (!broker) return true;
+  return institutionBrokerMap[institution] === broker;
+}
+
+export function getInstitutionDisplayTags(institution: string): readonly string[] {
+  return institutionTagsMap[institution] ?? [];
+}
+
+export function matchCounterpartyTags(institution: string, tags: readonly string[]) {
+  if (tags.length === 0) return true;
+  const institutionTags = institutionTagsMap[institution];
+  if (!institutionTags) return false;
+  return tags.some((tag) => institutionTags.includes(tag));
 }
 
 export function shouldShowAccountRequirement(rowId: string) {

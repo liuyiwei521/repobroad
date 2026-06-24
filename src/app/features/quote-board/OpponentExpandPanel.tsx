@@ -2,8 +2,10 @@ import { Pin } from "lucide-react";
 
 import type { QuoteDetailRow, RepoQuoteSection } from "../../types";
 import {
+  TAG_COLOR_MAP,
   buildOpponentChatQuote,
   formatInstitutionSender,
+  getInstitutionDisplayTags,
   getVisibleOpponentCards,
   opponentQuoteTimeText,
   pinnedQuoteFromRow,
@@ -67,17 +69,16 @@ export function OpponentExpandPanel({
               inlineMode ? "bg-transparent" : ""
             }`}
           >
-            <div className="flex min-w-0 items-center gap-2">
-              {card.core ? (
-                <span className="tk-sheet-table__badge tk-sheet-table__badge--core inline-flex shrink-0 items-center px-1.5 py-0.5 text-micro">
-                  核心
+            <div className="flex min-w-0 items-center gap-1.5">
+              {[...(card.core ? ["核心"] : []), ...(card.special ? ["特殊"] : []), ...getInstitutionDisplayTags(card.institution)].map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex shrink-0 items-center rounded-sm px-1 py-px text-[10px] font-medium leading-tight text-white"
+                  style={{ backgroundColor: tag === "特殊" ? "#e67e22" : (TAG_COLOR_MAP[tag] ?? "#64748b") }}
+                >
+                  {tag}
                 </span>
-              ) : null}
-              {card.special ? (
-                <span className="tk-sheet-table__badge tk-sheet-table__badge--special inline-flex shrink-0 items-center px-1.5 py-0.5 text-micro">
-                  特殊
-                </span>
-              ) : null}
+              ))}
               <div className="min-w-0 truncate font-semibold text-slate-700">
                 {formatInstitutionSender(card.institution, card.name)}
               </div>

@@ -14,7 +14,7 @@ import {
   topBoardFilters,
 } from "./quoteBoard.data";
 import { QuoteBoardAuxTable, type QuoteBoardAuxTab } from "./QuoteBoardAuxTable";
-import { InstitutionSearchField, QuoteBoardFilterControls } from "./QuoteBoardFilterControls";
+import { BrokerFilterButton, CounterpartyTagFilterButton, InstitutionSearchField, QuoteBoardFilterControls } from "./QuoteBoardFilterControls";
 import { RepoQuoteSectionBoard } from "./RepoQuoteSectionBoard";
 import type { PinnedQuote, QuoteOverride } from "./quoteBoard.types";
 import { normalizeRepoQuoteSection } from "./quoteBoard.utils";
@@ -99,6 +99,8 @@ export function MainQuoteBoard({
   const [institutionSearch, setInstitutionSearch] = useState("");
   const [accountSearch, setAccountSearch] = useState("");
   const [collateralSearch, setCollateralSearch] = useState("");
+  const [brokerFilter, setBrokerFilter] = useState("");
+  const [counterpartyTags, setCounterpartyTags] = useState<readonly string[]>([]);
   const [activeSectionId, setActiveSectionId] = useState<RepoQuoteSection["id"]>(repoQuoteSections[0].id);
   const [viewMode, setViewMode] = useState<QuoteBoardViewMode>("best");
   const [contentTab, setContentTab] = useState<QuoteBoardContentTab>("repo");
@@ -223,6 +225,14 @@ export function MainQuoteBoard({
               </div>
             </div>
             <div className="flex min-w-0 shrink-0 items-center gap-1.5">
+              <BrokerFilterButton
+                value={brokerFilter}
+                onChange={setBrokerFilter}
+              />
+              <CounterpartyTagFilterButton
+                value={counterpartyTags}
+                onChange={setCounterpartyTags}
+              />
               <InstitutionSearchField
                 value={institutionSearch}
                 onChange={setInstitutionSearch}
@@ -293,6 +303,8 @@ export function MainQuoteBoard({
                     accountSearch={accountSearch}
                     collateralSearch={collateralSearch}
                     collateralTab={collateralTab}
+                    brokerFilter={brokerFilter}
+                    counterpartyTags={counterpartyTags}
                     applyOverride={applyOverride}
                     pinnedQuotes={pinnedQuotes}
                     pinnedKeys={pinnedKeys}

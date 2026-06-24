@@ -48,7 +48,7 @@ export type OpponentQuoteCard = {
 export type UnifiedQuoteTableRow = {
   id: string;
   kind: "primary" | "supplement";
-  coreLabel: string;
+  tags: readonly string[];
   replyStatus: string;
   institution: string;
   sender: string;

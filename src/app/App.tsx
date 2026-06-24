@@ -1416,8 +1416,9 @@ function ResizableEntryStack({
                 entry.id === "big-bank-price"
                   ? "1 0 auto"
                   : "0 0 auto",
-              height: minH,
-              minHeight: minH,
+              ...(displayMode === "wide-preview" || collapsed
+                ? { height: minH, minHeight: minH }
+                : {}),
             }}
           >
             {collapsed ? (
@@ -1433,7 +1434,12 @@ function ResizableEntryStack({
               </button>
             ) : (
               <>
-                <div className="absolute right-1.5 top-1.5 z-30 opacity-70 transition-opacity group-hover/entry:opacity-100">
+                <div className="absolute right-1.5 top-1.5 z-30 flex flex-col items-end gap-1 opacity-70 transition-opacity group-hover/entry:opacity-100">
+                  {displayMode !== "wide-preview" ? (
+                    <span className="tk-chip rounded border text-micro">
+                      {getModuleEntryData(entry.id, tenorFilter).badge}
+                    </span>
+                  ) : null}
                   <button
                     className="inline-flex h-5 w-5 items-center justify-center rounded border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-deep)] text-slate-400 hover:text-slate-100"
                     type="button"
@@ -1453,6 +1459,7 @@ function ResizableEntryStack({
                   active={entry.id === activeId}
                   displayMode={displayMode}
                   tenorFilter={tenorFilter}
+                  hideBadge={displayMode !== "wide-preview"}
                   onOpen={(options) => onOpen(entry, options)}
                   onFlippedChange={handleFlipChange(entry.id)}
                   onNaturalHeightChange={handleNaturalHeightChange(
@@ -1908,6 +1915,7 @@ function ModuleEntryItem({
   onOpen,
   onFlippedChange,
   onNaturalHeightChange,
+  hideBadge,
 }: {
   entry: ModuleEntryConfig;
   active: boolean;
@@ -1916,6 +1924,7 @@ function ModuleEntryItem({
   onOpen: (options?: FrameOpenOptions) => void;
   onFlippedChange?: (flipped: boolean) => void;
   onNaturalHeightChange?: (height: number) => void;
+  hideBadge?: boolean;
 }) {
   const Icon = entry.icon;
   const metric = getModuleEntryData(entry.id, tenorFilter);
@@ -2046,7 +2055,7 @@ function ModuleEntryItem({
               </span>
             </span>
           ) : null}
-          {!compact && displayMode !== "wide-preview" ? (
+          {!compact && displayMode !== "wide-preview" && !hideBadge ? (
             <span className="tk-chip shrink-0 rounded border text-micro">
               {metric.badge}
             </span>
