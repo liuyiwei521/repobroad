@@ -1,129 +1,168 @@
+import { useMemo, useState } from "react";
 import {
   DEFAULT_TRADING_NOTICE_TEXT,
   DEFAULT_TRADING_STATUS_TEXT,
 } from "../../components/dialogs/TradingNoticeEditorModal";
 import {
-  demandRowsByDirection,
-  demandTenors,
   executionRows,
+  fundGapDataByDirection,
 } from "./execution.data";
-import { buildDemandMatrix } from "./execution.utils";
-import type { DemandAmount, ExecutionRow } from "./execution.types";
+import type {
+  DemandDirection,
+  ExecutionRow,
+  FundGapColumn,
+  FundGapColumnKey,
+  FundGapCustomRow,
+} from "./execution.types";
+
+type DirectionTab = DemandDirection;
+type StatusFilter = "all" | "idle" | "active" | "done";
+type SortDirection = "asc" | "desc";
+
+const directionTabOptions: readonly { key: DirectionTab; label: string }[] = [
+  { key: "repo", label: "正回购需求" },
+  { key: "reverse", label: "逆回购需求" },
+];
+
+const statusFilterOptions: readonly { key: StatusFilter; label: string }[] = [
+  { key: "all", label: "全部" },
+  { key: "idle", label: "未开始" },
+  { key: "active", label: "进行中" },
+  { key: "done", label: "已完成" },
+];
 
 export function CombinedDemandMatrixCard() {
-  const repoMatrix = buildDemandMatrix(demandRowsByDirection.repo, demandTenors);
-  const reverseMatrix = buildDemandMatrix(
-    demandRowsByDirection.reverse,
-    demandTenors,
-  );
+  const [directionTab, setDirectionTab] = useState<DirectionTab>("repo");
+  const [accountSearch, setAccountSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [sortDir, setSortDir] = useState<SortDirection>("desc");
 
-  const demandBuckets = [
-    {
-      key: "1d",
-      label: "1d",
-      repo: repoMatrix.columnTotals.R001,
-      reverse: reverseMatrix.columnTotals.R001,
-    },
-    {
-      key: "7d",
-      label: "7d",
-      repo: repoMatrix.columnTotals.R007,
-      reverse: reverseMatrix.columnTotals.R007,
-    },
-    {
-      key: "14d",
-      label: "14d",
-      repo: { need: 18.6, done: 12.1 },
-      reverse: { need: 13.7, done: 9.5 },
-    },
-    {
-      key: "21d",
-      label: "21d",
-      repo: { need: 10.2, done: 6.4 },
-      reverse: { need: 8.4, done: 4.9 },
-    },
-    {
-      key: "other",
-      label: "其他",
-      repo: { need: 6.1, done: 3.0 },
-      reverse: { need: 4.8, done: 2.3 },
-    },
-  ] as const;
+  const fundGapData = fundGapDataByDirection[directionTab];
 
-  const demandSummaryRows = [
-    {
-      key: "repo",
-      label: "正回购总计",
-      accent: "var(--tdx-red)",
-      amounts: demandBuckets.map((bucket) => bucket.repo),
-    },
-    {
-      key: "reverse",
-      label: "逆回购总计",
-      accent: "var(--tk-color-brand-cyan)",
-      amounts: demandBuckets.map((bucket) => bucket.reverse),
-    },
-  ].map((row) => ({
-    ...row,
-    total: sumDemandAmounts(row.amounts),
-  }));
+  const filteredRows = useMemo(() => {
+    let rows = executionRows.filter((row) => row.direction === directionTab);
+
+    if (accountSearch) {
+      const query = accountSearch.toLowerCase();
+      rows = rows.filter((row) => row.account.toLowerCase().includes(query));
+    }
+
+    if (statusFilter !== "all") {
+      rows = rows.filter((row) => resolveExecutionStatus(row).tone === statusFilter);
+    }
+
+    rows = [...rows].sort((a, b) =>
+      sortDir === "desc" ? b.remaining - a.remaining : a.remaining - b.remaining,
+    );
+
+    return rows;
+  }, [directionTab, accountSearch, statusFilter, sortDir]);
+
+  function toggleSort() {
+    setSortDir((current) => (current === "desc" ? "asc" : "desc"));
+  }
 
   return (
     <section className="tk-panel grid h-full min-h-0 grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden border">
-      <div className="tk-panel-header border-b px-3 py-2">
-        <div className="tk-title">资金缺口 / 在途指令</div>
+      {/* Direction tabs — replaces old title */}
+      <div className="flex items-center gap-1.5 border-b px-3 py-2">
+        {directionTabOptions.map((option) => (
+          <button
+            key={option.key}
+            className={`inline-flex h-7 items-center justify-center rounded-md border px-3 text-[13px] font-medium transition-all duration-150 ${
+              directionTab === option.key
+                ? option.key === "repo"
+                  ? "border-[#f0ccd0] bg-[#c45462] text-white shadow-[0_4px_10px_rgba(196,84,98,0.3)]"
+                  : "border-[#d7e2f2] bg-[#537dbc] text-white shadow-[0_4px_10px_rgba(83,125,188,0.3)]"
+                : "border-transparent bg-[var(--tdx-bg-panel)] tk-muted hover:bg-[var(--tk-color-surface-hover)]"
+            }`}
+            onClick={() => setDirectionTab(option.key)}
+            type="button"
+          >
+            {option.label}
+          </button>
+        ))}
       </div>
 
-      <div className="overflow-hidden border-b border-[color:var(--tk-color-border-panel)] px-1.5 py-1">
+      {/* Fund gap table — dynamic columns & custom rows */}
+      <div className="overflow-x-auto border-b border-[color:var(--tk-color-border-panel)] px-1.5 py-1">
         <table className="tk-table w-full border-separate border-spacing-0 text-xs">
           <thead>
             <tr>
-              <DemandTableHeader label="方向" />
-              {demandBuckets.map((bucket) => (
-                <DemandTableHeader
-                  key={bucket.key}
-                  label={bucket.label}
-                  align="right"
-                />
+              <FundGapHeaderCell label="" />
+              {fundGapData.columns.map((col) => (
+                <FundGapHeaderCell key={col.key} label={col.label} align="right" />
               ))}
-              <DemandTableHeader label="合计" align="right" />
             </tr>
           </thead>
           <tbody>
-            {demandSummaryRows.map((row) => (
-              <tr key={row.key}>
-                <DemandRowHeader label={row.label} color={row.accent} />
-                {row.amounts.map((amount, index) => (
-                  <DemandCompactCell
-                    key={`${row.key}-${demandBuckets[index].key}`}
-                    amount={amount}
-                  />
-                ))}
-                <DemandCompactCell amount={row.total} strong />
-              </tr>
+            {fundGapData.rows.map((row) => (
+              <FundGapBodyRow
+                key={row.label}
+                row={row}
+                columns={fundGapData.columns}
+              />
             ))}
           </tbody>
         </table>
       </div>
 
-      <div className="min-h-0 overflow-auto">
+      {/* Inflight toolbar + table */}
+      <div className="flex min-h-0 flex-col overflow-hidden">
+        <div className="flex items-center gap-3 border-b border-[color:var(--tk-color-border-panel)] px-3 py-1.5 text-[13px]">
+          <div className="relative">
+            <input
+              type="text"
+              value={accountSearch}
+              onChange={(e) => setAccountSearch(e.target.value)}
+              placeholder="搜索账户…"
+              className="h-7 w-[150px] rounded border border-[color:var(--tk-color-border-default)] bg-[var(--tdx-bg-panel)] pl-2 pr-7 text-[13px] tk-strong outline-none focus:border-[color:var(--tk-color-brand-cyan)]"
+            />
+            <svg className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 tk-muted" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="6.5" cy="6.5" r="5"/><path d="M10 10l4 4"/></svg>
+          </div>
+          <span className="h-4 w-px bg-[var(--tk-color-border-divider-dark)]" />
+          <div className="flex items-center gap-1.5">
+            <span className="tk-muted whitespace-nowrap">状态</span>
+            {statusFilterOptions.map((opt) => (
+              <button
+                key={opt.key}
+                className={`inline-flex h-6 items-center rounded px-2 text-[13px] transition-colors ${
+                  statusFilter === opt.key
+                    ? "bg-[rgba(59,130,246,0.12)] font-medium text-[color:var(--tk-color-brand-cyan)]"
+                    : "tk-muted hover:bg-[var(--tk-color-surface-hover)]"
+                }`}
+                onClick={() => setStatusFilter(opt.key)}
+                type="button"
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <span className="h-4 w-px bg-[var(--tk-color-border-divider-dark)]" />
+          <button
+            className="inline-flex items-center gap-1 tk-muted hover:text-[color:var(--tk-color-brand-cyan)]"
+            onClick={toggleSort}
+            type="button"
+          >
+            按剩余排序
+            <span className="text-xs">{sortDir === "desc" ? "↓" : "↑"}</span>
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-auto">
         <table className="tk-table w-full border-separate border-spacing-0 text-xs">
           <thead className="sticky top-0 z-10">
             <tr>
               <TableHeaderCell label="账户" />
-              <TableHeaderCell label="总额" align="right" />
-              <TableHeaderCell label="完成" align="right" />
-              <TableHeaderCell label="剩余" align="right" />
-              <TableHeaderCell label="完成百分比" />
+              <TableHeaderCell label="剩余/指令" align="right" />
+              <TableHeaderCell label="完成状态" />
               <TableHeaderCell label="下达时间" align="right" />
-              <TableHeaderCell label="交易备注" />
-              <TableHeaderCell label="投资备注" />
-              <TableHeaderCell label="对手标签" />
+              <TableHeaderCell label="合规要求" />
             </tr>
           </thead>
           <tbody>
-            {executionRows.map((row) => {
+            {filteredRows.map((row) => {
               const status = resolveExecutionStatus(row);
+              const compliance = buildComplianceText(row);
 
               return (
                 <tr key={row.account}>
@@ -131,18 +170,11 @@ export function CombinedDemandMatrixCard() {
                     <span className="tk-strong font-semibold">{row.account}</span>
                   </td>
                   <td className="border-b px-3 py-1.5 text-right">
-                    <span className="whitespace-nowrap font-medium tk-strong">
-                      {row.total.toFixed(1)}
-                    </span>
-                  </td>
-                  <td className="border-b px-3 py-1.5 text-right">
-                    <span className="whitespace-nowrap font-medium text-[color:var(--tdx-green)]">
-                      {row.done.toFixed(1)}
-                    </span>
-                  </td>
-                  <td className="border-b px-3 py-1.5 text-right">
-                    <span className={`whitespace-nowrap font-medium ${row.remaining > 0 ? "text-[color:var(--tdx-red)]" : "tk-muted"}`}>
-                      {row.remaining.toFixed(1)}
+                    <span className="whitespace-nowrap tabular-nums">
+                      <span className={`font-medium ${row.remaining > 0 ? "text-[color:var(--tdx-red)]" : "tk-muted"}`}>
+                        {row.remaining.toFixed(1)}
+                      </span>
+                      <span className="tk-muted"> / {row.total.toFixed(1)}</span>
                     </span>
                   </td>
                   <td className="border-b px-3 py-1.5">
@@ -157,23 +189,13 @@ export function CombinedDemandMatrixCard() {
                   </td>
                   <td className="border-b px-3 py-1.5 text-right">
                     <span className="whitespace-nowrap tk-strong">
-                      {row.issuedAt ?? "--"}
+                      {row.issuedAt || "--"}
                     </span>
                   </td>
                   <td className="border-b px-3 py-1.5">
-                    <span className="tk-muted max-w-[8rem] truncate inline-block" title={row.tradeNote || undefined}>
-                      {row.tradeNote || "--"}
-                    </span>
-                  </td>
-                  <td className="border-b px-3 py-1.5">
-                    <span className="tk-muted max-w-[8rem] truncate inline-block" title={row.investNote || undefined}>
-                      {row.investNote || "--"}
-                    </span>
-                  </td>
-                  <td className="border-b px-3 py-1.5">
-                    {row.counterpartyTag ? (
-                      <span className="rounded border border-[rgba(59,130,246,0.28)] bg-[rgba(59,130,246,0.08)] px-1.5 py-0.5 text-[color:var(--tk-color-brand-cyan)] whitespace-nowrap">
-                        {row.counterpartyTag}
+                    {compliance ? (
+                      <span className="tk-muted max-w-[14rem] truncate inline-block" title={compliance}>
+                        {compliance}
                       </span>
                     ) : (
                       <span className="tk-muted">--</span>
@@ -184,6 +206,7 @@ export function CombinedDemandMatrixCard() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </section>
   );
@@ -245,7 +268,7 @@ export function MiddleMatrixNoticeBar({
   );
 }
 
-function DemandTableHeader({
+function FundGapHeaderCell({
   label,
   align = "left",
 }: {
@@ -263,40 +286,67 @@ function DemandTableHeader({
   );
 }
 
-function DemandCompactCell({
-  amount,
-  strong = false,
+function FundGapBodyRow({
+  row,
+  columns,
 }: {
-  amount: DemandAmount;
-  strong?: boolean;
+  row: FundGapCustomRow;
+  columns: FundGapColumn[];
 }) {
-  const empty = amount.need <= 0;
-
   return (
-    <td className="border-b bg-[var(--tdx-bg-panel)] px-2 py-1.5 text-right">
-      <span
-        className={`inline-flex min-w-[5.75rem] justify-end whitespace-nowrap px-1 tabular-nums ${
-          strong ? "font-medium tk-strong" : empty ? "tk-muted" : "tk-strong"
-        } ${empty ? "opacity-45" : ""}`}
-      >
-        {amount.need.toFixed(1)} / {amount.done.toFixed(1)}
-      </span>
-    </td>
+    <tr>
+      <td className="border-b bg-[var(--tdx-bg-panel)] px-2 py-1.5 text-left">
+        <span className="tk-strong font-medium whitespace-nowrap">{row.label}</span>
+      </td>
+      {columns.map((col) => (
+        <td
+          key={col.key}
+          className="border-b bg-[var(--tdx-bg-panel)] px-2 py-1.5 text-right"
+        >
+          {row.type === "paired" && row.pairedValues ? (
+            <FundGapPairedValue
+              done={row.pairedValues[col.key]?.done ?? 0}
+              need={row.pairedValues[col.key]?.need ?? 0}
+            />
+          ) : (
+            <FundGapSingleValue value={row.values[col.key] ?? 0} />
+          )}
+        </td>
+      ))}
+    </tr>
   );
 }
 
-function DemandRowHeader({ label, color }: { label: string; color: string }) {
+function FundGapSingleValue({ value }: { value: number }) {
+  if (value === 0) {
+    return <span className="tk-muted whitespace-nowrap tabular-nums">-</span>;
+  }
+
   return (
-    <td className="border-b bg-[var(--tdx-bg-panel)] px-2 py-1.5 text-left">
-      <span className="inline-flex items-center gap-2">
-        <span
-          className="h-4 w-0.5 shrink-0 rounded-full"
-          style={{ backgroundColor: color }}
-        />
-        <span className="tk-strong font-medium">{label}</span>
-      </span>
-    </td>
+    <span
+      className={`whitespace-nowrap tabular-nums tk-strong ${
+        value < 0 ? "text-[color:var(--tdx-green)]" : ""
+      }`}
+    >
+      {formatGapNumber(value)}
+    </span>
   );
+}
+
+function FundGapPairedValue({ done, need }: { done: number; need: number }) {
+  if (done === 0 && need === 0) {
+    return <span className="tk-muted whitespace-nowrap tabular-nums">-</span>;
+  }
+
+  return (
+    <span className="whitespace-nowrap tabular-nums tk-strong">
+      {formatGapNumber(done)}/{formatGapNumber(need)}
+    </span>
+  );
+}
+
+function formatGapNumber(value: number): string {
+  return value.toLocaleString("zh-CN");
 }
 
 function TableHeaderCell({
@@ -323,7 +373,7 @@ function resolveExecutionStatus(row: ExecutionRow): {
   tone: "idle" | "active" | "done";
 } {
   if (row.progress == null) {
-    return { label: "未下达", value: "--", tone: "idle" };
+    return { label: "未开始", value: "--", tone: "idle" };
   }
 
   if (row.progress >= 100) {
@@ -331,6 +381,14 @@ function resolveExecutionStatus(row: ExecutionRow): {
   }
 
   return { label: "进行中", value: `${row.progress}%`, tone: "active" };
+}
+
+function buildComplianceText(row: ExecutionRow): string {
+  const parts: string[] = [];
+  if (row.tradeNote) parts.push(row.tradeNote);
+  if (row.investNote) parts.push(row.investNote);
+  if (row.counterpartyTag) parts.push(row.counterpartyTag);
+  return parts.join(" · ");
 }
 
 function executionStatusChipClass(tone: "idle" | "active" | "done") {
@@ -355,14 +413,4 @@ function executionStatusValueClass(tone: "idle" | "active" | "done") {
   }
 
   return "tk-muted";
-}
-
-function sumDemandAmounts(amounts: readonly DemandAmount[]): DemandAmount {
-  return amounts.reduce(
-    (total, amount) => ({
-      need: Number((total.need + amount.need).toFixed(1)),
-      done: Number((total.done + amount.done).toFixed(1)),
-    }),
-    { need: 0, done: 0 },
-  );
 }

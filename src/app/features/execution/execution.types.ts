@@ -35,8 +35,30 @@ export type DemandBottomTab = "demand" | "execution";
 
 export type CounterpartyTag = "保险/保障" | "稳定出钱" | "出散量" | "应急" | "券商自营";
 
+export type FundGapColumnKey = "noTenor" | `${number}d` | "otherTrader" | "remainingGap";
+
+export type FundGapColumn = {
+  key: FundGapColumnKey;
+  label: string;
+};
+
+export type FundGapCustomRowType = "single" | "paired";
+
+export type FundGapCustomRow = {
+  label: string;
+  type: FundGapCustomRowType;
+  values: Record<FundGapColumnKey, number>;
+  pairedValues?: Record<FundGapColumnKey, { done: number; need: number }>;
+};
+
+export type FundGapData = {
+  columns: FundGapColumn[];
+  rows: FundGapCustomRow[];
+};
+
 export type ExecutionRow = {
   account: string;
+  direction: DemandDirection;
   total: number;
   done: number;
   remaining: number;
@@ -54,6 +76,7 @@ export type FundGapRow = {
 
 export type InflightRow = {
   account: string;
+  direction: DemandDirection;
   total: number;
   done: number;
   progress: number;
