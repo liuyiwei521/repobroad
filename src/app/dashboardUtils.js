@@ -67,7 +67,16 @@ export function getSentimentState(score) {
       statusClass: "text-emerald-600",
     };
   }
-  if (score <= 44) {
+  if (score >= 45) {
+    return {
+      tone: "neutral",
+      status: "平衡",
+      accentClass:
+        "border-slate-200 bg-slate-50 text-slate-700",
+      statusClass: "text-slate-600",
+    };
+  }
+  if (score >= 30) {
     return {
       tone: "alert",
       status: "紧张",
@@ -77,11 +86,11 @@ export function getSentimentState(score) {
     };
   }
   return {
-    tone: "neutral",
-    status: "一般",
+    tone: "danger",
+    status: "异常紧张",
     accentClass:
-      "border-slate-200 bg-slate-50 text-slate-700",
-    statusClass: "text-slate-600",
+      "border-red-300 bg-red-100 text-red-800",
+    statusClass: "text-red-700",
   };
 }
 

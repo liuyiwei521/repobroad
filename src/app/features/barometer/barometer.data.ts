@@ -35,7 +35,6 @@ export const barometerMetricOptions: Array<{
 }> = [
   { value: "price", label: "\u4ef7" },
   { value: "count", label: "\u7b14\u6570" },
-  { value: "volume", label: "\u91cf" },
 ];
 
 export const qtInstitutionOptions = [
@@ -222,16 +221,6 @@ export const barometerData: Record<
         barometerYesterdayInCount,
       ),
     },
-    volume: {
-      yUnit: "\u4ebf",
-      yLabel: "\u6210\u4ea4\uff08\u4ebf\uff09",
-      series: buildBarometerSeries(
-        scaleBarometerPoints(barometerTodayOutCount, 1.8),
-        scaleBarometerPoints(barometerTodayInCount, 2.4),
-        scaleBarometerPoints(barometerYesterdayOutCount, 1.7),
-        scaleBarometerPoints(barometerYesterdayInCount, 2.3),
-      ),
-    },
   },
   "7d": {
     price: {
@@ -247,16 +236,6 @@ export const barometerData: Record<
         scaleBarometerPoints(barometerTodayInCount, 0.78),
         scaleBarometerPoints(barometerYesterdayOutCount, 0.6),
         scaleBarometerPoints(barometerYesterdayInCount, 0.74),
-      ),
-    },
-    volume: {
-      yUnit: "\u4ebf",
-      yLabel: "\u6210\u4ea4\uff08\u4ebf\uff09",
-      series: buildBarometerSeries(
-        scaleBarometerPoints(barometerTodayOutCount, 1.26),
-        scaleBarometerPoints(barometerTodayInCount, 1.87),
-        scaleBarometerPoints(barometerYesterdayOutCount, 1.02),
-        scaleBarometerPoints(barometerYesterdayInCount, 1.61),
       ),
     },
   },

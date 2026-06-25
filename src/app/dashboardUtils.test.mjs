@@ -44,9 +44,12 @@ test("buildXrepoTodayLabels keeps intraday endpoints visible", () => {
 test("getSentimentState returns stable status bands", () => {
   assert.equal(getSentimentState(66).status, "宽松");
   assert.equal(getSentimentState(60).status, "宽松");
-  assert.equal(getSentimentState(51).status, "一般");
+  assert.equal(getSentimentState(51).status, "平衡");
+  assert.equal(getSentimentState(45).status, "平衡");
   assert.equal(getSentimentState(44).status, "紧张");
-  assert.equal(getSentimentState(41).status, "紧张");
+  assert.equal(getSentimentState(30).status, "紧张");
+  assert.equal(getSentimentState(29).status, "异常紧张");
+  assert.equal(getSentimentState(10).status, "异常紧张");
 });
 
 test("buildChartDomain keeps small spreads readable without oversized blanks", () => {

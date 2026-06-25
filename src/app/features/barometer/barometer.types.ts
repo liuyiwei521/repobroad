@@ -1,5 +1,5 @@
 export type BarometerRange = "overnight" | "7d";
-export type BarometerMetric = "price" | "count" | "volume";
+export type BarometerMetric = "price" | "count";
 export type BarometerLineStyle = "solid" | "dashed";
 
 export type BarometerPoint = {

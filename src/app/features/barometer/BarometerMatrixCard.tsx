@@ -37,7 +37,7 @@ const visibleTimeLabels = new Set([
 
 export function BarometerMatrixCard() {
   const [range, setRange] = useState<BarometerRange>("overnight");
-  const [metric, setMetric] = useState<BarometerMetric>("volume");
+  const [metric, setMetric] = useState<BarometerMetric>("count");
   const [institutionType, setInstitutionType] =
     useState<QtInstitutionType>("all");
 

@@ -2951,11 +2951,6 @@ function TopBar({
         </div>
         <div className="flex min-w-0 items-center gap-2">
           <SentimentChipWithPopover />
-          <SentimentChipWithPopover
-            label="国际情绪指数"
-            detailText="31/42/31/33"
-            compact
-          />
           <div className="min-w-0 flex-1">
             <MiddleMatrixNoticeBar
               variant="inline"
@@ -5802,81 +5797,21 @@ function TopToolValuePopover({
 
 function SentimentChipWithPopover({
   label = "泰康资金情绪",
-  detailText,
-  compact = false,
 }: {
   label?: string;
-  detailText?: string;
-  compact?: boolean;
 }) {
   const score = 51;
   const sentiment = getSentimentState(score);
   const updatedAt = "10:53";
-  const detailParts = detailText?.split("/") ?? [];
-  const {
-    visible,
-    anchorRect,
-    anchorRef,
-    scheduleShow,
-    scheduleHide,
-    cancelHide,
-  } = useHoverPopover();
   return (
     <div
-      ref={anchorRef}
-      onMouseEnter={scheduleShow}
-      onMouseLeave={scheduleHide}
+      className="tk-info-chip flex items-center gap-1.5 rounded-full border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-2.5 py-1 text-xs"
     >
-      <div
-        className={`tk-info-chip flex items-center rounded-full border border-[color:var(--tk-color-border-panel)] bg-[var(--tk-color-surface-dark-muted)] px-2.5 py-1 text-xs ${
-          compact ? "gap-0.5" : "gap-1.5"
-        }`}
-      >
-        {compact && detailParts.length === sentimentSeriesConfig.length ? (
-          <span className="inline-flex items-center gap-0.5">
-            <span className="text-black">{label}</span>
-            <span className="text-slate-500">(</span>
-            {detailParts.map((part, index) => (
-              <Fragment key={`${label}-${sentimentSeriesConfig[index].key}`}>
-                {index > 0 ? (
-                  <span className="text-slate-500">/</span>
-                ) : null}
-                <span
-                  className="font-semibold"
-                  style={{
-                    color:
-                      index === 0 ? "#000000" : sentimentSeriesConfig[index].color,
-                  }}
-                >
-                  {part}
-                </span>
-              </Fragment>
-            ))}
-            <span className="text-slate-500">)</span>
-          </span>
-        ) : (
-          <span className="text-black">
-            {detailText ? `${label}(${detailText})` : label}
-          </span>
-        )}
-        {!compact ? (
-          <>
-            <span className="font-semibold text-slate-100">{score}</span>
-            <span className="text-slate-500">{updatedAt}</span>
-            <span className={`font-semibold ${sentiment.statusClass}`}>
-              {sentiment.status}
-            </span>
-          </>
-        ) : null}
-      </div>
-      {visible && anchorRect && (
-        <SentimentPopoverPanel
-          anchorRect={anchorRect}
-          label={label}
-          onEnter={cancelHide}
-          onLeave={scheduleHide}
-        />
-      )}
+      <span className="text-black">{label}</span>
+      <span className={`font-semibold ${sentiment.statusClass}`}>
+        {sentiment.status}
+      </span>
+      <span className="text-slate-500">{updatedAt}</span>
     </div>
   );
 }
