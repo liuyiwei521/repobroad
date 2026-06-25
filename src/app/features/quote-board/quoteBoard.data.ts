@@ -4,7 +4,7 @@ import type { AmountFilterUnit } from "./quoteBoard.types";
 export const repoQuoteSections: readonly RepoQuoteSection[] = [
   {
     id: "reverse",
-    title: "逆回购",
+    title: "市场逆回购",
     groups: [
       {
         id: "reverse-rate-local",
@@ -368,7 +368,7 @@ export const repoQuoteSections: readonly RepoQuoteSection[] = [
   },
   {
     id: "forward",
-    title: "正回购",
+    title: "市场正回购",
     groups: [
       {
         id: "forward-rate-local",

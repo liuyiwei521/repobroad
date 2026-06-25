@@ -206,7 +206,9 @@ export function MainQuoteBoard({
                   );
                 })}
               </div>
-              <div className="flex shrink-0 items-center gap-1.5 border-l border-[color:var(--tk-color-border-divider-dark)] pl-2.5">
+            </div>
+            <div className="flex min-w-0 shrink-0 items-center gap-1.5">
+              <div className="flex shrink-0 items-center gap-1.5 border-r border-[color:var(--tk-color-border-divider-dark)] pr-2">
                 {auxTabOptions.map((option) => {
                   const active = contentTab === option.key;
                   return (
@@ -223,8 +225,6 @@ export function MainQuoteBoard({
                   );
                 })}
               </div>
-            </div>
-            <div className="flex min-w-0 shrink-0 items-center gap-1.5">
               <BrokerFilterButton
                 value={brokerFilter}
                 onChange={setBrokerFilter}
