@@ -1,0 +1,106 @@
+flowchart TD
+  App["RepoBroad Home"]
+
+  subgraph Shell["App Shell"]
+    TopBar["Top Bar
+    - Board title
+    - Notice bar
+    - Time / market summary chips
+    - Reset layout"]
+
+    subgraph MainGrid["Resizable 3-Column Main Grid"]
+      LeftRail["Left Entry Rail
+      - Module groups
+      - Summary / preview cards
+      - Open detail frame"]
+
+      MiddleColumn["Middle Matrix Column
+      - Task / demand matrix
+      - Barometer matrix
+      - Bottom tab panel"]
+
+      RightBoard["Right Quote Board
+      - Quote header
+      - Tenor tabs
+      - Level 1 / Level 2 switch
+      - Filter row"]
+    end
+
+    FloatingBall["Floating Assistant Ball"]
+  end
+
+  subgraph LeftRailDetail["Left Entry Rail Internal Structure"]
+    RailHeader["Rail header
+    - Adaptive display mode"]
+    RailGroups["Grouped module entries"]
+    EntryPreview["Embedded previews
+    - Big bank price
+    - XREPO
+    - Exchange repo
+    - NCD"]
+    HoverMetric["Hover metric tooltip"]
+  end
+
+  subgraph MiddleDetail["Middle Column Internal Structure"]
+    DemandCard["Combined demand matrix card"]
+    BarometerCard["Barometer matrix card"]
+    BottomTabs["Bottom tab container"]
+    IntradayPanel["Tab A: Intraday anonymous trade trend"]
+    InstMatrix["Tab B: Institution / tenor statistics"]
+  end
+
+  subgraph RightDetail["Right Quote Board Internal Structure"]
+    QuoteSections["Two repo quote sections
+    - Our borrowing
+    - Our lending"]
+    QuoteGroups["Quote groups by collateral / institution set"]
+    QuoteRows["Quote detail rows
+    - Amount / rate / collateral
+    - Account requirement
+    - Updated time"]
+    Level2Split["Optional horizontal splitter in Level 2"]
+    PinEditSend["Pin / edit / send actions"]
+  end
+
+  subgraph OverlayFrames["Detail Overlays / Modals"]
+    PageFrame["Page frame modal
+    - Opened from left rail modules"]
+    FrameTypes["Detail content
+    - Big bank price
+    - XREPO
+    - Exchange repo
+    - NCD
+    - History panel
+    - Intraday panel
+    - Institution stats
+    - Global filter
+    - Market sentiment"]
+    QuoteEditor["Quote editor modal"]
+    QuoteChat["Quote chat dialog"]
+  end
+
+  App --> TopBar
+  App --> MainGrid
+  App --> FloatingBall
+
+  LeftRail --> RailHeader
+  LeftRail --> RailGroups
+  LeftRail --> EntryPreview
+  LeftRail --> HoverMetric
+
+  MiddleColumn --> DemandCard
+  MiddleColumn --> BarometerCard
+  MiddleColumn --> BottomTabs
+  BottomTabs --> IntradayPanel
+  BottomTabs --> InstMatrix
+
+  RightBoard --> QuoteSections
+  QuoteSections --> QuoteGroups
+  QuoteGroups --> QuoteRows
+  RightBoard --> Level2Split
+  RightBoard --> PinEditSend
+
+  LeftRail -. "open module" .-> PageFrame
+  PageFrame --> FrameTypes
+  RightBoard -. "edit quote" .-> QuoteEditor
+  RightBoard -. "send message" .-> QuoteChat

@@ -7,3 +7,22 @@ dist/
 .idea/
 newworkspace/trading-workbench-vue/*.log
 newworkspace/trading-workbench-vue/*.err.log
+
+# Local agent artifacts and scratch outputs
+.claude/worktrees/
+.codex-artifacts/
+.codex-*.log
+output/
+tmp_*.png
+
+# Local prototypes, backups, and generated bundles
+bond-quote-replica.html
+repobroad-dist-*.zip
+src/*.zip
+src/dist.zip
+src/dist - */
+src/*示意图*/
+src/**/*.wip
+
+# Local account/process notes
+docs/*账号*流程.md
